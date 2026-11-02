@@ -1,26 +1,40 @@
-# Anteater Simulator: demo
+# Anteater Simulator
 
-Você é um **tamanduá-bandeira** faminto, em **primeira pessoa**, no **cerrado ao
-entardecer**. A colônia tem **1000 formigas** saindo pelas trilhas e em ondas
-cada vez maiores. Coma todas, e a cada **100 formigas** ganhe um ponto para a
-**árvore de habilidades**.
+Um jogo **relaxante de "arrumar e limpar"**, na linha de *Leaf it Alone*: você é
+um **tamanduá-bandeira** que come formigas e cupins no **cerrado**, evolui
+habilidades e deixa a região **100% limpa**. Não dá para perder, e o jogo tem
+fim. Para **PC (Steam)**, em **3D estilizado** com cara de filme de animação,
+visto pelos olhos do tamanduá. Feito em **Godot 4.7**.
 
-Visual 3D estilizado, com cara de filme de animação (nada de pixel art, nada de
-low poly), feito em **Godot 4.7**.
+**Tudo o que foi decidido sobre o jogo está em
+[`docs/DESIGN.md`](docs/DESIGN.md)**: o documento de design, o plano de
+produção, os protótipos e as decisões, num lugar só.
 
-![Tela inicial](docs/screenshots/menu.jpg)
+![Tela inicial da demo](docs/screenshots/menu.jpg)
 
 | | |
 |---|---|
 | ![Lambendo formigas na trilha](docs/screenshots/trilha.jpg) | ![Formigueiro escavado](docs/screenshots/formigueiro.jpg) |
-| ![Árvore de habilidades](docs/screenshots/arvore.jpg) | |
+| ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
 > No seu PC fica igual ou melhor.
 
 ---
 
-## Como rodar
+## A demo jogável
+
+Uma fase no **cerrado ao entardecer**: a colônia tem **1000 formigas**, que
+saem de 5 formigueiros, andam pelas trilhas de terra e chegam em **ondas** cada
+vez maiores. A cada **100 formigas** você ganha um ponto para a árvore de
+habilidades. O sol vai se pondo conforme você come.
+
+> A demo veio antes das decisões de 02/11/2026. As mudanças para alinhá-la ao
+> jogo decidido (ninhos com câmaras, rainha, 5 habilidades, sem formigas-soldado,
+> região de 45 a 60 minutos) estão na seção 4 do
+> [`docs/DESIGN.md`](docs/DESIGN.md).
+
+### Como rodar
 
 1. Instale o **Godot 4.7** (versão padrão, não precisa da .NET):
    <https://godotengine.org/download>
@@ -33,7 +47,7 @@ O projeto usa o renderizador **Forward+** (PC com placa de vídeo compatível co
 Vulkan, Direct3D 12 ou Metal). Em **Configurações** dá para baixar a qualidade
 gráfica se o PC sofrer.
 
-## Controles
+### Controles
 
 | Ação | Teclado e mouse | Controle |
 |---|---|---|
@@ -49,52 +63,22 @@ gráfica se o PC sofrer.
 
 \* liberados pela árvore de habilidades.
 
-## A fase: Cerrado ao Entardecer
+### O que tem na demo hoje
 
-- **1000 formigas na colônia.** Elas saem de 5 formigueiros, andam pelas trilhas
-  de terra até os arbustos, cortam folhas e voltam carregando-as. Quem entra de
-  novo no formigueiro sai mais tarde; só as que você come somem de vez.
-- **Ondas**: a cada ~40 s um formigueiro despeja uma coluna de formigas, e cada
-  onda é maior que a anterior. A bússola no topo da tela mostra de onde vem.
-- **Reta final**: quando restam ~90, todas saem de casa e não voltam mais.
-- **Formigas fogem** quando você chega correndo. Chegue andando e lamba de longe.
-- **Soldados** (cabeçudos, vermelho-escuro) aguentam uma lambida antes de grudar.
+- **Trilhas e ondas:** quem volta para o formigueiro sai de novo mais tarde; só
+  as que você come somem de vez. Quando restam ~90, todas saem de casa.
+- **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
+- **Faro:** mostra as formigas através do capim e aponta o maior grupo na
+  bússola.
 - **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
   mais longa por 6 s.
-- **Faro**: mostra as formigas através do capim e aponta o maior grupo na bússola.
-- **Sem derrota**: é uma demo para relaxar. O sol vai se pondo conforme você
-  come, e no fim aparecem os vaga-lumes. O recorde de tempo fica salvo.
+- **Formigas-soldado** aguentam uma lambida antes de grudar (vão sair, pelas
+  decisões de 02/11).
+- **Árvore da demo:** 3 ramos (Língua, Garras, Corpo) com 4 níveis cada, ou
+  seja, 9 pontos para 12 melhorias. Vai virar as 5 habilidades decididas.
+- **Sem derrota:** o recorde de tempo fica salvo.
 
-## Árvore de habilidades
-
-A cada 100 formigas você ganha **1 ponto**: são **9 pontos** para **12
-habilidades**, então não dá para pegar tudo. Cada ramo é aprendido em ordem.
-
-| Nível | Língua | Garras | Corpo |
-|---|---|---|---|
-| I | **Língua Comprida**: alcance +50% | **Garras Afiadas**: segure `E` num formigueiro e solte 25 formigas | **Patas Ligeiras**: +30% de velocidade |
-| II | **Saliva Grudenta**: raio de captura +70% | **Escavação Profunda**: cava 2x mais rápido, solta 50 | **Pelagem Silenciosa**: as formigas só fogem de muito perto |
-| III | **Lambida Dupla**: lambe 2x mais rápido | **Tremor** (`Espaço`): formigas a 6 m ficam tontas | **Disparada**: correr vira galope e não assusta as trilhas |
-| IV | **Língua Chicote**: varre o caminho todo | **Terremoto**: tremor maior que puxa as formigas para a boca | **Faro Lendário**: fareja o mapa inteiro, recarga 2x |
-
-## Modelos 3D gerados por IA
-
-Tudo no jogo já funciona com modelos **feitos por código** (formas suaves,
-pelagem com shader, folhas recortadas). Para trocar por modelos gerados por IA no
-mesmo estilo:
-
-- **[`docs/prompts-ia.md`](docs/prompts-ia.md)**: guia de estilo, paleta e o
-  prompt de cada modelo (formigas, focinho, tamanduá, formigueiro, cupinzeiro,
-  árvores, ipês, pedra, arbusto, tronco).
-- **[`assets/models/LEIA-ME.md`](assets/models/LEIA-ME.md)**: nomes de arquivo
-  e ajustes. Basta colocar o `.glb` em `assets/models/` que o jogo troca sozinho.
-
-O **formigueiro** já foi gerado na Artlist (Hyper3D Rodin, com a geração 3D
-gratuita da conta) e está no seu histórico de lá. O download do `.glb` exige um
-plano com créditos de IA; depois de baixar, salve como
-`assets/models/formigueiro.glb`.
-
-## Qualidade gráfica
+### Qualidade gráfica
 
 | Preset | O que muda |
 |---|---|
@@ -105,7 +89,27 @@ plano com créditos de IA; depois de baixar, salve como
 
 A densidade do capim muda ao recomeçar a fase.
 
-## Estrutura do projeto
+---
+
+## Modelos 3D gerados por IA
+
+Tudo na demo funciona com modelos **feitos por código** (formas suaves,
+pelagem, folhas recortadas). Para trocar por modelos gerados por IA no mesmo
+estilo:
+
+- **[`docs/prompts-ia.md`](docs/prompts-ia.md)**: guia de estilo, paleta e o
+  prompt de cada modelo.
+- **[`assets/models/LEIA-ME.md`](assets/models/LEIA-ME.md)**: nomes de arquivo
+  e ajustes. Basta colocar o `.glb` em `assets/models/` que o jogo troca sozinho.
+
+O **formigueiro** já foi gerado na Artlist (Hyper3D Rodin, com a geração 3D
+gratuita da conta) e está no seu histórico de lá. O download do `.glb` exige um
+plano com créditos de IA; depois de baixar, salve como
+`assets/models/formigueiro.glb`.
+
+---
+
+## Para quem mexe no código
 
 ```
 project.godot            configuração (Forward+, autoloads, uniforms globais)
@@ -122,10 +126,8 @@ scripts/
 shaders/                 capim, terreno, céu, folhagem, pelagem, língua, formigas...
 assets/                  fontes, texturas e sons gerados, modelos de IA
 tools/                   scripts Python que geram os sons e as texturas
-docs/                    prompts de IA e capturas de tela
+docs/                    documento do jogo, prompts de IA e capturas de tela
 ```
-
-## Ferramentas
 
 Sons e texturas são gerados por código (só precisam de Python 3 + numpy):
 

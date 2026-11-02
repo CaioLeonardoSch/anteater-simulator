@@ -50,6 +50,10 @@ var t_time := 0.0
 var t_dur_out := 0.1
 var t_dur_back := 0.14
 var t_target := Vector3.ZERO
+## Mira: a formiga que a língua vai buscar (Língua Certeira, ou -1) e se a
+## lambida pega alguma formiga daqui.
+var aim_ant := -1
+var aim_hits := false
 var t_tip := Vector3.ZERO
 var t_stuck := PackedInt32Array()
 var _stuck_offsets: Array[Vector3] = []
@@ -277,6 +281,7 @@ func _physics_process(delta: float) -> void:
 	swarm.threat_pos = global_position
 	swarm.flee_radius = (1.0 + clampf(spd / maxf(GameState.walk_speed(), 0.1), 0.0, 2.0) * 0.9) \
 		* GameState.flee_multiplier(running)
+	_update_aim()
 	_update_tongue(delta)
 	_update_abilities(delta)
 
@@ -401,31 +406,56 @@ func _start_flick() -> void:
 	lick_cooldown = period
 	t_dur_out = period * 0.36
 	t_dur_back = period * 0.5
+	var target := _straight_target()
+	# Língua Certeira: a ponta vai atrás da formiga mais perto da mira.
+	var ant := _tracked_ant()
+	if ant >= 0:
+		target = swarm.pos[ant] + Vector3(0, 0.02, 0)
+	t_target = target
+	t_state = Tongue.OUT
+	t_time = 0.0
+	Sfx.play("tongue", -7.0, 1.0, 0.12)
+
+
+## Onde a língua chega indo reta: no chão (ou no monte) para onde você mira,
+## no máximo até o alcance dela.
+func _straight_target() -> Vector3:
 	var cam_t := camera.global_transform
 	var origin := cam_t.origin
 	var fwd := -cam_t.basis.z
 	var mouth := mouth_real()
 	var reach := GameState.tongue_range()
-	var space := get_world_3d().direct_space_state
 	var q := PhysicsRayQueryParameters3D.create(origin, origin + fwd * (reach + 1.0))
 	q.exclude = [get_rid()]
-	var hit := space.intersect_ray(q)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	var target := origin + fwd * (reach + 0.5)
 	if not hit.is_empty():
 		target = hit.position
 	var off := target - mouth
 	if off.length() > reach:
 		target = mouth + off.normalized() * reach
-	# Ajuda de mira: puxa a ponta para a formiga mais perto da mira.
-	var best: int = swarm.best_target(origin, fwd, reach + 0.7, cos(deg_to_rad(10.0)))
-	if best >= 0:
-		var ap: Vector3 = swarm.pos[best] + Vector3(0, 0.02, 0)
-		if ap.distance_to(mouth) <= reach + 0.2:
-			target = ap
-	t_target = target
-	t_state = Tongue.OUT
-	t_time = 0.0
-	Sfx.play("tongue", -7.0, 1.0, 0.12)
+	return target
+
+
+## Com Língua Certeira, a formiga que a língua vai buscar (ou -1).
+func _tracked_ant() -> int:
+	if not GameState.tongue_tracking():
+		return -1
+	var cam_t := camera.global_transform
+	var reach := GameState.tongue_range()
+	var best: int = swarm.best_target(cam_t.origin, -cam_t.basis.z, reach + 0.7, cos(deg_to_rad(GameState.aim_cone_deg())))
+	if best >= 0 and swarm.pos[best].distance_to(mouth_real()) > reach + 0.2:
+		return -1
+	return best
+
+
+## Para a mira da tela: a formiga que a língua vai buscar e se a lambida pega alguma.
+func _update_aim() -> void:
+	aim_ant = _tracked_ant()
+	if aim_ant >= 0:
+		aim_hits = true
+	else:
+		aim_hits = swarm.any_near(_straight_target(), GameState.capture_radius())
 
 
 func _capture() -> void:

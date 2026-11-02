@@ -493,7 +493,18 @@ func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 	return {"captured": captured, "queen_protected": protected_queen}
 
 
-## Formiga mais próxima da mira (ajuda de mira), ou -1.
+## Há alguma formiga (que dá para pegar) a menos de `radius` deste ponto?
+func any_near(point: Vector3, radius: float) -> bool:
+	var r2 := radius * radius
+	for i in CAPACITY:
+		if alive[i] == 0 or mode[i] == Mode.STUCK or _queen_blocked(i):
+			continue
+		if pos[i].distance_squared_to(point) <= r2:
+			return true
+	return false
+
+
+## Formiga mais próxima da mira (Língua Certeira), ou -1.
 func best_target(origin: Vector3, aim_dir: Vector3, max_dist: float, max_angle_cos: float) -> int:
 	var best := -1
 	var best_score := -INF

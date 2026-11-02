@@ -74,6 +74,9 @@ func _ready() -> void:
 	elif DevTools.start_mode == "settings":
 		_enter_menu()
 		menus.open_settings(int(DevTools.args.get("tab", "0")))
+	elif DevTools.start_mode == "howto":
+		_enter_menu()
+		menus.show_screen("howto")
 	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()

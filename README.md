@@ -27,7 +27,8 @@ produção, os protótipos e as decisões, num lugar só.
 
 O **Cerrado ao entardecer**: a colônia tem **3200 formigas** e **12
 formigueiros**. Parte das formigas anda pelas trilhas de terra e chega em
-**ondas**; o resto mora nas **câmaras** dos formigueiros, que você abre cavando.
+**ondas**; o resto mora nas **câmaras** dos formigueiros (e em algumas câmaras
+no meio do campo), que você abre cavando.
 Os 5 formigueiros grandes guardam uma **rainha**. **Cada formiga comida vale 1
 ponto**, cada habilidade tem o seu preço, e o sol vai se pondo conforme você come.
 
@@ -53,9 +54,9 @@ tela, a resolução e a qualidade gráfica.
 | Olhar | mouse | analógico direito |
 | Correr* | `Shift` | clicar o analógico esquerdo |
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
-| Farejar | `Q` ou clique direito | `LT` |
+| Farejar* | `Q` ou clique direito | `LT` |
 | Abrir câmara* | segure `E` perto dela | `X` |
-| Tremor* | `Espaço` | `A` |
+| Tremor* (pulo) | `Espaço` | `A` |
 | Árvore de habilidades | `Tab` | `Back` |
 | Pausa | `Esc` | `Start` |
 | Tela cheia | `F11` ou `Alt+Enter` | |
@@ -65,8 +66,11 @@ tela, a resolução e a qualidade gráfica.
 ### O que tem na demo hoje
 
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
-  fechadas. Com **Cavar** (Garras), segure `E` perto de uma para abri-la. Até 40
-  moradoras ficam à vista; as outras saem do túnel conforme você come.
+  fechadas, e 12 delas ficam sozinhas no meio do campo. Com **Cavar** (Garras),
+  segure `E` perto de uma para abri-la: as moradoras **saem correndo**, fogem
+  quando você chega perto e depois voltam para casa. Até 40 ficam à vista; as
+  outras saem do túnel conforme você come. Depois de cavar, as garras descansam
+  (30 s no começo).
 - **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
 - **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
   outras formigas. Coma todas em volta e ela vale **20**.
@@ -74,8 +78,13 @@ tela, a resolução e a qualidade gráfica.
   as que você come somem de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
   Correndo também não dá para lamber, até aprender **Lamber Correndo**.
-- **Faro:** mostra as formigas através do capim; nos níveis mais altos, a
-  bússola mostra quanto falta em cada formigueiro e onde estão as rainhas.
+- **Faro:** primeiro só diz quantas formigas há por perto e a que distância
+  está a mais perto. Com Precisão, mostra uma nuvem borrada onde elas estão e
+  depois as formigas brilhando através do capim; o Faro de Câmara mostra as
+  câmaras fechadas. Nos níveis altos, a bússola mostra quanto falta em cada
+  formigueiro e onde estão as rainhas. A cor do faro (vermelha) pode ser trocada
+  em Configurações → Jogo.
+- **Tremor:** um pulo; ao cair, as formigas em volta ficam tontas.
 - **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
   mais longa por 6 s.
 - **Progresso:** formigueiro limpo ganha flores, e o contador mostra quantos
@@ -87,14 +96,14 @@ tela, a resolução e a qualidade gráfica.
 
 | Habilidade | Níveis (preço em pontos) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber) · Lambida (50: pega várias) · Língua Comprida (90) · Saliva Grudenta (140) · Língua Turbo (200) |
-| **Garras** | Cavar (35), e depois duas linhas: **Força** · Garras Fortes (80) · Tremor (130) · Terremoto (200); **Rapidez** · Cavada Rápida (60) · Cavada Relâmpago (110) · Recarga Rápida (160) |
-| **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (90: mais 25%) · Galope Silencioso (150); **Agilidade** · Lamber Correndo (70) |
-| **Faro** | Faro Apurado (30), e depois: **Alcance** · Faro de Ninho (80) · Faro Lendário (170); **Fôlego** · Fôlego (50) · Faro Duradouro (90) · Faro Incansável (140) |
-| **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400), só ao chegar à floresta |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois duas linhas: **Bocado** · Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40); **Destreza** · Língua Comprida (70) · Saliva Grudenta (100) · Língua Turbo (150) |
+| **Garras** | Cavar (35: depois as garras descansam 30 s), e depois: **Força** · Garras Fortes (70) · Tremor (110) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 18 s) · Garras Incansáveis (95: 8 s) · Recarga do Tremor (130) |
+| **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (80: mais 25%) · Galope Silencioso (130); **Agilidade** · Lamber Correndo (60) |
+| **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
+| **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
 1 formiga comida = 1 ponto (a rainha vale 20). As duas linhas de um ramo não se
-excluem. Tudo o que dá para aprender no Cerrado soma 2180 pontos, e dá para
+excluem. Tudo o que dá para aprender no Cerrado soma 2335 pontos, e dá para
 redistribuir os pontos de graça na árvore.
 
 ### Tela e gráficos
@@ -176,7 +185,8 @@ godot --path . -- --start=play --autoplay --timescale=4 --stats
 
 `--start=play|tree|settings` pula o menu · `--autoplay` um bot joga sozinho ·
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
-habilidades · `--open=N|all` abre as câmaras · `--captures=SEG:arquivo.png` tira
+habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
+instante · `--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.
 

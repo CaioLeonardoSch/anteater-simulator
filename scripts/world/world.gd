@@ -663,6 +663,8 @@ func _apply_day() -> void:
 	sky_mat.set_shader_parameter("zenith_color", Color(0.26, 0.36, 0.62).lerp(Color(0.18, 0.20, 0.45), p))
 	sky_mat.set_shader_parameter("sun_glow_color", Color(1.0, 0.6, 0.3).lerp(Color(1.0, 0.42, 0.25), p))
 	env.fog_light_color = Color(0.92, 0.74, 0.6).lerp(Color(0.85, 0.55, 0.52), p)
+	if giant_mound:
+		giant_mound.set_atmosphere(sky_mat, env, s, sun)
 	if fireflies:
 		fireflies.emitting = p > 0.55
 
@@ -673,6 +675,8 @@ func apply_graphics() -> void:
 	env.ssao_enabled = Settings.ssao
 	env.ssil_enabled = Settings.ssil
 	env.volumetric_fog_enabled = Settings.volumetric_fog
+	if giant_mound:
+		giant_mound.set_volumetric(Settings.volumetric_fog)
 	env.glow_enabled = Settings.glow
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if sq == 0 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	sun.directional_shadow_max_distance = [35.0, 55.0, 70.0, 90.0][sq]

@@ -16,7 +16,7 @@ produção, os protótipos e as decisões, num lugar só.
 | | |
 |---|---|
 | ![Lambendo formigas na trilha](docs/screenshots/trilha.jpg) | ![Em cima de um formigueiro grande, com a câmara da rainha aberta](docs/screenshots/formigueiro.jpg) |
-| ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | |
+| ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
 > No seu PC fica igual ou melhor.
@@ -25,15 +25,18 @@ produção, os protótipos e as decisões, num lugar só.
 
 ## A demo jogável
 
-O **Cerrado ao entardecer**: a colônia tem **3200 formigas** e **12
-formigueiros**. Parte das formigas anda pelas trilhas de terra e chega em
-**ondas**; o resto mora nas **câmaras** dos formigueiros (e em algumas câmaras
-no meio do campo), que você abre cavando.
-Os 5 formigueiros grandes guardam uma **rainha**. **Cada formiga comida vale 1
-ponto**, cada habilidade tem o seu preço, e o sol vai se pondo conforme você come.
+Uma **clareira do cerrado no fim da tarde**, cercada por penhascos. O tamanduá
+acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
+ronca: hora de comer. A colônia tem **3200 formigas** e **12 formigueiros**.
+Parte das formigas anda pelas trilhas de terra e chega em **ondas**; o resto
+mora nas **câmaras** dos formigueiros (e em algumas câmaras no meio do campo),
+que você abre cavando. Os 5 formigueiros grandes guardam uma **rainha**. **Cada
+formiga comida vale 1 ponto** e cada habilidade tem o seu preço. Com a clareira
+**100% limpa**, as garras quebram o **tronco caído** que fecha a saída, e a demo
+termina.
 
-A demo é a **primeira área** (uma clareira) de um mapa maior, cercado por
-penhascos, que leva até um cupinzeiro gigante; o plano está em
+A demo é a **primeira área** de um mapa maior, todo cercado por penhascos, que
+leva até o cupinzeiro gigante; o plano está em
 [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ### Como rodar
@@ -59,7 +62,7 @@ tela, a resolução e a qualidade gráfica.
 | Correr* | `Shift` | clicar o analógico esquerdo |
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar* | `Q` ou clique direito | `LT` |
-| Abrir câmara* | segure `E` perto dela | `X` |
+| Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
 | Tremor* (pulo) | `Espaço` | `A` |
 | Árvore de habilidades | `Tab` | `Back` |
 | Pausa | `Esc` | `Start` |
@@ -93,6 +96,13 @@ tela, a resolução e a qualidade gráfica.
   mais longa por 6 s.
 - **Progresso:** formigueiro limpo ganha flores, e o contador mostra quantos
   faltam.
+- **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
+  do mapa). Você começa numa caverna no pé deles, e o cupinzeiro gigante aparece
+  lá longe, por cima dos penhascos. É sempre o mesmo fim de tarde, e há duas
+  lagoas de enfeite.
+- **Fim da demo:** um tronco caído fecha a passagem para a próxima área. Com
+  todas as formigas comidas, a bússola mostra a saída: segure `E` perto do
+  tronco e as garras quebram o tronco.
 - **Sem derrota.** O jogo **salva sozinho**; na tela inicial aparecem
   **Continuar** e **Novo jogo**.
 
@@ -190,7 +200,8 @@ godot --path . -- --start=play --autoplay --timescale=4 --stats
 `--start=play|tree|settings` pula o menu · `--autoplay` um bot joga sozinho ·
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
-instante · `--captures=SEG:arquivo.png` tira
+instante · `--growl` faz a barriga roncar mesmo pulando o menu ·
+`--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.
 

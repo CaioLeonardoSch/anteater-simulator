@@ -322,7 +322,7 @@ func _process(delta: float) -> void:
 
 	# --- insetos ---
 	var tip_active := active
-	for b in bugs:
+	for b: Bug in bugs:
 		if not b.alive:
 			continue
 		var ch: Chamber = chambers[b.home]

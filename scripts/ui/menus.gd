@@ -16,7 +16,12 @@ var _current := ""
 var _back_to := "title"
 var _end_stats: Label
 var _end_title: Label
+var _end_sub: Label
 var _restart_button: Button
+var _settings_controls: Dictionary = {}
+var _settings_pages: Array[Control] = []
+var _settings_tab_buttons: Array[Button] = []
+var _settings_note: Label
 
 
 func _ready() -> void:
@@ -133,7 +138,7 @@ func _build_title() -> Control:
 	sub.add_theme_constant_override("outline_size", 6)
 	sub.add_theme_color_override("font_outline_color", Color(0.25, 0.1, 0.05))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem 1000 formigas.\nComa todas e evolua a cada 100.", 21, UiTheme.CREAM)
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada formiga comida vale 1 ponto para aprender habilidades." % GameState.GOAL, 21, UiTheme.CREAM)
 	tag.add_theme_constant_override("outline_size", 5)
 	tag.add_theme_color_override("font_outline_color", Color(0.15, 0.06, 0.03, 0.9))
 	v.add_child(tag)
@@ -176,7 +181,7 @@ func _update_title_buttons(cont: Button, play: Button) -> void:
 
 func _update_record(record: Label) -> void:
 	if GameState.best_time > 0.0:
-		record.text = "Seu recorde: 1000 formigas em %s" % GameState.format_time(GameState.best_time)
+		record.text = "Seu recorde: %d formigas em %s" % [GameState.GOAL, GameState.format_time(GameState.best_time)]
 	else:
 		record.text = ""
 
@@ -242,21 +247,21 @@ func _build_howto() -> Control:
 	text.add_theme_font_override("bold_font", UiTheme.FONT_BOLD)
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
-	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]1000 formigas[/b]. Coma todas e deixe os [b]8 formigueiros[/b] limpos.
+	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d formigas[/b]. Coma todas e deixe os [b]12 formigueiros[/b] limpos.
 Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
 
 [b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)
-[b]Clique esquerdo (segurado)[/b] lamber: a língua vai até a mira e gruda uma formiga (com a Lambida, gruda várias)
-[b]Q[/b] ou [b]clique direito[/b] farejar · [b]E (segurado)[/b] abrir uma câmara (com Cavar)
-[b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho)
+[b]Clique esquerdo[/b] lamber: cada clique é uma lambida (com a [b]Lambida Contínua[/b], é só segurar)
+[b]Q[/b] ou [b]clique direito[/b] farejar · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] Tremor
+[b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
-· Os montinhos de terra clara nos formigueiros são [b]câmaras fechadas[/b]: cave para comer quem mora lá.
-· Os formigueiros grandes guardam uma [b]rainha[/b]: coma as formigas em volta dela e ela vale 20.
+· [b]Cada formiga comida vale 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
+· Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
+· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 20.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
-· Correr assusta as formigas: chegue andando e lamba de longe.
-· A cada [b]100 formigas[/b], 1 ponto de habilidade. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
-· Não dá para perder: aproveite o pôr do sol e tente bater seu recorde de tempo."""
+· Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
+· Não dá para perder: aproveite o pôr do sol e tente bater seu recorde de tempo.""" % GameState.GOAL
 	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -271,54 +276,171 @@ func _build_settings() -> Control:
 	var t := UiTheme.label("Configurações", 44, UiTheme.GOLD, true)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 26)
-	grid.add_theme_constant_override("v_separation", 14)
-	v.add_child(grid)
-	# Qualidade.
-	grid.add_child(UiTheme.label("Qualidade gráfica", 22))
-	var q := OptionButton.new()
-	for i in Settings.QUALITY_NAMES.size():
-		q.add_item(Settings.QUALITY_NAMES[i], i)
-	q.selected = Settings.graphics_quality
-	q.custom_minimum_size = Vector2(300, 48)
-	q.item_selected.connect(func(i): Settings.set_value("graphics_quality", i))
-	grid.add_child(q)
-	_add_slider(grid, "Sensibilidade do mouse", 0.05, 0.6, Settings.mouse_sensitivity, func(x): Settings.set_value("mouse_sensitivity", x))
-	_add_slider(grid, "Campo de visão", 60.0, 100.0, Settings.fov, func(x): Settings.set_value("fov", x))
-	_add_slider(grid, "Volume geral", 0.0, 1.0, Settings.master_volume, func(x): Settings.set_value("master_volume", x))
-	_add_slider(grid, "Volume da música", 0.0, 1.0, Settings.music_volume, func(x): Settings.set_value("music_volume", x))
-	grid.add_child(UiTheme.label("Inverter eixo Y", 22))
-	var inv := CheckBox.new()
-	inv.button_pressed = Settings.invert_y
-	inv.toggled.connect(func(on): Settings.set_value("invert_y", on))
-	grid.add_child(inv)
-	grid.add_child(UiTheme.label("Tela cheia", 22))
-	var fs := CheckBox.new()
-	fs.button_pressed = Settings.fullscreen
-	fs.toggled.connect(func(on): Settings.set_value("fullscreen", on))
-	grid.add_child(fs)
-	var note := UiTheme.label("A densidade do capim muda ao recomeçar a fase.", 16, UiTheme.SAND)
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(note)
+	var tabs := HBoxContainer.new()
+	tabs.alignment = BoxContainer.ALIGNMENT_CENTER
+	tabs.add_theme_constant_override("separation", 10)
+	v.add_child(tabs)
+	var stack := MarginContainer.new()
+	stack.custom_minimum_size = Vector2(800, 446)
+	v.add_child(stack)
+	var tab_names := ["Tela", "Gráficos", "Jogo", "Áudio"]
+	for i in tab_names.size():
+		var b := UiTheme.button(tab_names[i], 176)
+		b.toggle_mode = true
+		b.pressed.connect(_show_settings_tab.bind(i))
+		tabs.add_child(b)
+		_settings_tab_buttons.append(b)
+	# Tela
+	var g := _settings_page(stack)
+	_add_option(g, "window_mode", "Modo de tela", Settings.WINDOW_MODE_NAMES)
+	var res_names := []
+	var res_values := []
+	for r in Settings.available_resolutions():
+		res_names.append("%d × %d" % [r.x, r.y])
+		res_values.append(r)
+	_add_option(g, "resolution", "Resolução", res_names, res_values)
+	var scale_names := []
+	for k in Settings.RENDER_SCALES:
+		scale_names.append("%d%%" % int(round(k * 100.0)))
+	_add_option(g, "render_scale", "Resolução do 3D", scale_names, Settings.RENDER_SCALES)
+	_add_check(g, "vsync", "Sincronia vertical (VSync)")
+	var fps_names := []
+	for f in Settings.FPS_LIMITS:
+		fps_names.append("Sem limite" if f == 0 else str(f))
+	_add_option(g, "max_fps", "Limite de FPS", fps_names, Settings.FPS_LIMITS)
+	# Gráficos
+	g = _settings_page(stack)
+	_add_option(g, "graphics_quality", "Qualidade", Settings.QUALITY_NAMES)
+	_add_option(g, "shadow_quality", "Sombras", Settings.SHADOW_NAMES)
+	_add_option(g, "grass_quality", "Capim", Settings.GRASS_NAMES)
+	_add_option(g, "antialiasing", "Suavização (anti-aliasing)", Settings.AA_NAMES)
+	_add_check(g, "ssao", "Sombra de contato (SSAO)")
+	_add_check(g, "ssil", "Luz rebatida (SSIL)")
+	_add_check(g, "volumetric_fog", "Neblina volumétrica")
+	_add_check(g, "glow", "Brilho do sol (bloom)")
+	# Jogo
+	g = _settings_page(stack)
+	_add_slider(g, "mouse_sensitivity", "Sensibilidade do mouse", 0.05, 0.6)
+	_add_check(g, "invert_y", "Inverter eixo Y")
+	_add_slider(g, "fov", "Campo de visão", 60.0, 100.0)
+	_add_slider(g, "camera_bob", "Balanço da câmera", 0.0, 1.0)
+	# Áudio
+	g = _settings_page(stack)
+	_add_slider(g, "master_volume", "Volume geral", 0.0, 1.0)
+	_add_slider(g, "music_volume", "Volume da música", 0.0, 1.0)
+	_settings_note = UiTheme.label("", 16, UiTheme.SAND)
+	_settings_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_settings_note)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(func(): show_screen(_back_to))
 	v.add_child(back)
+	Settings.changed.connect(_sync_settings)
+	s.visibility_changed.connect(_sync_settings)
+	_show_settings_tab(0)
 	return s
 
 
-func _add_slider(grid: GridContainer, text: String, lo: float, hi: float, value: float, cb: Callable) -> void:
-	grid.add_child(UiTheme.label(text, 22))
+## Abre as configurações numa aba (usado também pelos testes: --start=settings --tab=N).
+func open_settings(tab: int = 0) -> void:
+	_goto("settings", "title")
+	_show_settings_tab(clampi(tab, 0, _settings_pages.size() - 1))
+
+
+func _settings_page(stack: Control) -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 26)
+	grid.add_theme_constant_override("v_separation", 10)
+	stack.add_child(grid)
+	_settings_pages.append(grid)
+	return grid
+
+
+func _show_settings_tab(i: int) -> void:
+	for k in _settings_pages.size():
+		_settings_pages[k].visible = k == i
+		_settings_tab_buttons[k].set_pressed_no_signal(k == i)
+	_settings_note.text = [
+		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
+		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
+		"Sem balanço, a câmera fica parada ao andar e correr.",
+		"",
+	][i]
+
+
+func _setting_label(grid: GridContainer, text: String) -> void:
+	var l := UiTheme.label(text, 21)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	grid.add_child(l)
+
+
+func _add_option(grid: GridContainer, key: String, text: String, names: Array, values: Array = []) -> void:
+	_setting_label(grid, text)
+	var ob := OptionButton.new()
+	for i in names.size():
+		ob.add_item(String(names[i]), i)
+	ob.custom_minimum_size = Vector2(330, 44)
+	ob.set_meta("values", values)
+	ob.item_selected.connect(_on_option.bind(key, ob))
+	grid.add_child(ob)
+	_settings_controls[key] = ob
+
+
+func _on_option(i: int, key: String, ob: OptionButton) -> void:
+	var values: Array = ob.get_meta("values")
+	Settings.set_value(key, values[i] if not values.is_empty() else i)
+
+
+func _add_check(grid: GridContainer, key: String, text: String) -> void:
+	_setting_label(grid, text)
+	var cb := CheckBox.new()
+	cb.toggled.connect(func(on): Settings.set_value(key, on))
+	grid.add_child(cb)
+	_settings_controls[key] = cb
+
+
+func _add_slider(grid: GridContainer, key: String, text: String, lo: float, hi: float) -> void:
+	_setting_label(grid, text)
 	var sl := HSlider.new()
 	sl.min_value = lo
 	sl.max_value = hi
 	sl.step = (hi - lo) / 100.0
-	sl.value = value
-	sl.custom_minimum_size = Vector2(300, 32)
-	sl.value_changed.connect(cb)
+	sl.custom_minimum_size = Vector2(330, 32)
+	sl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	sl.value_changed.connect(func(x): Settings.set_value(key, x))
 	grid.add_child(sl)
+	_settings_controls[key] = sl
+
+
+## Mostra nos controles o que está valendo agora (ex.: depois de trocar o preset).
+func _sync_settings() -> void:
+	for key in _settings_controls:
+		var c: Control = _settings_controls[key]
+		var value = Settings.get(key)
+		if c is OptionButton:
+			var ob := c as OptionButton
+			var values: Array = ob.get_meta("values")
+			var idx := -1
+			if values.is_empty():
+				idx = int(value)
+			else:
+				var best := INF
+				for i in values.size():
+					var d := 0.0
+					if value is Vector2i:
+						d = 0.0 if values[i] == value else 1.0
+					else:
+						d = absf(float(values[i]) - float(value))
+					if d < best:
+						best = d
+						idx = i
+			if idx >= 0 and idx < ob.item_count and ob.selected != idx:
+				ob.select(idx)
+		elif c is CheckBox:
+			(c as CheckBox).set_pressed_no_signal(bool(value))
+		elif c is HSlider:
+			(c as HSlider).set_value_no_signal(float(value))
 
 
 func _build_end() -> Control:
@@ -327,9 +449,9 @@ func _build_end() -> Control:
 	_end_title = UiTheme.label("Fase concluída!", 56, UiTheme.GOLD, true)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	var sub := UiTheme.label("Você comeu as 1000 formigas da colônia do cerrado.", 24, UiTheme.CREAM)
-	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(sub)
+	_end_sub = UiTheme.label("Você comeu as %d formigas da colônia do cerrado." % GameState.GOAL, 24, UiTheme.CREAM)
+	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_end_sub)
 	_end_stats = UiTheme.label("", 22, UiTheme.SAND)
 	_end_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_stats)

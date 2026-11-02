@@ -1,8 +1,9 @@
 extends Node
-## A colônia do Cerrado: 1000 formigas ao todo (cada rainha conta como 20).
-## Cada formigueiro guarda forrageiras, que saem pelas trilhas e voltam, e
-## moradoras, que vivem nas câmaras e só aparecem quando você cava.
-## Só as formigas que você come somem de vez.
+## A colônia do Cerrado: GameState.GOAL formigas ao todo (cada rainha conta
+## como 20). Cada formigueiro guarda forrageiras, que saem pelas trilhas e
+## voltam, e moradoras, que vivem nas câmaras e só aparecem quando você cava.
+## Numa câmara aberta ficam até CHAMBER_VISIBLE à vista; as outras saem do
+## túnel conforme você come. Só as formigas que você come somem de vez.
 
 signal wave_announced(wave: int, nest_name: String, count: int, nest_index: int)
 signal final_wave(remaining: int)
@@ -12,15 +13,15 @@ signal nest_cleaned(nest)
 signal queen_eaten(nest)
 
 const Nest := preload("res://scripts/world/nest.gd")
-const TOTAL := 1000
 const QUEEN_VALUE := Nest.QUEEN_VALUE
+const CHAMBER_VISIBLE := 40
 ## Parte de cada formigueiro que anda pelas trilhas (o resto mora nas câmaras).
 const FORAGER_SHARE := 0.45
 const ROYAL_WEIGHT := 1.7
 
 var swarm
 var world
-var max_alive := 220
+var max_alive := 300
 var wave_number := 0
 var wave_timer := 22.0
 var final_released := false
@@ -29,6 +30,7 @@ var active := false
 var _trail_timers := PackedFloat32Array()
 var _wave := {}
 var _clean_announced := {}
+var _refill_timer := 0.0
 
 
 func setup(w, sw) -> void:
@@ -41,7 +43,7 @@ func setup(w, sw) -> void:
 	_distribute()
 
 
-## Reparte as 1000 formigas entre os formigueiros, as trilhas e as câmaras.
+## Reparte as formigas da colônia entre os formigueiros, as trilhas e as câmaras.
 func _distribute() -> void:
 	var nests: Array = world.nests
 	var queens := 0
@@ -50,7 +52,7 @@ func _distribute() -> void:
 		if n.big:
 			queens += 1
 		total_w += 1.75 if n.big else 1.0
-	var workers := TOTAL - queens * QUEEN_VALUE
+	var workers: int = GameState.GOAL - queens * QUEEN_VALUE
 	var assigned := 0
 	for k in nests.size():
 		var n = nests[k]
@@ -73,6 +75,7 @@ func _distribute() -> void:
 			if ci == n.chambers.size() - 1:
 				r = residents - given
 			c.residents = r
+			c.shown = 0
 			c.opened = false
 			given += r
 
@@ -159,7 +162,10 @@ func ant_eaten(i: int) -> int:
 		value = QUEEN_VALUE
 		queen_eaten.emit(nest)
 	else:
-		nest.chambers[ci].residents -= 1
+		var c = nest.chambers[ci]
+		c.residents -= 1
+		c.shown = maxi(c.shown - 1, 0)
+		_refill(nest, ci, true)
 	_check_chamber(nest, ci)
 	_check_cleaned(nest)
 	return value
@@ -189,28 +195,52 @@ func _check_cleaned(nest) -> void:
 
 
 ## Abre uma câmara: as moradoras (e a rainha) aparecem dentro do buraco.
-func open_chamber(nest, ci: int, instant: bool = false) -> int:
+## `stun` > 0 deixa as moradoras tontas (Garras Fortes). Retorna quantas
+## moram lá (à vista ou ainda no túnel).
+func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> int:
 	var c = nest.chambers[ci]
 	if c.opened and not instant:
 		return 0
 	nest.open_chamber(ci, instant)
 	var code: int = nest.index * 16 + ci
-	var spawned := 0
-	for _k in c.residents:
-		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.radius) >= 0:
-			spawned += 1
+	c.shown = 0
+	_refill(nest, ci, false)
 	if c.royal and nest.queen_alive:
 		swarm.spawn_resident(swarm.QUEEN, code, c.pos2, c.radius)
+	if stun > 0.0:
+		swarm.stun_home(code, stun)
 	if not instant:
 		chamber_opened.emit(nest, ci)
 		_check_chamber(nest, ci)
 		_check_cleaned(nest)
-	return spawned
+	return c.residents
+
+
+## Põe moradoras à vista até CHAMBER_VISIBLE (as novas saem do túnel, no centro).
+func _refill(nest, ci: int, from_tunnel: bool) -> void:
+	var c = nest.chambers[ci]
+	if not c.opened:
+		return
+	var want: int = mini(c.residents, CHAMBER_VISIBLE)
+	var code: int = nest.index * 16 + ci
+	while c.shown < want:
+		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.radius, from_tunnel) < 0:
+			break
+		c.shown += 1
 
 
 func _process(delta: float) -> void:
 	if not active:
 		return
+	# Câmaras abertas que ainda têm moradoras no túnel (ex.: o enxame estava cheio).
+	_refill_timer -= delta
+	if _refill_timer <= 0.0:
+		_refill_timer = 1.0
+		for nest in world.nests:
+			for ci in nest.chambers.size():
+				var c = nest.chambers[ci]
+				if c.opened and c.shown < mini(c.residents, CHAMBER_VISIBLE):
+					_refill(nest, ci, true)
 	var trails: Array = world.trails.trails
 	var outside := outside_total()
 	# Fluxo contínuo nas trilhas.
@@ -278,7 +308,7 @@ func _start_wave() -> void:
 		return
 	wave_number += 1
 	var nest = candidates[randi() % candidates.size()]
-	var count := mini(nest.pool, 18 + wave_number * 8)
+	var count := mini(nest.pool, 24 + wave_number * 10)
 	_wave = {
 		"nest": nest.index,
 		"left": count,
@@ -314,6 +344,9 @@ func from_save(d: Dictionary) -> void:
 		n.pool = int(sd.get("pool", 0))
 		n.outside = 0
 		n.queen_alive = bool(sd.get("queen", false)) and n.big
+		for c in n.chambers:
+			c.shown = 0
+			c.opened = false
 		var ch: Array = sd.get("chambers", [])
 		for ci in mini(ch.size(), n.chambers.size()):
 			n.chambers[ci].residents = int(ch[ci].get("residents", 0))
@@ -330,4 +363,4 @@ func from_save(d: Dictionary) -> void:
 	if bool(d.get("final_released", false)):
 		_release_all()
 	else:
-		populate(150)
+		populate(220)

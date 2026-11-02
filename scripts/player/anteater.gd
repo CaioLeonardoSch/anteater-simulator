@@ -7,6 +7,8 @@ signal sniffed(count: int)
 signal dug(nest, chamber_index: int, released: int)
 signal tremor_used(count: int)
 signal queen_blocked
+## Tentou lamber correndo sem ter aprendido Lamber Correndo.
+signal lick_blocked_running
 
 const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
@@ -15,7 +17,8 @@ const TONGUE_SHADER := preload("res://shaders/tongue.gdshader")
 ## O focinho é desenhado em escala reduzida bem perto da câmera: na tela fica
 ## idêntico, mas não atravessa o chão quando você olha para baixo.
 const VIEW_SCALE := 0.25
-const EYE_HEIGHT := 0.5
+## Altura dos olhos: alto o bastante para ver por cima do capim baixo.
+const EYE_HEIGHT := 0.72
 const GRAVITY := 20.0
 const PLAY_RADIUS := 61.0
 
@@ -48,6 +51,9 @@ var t_tip := Vector3.ZERO
 var t_stuck := PackedInt32Array()
 var _stuck_offsets: Array[Vector3] = []
 var lick_cooldown := 0.0
+## Clique guardado por um instante (sem a Lambida Contínua, cada clique é uma lambida).
+var _lick_click := 0.0
+var _blocked_note := 0.0
 
 var sniff_cd := 0.0
 var sniff_left := 0.0
@@ -66,6 +72,7 @@ var _dig_sound := 0.0
 var _tremor_anim := 0.0
 var shake := 0.0
 var _bob := 0.0
+var _run_blend := 0.0
 var _last_step_sign := 1.0
 var running := false
 
@@ -165,13 +172,20 @@ func setup(w, sw, col_) -> void:
 	colony = col_
 
 
+## Põe o tamanduá em pé nesse ponto (em cima do monte, se houver um ali).
 func place_at(pos2: Vector2, yaw_value: float) -> void:
-	global_position = Vector3(pos2.x, world.terrain.get_height(pos2.x, pos2.y) + 0.05, pos2.y)
+	global_position = Vector3(pos2.x, world.ground_height(pos2.x, pos2.y) + 0.05, pos2.y)
 	yaw = yaw_value
 	pitch = -0.12
 	velocity = Vector3.ZERO
 	rotation.y = yaw
 	head.rotation.x = pitch
+
+
+## O clique de lamber é lido antes da interface, para nenhum elemento da tela engolir o clique.
+func _input(event: InputEvent) -> void:
+	if controls_enabled and event.is_action_pressed("lick"):
+		_lick_click = 0.3
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -225,8 +239,10 @@ func _physics_process(delta: float) -> void:
 		flat = flat.normalized() * PLAY_RADIUS
 		global_position.x = flat.x
 		global_position.z = flat.y
-	if global_position.y < world.terrain.get_height(global_position.x, global_position.z) - 1.0:
-		global_position.y = world.terrain.get_height(global_position.x, global_position.z) + 0.2
+	var floor_y: float = world.ground_height(global_position.x, global_position.z)
+	if global_position.y < floor_y - 0.6:
+		global_position.y = floor_y + 0.2
+		velocity.y = 0.0
 	rotation.y = yaw
 	head.rotation.x = pitch
 	var spd := hv.length()
@@ -244,9 +260,15 @@ func _process(delta: float) -> void:
 	var spd := Vector2(velocity.x, velocity.z).length()
 	if is_on_floor() and spd > 0.2:
 		_bob += delta * (4.0 + spd * 1.6)
-	var amp := clampf(spd / 6.0, 0.0, 1.2) * 0.02
+	# Balanço da cabeça: leve ao andar, um galope perceptível ao correr.
+	_run_blend = move_toward(_run_blend, 1.0 if running else 0.0, delta * 3.0)
+	var bob_k: float = Settings.camera_bob
+	var amp := clampf(spd / 6.0, 0.0, 1.2) * 0.02 * (0.4 + 0.6 * bob_k)
+	var gallop := _run_blend * bob_k
+	amp += 0.035 * gallop
 	head.position = Vector3(sin(_bob * 0.5) * amp * 0.7, EYE_HEIGHT + absf(sin(_bob)) * amp, 0.0)
-	camera.rotation.z = sin(_bob * 0.5) * amp * 0.25
+	camera.rotation.z = sin(_bob * 0.5) * (amp * 0.25 + 0.014 * gallop)
+	camera.rotation.x = (absf(cos(_bob)) - 0.5) * 0.022 * gallop
 	var s := signf(sin(_bob))
 	if s != _last_step_sign and spd > 0.4:
 		Sfx.play("step", -14.0 + minf(spd, 6.0), 1.0, 0.15, 4)
@@ -295,14 +317,30 @@ func mouth_view() -> Vector3:
 
 func _wants_lick() -> bool:
 	if controls_enabled:
-		return Input.is_action_pressed("lick")
+		if GameState.lick_hold() and Input.is_action_pressed("lick"):
+			return true
+		return _lick_click > 0.0
 	return bot and _bot_lick
+
+
+## Correndo, só dá para lamber com Lamber Correndo.
+func _lick_blocked() -> bool:
+	return running and not GameState.can_lick_running()
 
 
 func _update_tongue(delta: float) -> void:
 	lick_cooldown -= delta
+	_lick_click = maxf(_lick_click - delta, 0.0)
+	_blocked_note = maxf(_blocked_note - delta, 0.0)
 	if t_state == Tongue.IDLE and lick_cooldown <= 0.0 and _wants_lick() and not _is_digging():
-		_start_flick()
+		if _lick_blocked():
+			_lick_click = 0.0
+			if _blocked_note <= 0.0:
+				_blocked_note = 6.0
+				lick_blocked_running.emit()
+		else:
+			_lick_click = 0.0
+			_start_flick()
 	match t_state:
 		Tongue.OUT:
 			t_time += delta
@@ -471,7 +509,7 @@ func _update_abilities(delta: float) -> void:
 			dig_progress = 0.0
 			var opened_nest = dig_nest
 			var opened_chamber := dig_chamber
-			var released: int = colony.open_chamber(opened_nest, opened_chamber)
+			var released: int = colony.open_chamber(opened_nest, opened_chamber, false, GameState.dig_stun_time())
 			shake = 0.5
 			Sfx.play("burst", -2.0)
 			dug.emit(opened_nest, opened_chamber, released)
@@ -507,7 +545,7 @@ func do_sniff() -> void:
 
 
 func do_tremor() -> void:
-	tremor_cd = 7.0
+	tremor_cd = GameState.tremor_cooldown()
 	var n: int = swarm.stun_radius(global_position, GameState.tremor_radius(), 3.0)
 	if GameState.tremor_pulls():
 		pull_time = 2.4
@@ -561,8 +599,8 @@ func _bot_update(delta: float) -> void:
 			to_chamber = true
 	if goal == Vector3.INF:
 		return
-	# Anda até um ponto alcançável (contornando montes), mas mira na formiga.
-	var move_goal := _bot_detour(goal)
+	# Anda até o alvo (dá para subir nos montes) e mira na formiga.
+	var move_goal := goal
 	var cam_pos := camera.global_position
 	var to_goal := goal - cam_pos
 	var dist := Vector2(to_goal.x, to_goal.z).length()
@@ -598,27 +636,6 @@ func _bot_unstuck(delta: float) -> void:
 		if moved < 0.5:
 			_bot_side = -1.0 if randf() < 0.5 else 1.0
 			_bot_side_t = 1.4
-
-
-## Contorna o monte do formigueiro em vez de empurrar a parede de frente.
-func _bot_detour(goal: Vector3) -> Vector3:
-	var me := Vector2(global_position.x, global_position.z)
-	var g := Vector2(goal.x, goal.z)
-	for n in world.nests:
-		var c: Vector2 = n.center2
-		var ring: float = n.radius * 0.5 + 0.75
-		var to_me := me - c
-		var to_goal := g - c
-		if to_me.length() > ring + 2.5 or to_goal.length() > ring + 0.5:
-			continue
-		var ang := to_me.angle_to(to_goal)
-		if absf(ang) < 0.7:
-			# Já está do lado certo: vai até a borda, na direção do alvo.
-			var edge := c + to_goal.normalized() * ring
-			return Vector3(edge.x, goal.y, edge.y)
-		var step := c + to_me.normalized().rotated(signf(ang) * 0.6) * ring
-		return Vector3(step.x, goal.y, step.y)
-	return goal
 
 
 func _bot_nearest_closed_chamber() -> Vector3:

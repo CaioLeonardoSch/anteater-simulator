@@ -68,9 +68,9 @@ Também dá para ir direto de texto para 3D (*text-to-3D*) com os mesmos prompts
 
 | Arquivo | O que é | Onde aparece | Prioridade |
 |---|---|---|---|
-| `formigueiro.glb` | Monte de terra das saúvas | 5 formigueiros do mapa | **já gerado** |
+| `formigueiro.glb` | Monte de terra das saúvas | 12 formigueiros do mapa | **já gerado** |
 | `formiga_operaria.glb` | Saúva operária | centenas na tela | alta |
-| `formiga_rainha.glb` | Rainha do formigueiro | 3 formigueiros grandes | alta |
+| `formiga_rainha.glb` | Rainha do formigueiro | 5 formigueiros grandes | alta |
 | `formiga_tanajura.glb` | Tanajura (rainha alada) | raras, ativam o Frenesi | média |
 | `tamandua_focinho.glb` | Focinho visto pelos olhos | 1ª pessoa, o tempo todo | alta |
 | `tamandua.glb` | Tamanduá-bandeira inteiro | menu inicial | média |
@@ -106,7 +106,9 @@ subtle hand-painted texture detail, clean readable silhouette. Single game-ready
 prop, centered, isolated, no background.
 ```
 
-No jogo: de 3,4 a 5 m de largura e de 0,55 a 0,8 m de altura (escala automática).
+No jogo: de 5 a 7,6 m de largura e de 0,75 a 1,1 m de altura (escala automática).
+O tamanduá sobe no monte; o chão segue a forma de domo do jogo, então evite
+modelos com paredes muito íngremes ou buracos fundos.
 As câmaras (tampas de terra clara e os buracos) são colocadas pelo jogo por cima
 do modelo, então ele não precisa ter buracos específicos.
 

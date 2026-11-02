@@ -7,7 +7,8 @@ Este documento junta, em um lugar só, tudo o que já foi definido sobre o jogo:
 - o **protótipo 2D do loop** (pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/));
 - a **demo 3D** (o projeto principal deste repositório) e as escolhas feitas na
   conversa em que ela foi criada;
-- as **decisões de 02/11/2026**, tomadas para resolver o que não batia.
+- as **decisões de 02/11/2026**, tomadas para resolver o que não batia;
+- as **mudanças pedidas depois do primeiro teste** da demo (também de 02/11/2026).
 
 Quando algo aqui contradiz uma fonte antiga, **vale este documento**.
 
@@ -44,7 +45,7 @@ buscamos, no espírito delas:
 | **Documento de design** | As regras e ideias do jogo inteiro | Seção 6 deste documento | Consolidado aqui |
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
-| **Demo 3D** | O Cerrado ao entardecer, em 1ª pessoa: 1000 formigas, 8 formigueiros com câmaras e rainhas, 5 habilidades e jogo salvo | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | O Cerrado ao entardecer, em 1ª pessoa: 3200 formigas, 12 formigueiros com câmaras e rainhas, 5 habilidades (22 níveis) e jogo salvo | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -58,8 +59,12 @@ buscamos, no espírito delas:
 - **3D estilizado**, com cara de filme de animação. Nada de pixel art, nada de
   low poly.
 - **1ª pessoa:** você vê o mundo pelos olhos do tamanduá, com o focinho na parte
-  de baixo da tela. *Atenção (do plano): câmera livre deixa a criação das fases
-  mais cara do que câmera fixa.*
+  de baixo da tela. Os olhos ficam a **72 cm do chão**, e dá para **subir nos
+  formigueiros** para olhar dentro das câmaras. Correndo, a câmera balança de
+  leve (dá para desligar). *Atenção (do plano): câmera livre deixa a criação das
+  fases mais cara do que câmera fixa.*
+- **Tela:** janela, tela cheia ou tela cheia exclusiva, em várias resoluções, e
+  opções gráficas separadas (sombras, capim, suavização, efeitos de luz).
 - **Modelos 3D gerados por IA**, todos no mesmo estilo. Os prompts estão em
   [`prompts-ia.md`](prompts-ia.md). O formigueiro já foi gerado na Artlist e
   falta baixar (precisa de um plano com créditos).
@@ -70,13 +75,13 @@ buscamos, no espírito delas:
 - **Um mapa só, com várias regiões.** Você anda de uma região para a outra sem
   telas de carregamento. Por enquanto, só o Cerrado está pronto.
 - O cerrado é a savana brasileira (a "Savana" do documento original).
-- O Cerrado é uma **região completa de 45 a 60 minutos**, com **8 ninhos**.
+- O Cerrado é uma **região completa de 45 a 60 minutos**, com **12 ninhos**:
+  8 em volta do mapa e 4 no meio. Os formigueiros ficaram cerca de 45% maiores.
 - **Os ninhos do Cerrado são só formigueiros.** Os cupinzeiros aparecem apenas
   como cenário.
-- **1000 formigas por enquanto.** Na demo de hoje, elas acabam em 6 a 10
-  minutos. Para chegar aos 45 a 60 minutos, o tempo a mais deve vir de cavar e
-  esvaziar os ninhos, achar as últimas formigas com o Faro e explorar, e não de
-  colocar mais formigas. Se não bastar, o número muda nos testes.
+- **3200 formigas** (eram 1000). Somando o preço de todas as habilidades do
+  Cerrado dá **2180 pontos**: dá para aprender tudo e ainda sobram cerca de
+  **1000 formigas** (uns 4 formigueiros) para jogar com tudo liberado.
 - **Depois do Cerrado:** **outra floresta, com lagoas, cupinzeiros e mais**.
   As lagoas são só cenário por enquanto (nada de nadar). O Quintal urbano fica
   para mais tarde.
@@ -88,8 +93,9 @@ buscamos, no espírito delas:
 - **Ninhos com câmaras:** cada ninho tem câmaras internas. Você cava com as
   Garras e esvazia uma por uma, com a satisfação de terminar de arrumar uma
   prateleira.
-- A **língua** começa comendo um inseto por vez e evolui até a **lambida**, que
-  pega vários.
+- A **língua** começa com **um clique por lambida**, e cada lambida pega um
+  inseto. A primeira habilidade (**Lambida Contínua**, 25 pontos) deixa segurar
+  o botão; depois a **Lambida** pega vários de uma vez.
 - **O fim:** a região está limpa quando não sobra nenhum inseto, nem nas trilhas
   nem dentro dos ninhos.
 
@@ -105,17 +111,27 @@ buscamos, no espírito delas:
 
 ### Habilidades: as 5 do plano
 
-Cada habilidade tem **níveis**, comprados com **pontos** que você ganha comendo
-(na demo, 1 ponto a cada 100 formigas). Você escolhe onde gastar, e os gestos
-novos (lambida, cavar, escalar) também são comprados assim.
+**Cada formiga comida vale 1 ponto** (a rainha vale 20), e **cada habilidade tem
+o seu preço**. Você escolhe onde gastar, e os gestos novos (segurar para lamber,
+lambida, cavar, escalar) também são comprados assim. Dá para redistribuir os
+pontos de graça.
 
-| Habilidade | Para que serve | Ideias de níveis (vindas da demo e do documento) |
+**Garras**, **Patas** e **Faro** começam com uma habilidade e depois se dividem
+em **duas linhas que não se excluem** (dá para seguir as duas).
+
+| Habilidade | Linha | Níveis (preço em pontos) |
 |---|---|---|
-| **Língua** | Comer | Mais comprida, mais grudenta, **lambida**, lamber mais rápido, varrer o caminho todo |
-| **Garras** | Abrir ninhos e caminhos bloqueados | **Cavar ninhos**, cavar mais rápido, bater no chão para deixar os insetos tontos |
-| **Patas** | Andar | Andar mais rápido, **correr**, galopar sem assustar os insetos |
-| **Faro** | Achar insetos e ninhos | Nível 1: "sobrou algo perto"; nível 2: "está nesta área"; nível 3: "está exatamente aqui", e acha a rainha |
-| **Escalada + Cauda** | Alcançar o que está no alto | Subir em cupinzeiros altos e árvores; pendurar-se pela cauda para alcançar ninhos difíceis |
+| **Língua** | | Lambida Contínua (25: segurar para lamber) · Lambida (50: pega várias) · Língua Comprida (90) · Saliva Grudenta (140) · Língua Turbo (200) |
+| **Garras** | começo | Cavar (35: abre as câmaras) |
+| | Força | Garras Fortes (80: as moradoras ficam tontas ao abrir) · Tremor (130) · Terremoto (200) |
+| | Rapidez | Cavada Rápida (60: espera de 1,2 s vira 0,75 s) · Cavada Relâmpago (110: 0,35 s) · Recarga Rápida (160: Tremor recarrega 2x mais rápido) |
+| **Patas** | começo | Corrida (30: +25% de velocidade; correndo não dá para lamber) |
+| | Velocidade | Patas Ligeiras (90: mais 25%) · Galope Silencioso (150: correr não assusta) |
+| | Agilidade | Lamber Correndo (70) |
+| **Faro** | começo | Faro Apurado (30: alcance de 30 m e direção do maior grupo) |
+| | Alcance | Faro de Ninho (80: quanto falta em cada formigueiro) · Faro Lendário (170: mapa todo e as rainhas) |
+| | Fôlego | Fôlego (50: espera de 8 s vira 5 s) · Faro Duradouro (90: dura 7 s) · Faro Incansável (140: espera de 2 s) |
+| **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400), só na floresta |
 
 **Habilidades por região:** a **Escalada + Cauda** aparece na árvore desde o
 começo, mas só pode ser comprada **quando você chegar à floresta**, onde ela é
@@ -130,31 +146,38 @@ usada.
 
 Feito, seguindo as decisões:
 
-1. **8 formigueiros**, 3 deles grandes. Cada um tem **câmaras fechadas**
+1. **12 formigueiros**, 5 deles grandes, com **46 câmaras fechadas** ao todo
    (montinhos de terra clara). Segurando **E** com a habilidade Cavar, a câmara
-   abre e as moradoras aparecem dentro do buraco.
-2. **Rainha** na câmara do topo dos 3 formigueiros grandes. Brilha de leve, fica
+   abre e as moradoras aparecem dentro do buraco. Até 40 ficam à vista; as
+   outras saem do túnel conforme você come.
+2. **Dá para subir nos formigueiros** e olhar dentro das câmaras lá de cima.
+3. **Rainha** na câmara do topo dos 5 formigueiros grandes. Brilha de leve, fica
    protegida enquanto houver formigas na câmara e **vale 20**.
-3. **As 1000 formigas** são divididas assim: cerca de 45% andam pelas trilhas
-   (e voltam para casa), o resto mora nas câmaras. 940 operárias + 3 rainhas × 20.
-4. **Soldados:** saíram. A **tanajura** continua.
-5. **As 5 habilidades**, compradas com pontos (1 a cada 100). No começo a língua
-   pega **uma formiga por vez**; a **Lambida** passa a pegar várias (o "gesto
-   novo" do documento). Correr também é uma habilidade (Patas). A **Escalada +
-   Cauda** aparece travada até a floresta. Dá para **redistribuir os pontos**.
-6. **Progresso visível:** contador de formigueiros limpos, avisos de câmara
-   limpa, e florzinhas brotam no formigueiro quando ele fica limpo. O Faro nível
-   2 mostra na bússola quanto falta em cada formigueiro; o nível 3 marca as
-   rainhas.
-7. **Jogo salvo:** salva sozinho a cada 30 s, ao pausar e ao sair. A tela
-   inicial ganha **Continuar** e **Novo jogo**.
+4. **As 3200 formigas** são divididas assim: cerca de 45% andam pelas trilhas
+   (e voltam para casa), o resto mora nas câmaras. 3100 operárias + 5 rainhas × 20.
+5. **Soldados:** saíram. A **tanajura** continua.
+6. **As 5 habilidades, com 22 níveis**, cada um com seu preço (seção 3). A
+   língua começa com um clique por lambida; correndo não dá para lamber até
+   aprender Lamber Correndo. A **Escalada + Cauda** aparece travada até a
+   floresta. Dá para **redistribuir os pontos**.
+7. **Progresso visível:** contador de formigueiros limpos, pontos e a próxima
+   habilidade no canto da tela, avisos de câmara limpa e de habilidade nova, e
+   florzinhas no formigueiro quando ele fica limpo. O Faro de Ninho mostra na
+   bússola quanto falta em cada formigueiro; o Faro Lendário marca as rainhas.
+8. **Jogo salvo:** salva sozinho a cada 30 s, ao pausar e ao sair. A tela
+   inicial ganha **Continuar** e **Novo jogo**. Jogos salvos da versão com 1000
+   formigas não são carregados (o mapa mudou).
+9. **Configurações** em abas (Tela, Gráficos, Jogo, Áudio): janela, tela cheia
+   ou tela cheia exclusiva, resolução, resolução do 3D, VSync, limite de FPS,
+   sombras, capim, suavização, efeitos de luz e balanço da câmera. **F11** ou
+   **Alt+Enter** alternam a tela cheia.
 
 Ainda a ajustar:
 
-- **Duração:** num teste automático (um robô que mira perfeito), as 1000
-  formigas acabaram em cerca de 6 minutos. Uma pessoa deve levar bem mais, mas
-  é provável que ainda fique abaixo dos 45 a 60 minutos. É o próximo ponto a
-  medir com jogadores.
+- **Duração:** num teste automático (um robô que mira perfeito), as 3200
+  formigas acabaram em cerca de **12 minutos** (antes, as 1000 levavam 6), e o
+  robô aprendeu todas as habilidades com cerca de 2200 formigas comidas. Uma
+  pessoa leva bem mais; é o próximo ponto a medir com jogadores.
 
 ---
 
@@ -271,13 +294,13 @@ Também recomendava lançar a página na Steam **antes** da segunda região.
 |---|---|---|
 | **M1: Sensação** | Protótipo do ato de comer | Você e mais 2 pessoas quiseram terminar o ninho |
 | **M2: Fatia vertical** | Um ninho no visual final, câmera de verdade, andar entre dois ninhos, um upgrade, salvar o jogo | Um vídeo de 15 s que dá vontade de jogar |
-| **M3: Uma região inteira** | Cerrado completo: 8 ninhos e árvore de habilidades | 45 a 60 min de jogo sem problemas de progressão |
+| **M3: Uma região inteira** | Cerrado completo: todos os ninhos da região e a árvore de habilidades | 45 a 60 min de jogo sem problemas de progressão |
 | **M4: Página na Steam + demo** | Medir interesse (lista de desejos) antes da próxima região | Página no ar com demo |
 | **M5: Próxima região + lançamento** | Polimento e lançamento | Jogo lançado |
 
 **Onde estamos:** a demo 3D já cobre a M2 (visual final, câmera de verdade,
-andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com 8
-formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
+andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
+12 formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 
 ---
 
@@ -299,14 +322,17 @@ formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 ### Demo 3D, projeto principal
 
 - **1ª pessoa** no cerrado ao entardecer; o sol vai se pondo enquanto você come.
-- **8 formigueiros** (3 com rainha) e **25 câmaras** para abrir e esvaziar.
+- **12 formigueiros** (5 com rainha) e **46 câmaras** para abrir e esvaziar;
+  dá para subir nos montes.
 - Formigas andando por **trilhas** até os arbustos, em **ondas** cada vez
   maiores. Correr assusta as formigas.
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
   através do capim; **tremor** que deixa as formigas tontas.
 - **Tanajura** voadora que dá o Frenesi.
-- **5 habilidades** com pontos (1 a cada 100) e redistribuição grátis.
+- **5 habilidades com 22 níveis**: 1 formiga = 1 ponto, cada nível com seu
+  preço, e redistribuição grátis.
 - **Salva sozinho**; dá para continuar de onde parou.
+- **Tela cheia e várias resoluções**, com opções gráficas separadas.
 
 ---
 
@@ -332,3 +358,12 @@ formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 | 02/11/2026 | Escalada + Cauda | Sem uso no Cerrado (ninhos só no chão) | Só pode ser comprada ao chegar à floresta |
 | 02/11/2026 | Lagoas da floresta | Poderiam trazer a Natação | Só cenário por enquanto |
 | 02/11/2026 | Organização do repositório | Demo 3D num PR; protótipo e plano numa branch à parte | Tudo junto na `main`; as outras branches foram apagadas |
+| 02/11/2026 | Altura da visão | Olhos a 50 cm do chão | 72 cm, e dá para subir nos formigueiros |
+| 02/11/2026 | Lamber segurando | Liberado desde o começo | Habilidade inicial de 25 pontos (Lambida Contínua); antes dela, um clique por lambida |
+| 02/11/2026 | Preço das habilidades | 1 ponto a cada 100 formigas; tudo custava 1 ponto | 1 formiga = 1 ponto; cada habilidade tem seu preço (25 a 200; Escalada 300 e 400) |
+| 02/11/2026 | Garras e Faro | Uma linha de níveis cada | Duas linhas que não se excluem: Força e Rapidez (Garras), Alcance e Fôlego (Faro) |
+| 02/11/2026 | Correr | Corrida bem mais rápida; dava para lamber correndo | +25%, e mais 25% com Patas Ligeiras; lamber correndo virou habilidade |
+| 02/11/2026 | Quantidade de formigas | 1000 | 3200: dá para aprender tudo (2180 pontos) e ainda jogar com tudo liberado |
+| 02/11/2026 | Formigueiros | 8, menores | 12 (4 novos no meio do mapa), cerca de 45% maiores |
+| 02/11/2026 | Tela | Janela de 1600x900 e só "tela cheia: sim/não" | Janela, tela cheia ou exclusiva; várias resoluções; opções gráficas separadas |
+| 02/11/2026 | Câmera ao correr | Quase parada | Leve balanço de galope (dá para desligar) |

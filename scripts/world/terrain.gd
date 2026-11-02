@@ -16,6 +16,10 @@ var noise_ring := FastNoiseLite.new()
 ## Áreas planas: Vector3(x, z, raio).
 var flat_spots: Array[Vector3] = []
 var _flat_targets: Array[float] = []
+## Áreas planas numa altura escolhida: Vector4(x, z, raio, altura) (caverna, passagem).
+var flat_zones: Array[Vector4] = []
+## Depressões (lagoas): Vector4(x, z, raio, profundidade).
+var dips: Array[Vector4] = []
 
 var mask_data := PackedByteArray()
 var mask_texture: ImageTexture
@@ -57,7 +61,31 @@ func height_fn(x: float, z: float) -> float:
 		if d < s.z:
 			var w := 1.0 - smoothstep(s.z * 0.55, s.z, d)
 			h = lerpf(h, _flat_targets[i], w)
+	for f in flat_zones:
+		var d := Vector2(x - f.x, z - f.y).length()
+		if d < f.z:
+			h = lerpf(h, f.w, 1.0 - smoothstep(f.z * 0.55, f.z, d))
+	for dp in dips:
+		var d := Vector2(x - dp.x, z - dp.y).length()
+		if d < dp.z:
+			var k := 1.0 - (d / dp.z) * (d / dp.z)
+			h -= dp.w * k * k
 	return h
+
+
+## Altura do relevo antes de qualquer ajuste (para escolher a altura de uma área plana).
+func natural_height(x: float, z: float) -> float:
+	return _base_height(x, z)
+
+
+## Deixa o chão plano nessa altura (precisa ser chamado antes de build()).
+func add_flat_zone(x: float, z: float, radius: float, target_y: float) -> void:
+	flat_zones.append(Vector4(x, z, radius, target_y))
+
+
+## Afunda o chão numa bacia redonda (lagoa). Antes de build().
+func add_dip(x: float, z: float, radius: float, depth: float) -> void:
+	dips.append(Vector4(x, z, radius, depth))
 
 
 func build(material: Material) -> void:

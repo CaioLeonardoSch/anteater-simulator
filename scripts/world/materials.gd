@@ -28,6 +28,7 @@ var ipe_roxo_cards: ShaderMaterial
 var ipe_ground: ShaderMaterial
 var clay: ShaderMaterial
 var rock: ShaderMaterial
+var cliff: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
 
@@ -86,6 +87,20 @@ func _init() -> void:
 	rock.set_shader_parameter("accent_up_bias", 0.35)
 	rock.set_shader_parameter("roughness_value", 0.8)
 	rock.set_shader_parameter("specular_value", 0.4)
+
+	# Paredões de arenito da chapada: faixas pintadas por vértice, escorridos
+	# verticais e um verde ralo só no topo plano.
+	cliff = _surface(Color(0.50, 0.31, 0.21), Color(0.70, 0.51, 0.37), Color(0.46, 0.52, 0.26))
+	cliff.set_shader_parameter("noise_scale", 0.35)
+	cliff.set_shader_parameter("detail_scale", 2.6)
+	cliff.set_shader_parameter("streak_amount", 0.3)
+	cliff.set_shader_parameter("streak_scale", 3.0)
+	cliff.set_shader_parameter("accent_amount", 0.7)
+	cliff.set_shader_parameter("accent_threshold", 0.75)
+	cliff.set_shader_parameter("accent_up_bias", 0.7)
+	cliff.set_shader_parameter("roughness_value", 0.93)
+	cliff.set_shader_parameter("specular_value", 0.2)
+	cliff.set_shader_parameter("rim_amount", 0.05)
 
 	nest_soil = _surface(Color(0.46, 0.26, 0.16), Color(0.64, 0.42, 0.28), Color(0.80, 0.62, 0.46))
 	nest_soil.set_shader_parameter("noise_scale", 3.0)

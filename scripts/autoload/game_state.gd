@@ -521,7 +521,7 @@ func to_save() -> Dictionary:
 		"ants_eaten": ants_eaten, "points_spent": points_spent,
 		"purchased": purchased.keys(), "elapsed": elapsed, "best_combo": best_combo,
 		"tanajuras_eaten": tanajuras_eaten, "queens_eaten": queens_eaten,
-		"regions_reached": regions_reached,
+		"regions_reached": regions_reached, "completed": completed,
 	}
 
 
@@ -541,7 +541,7 @@ func from_save(d: Dictionary) -> void:
 	regions_reached.clear()
 	for r in d.get("regions_reached", ["Cerrado"]):
 		regions_reached.append(String(r))
-	completed = false
+	completed = bool(d.get("completed", false)) and ants_eaten >= GOAL
 	combo = 0
 	frenzy_time = 0.0
 	_check_affordable(false)

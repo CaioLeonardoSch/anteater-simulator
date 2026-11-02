@@ -11,6 +11,8 @@ signal tremor_used(count: int)
 signal queen_blocked
 ## Tentou lamber correndo sem ter aprendido Lamber Correndo.
 signal lick_blocked_running
+## Quebrou o tronco que fecha a passagem para a área 2 (fim da demo).
+signal exit_broken
 
 const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
@@ -22,7 +24,6 @@ const VIEW_SCALE := 0.25
 ## Altura dos olhos: alto o bastante para ver por cima do capim baixo.
 const EYE_HEIGHT := 0.72
 const GRAVITY := 20.0
-const PLAY_RADIUS := 61.0
 
 enum Tongue { IDLE, OUT, BACK }
 
@@ -65,6 +66,9 @@ var sniff_chambers: Array[Vector3] = []
 var tremor_cd := 0.0
 ## Descanso das garras depois de abrir uma câmara.
 var dig_cd := 0.0
+## Perto do tronco da saída (com a clareira limpa) e quanto dele já foi quebrado.
+var near_exit := false
+var exit_progress := 0.0
 var _jump_request := false
 var _stomp_pending := false
 var _air_time := 0.0
@@ -226,7 +230,7 @@ func _physics_process(delta: float) -> void:
 		_bot_update(delta)
 		input = _bot_input
 		want_run = _bot_run and GameState.can_run()
-	var digging := _is_digging()
+	var digging := _is_digging() or _breaking_exit()
 	var target_speed := GameState.run_speed() if want_run else GameState.walk_speed()
 	if digging:
 		target_speed = 0.0
@@ -255,9 +259,11 @@ func _physics_process(delta: float) -> void:
 		_air_time += delta
 		if _stomp_pending and _air_time > 3.0:
 			_stomp()
+	# Os penhascos são o limite (dá para entrar na caverna e ir até o tronco).
 	var flat := Vector2(global_position.x, global_position.z)
-	if flat.length() > PLAY_RADIUS:
-		flat = flat.normalized() * PLAY_RADIUS
+	var limit: float = world.walk_limit(flat)
+	if flat.length() > limit:
+		flat = flat.normalized() * limit
 		global_position.x = flat.x
 		global_position.z = flat.y
 	var floor_y: float = world.ground_height(global_position.x, global_position.z)
@@ -316,6 +322,15 @@ func _process(delta: float) -> void:
 	world.follow_camera(camera.global_position)
 	swarm.cam_pos = camera.global_position
 	RenderingServer.global_shader_parameter_set("player_pos", global_position)
+
+
+## Quebrando o tronco da saída com as garras (só com a clareira 100% limpa).
+func _breaking_exit() -> bool:
+	if not near_exit or not GameState.can_dig():
+		return false
+	if controls_enabled:
+		return Input.is_action_pressed("dig")
+	return false
 
 
 func _is_digging() -> bool:
@@ -548,6 +563,23 @@ func _update_abilities(delta: float) -> void:
 			dig_nest.set_dig_progress(dig_chamber, dig_progress)
 			if dig_progress <= 0.0:
 				dig_nest.reset_dig(dig_chamber)
+	# Tronco da saída: com a clareira limpa, segurar E perto dele quebra o tronco.
+	near_exit = world.exit_breakable and not world.exit_open and world.near_exit(p2, 2.4)
+	if _breaking_exit():
+		exit_progress += delta / 1.6
+		_dig_swipe += delta * 11.0
+		_dig_sound -= delta
+		if _dig_sound <= 0.0:
+			_dig_sound = 0.16
+			Sfx.play("dig", -5.0, 0.8, 0.2)
+		if exit_progress >= 1.0:
+			exit_progress = 0.0
+			world.break_exit()
+			shake = 0.9
+			Sfx.play("crack", 0.0)
+			exit_broken.emit()
+	else:
+		exit_progress = maxf(exit_progress - delta * 2.0, 0.0)
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
 	if bot and GameState.can_tremor() and tremor_cd <= 0.0 and _bot_target >= 0:
 		want_tremor = swarm.alive[_bot_target] == 1 and swarm.pos[_bot_target].distance_to(global_position) < 4.0
@@ -661,13 +693,14 @@ func _dust_ring(radius: float) -> void:
 
 
 func _update_arms(delta: float) -> void:
-	var target := 1.0 if (_is_digging() or _tremor_anim > 0.0) else 0.0
+	var working := _is_digging() or _breaking_exit()
+	var target := 1.0 if (working or _tremor_anim > 0.0) else 0.0
 	arm_anim = move_toward(arm_anim, target, delta * 6.0)
 	for k in arm_pivots.size():
 		var pivot := arm_pivots[k]
 		pivot.visible = arm_anim > 0.01
 		var side := -1.0 if k == 0 else 1.0
-		var swipe := sin(_dig_swipe + k * PI) * 0.35 if _is_digging() else -_tremor_anim * 0.5
+		var swipe := sin(_dig_swipe + k * PI) * 0.35 if working else -_tremor_anim * 0.5
 		pivot.rotation = Vector3(lerpf(-1.4, 0.15, arm_anim) + swipe * arm_anim, side * 0.15, side * 0.1)
 
 

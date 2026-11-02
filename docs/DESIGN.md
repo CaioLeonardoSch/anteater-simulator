@@ -22,6 +22,10 @@ que come **formigas e cupins** no **cerrado**, evolui habilidades e deixa a
 região **100% limpa**. Aí o jogo acaba: não existe loop infinito e não dá para
 perder.
 
+**A história:** o tamanduá acorda numa caverna e vê, lá longe, um **cupinzeiro
+gigante**. A barriga ronca: ele quer comer e chegar até lá. O caminho passa por
+4 áreas do cerrado (seção 3).
+
 **Para PC (Steam)**, por **até R$ 20**, em **3D estilizado** com cara de filme
 de animação, visto **pelos olhos do tamanduá**.
 
@@ -46,7 +50,8 @@ buscamos, no espírito delas:
 | **Documento de design** | As regras e ideias do jogo inteiro | Seção 6 deste documento | Consolidado aqui |
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
-| **Demo 3D** | O Cerrado ao entardecer, em 1ª pessoa: 3200 formigas, 12 formigueiros e 58 câmaras (12 no meio do campo), rainhas, 5 habilidades (28 níveis) e jogo salvo | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
+| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 3200 formigas, 12 formigueiros e 58 câmaras (12 no meio do campo), rainhas, 5 habilidades (28 níveis), jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -71,21 +76,62 @@ buscamos, no espírito delas:
   falta baixar (precisa de um plano com créditos).
 - **Motor:** Godot 4.7.
 
-### Tamanho
+### Tamanho e mapa
 
-- **Um mapa só, com várias regiões.** Você anda de uma região para a outra sem
-  telas de carregamento. Por enquanto, só o Cerrado está pronto.
-- O cerrado é a savana brasileira (a "Savana" do documento original).
-- O Cerrado é uma **região completa de 45 a 60 minutos**, com **12 ninhos**:
-  8 em volta do mapa e 4 no meio. Os formigueiros ficaram cerca de 45% maiores.
-- **Os ninhos do Cerrado são só formigueiros.** Os cupinzeiros aparecem apenas
-  como cenário.
+- **Um mapa só, todo no cerrado, com 4 áreas** ligadas por passagens estreitas
+  e cercado por **penhascos**, que são o limite do mapa. Você anda de uma área
+  para a outra sem telas de carregamento. O formato do esboço (abaixo) é uma
+  base e pode mudar com o tempo.
+- O cerrado é a savana brasileira (a "Savana" do documento original). As árvores
+  vão ficar um pouco mais densas.
+- **A demo é a área 1**, uma **região completa de 45 a 60 minutos**, com **12
+  ninhos**: 8 em volta e 4 no meio. Os formigueiros ficaram cerca de 45% maiores.
+- **Na área 1, os ninhos são só formigueiros**, de uma formiga que fica só no
+  chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
 - **3200 formigas** (eram 1000). Somando o preço de todas as habilidades do
   Cerrado dá **2485 pontos**: dá para aprender tudo e ainda sobram cerca de
   **715 formigas** (uns 3 formigueiros) para jogar com tudo liberado.
-- **Depois do Cerrado:** **outra floresta, com lagoas, cupinzeiros e mais**.
-  As lagoas são só cenário por enquanto (nada de nadar). O Quintal urbano fica
-  para mais tarde.
+- **Por enquanto as habilidades ficam como estão.** A pontuação e a quantidade
+  de formigas e cupins para liberar tudo serão reavaliadas mais para a frente.
+
+### O mapa: 4 áreas (esboço de 02/11/2026)
+
+![Esboço do mapa: a área 1 pequena embaixo, a área 2 no meio e a área 3 grande, com o cupinzeiro gigante (área 4) dentro; a borda amarela são os penhascos](esboco-mapa.png)
+
+| Área | Como é | Insetos | Como se chega |
+|---|---|---|---|
+| **1** | Uma clareira: onde se passa a demo | Formigas que ficam só no chão, com as câmaras da demo | É o começo: o tamanduá sai de uma caverna |
+| **2** | Árvores mais densas | Outro tipo de formiga, que consegue ficar nas árvores | Liberada ao limpar 100% da área 1 |
+| **3** | A área grande, em volta do cupinzeiro gigante | Cupins | Depois da área 2 |
+| **4** | Um **cupinzeiro gigante**: dá para ir subindo nele e comendo os cupins | Cupins | Dentro da área 3 |
+
+- **A área 4 aparece desde a área 1**, lá longe: é o lugar aonde o tamanduá
+  quer chegar.
+- **História:** o tamanduá acorda numa caverna, vê o cupinzeiro gigante lá de
+  longe, a barriga ronca, e ele decide comer e ir até lá.
+- **Foco agora:** a demo (área 1) e o refinamento dela.
+
+### A área 1 (a demo), decidida em 02/11/2026
+
+- **Tamanho:** continua com cerca de 120 m de um lado ao outro. Em volta, no
+  lugar da parede invisível, ficam **penhascos de arenito** (faixas creme e
+  vermelhas), com árvores no platô lá em cima.
+- **Começo:** o tamanduá acorda no fundo de uma **caverna** no pé do penhasco,
+  já de frente para o cupinzeiro gigante, e a **barriga ronca** uma vez. Dá para
+  jogar logo; um vídeo de abertura fica para depois.
+- **O cupinzeiro gigante** aparece lá longe, por cima dos penhascos, no rumo da
+  saída. Ele fica dentro do mapa, nas áreas mais adiante. **Não brilha.**
+- **Horário fixo:** é sempre o mesmo fim de tarde. O sol não se põe enquanto
+  você joga.
+- **Saída para a área 2:** uma passagem estreita entre os penhascos, fechada
+  por um **tronco caído**. Com a clareira 100% limpa, a bússola mostra a saída;
+  perto do tronco, segure **E** e as garras quebram o tronco. Na demo, isso é o
+  fim: o caminho até o cupinzeiro fica aberto.
+- **Lagoas:** uma ou duas, **só de enfeite** (não têm insetos nem mudam o jogo).
+- **A barriga não aponta o caminho:** ela só ronca no começo.
+- **Ideia para a área 2:** um nível das **Garras** que deixa **escalar ou
+  quebrar a árvore** para comer as formigas que moram nela (a outra opção é a
+  Escalada + Cauda).
 
 ### Como se come: os dois jeitos juntos
 
@@ -186,6 +232,15 @@ Feito, seguindo as decisões:
    alternam a tela cheia.
 10. **Pausa de verdade:** na pausa e na árvore de habilidades, as formigas e as
    ondas param.
+11. **Penhascos** em volta da clareira, que são o fim do mapa, com árvores no
+   platô e pedras soltas no pé.
+12. **Começo na caverna:** o tamanduá acorda numa caverna no pé do penhasco,
+   olhando para o **cupinzeiro gigante** lá longe, e a barriga ronca.
+13. **Fim da demo:** a passagem para a área 2 fica fechada por um **tronco
+   caído**. Com 100% limpo, a bússola mostra a saída; segurando **E** perto do
+   tronco, as garras quebram o tronco e a demo termina.
+14. **Sempre o mesmo fim de tarde** (o sol não se põe mais) e **duas lagoas** de
+   enfeite.
 
 Ainda a ajustar:
 
@@ -197,8 +252,13 @@ Ainda a ajustar:
 
 ## 5. Ainda em aberto
 
-- **A floresta:** os cupinzeiros de lá são ninhos, com rainha? Os formigueiros
-  de folha e os ninhos em árvores do documento original continuam?
+- **O vídeo de abertura:** o tamanduá acordando na caverna (fica para depois).
+- **A formiga das árvores (área 2):** que espécie é, e qual habilidade leva até
+  ela: a Escalada + Cauda ou um nível das Garras que escala ou quebra a árvore.
+- **Os cupins (áreas 3 e 4):** como são os ninhos (câmaras, rainha?) e como é
+  subir no cupinzeiro gigante.
+- **A "outra floresta":** era a ideia anterior para depois do Cerrado. Com o
+  mapa todo no cerrado, fica de fora? (As lagoas já entraram, só de enfeite.)
 - **Quintal urbano:** quando entra, e se o Focinho volta com ele.
 
 ---
@@ -335,7 +395,9 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 
 ### Demo 3D, projeto principal
 
-- **1ª pessoa** no cerrado ao entardecer; o sol vai se pondo enquanto você come.
+- **1ª pessoa** numa clareira do cerrado, sempre no mesmo fim de tarde, cercada
+  por **penhascos**. Começa numa **caverna**, de frente para o **cupinzeiro
+  gigante** lá longe, e termina quebrando o **tronco caído** que fecha a saída.
 - **12 formigueiros** (5 com rainha) e **58 câmaras** para abrir e esvaziar (12
   delas no meio do campo); dá para subir nos montes. As formigas das câmaras
   saem correndo quando você abre.
@@ -396,3 +458,15 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 02/11/2026 | Aviso de onda | Grande, no meio da tela | Discreto, no painel da direita |
 | 02/11/2026 | Pausa | As formigas continuavam andando | Pausa de verdade |
 | 02/11/2026 | Habilidades ainda não feitas | Mostravam "na Floresta" | Só um cadeado |
+| 02/11/2026 | Mapa do jogo completo | Um mapa com regiões: o Cerrado e depois outra floresta, com lagoas | Um mapa todo de cerrado, com 4 áreas cercadas por penhascos (esboço na seção 3) |
+| 02/11/2026 | A demo | O Cerrado inteiro | A área 1, uma clareira; limpar 100% libera a área 2 |
+| 02/11/2026 | Insetos por área | Formigas no Cerrado; cupinzeiros só como cenário | Área 1: formigas de chão; área 2: formigas que sobem em árvores; áreas 3 e 4: cupins |
+| 02/11/2026 | Objetivo do jogo | Limpar cada região | Chegar ao cupinzeiro gigante (área 4), visível desde a área 1, e subir nele comendo cupins |
+| 02/11/2026 | História | Não havia | O tamanduá acorda numa caverna, vê o cupinzeiro gigante e a barriga ronca |
+| 02/11/2026 | Horário | O sol se punha conforme você comia | Sempre o mesmo fim de tarde |
+| 02/11/2026 | Limite da clareira | Parede invisível | Penhascos de arenito, com árvores no platô |
+| 02/11/2026 | Começo da demo | No meio da clareira | Numa caverna no pé do penhasco, de frente para o cupinzeiro gigante; a barriga ronca (o vídeo fica para depois) |
+| 02/11/2026 | Cupinzeiro gigante | Não aparecia | Lá longe, por cima dos penhascos, sem brilho |
+| 02/11/2026 | Passagem para a área 2 | Em aberto | Fechada por um tronco caído; com 100% limpo, as garras quebram o tronco e a demo termina |
+| 02/11/2026 | Lagoas | Só na "outra floresta" | Uma ou duas na clareira, só de enfeite |
+| 02/11/2026 | Barriga | Ideia: roncar mais forte na direção certa | Só ronca no começo; não aponta caminho |

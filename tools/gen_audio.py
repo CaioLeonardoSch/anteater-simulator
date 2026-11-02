@@ -295,6 +295,37 @@ def sfx_ui_open():
 
 # ------------------------------------------------------------- Violão (KS)
 
+def sfx_growl():
+    """Barriga roncando: tom grave que oscila, com borbulhas."""
+    d = 1.7
+    n = int(SR * d)
+    t = t_axis(d)
+    f = 85 + 25 * np.sin(2 * np.pi * 1.3 * t) + 15 * np.sin(2 * np.pi * 3.7 * t)
+    phase = 2 * np.pi * np.cumsum(f) / SR
+    body = np.sin(phase) * 0.6 + np.sin(phase * 2.03) * 0.25
+    am = 0.55 + 0.45 * np.sin(2 * np.pi * 6.5 * t) ** 2
+    env = np.minimum(1.0, t / 0.15) * np.exp(-(((t - 0.9) / 0.8) ** 2))
+    out = body * am * env + fast_lowpass(noise(n), 160) * 2.5 * env
+    for k in range(5):
+        blub = sweep(140 + k * 20, 70, 0.12) * np.exp(-t_axis(0.12) * 18)
+        place(out, blub * 0.5, 0.2 + k * 0.27)
+    return out
+
+
+def sfx_crack():
+    """Tronco quebrando: estalo seco, madeira rachando e um baque."""
+    out = np.zeros(int(SR * 1.1))
+    snap_n = int(SR * 0.08)
+    place(out, bandpass(noise(snap_n), 1200, 6000) * env_ad(snap_n, 0.001, 0.03), 0.0)
+    for k in range(7):
+        cn = int(SR * 0.05)
+        place(out, bandpass(noise(cn), 800 + k * 150, 4000) * env_ad(cn, 0.001, 0.02) * 0.6, 0.05 + k * 0.045)
+    place(out, tone(90, 0.5, ((1, 1.0), (2, 0.35)), 0.15) * 1.1, 0.12)
+    rn = int(SR * 0.7)
+    place(out, fast_lowpass(noise(rn), 300) * env_ad(rn, 0.01, 0.25) * 2.0, 0.12)
+    return out
+
+
 def pluck(freq, dur, bright=0.5, decay=0.996):
     """Corda dedilhada (Karplus-Strong), vetorizada por blocos."""
     n = int(SR * dur)
@@ -416,6 +447,9 @@ def main():
     save("chamber", sfx_chamber(), 0.7)
     save("nest_clean", sfx_nest_clean(), 0.8)
     save("queen", sfx_queen(), 0.85)
+    # Sons novos sempre no fim: assim os anteriores continuam idênticos.
+    save("growl", sfx_growl(), 0.8)
+    save("crack", sfx_crack(), 0.85)
     print("sons gerados em", os.path.abspath(OUT))
 
 

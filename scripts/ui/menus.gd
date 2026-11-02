@@ -261,7 +261,8 @@ Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; a
 · Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 20.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
 · Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
-· Não dá para perder: aproveite o pôr do sol e tente bater seu recorde de tempo.""" % GameState.GOAL
+· Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.
+· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % GameState.GOAL
 	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -447,10 +448,10 @@ func _sync_settings() -> void:
 func _build_end() -> Control:
 	var s := _screen(0.45)
 	var v := _centered_column(s)
-	_end_title = UiTheme.label("Fase concluída!", 56, UiTheme.GOLD, true)
+	_end_title = UiTheme.label("Fim da demo!", 56, UiTheme.GOLD, true)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	_end_sub = UiTheme.label("Você comeu as %d formigas da colônia do cerrado." % GameState.GOAL, 24, UiTheme.CREAM)
+	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.GOAL, 24, UiTheme.CREAM)
 	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_sub)
 	_end_stats = UiTheme.label("", 22, UiTheme.SAND)

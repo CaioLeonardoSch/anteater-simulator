@@ -111,6 +111,7 @@ func _build_game() -> void:
 	add_child(player)
 	player.setup(world, swarm, colony)
 	player.place_at(world.player_start, world.player_start_yaw)
+	player.exit_broken.connect(_on_exit_broken)
 	menu_cam = Camera3D.new()
 	menu_cam.name = "MenuCamera"
 	menu_cam.fov = 62.0
@@ -186,10 +187,12 @@ func _on_continue_pressed() -> void:
 ## Jogo novo.
 func _start_play() -> void:
 	GameState.reset_run()
-	world.set_day_progress(0.0, true)
 	player.place_at(world.player_start, world.player_start_yaw)
 	_begin_playing()
 	save_game()
+	# Ele acorda na caverna com fome: a barriga ronca uma vez.
+	if DevTools.start_mode == "" or DevTools.args.has("growl"):
+		get_tree().create_timer(1.4).timeout.connect(_belly_growl)
 	if DevTools.give > 0:
 		_first_point_done = true
 		GameState.add_eaten(DevTools.give)
@@ -224,9 +227,11 @@ func _continue_game() -> void:
 	player.place_at(Vector2(float(p.get("x", world.player_start.x)), float(p.get("z", world.player_start.y))),
 		float(p.get("yaw", world.player_start_yaw)))
 	player.pitch = float(p.get("pitch", -0.12))
-	world.set_day_progress(float(GameState.ants_eaten) / GameState.GOAL, true)
 	_first_point_done = GameState.ants_eaten >= GameState.cost_of("lingua_segurar")
 	_begin_playing()
+	if GameState.completed:
+		# A clareira já estava limpa: o tronco da saída continua esperando as garras.
+		world.exit_breakable = true
 
 
 func _begin_playing() -> void:
@@ -244,7 +249,7 @@ func _begin_playing() -> void:
 
 ## Salva o progresso (formigas, câmaras, habilidades e onde o tamanduá está).
 func save_game() -> void:
-	if state == State.COMPLETE or GameState.completed:
+	if state == State.COMPLETE:
 		return
 	var gp := player.global_position
 	GameState.write_saved_game({
@@ -365,8 +370,7 @@ func _reload() -> void:
 	tw.tween_callback(func(): get_tree().reload_current_scene())
 
 
-func _on_eaten_changed(total: int, _delta: int) -> void:
-	world.set_day_progress(float(total) / GameState.GOAL)
+func _on_eaten_changed(_total: int, _delta: int) -> void:
 	if DevTools.autoplay and state == State.PLAYING:
 		_bot_buy()
 
@@ -392,16 +396,32 @@ func _on_affordable(_id: String) -> void:
 		_open_tree()
 
 
+## Clareira 100% limpa: o tronco da saída já pode ser quebrado com as garras.
 func _on_complete(_time: float) -> void:
+	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
+	world.exit_breakable = true
+	hud.big_note("CLAREIRA LIMPA!", "Vá até o tronco caído na saída e segure E para quebrá-lo", 5.0)
+	Sfx.play("complete", 0.0)
+	save_game()
+
+
+func _belly_growl() -> void:
+	if state != State.PLAYING:
+		return
+	Sfx.play("growl", 0.0)
+	player.shake = 0.35
+	hud.note("A barriga ronca... hora de achar formigas!", UiTheme.SAND, 4.0)
+
+
+## O tronco foi quebrado: a passagem para a área 2 está aberta (fim da demo).
+func _on_exit_broken() -> void:
 	state = State.COMPLETE
 	GameState.delete_saved_game()
-	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
 	player.controls_enabled = false
 	player.bot = false
 	Engine.time_scale = _base_time_scale * 0.35
-	_complete_wait = 2.2
-	hud.big_note("%d FORMIGAS!" % GameState.GOAL, "A colônia inteira virou janta.", 4.0)
-	Sfx.play("complete", 0.0)
+	_complete_wait = 2.6
+	hud.big_note("O CAMINHO ESTÁ ABERTO", "Lá longe, o cupinzeiro gigante espera...", 4.0)
 
 
 func _process(delta: float) -> void:

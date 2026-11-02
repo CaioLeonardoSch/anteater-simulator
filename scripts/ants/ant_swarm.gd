@@ -293,8 +293,9 @@ func _update_free(i: int, delta: float) -> void:
 			var d := sqrt(dd)
 			p2 = Vector2(o.x, o.y) + Vector2(dx, dz) / d * rr
 			v = v.slide(Vector2(dx, dz) / d)
-	if p2.length() > 62.0:
-		p2 = p2.normalized() * 62.0
+	var limit: float = world.walk_limit(p2) - 0.3
+	if p2.length() > limit:
+		p2 = p2.normalized() * limit
 		v = -v
 	vel[i] = v
 	var y: float = world.ground_height(p2.x, p2.y)

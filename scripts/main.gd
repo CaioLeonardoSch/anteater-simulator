@@ -41,7 +41,6 @@ var fade: ColorRect
 
 var _menu_t := 0.0
 var _menu_center := Vector3.ZERO
-var _first_point_done := false
 var _complete_wait := -1.0
 var _base_time_scale := 1.0
 var _new_record := false
@@ -144,7 +143,6 @@ func _build_game() -> void:
 	menus.main_menu_pressed.connect(_to_main_menu)
 	menus.skill_tree_pressed.connect(_open_tree)
 	GameState.level_completed.connect(_on_complete)
-	GameState.upgrade_affordable.connect(_on_affordable)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
@@ -194,7 +192,6 @@ func _start_play() -> void:
 	if DevTools.start_mode == "" or DevTools.args.has("growl"):
 		get_tree().create_timer(1.4).timeout.connect(_belly_growl)
 	if DevTools.give > 0:
-		_first_point_done = true
 		GameState.add_eaten(DevTools.give)
 		GameState.combo = 0
 		GameState.best_combo = 0
@@ -227,7 +224,6 @@ func _continue_game() -> void:
 	player.place_at(Vector2(float(p.get("x", world.player_start.x)), float(p.get("z", world.player_start.y))),
 		float(p.get("yaw", world.player_start_yaw)))
 	player.pitch = float(p.get("pitch", -0.12))
-	_first_point_done = GameState.ants_eaten >= GameState.cost_of("lingua_segurar")
 	_begin_playing()
 	if GameState.completed:
 		# A clareira já estava limpa: o tronco da saída continua esperando as garras.
@@ -384,16 +380,6 @@ func _bot_buy() -> void:
 			return
 		GameState.buy(id)
 		print("[bot] comprou %s com %d formigas comidas" % [id, GameState.ants_eaten])
-
-
-func _on_affordable(_id: String) -> void:
-	if DevTools.autoplay or _first_point_done or state != State.PLAYING:
-		return
-	_first_point_done = true
-	# Na primeira vez, abre a árvore sozinho para ensinar.
-	await get_tree().create_timer(1.6).timeout
-	if state == State.PLAYING:
-		_open_tree()
 
 
 ## Clareira 100% limpa: o tronco da saída já pode ser quebrado com as garras.

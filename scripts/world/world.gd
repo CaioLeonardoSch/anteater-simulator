@@ -1,6 +1,8 @@
 extends Node3D
-## Monta a fase "Cerrado ao Entardecer": céu, sol, terreno, trilhas, formigueiros,
-## vegetação, capim e partículas. Também controla o pôr do sol ao longo da fase.
+## Monta a fase "Cerrado ao Entardecer" (a clareira, área 1): céu, sol, terreno,
+## penhascos com a caverna e a saída, trilhas, formigueiros, vegetação, lagoas,
+## o tronco caído, o cupinzeiro gigante ao longe, capim e partículas. A luz é a
+## de um fim de tarde fixo (o sol não se põe).
 
 const Materials := preload("res://scripts/world/materials.gd")
 const Terrain := preload("res://scripts/world/terrain.gd")
@@ -10,6 +12,9 @@ const Grass := preload("res://scripts/world/grass.gd")
 const Nest := preload("res://scripts/world/nest.gd")
 const Props := preload("res://scripts/world/props.gd")
 const ScentMarks := preload("res://scripts/world/scent_marks.gd")
+const Cliffs := preload("res://scripts/world/cliffs.gd")
+const GiantMound := preload("res://scripts/world/giant_mound.gd")
+const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const SKY_SHADER := preload("res://shaders/sky_dusk.gdshader")
 
@@ -28,6 +33,19 @@ var player_start := Vector2(2.0, 6.0)
 var satellite_spots: Array[Vector2] = []
 ## Nuvens e colunas de cheiro do faro.
 var scent_marks: ScentMarks
+## Penhascos em volta da clareira (limite do mapa), com a caverna e a passagem.
+var cliffs: Cliffs
+var giant_mound: GiantMound
+## Lagoas (só enfeite): Vector3(x, z, raio).
+var ponds: Array[Vector3] = []
+## Tronco caído que fecha a passagem para a área 2.
+var exit_log: Node3D
+## A clareira está 100% limpa: o tronco já pode ser quebrado.
+var exit_breakable := false
+## O tronco foi quebrado (a passagem está aberta).
+var exit_open := false
+var _exit_halves: Array[Node3D] = []
+var _exit_body: StaticBody3D
 var player_start_yaw := 0.0
 var start_trail_index := 0
 
@@ -100,7 +118,12 @@ func build() -> void:
 	terrain.name = "Terrain"
 	add_child(terrain)
 	terrain.setup(SEED, spots)
-	terrain.build(mats.terrain)
+	# Penhascos em volta: primeiro o formato (aplaina o chão da caverna e da
+	# passagem); a malha vem depois, com o terreno pronto.
+	cliffs = Cliffs.new()
+	cliffs.name = "Penhascos"
+	add_child(cliffs)
+	cliffs.plan(terrain)
 	# Trilhas.
 	trails = TrailNetwork.new(SEED)
 	for link in LINKS:
@@ -116,16 +139,16 @@ func build() -> void:
 			var p: Vector2 = t.points[k]
 			terrain.mask_paint(p.x, p.y, 0.62, 0, 1.0)
 			terrain.mask_paint(p.x, p.y, 1.25, 0, 0.35)
-	# Início: ao lado de uma trilha movimentada, olhando ao longo dela, contra o sol.
+	# Ponto ao lado da trilha de onde o jogo começava: ainda serve de referência
+	# para espalhar as câmaras do campo sempre nos mesmos lugares (assim os jogos
+	# salvos continuam valendo).
 	for k in LINKS.size():
 		if LINKS[k] == START_LINK:
 			start_trail_index = k
 	var start_trail = trails.trails[start_trail_index]
 	var s0: float = start_trail.length * 0.5
-	player_start = start_trail.point_at(s0) + start_trail.side_at(s0) * 1.4
-	var target: Vector2 = start_trail.point_at(start_trail.length * 0.72)
-	var to := target - player_start
-	player_start_yaw = atan2(-to.x, -to.y)
+	var trail_start: Vector2 = start_trail.point_at(s0) + start_trail.side_at(s0) * 1.4
+	player_start = trail_start
 	for nest in nests:
 		terrain.mask_paint(nest.center2.x, nest.center2.y, nest.radius + 1.0, 1, 1.0)
 	for f in food_sources:
@@ -136,6 +159,14 @@ func build() -> void:
 	for nest in nests:
 		nest.plan_chambers(_rng)
 	_plan_satellites()
+	_plan_ponds()
+	terrain.build(mats.terrain)
+	cliffs.build(mats)
+	# O tamanduá acorda no fundo da caverna, olhando para o cupinzeiro gigante.
+	player_start = cliffs.cave_spot()
+	var look := Vector2(cos(GiantMound.ANGLE), sin(GiantMound.ANGLE)) * 60.0
+	var to := look - player_start
+	player_start_yaw = atan2(-to.x, -to.y)
 	for nest in nests:
 		nest.position = Vector3(nest.center2.x, terrain.get_height(nest.center2.x, nest.center2.y), nest.center2.y)
 		nest.ground = ground_height
@@ -156,6 +187,13 @@ func build() -> void:
 	vegetation.build(self, _rng)
 	for f in food_sources:
 		vegetation.obstacles.append(Vector3(f.x, f.y, 0.7))
+	for w in ponds:
+		vegetation.obstacles.append(w)
+	_build_pond_water()
+	_build_exit_log()
+	giant_mound = GiantMound.new()
+	add_child(giant_mound)
+	giant_mound.build(mats, Color(0.92, 0.74, 0.6))
 	mats.terrain.set_shader_parameter("mask_tex", terrain.finalize_mask())
 	grass = Grass.new()
 	grass.name = "Grass"
@@ -171,6 +209,179 @@ func build() -> void:
 	apply_graphics()
 
 
+## Até onde dá para andar nessa direção (penhascos, caverna e o tronco da saída).
+func walk_limit(p2: Vector2) -> float:
+	return cliffs.walk_limit(p2, exit_open)
+
+
+## Uma ou duas lagoas, só de enfeite: longe das trilhas, dos formigueiros, das
+## câmaras, da caverna e da passagem.
+func _plan_ponds() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED + 31
+	var tries := 0
+	while ponds.size() < 2 and tries < 500:
+		tries += 1
+		var a := rng.randf() * TAU
+		var p := Vector2(cos(a), sin(a)) * rng.randf_range(14.0, 50.0)
+		var size := rng.randf_range(3.4, 4.6)
+		if trails.distance_to_trails(p) < size + 3.0:
+			continue
+		var ok := p.distance_to(cliffs.cave_mouth()) > 16.0 and p.distance_to(cliffs.exit_center(0.0)) > 16.0
+		for n in nests:
+			if p.distance_to(n.center2) < n.radius + size + 4.0:
+				ok = false
+		for f in food_sources:
+			if p.distance_to(f) < size + 4.0:
+				ok = false
+		for q in satellite_spots:
+			if p.distance_to(q) < size + 4.0:
+				ok = false
+		for w in ponds:
+			if p.distance_to(Vector2(w.x, w.y)) < 22.0:
+				ok = false
+		if not ok:
+			continue
+		ponds.append(Vector3(p.x, p.y, size))
+		# Nivela o entorno antes de cavar, para a água encher a lagoa por igual.
+		terrain.add_flat_zone(p.x, p.y, size * 1.9, terrain.natural_height(p.x, p.y))
+		terrain.add_dip(p.x, p.y, size, 0.75)
+		terrain.mask_paint(p.x, p.y, size + 0.6, 1, 1.0)
+
+
+func _build_pond_water() -> void:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.08, 0.2, 0.2, 0.92)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.18
+	mat.metallic_specular = 0.6
+	for w in ponds:
+		# Nível da água um pouco abaixo da beira mais baixa (a água nunca sobe no capim).
+		var level := INF
+		for k in 12:
+			var a := TAU * k / 12.0
+			level = minf(level, terrain.get_height(w.x + cos(a) * w.z * 0.95, w.y + sin(a) * w.z * 0.95))
+		level -= 0.08
+		var b := MeshBuilder.new()
+		b.add_vertex(Vector3.ZERO, Vector3.UP)
+		var segs := 28
+		for j in segs:
+			var a := TAU * j / segs
+			b.add_vertex(Vector3(cos(a), 0.0, sin(a)) * w.z, Vector3.UP)
+		for j in segs:
+			b.add_tri(0, 1 + (j + 1) % segs, 1 + j)
+		var mi := MeshInstance3D.new()
+		mi.name = "Lagoa"
+		mi.mesh = b.commit(null, mat)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.position = Vector3(w.x, level, w.y)
+		add_child(mi)
+
+
+## Tronco caído atravessado na passagem para a área 2 (em duas metades, que se
+## abrem quando as garras quebram o tronco).
+func _build_exit_log() -> void:
+	var e := Vector2(cos(Cliffs.EXIT_ANGLE), sin(Cliffs.EXIT_ANGLE))
+	var lateral := Vector2(-e.y, e.x)
+	var c := cliffs.exit_center(1.6)
+	var length := cliffs.exit_width() + 2.6
+	var radius := 0.62
+	exit_log = Node3D.new()
+	exit_log.name = "TroncoCaido"
+	exit_log.position = Vector3(c.x, terrain.get_height(c.x, c.y), c.y)
+	exit_log.rotation.y = atan2(-lateral.y, lateral.x)
+	add_child(exit_log)
+	for side in [-1.0, 1.0]:
+		var pivot := Node3D.new()
+		pivot.position = Vector3(side * length * 0.5, 0.0, 0.0)
+		exit_log.add_child(pivot)
+		var b := MeshBuilder.new()
+		var pts := PackedVector3Array()
+		var radii := PackedFloat32Array()
+		for i in 6:
+			var t := float(i) / 5.0
+			pts.append(Vector3(-side * t * (length * 0.5 - 0.06), radius * 0.85 + sin(t * PI) * 0.06, sin(t * 2.6 + side) * 0.12))
+			radii.append(radius * lerpf(1.0, 0.86, t) * (1.0 if side < 0.0 else 0.94))
+		b.add_tube(pts, radii, 14, true, true, 0.5)
+		# Toco de galho quebrado.
+		var stub := pts[2] + Vector3(0, radius * 0.6, 0)
+		b.add_tube(PackedVector3Array([stub, stub + Vector3(0.1, 0.55, 0.25), stub + Vector3(0.2, 0.95, 0.35)]),
+			PackedFloat32Array([radius * 0.32, radius * 0.22, radius * 0.12]), 8, false, true)
+		var mi := MeshInstance3D.new()
+		mi.mesh = b.commit(null, mats.log_bark)
+		pivot.add_child(mi)
+		_exit_halves.append(pivot)
+	_exit_body = StaticBody3D.new()
+	var col := CollisionShape3D.new()
+	var shape := CapsuleShape3D.new()
+	shape.radius = radius
+	shape.height = length
+	col.shape = shape
+	col.rotation_degrees = Vector3(0, 0, 90)
+	col.position.y = radius
+	_exit_body.add_child(col)
+	exit_log.add_child(_exit_body)
+
+
+## Distância (no chão) até o tronco da saída é menor que `reach`?
+func near_exit(p2: Vector2, reach: float) -> bool:
+	if exit_log == null:
+		return false
+	var e := Vector2(cos(Cliffs.EXIT_ANGLE), sin(Cliffs.EXIT_ANGLE))
+	var lateral := Vector2(-e.y, e.x)
+	var c := cliffs.exit_center(1.6)
+	var half := (cliffs.exit_width() + 2.6) * 0.5
+	var along := clampf((p2 - c).dot(lateral), -half, half)
+	return p2.distance_to(c + lateral * along) < reach
+
+
+## As garras quebram o tronco: as duas metades se abrem e a passagem fica livre.
+func break_exit() -> void:
+	if exit_open:
+		return
+	exit_open = true
+	if _exit_body:
+		_exit_body.queue_free()
+		_exit_body = null
+	for k in _exit_halves.size():
+		var pivot := _exit_halves[k]
+		var tw := create_tween()
+		tw.set_parallel(true)
+		tw.tween_property(pivot, "rotation:y", 1.25 if k == 0 else -1.25, 0.9).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(pivot, "rotation:x", 0.18 if k == 0 else -0.18, 0.9)
+	_splinters(exit_log.global_position + Vector3(0, 0.6, 0))
+
+
+func _splinters(at: Vector3) -> void:
+	var p := GPUParticles3D.new()
+	p.one_shot = true
+	p.amount = 60
+	p.lifetime = 1.3
+	p.explosiveness = 0.95
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	pm.emission_sphere_radius = 0.6
+	pm.direction = Vector3.UP
+	pm.spread = 75.0
+	pm.initial_velocity_min = 2.0
+	pm.initial_velocity_max = 4.5
+	pm.gravity = Vector3(0, -9.0, 0)
+	pm.scale_min = 0.6
+	pm.scale_max = 1.6
+	p.process_material = pm
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.05, 0.03, 0.18)
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.55, 0.38, 0.24)
+	m.roughness = 1.0
+	mesh.material = m
+	p.draw_pass_1 = mesh
+	add_child(p)
+	p.global_position = at
+	p.emitting = true
+	get_tree().create_timer(2.5).timeout.connect(p.queue_free)
+
+
 ## Espalha câmaras pelo campo, longe das trilhas, dos montes e dos arbustos.
 ## Cada uma pertence ao formigueiro mais perto (no máximo 2 por formigueiro).
 func _plan_satellites() -> void:
@@ -182,6 +393,7 @@ func _plan_satellites() -> void:
 		var r := sqrt(_rng.randf_range(8.0 * 8.0, 54.0 * 54.0))
 		var p := Vector2(cos(a), sin(a)) * r
 		if trails.distance_to_trails(p) < 3.5 or p.distance_to(player_start) < 7.0:
+			# (player_start aqui ainda é o ponto antigo, ao lado da trilha)
 			continue
 		var ok := true
 		for n in nests:

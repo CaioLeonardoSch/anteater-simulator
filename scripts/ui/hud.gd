@@ -338,6 +338,13 @@ func _context_hint() -> String:
 		return "Segure E para abrir esta câmara do campo" if c.satellite else "Segure E para abrir a câmara"
 	# Câmara aberta por perto (no monte ou no campo).
 	var p2 := Vector2(player.global_position.x, player.global_position.z)
+	# Tronco caído na saída para a área 2.
+	if not world.exit_open and world.near_exit(p2, 4.5):
+		if not world.exit_breakable:
+			return "Um tronco caído fecha a passagem. Limpe a clareira primeiro (faltam %d formigas)" % colony.remaining()
+		if not GameState.can_dig():
+			return "Aprenda Cavar (Garras) na árvore [TAB] para quebrar o tronco"
+		return "Segure E para quebrar o tronco com as garras"
 	for n in world.nests:
 		var ci: int = n.open_chamber_near(p2, 3.0)
 		if ci < 0:
@@ -589,6 +596,17 @@ class Compass extends Control:
 				var q := Vector2(x, 10)
 				draw_colored_polygon(PackedVector2Array([q + Vector2(-8, 6), q + Vector2(-8, -3), q + Vector2(-4, 2), q + Vector2(0, -6),
 					q + Vector2(4, 2), q + Vector2(8, -3), q + Vector2(8, 6)]), Color(1.0, 0.82, 0.25))
+		# Saída para a área 2 (quando a clareira fica limpa).
+		if world.exit_breakable and not world.exit_open:
+			var ep: Vector2 = world.cliffs.exit_center(1.6)
+			var exit3 := Vector3(ep.x, 0.0, ep.y)
+			var ex := clampf(_x_for(_yaw_to(exit3)), 16, size.x - 16)
+			var pulse := 0.7 + 0.3 * sin(now * 5.0)
+			var gold := Color(1.0, 0.85, 0.3, pulse)
+			var tip := Vector2(ex, size.y - 30)
+			draw_colored_polygon(PackedVector2Array([tip + Vector2(-10, -12), tip + Vector2(10, -12), tip]), gold)
+			var dist := Vector2(player.global_position.x, player.global_position.z).distance_to(ep)
+			draw_string(font, Vector2(ex - 34, 12), "SAÍDA %dm" % int(dist), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, gold)
 		var scent: Color = Settings.sniff_color()
 		if now < sniff_until:
 			for cpos in chamber_marks:
@@ -625,8 +643,9 @@ class Crosshair extends Control:
 		var r := 13.0 if locked else 10.0
 		draw_arc(c, r, 0, TAU, 32, col, 2.5, true)
 		draw_circle(c, 2.5, col)
-		if player.dig_progress > 0.0:
-			draw_arc(c, 24, -PI * 0.5, -PI * 0.5 + TAU * player.dig_progress, 48, Color(1, 0.75, 0.3), 5, true)
+		var work := maxf(player.dig_progress, player.exit_progress)
+		if work > 0.0:
+			draw_arc(c, 24, -PI * 0.5, -PI * 0.5 + TAU * work, 48, Color(1, 0.75, 0.3), 5, true)
 
 
 class AbilityIcon extends Control:

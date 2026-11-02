@@ -3,6 +3,7 @@ extends Control
 ## Um único nó com várias telas; o Main troca entre elas.
 
 signal play_pressed
+signal continue_pressed
 signal resume_pressed
 signal restart_pressed
 signal main_menu_pressed
@@ -15,6 +16,7 @@ var _current := ""
 var _back_to := "title"
 var _end_stats: Label
 var _end_title: Label
+var _restart_button: Button
 
 
 func _ready() -> void:
@@ -138,7 +140,12 @@ func _build_title() -> Control:
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 18)
 	v.add_child(gap)
+	var cont := UiTheme.button("Continuar")
+	cont.name = "Continue"
+	cont.pressed.connect(func(): continue_pressed.emit())
+	v.add_child(cont)
 	var play := UiTheme.button("Jogar")
+	play.name = "Play"
 	play.pressed.connect(func(): play_pressed.emit())
 	v.add_child(play)
 	var how := UiTheme.button("Como jogar")
@@ -150,13 +157,21 @@ func _build_title() -> Control:
 	var quit := UiTheme.button("Sair")
 	quit.pressed.connect(func(): Sfx.quit_game())
 	v.add_child(quit)
-	for b in [play, how, settings, quit]:
+	for b in [cont, play, how, settings, quit]:
 		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var record := UiTheme.label("", 20, UiTheme.SAND)
 	record.name = "Record"
 	v.add_child(record)
 	s.visibility_changed.connect(_update_record.bind(record))
+	s.visibility_changed.connect(_update_title_buttons.bind(cont, play))
 	return s
+
+
+## Com jogo salvo: "Continuar" aparece e "Jogar" vira "Novo jogo".
+func _update_title_buttons(cont: Button, play: Button) -> void:
+	var saved := GameState.has_saved_game()
+	cont.visible = saved
+	play.text = "Novo jogo" if saved else "Jogar"
 
 
 func _update_record(record: Label) -> void:
@@ -164,6 +179,23 @@ func _update_record(record: Label) -> void:
 		record.text = "Seu recorde: 1000 formigas em %s" % GameState.format_time(GameState.best_time)
 	else:
 		record.text = ""
+
+
+## Recomeçar apaga o jogo salvo: pede um segundo clique para confirmar.
+func _confirm_restart(b: Button) -> void:
+	if b.get_meta("armed", false):
+		b.set_meta("armed", false)
+		restart_pressed.emit()
+		return
+	b.set_meta("armed", true)
+	b.text = "Apaga o progresso! Clique de novo"
+	get_tree().create_timer(3.0, true).timeout.connect(_disarm_restart.bind(b))
+
+
+func _disarm_restart(b: Button) -> void:
+	if is_instance_valid(b):
+		b.set_meta("armed", false)
+		b.text = "Recomeçar do zero"
 
 
 func _goto(screen_name: String, back: String) -> void:
@@ -182,12 +214,16 @@ func _build_pause() -> Control:
 		["Árvore de habilidades", func(): skill_tree_pressed.emit()],
 		["Como jogar", _goto.bind("howto", "pause")],
 		["Configurações", _goto.bind("settings", "pause")],
-		["Recomeçar a fase", func(): restart_pressed.emit()],
-		["Menu principal", func(): main_menu_pressed.emit()],
+		["Recomeçar do zero", _confirm_restart],
+		["Salvar e voltar ao menu", func(): main_menu_pressed.emit()],
 	]
 	for item in buttons:
 		var b := UiTheme.button(item[0], 380)
-		b.pressed.connect(item[1])
+		if item[0] == "Recomeçar do zero":
+			_restart_button = b
+			b.pressed.connect(item[1].bind(b))
+		else:
+			b.pressed.connect(item[1])
 		v.add_child(b)
 	return s
 
@@ -206,19 +242,20 @@ func _build_howto() -> Control:
 	text.add_theme_font_override("bold_font", UiTheme.FONT_BOLD)
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
-	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]1000 formigas[/b]. Coma todas para terminar a fase.
-As formigas andam pelas [b]trilhas de terra[/b] entre os formigueiros e os arbustos, e saem em [b]ondas[/b] cada vez maiores.
+	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]1000 formigas[/b]. Coma todas e deixe os [b]8 formigueiros[/b] limpos.
+Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
 
-[b]WASD[/b] andar · [b]Shift[/b] correr · [b]Mouse[/b] olhar
-[b]Clique esquerdo (segurado)[/b] lamber: a língua vai até a mira e gruda as formigas
-[b]Q[/b] ou [b]clique direito[/b] farejar: mostra as formigas através do capim
-[b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa
+[b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)
+[b]Clique esquerdo (segurado)[/b] lamber: a língua vai até a mira e gruda uma formiga (com a Lambida, gruda várias)
+[b]Q[/b] ou [b]clique direito[/b] farejar · [b]E (segurado)[/b] abrir uma câmara (com Cavar)
+[b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho)
 
 [b]Dicas[/b]
-· Correr assusta as formigas: chegue andando e lamba de longe.
-· [b]Soldados[/b] (vermelho-escuro, cabeçudos) aguentam uma lambida antes de grudar.
+· Os montinhos de terra clara nos formigueiros são [b]câmaras fechadas[/b]: cave para comer quem mora lá.
+· Os formigueiros grandes guardam uma [b]rainha[/b]: coma as formigas em volta dela e ela vale 20.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
-· A cada [b]100 formigas[/b] você ganha 1 ponto de habilidade. São 9 pontos para 12 habilidades.
+· Correr assusta as formigas: chegue andando e lamba de longe.
+· A cada [b]100 formigas[/b], 1 ponto de habilidade. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
 · Não dá para perder: aproveite o pôr do sol e tente bater seu recorde de tempo."""
 	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)

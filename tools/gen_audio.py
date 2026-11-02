@@ -250,6 +250,33 @@ def sfx_complete():
     return out
 
 
+def sfx_chamber():
+    out = np.zeros(int(SR * 1.0))
+    for k, f in enumerate((659.25, 830.61, 987.77)):
+        place(out, bell(f, 0.8, 0.3) * 0.8, k * 0.07)
+    return out
+
+
+def sfx_nest_clean():
+    out = np.zeros(int(SR * 2.2))
+    for k, f in enumerate((523.25, 659.25, 783.99, 1046.5, 1318.5)):
+        place(out, pluck(f, 1.4) * 0.5, k * 0.1)
+        place(out, bell(f, 1.2, 0.5) * 0.35, k * 0.1 + 0.02)
+    for k in range(8):
+        place(out, shaker(0.08) * 0.2, 0.5 + k * 0.12)
+    return out
+
+
+def sfx_queen():
+    out = np.zeros(int(SR * 2.6))
+    place(out, drum(82, 0.6) * 1.1, 0.0)
+    for k, f in enumerate((392.0, 493.88, 587.33, 783.99, 987.77, 1174.66)):
+        place(out, bell(f, 1.6, 0.7) * 0.55, 0.12 + k * 0.09)
+    for f in (392.0, 493.88, 587.33):
+        place(out, tone(f * 0.5, 2.0, ((1, 1.0), (2, 0.4), (3, 0.2)), 1.0, 0.02) * 0.35, 0.7)
+    return out
+
+
 def sfx_ui_hover():
     return tone(1700, 0.05, ((1, 1),), 0.012)
 
@@ -386,6 +413,9 @@ def main():
     save("ui_open", sfx_ui_open(), 0.6)
     save("amb_cerrado", amb_cerrado(), 0.7, loop=True)
     save("music_violao", music_violao(), 0.75, loop=True)
+    save("chamber", sfx_chamber(), 0.7)
+    save("nest_clean", sfx_nest_clean(), 0.8)
+    save("queen", sfx_queen(), 0.85)
     print("sons gerados em", os.path.abspath(OUT))
 
 

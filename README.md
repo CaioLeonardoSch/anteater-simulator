@@ -15,7 +15,7 @@ produção, os protótipos e as decisões, num lugar só.
 
 | | |
 |---|---|
-| ![Lambendo formigas na trilha](docs/screenshots/trilha.jpg) | ![Formigueiro escavado](docs/screenshots/formigueiro.jpg) |
+| ![Lambendo formigas perto de um formigueiro](docs/screenshots/trilha.jpg) | ![Câmaras abertas, com a rainha brilhando no topo](docs/screenshots/formigueiro.jpg) |
 | ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
@@ -25,15 +25,11 @@ produção, os protótipos e as decisões, num lugar só.
 
 ## A demo jogável
 
-Uma fase no **cerrado ao entardecer**: a colônia tem **1000 formigas**, que
-saem de 5 formigueiros, andam pelas trilhas de terra e chegam em **ondas** cada
-vez maiores. A cada **100 formigas** você ganha um ponto para a árvore de
-habilidades. O sol vai se pondo conforme você come.
-
-> A demo veio antes das decisões de 02/11/2026. As mudanças para alinhá-la ao
-> jogo decidido (ninhos com câmaras, rainha, 5 habilidades, sem formigas-soldado,
-> região de 45 a 60 minutos) estão na seção 4 do
-> [`docs/DESIGN.md`](docs/DESIGN.md).
+O **Cerrado ao entardecer**: a colônia tem **1000 formigas** e **8
+formigueiros**. Parte das formigas anda pelas trilhas de terra e chega em
+**ondas**; o resto mora nas **câmaras** dos formigueiros, que você abre cavando.
+Os 3 formigueiros grandes guardam uma **rainha**. A cada **100 formigas** você
+ganha um ponto de habilidade, e o sol vai se pondo conforme você come.
 
 ### Como rodar
 
@@ -54,10 +50,10 @@ gráfica se o PC sofrer.
 |---|---|---|
 | Andar | `W` `A` `S` `D` | analógico esquerdo |
 | Olhar | mouse | analógico direito |
-| Correr | `Shift` | clicar o analógico esquerdo |
+| Correr* | `Shift` | clicar o analógico esquerdo |
 | **Lamber** (segure) | clique esquerdo | `RT` |
 | Farejar | `Q` ou clique direito | `LT` |
-| Cavar formigueiro* | segure `E` | `X` |
+| Abrir câmara* | segure `E` perto dela | `X` |
 | Tremor* | `Espaço` | `A` |
 | Árvore de habilidades | `Tab` | `Back` |
 | Pausa | `Esc` | `Start` |
@@ -66,18 +62,33 @@ gráfica se o PC sofrer.
 
 ### O que tem na demo hoje
 
+- **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
+  fechadas. Com **Cavar** (Garras), segure `E` perto de uma para abri-la.
+- **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
+  outras formigas. Coma todas em volta e ela vale **20**.
 - **Trilhas e ondas:** quem volta para o formigueiro sai de novo mais tarde; só
-  as que você come somem de vez. Quando restam ~90, todas saem de casa.
+  as que você come somem de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
-- **Faro:** mostra as formigas através do capim e aponta o maior grupo na
-  bússola.
+- **Faro:** mostra as formigas através do capim; nos níveis mais altos, a
+  bússola mostra quanto falta em cada formigueiro e onde estão as rainhas.
 - **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
   mais longa por 6 s.
-- **Formigas-soldado** aguentam uma lambida antes de grudar (vão sair, pelas
-  decisões de 02/11).
-- **Árvore da demo:** 3 ramos (Língua, Garras, Corpo) com 4 níveis cada, ou
-  seja, 9 pontos para 12 melhorias. Vai virar as 5 habilidades decididas.
-- **Sem derrota:** o recorde de tempo fica salvo.
+- **Progresso:** formigueiro limpo ganha flores, e o contador mostra quantos
+  faltam.
+- **Sem derrota.** O jogo **salva sozinho**; na tela inicial aparecem
+  **Continuar** e **Novo jogo**.
+
+### Habilidades
+
+| Habilidade | Níveis |
+|---|---|
+| **Língua** | Lambida (pega várias de uma vez) · Língua Comprida · Saliva Grudenta · Língua Turbo |
+| **Garras** | Cavar · Garras Fortes · Tremor · Terremoto |
+| **Patas** | Corrida · Patas Ligeiras · Galope Silencioso |
+| **Faro** | Faro Apurado · Faro de Ninho · Faro Lendário |
+| **Escalada + Cauda** | Escalada · Cauda Preênsil (só ao chegar à floresta) |
+
+1 ponto a cada 100 formigas; dá para redistribuir os pontos de graça na árvore.
 
 ### Qualidade gráfica
 

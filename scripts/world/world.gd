@@ -24,6 +24,7 @@ var vegetation: Vegetation
 var grass: Grass
 var player_start := Vector2(2.0, 6.0)
 var player_start_yaw := 0.0
+var start_trail_index := 0
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -36,17 +37,26 @@ var day_progress := 0.0
 var _day_target := 0.0
 var _rng := RandomNumberGenerator.new()
 
+## 8 formigueiros; os grandes ("big") têm a câmara da rainha.
 const NEST_LAYOUT := [
-	{"name": "Formigueiro Norte", "pos": Vector2(4, -40)},
-	{"name": "Formigueiro Leste", "pos": Vector2(41, -7)},
-	{"name": "Formigueiro Sudeste", "pos": Vector2(27, 35)},
-	{"name": "Formigueiro Sudoeste", "pos": Vector2(-29, 33)},
-	{"name": "Formigueiro Oeste", "pos": Vector2(-43, -11)},
+	{"name": "Formigueiro Norte", "pos": Vector2(4, -42), "big": true},
+	{"name": "Formigueiro Nordeste", "pos": Vector2(32, -30), "big": false},
+	{"name": "Formigueiro Leste", "pos": Vector2(44, 2), "big": true},
+	{"name": "Formigueiro Sudeste", "pos": Vector2(28, 36), "big": false},
+	{"name": "Formigueiro Sul", "pos": Vector2(-2, 46), "big": true},
+	{"name": "Formigueiro Sudoeste", "pos": Vector2(-32, 30), "big": false},
+	{"name": "Formigueiro Oeste", "pos": Vector2(-45, -6), "big": false},
+	{"name": "Formigueiro Noroeste", "pos": Vector2(-26, -36), "big": false},
 ]
+## Arbustos onde as saúvas cortam folhas.
 const FOOD_LAYOUT := [
-	Vector2(-9, -23), Vector2(20, -25), Vector2(19, 8), Vector2(-2, 21),
-	Vector2(-22, 5), Vector2(-31, -31), Vector2(42, 22)]
-const LINKS := [[0, 0], [0, 1], [1, 1], [1, 2], [2, 2], [2, 3], [2, 6], [3, 3], [3, 4], [4, 4], [4, 5], [4, 0]]
+	Vector2(-9, -24), Vector2(18, -20), Vector2(26, 4), Vector2(12, 24),
+	Vector2(-14, 22), Vector2(-26, -2)]
+## Trilhas: [formigueiro, arbusto].
+const LINKS := [[0, 0], [0, 1], [1, 1], [2, 2], [2, 1], [3, 3], [3, 2], [4, 3], [4, 4],
+	[5, 4], [5, 5], [6, 5], [7, 0], [7, 5]]
+## Trilha onde o jogador começa (formigueiro Leste -> arbusto 2), olhando para o sol.
+const START_LINK := [2, 2]
 
 
 func build() -> void:
@@ -57,7 +67,7 @@ func build() -> void:
 	var spots: Array[Vector3] = []
 	for i in NEST_LAYOUT.size():
 		var p: Vector2 = NEST_LAYOUT[i].pos
-		spots.append(Vector3(p.x, p.y, 4.5))
+		spots.append(Vector3(p.x, p.y, 5.2 if NEST_LAYOUT[i].big else 4.5))
 	for f in FOOD_LAYOUT:
 		food_sources.append(f)
 	terrain = Terrain.new()
@@ -68,7 +78,10 @@ func build() -> void:
 	for i in NEST_LAYOUT.size():
 		var nest: Nest = Nest.new()
 		nest.name = "Nest%d" % i
-		nest.setup(i, NEST_LAYOUT[i].name, NEST_LAYOUT[i].pos, _rng.randf_range(1.6, 2.0), _rng.randf_range(0.55, 0.7))
+		var big: bool = NEST_LAYOUT[i].big
+		var r := _rng.randf_range(2.25, 2.45) if big else _rng.randf_range(1.6, 1.9)
+		var h := _rng.randf_range(0.72, 0.8) if big else _rng.randf_range(0.55, 0.65)
+		nest.setup(i, NEST_LAYOUT[i].name, NEST_LAYOUT[i].pos, r, h, big)
 		nests.append(nest)
 	# Trilhas.
 	trails = TrailNetwork.new(SEED)
@@ -86,7 +99,10 @@ func build() -> void:
 			terrain.mask_paint(p.x, p.y, 0.62, 0, 1.0)
 			terrain.mask_paint(p.x, p.y, 1.25, 0, 0.35)
 	# Início: ao lado de uma trilha movimentada, olhando ao longo dela, contra o sol.
-	var start_trail = trails.trails[5]
+	for k in LINKS.size():
+		if LINKS[k] == START_LINK:
+			start_trail_index = k
+	var start_trail = trails.trails[start_trail_index]
 	var s0: float = start_trail.length * 0.5
 	player_start = start_trail.point_at(s0) + start_trail.side_at(s0) * 1.4
 	var target: Vector2 = start_trail.point_at(start_trail.length * 0.72)
@@ -96,7 +112,11 @@ func build() -> void:
 		terrain.mask_paint(nest.center2.x, nest.center2.y, nest.radius + 1.0, 1, 1.0)
 	for f in food_sources:
 		terrain.mask_paint(f.x, f.y, 1.6, 1, 0.8)
-	# Nós dos formigueiros.
+	# Nós dos formigueiros (com as câmaras longe dos olheiros das trilhas).
+	# As câmaras são planejadas antes de montar qualquer monte, para o mapa não
+	# mudar quando o visual dos montes muda.
+	for nest in nests:
+		nest.plan_chambers(_rng)
 	for nest in nests:
 		nest.position = Vector3(nest.center2.x, terrain.get_height(nest.center2.x, nest.center2.y), nest.center2.y)
 		add_child(nest)

@@ -43,7 +43,7 @@ buscamos, no espírito delas:
 | **Documento de design** | As regras e ideias do jogo inteiro | Seção 6 deste documento | Consolidado aqui |
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | `docs/PLANO.md` na branch `m1-prototipo-do-loop` (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Branch `m1-prototipo-do-loop` (detalhes na seção 8) | Jogável |
-| **Demo 3D** | Uma fase no cerrado ao entardecer, em 1ª pessoa, com 1000 formigas e árvore de habilidades | PR #1 (detalhes na seção 8) | Jogável (precisa de ajustes para seguir as decisões, seção 4) |
+| **Demo 3D** | O Cerrado ao entardecer, em 1ª pessoa: 1000 formigas, 8 formigueiros com câmaras e rainhas, 5 habilidades e jogo salvo | PR #1 (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -66,8 +66,9 @@ buscamos, no espírito delas:
 
 ### Tamanho
 
-- **Só o Cerrado por enquanto.** O cerrado é a savana brasileira (a "Savana" do
-  documento original).
+- **Um mapa só, com várias regiões.** Você anda de uma região para a outra sem
+  telas de carregamento. Por enquanto, só o Cerrado está pronto.
+- O cerrado é a savana brasileira (a "Savana" do documento original).
 - O Cerrado é uma **região completa de 45 a 60 minutos**, com **8 ninhos**.
 - **Os ninhos do Cerrado são só formigueiros.** Os cupinzeiros aparecem apenas
   como cenário.
@@ -76,7 +77,8 @@ buscamos, no espírito delas:
   esvaziar os ninhos, achar as últimas formigas com o Faro e explorar, e não de
   colocar mais formigas. Se não bastar, o número muda nos testes.
 - **Depois do Cerrado:** **outra floresta, com lagoas, cupinzeiros e mais**.
-  O Quintal urbano fica para mais tarde.
+  As lagoas são só cenário por enquanto (nada de nadar). O Quintal urbano fica
+  para mais tarde.
 
 ### Como se come: os dois jeitos juntos
 
@@ -98,7 +100,7 @@ buscamos, no espírito delas:
   ajuda a encontrá-la.
 - **Tanajura:** rainha voadora e rara que cruza o mapa. Comê-la deixa a língua
   mais rápida por alguns segundos.
-- **Sem insetos resistentes:** as formigas-soldado da demo saem.
+- **Sem insetos resistentes:** as formigas-soldado saíram da demo.
 
 ### Habilidades: as 5 do plano
 
@@ -114,38 +116,51 @@ novos (lambida, cavar, escalar) também são comprados assim.
 | **Faro** | Achar insetos e ninhos | Nível 1: "sobrou algo perto"; nível 2: "está nesta área"; nível 3: "está exatamente aqui", e acha a rainha |
 | **Escalada + Cauda** | Alcançar o que está no alto | Subir em cupinzeiros altos e árvores; pendurar-se pela cauda para alcançar ninhos difíceis |
 
+**Habilidades por região:** a **Escalada + Cauda** aparece na árvore desde o
+começo, mas só pode ser comprada **quando você chegar à floresta**, onde ela é
+usada.
+
 **Fora por enquanto:** Camuflagem (repete o que a Língua já faz) e Natação. O
 **Focinho** volta junto com o Quintal urbano.
 
 ---
 
-## 4. O que muda na demo para seguir as decisões
+## 4. A demo hoje (atualizada em 02/11/2026)
 
-1. **Ninhos com câmaras:** hoje cavar um formigueiro só solta formigas. Ele
-   passa a ter câmaras para esvaziar, com a rainha nos ninhos grandes.
-2. **Rainha:** entra como no documento (só nos ninhos grandes, vale 15 a 20).
-3. **Soldados:** saem.
-4. **Habilidades:** os 3 ramos de hoje (Língua, Garras, Corpo) viram as 5 do
-   plano. A "Pelagem Silenciosa" sai, porque é a Camuflagem com outro nome.
-5. **Duração:** a fase de 10 minutos vira uma região de 45 a 60 minutos com 8
-   formigueiros (hoje são 5), ainda com **1000 formigas** e 1 ponto a cada 100.
-   O tempo a mais vem dos ninhos com câmaras, da busca pelas últimas formigas e
-   da exploração.
-6. **Salvar o progresso:** com 45 a 60 minutos, o jogo precisa salvar. A demo
-   ainda não salva.
+Feito, seguindo as decisões:
 
-Plataforma (PC), visual, câmera e tanajura já estão como foi decidido.
+1. **8 formigueiros**, 3 deles grandes. Cada um tem **câmaras fechadas**
+   (montinhos de terra clara). Segurando **E** com a habilidade Cavar, a câmara
+   abre e as moradoras aparecem dentro do buraco.
+2. **Rainha** na câmara do topo dos 3 formigueiros grandes. Brilha de leve, fica
+   protegida enquanto houver formigas na câmara e **vale 20**.
+3. **As 1000 formigas** são divididas assim: cerca de 45% andam pelas trilhas
+   (e voltam para casa), o resto mora nas câmaras. 940 operárias + 3 rainhas × 20.
+4. **Soldados:** saíram. A **tanajura** continua.
+5. **As 5 habilidades**, compradas com pontos (1 a cada 100). No começo a língua
+   pega **uma formiga por vez**; a **Lambida** passa a pegar várias (o "gesto
+   novo" do documento). Correr também é uma habilidade (Patas). A **Escalada +
+   Cauda** aparece travada até a floresta. Dá para **redistribuir os pontos**.
+6. **Progresso visível:** contador de formigueiros limpos, avisos de câmara
+   limpa, e florzinhas brotam no formigueiro quando ele fica limpo. O Faro nível
+   2 mostra na bússola quanto falta em cada formigueiro; o nível 3 marca as
+   rainhas.
+7. **Jogo salvo:** salva sozinho a cada 30 s, ao pausar e ao sair. A tela
+   inicial ganha **Continuar** e **Novo jogo**.
+
+Ainda a ajustar:
+
+- **Duração:** num teste automático (um robô que mira perfeito), as 1000
+  formigas acabaram em cerca de 6 minutos. Uma pessoa deve levar bem mais, mas
+  é provável que ainda fique abaixo dos 45 a 60 minutos. É o próximo ponto a
+  medir com jogadores.
 
 ---
 
 ## 5. Ainda em aberto
 
-- **Escalada + Cauda no Cerrado:** se os ninhos do Cerrado são só formigueiros
-  no chão, onde o tamanduá vai escalar? Algumas ideias: formigueiros em árvores
-  ou em cima de cupinzeiros, ou deixar a Escalada para a floresta.
-- **A floresta com lagoas:** as lagoas trazem de volta a Natação (que estava
-  fora)? Os cupinzeiros de lá são ninhos, com rainha? Os formigueiros de folha
-  e os ninhos em árvores do documento original continuam?
+- **A floresta:** os cupinzeiros de lá são ninhos, com rainha? Os formigueiros
+  de folha e os ninhos em árvores do documento original continuam?
 - **Quintal urbano:** quando entra, e se o Focinho volta com ele.
 
 ---
@@ -259,9 +274,9 @@ Também recomendava lançar a página na Steam **antes** da segunda região.
 | **M4: Página na Steam + demo** | Medir interesse (lista de desejos) antes da próxima região | Página no ar com demo |
 | **M5: Próxima região + lançamento** | Polimento e lançamento | Jogo lançado |
 
-**Onde estamos:** a demo 3D já cobre boa parte da M2 (visual final, câmera de
-verdade, andar entre ninhos, upgrades). Faltam as câmaras dentro dos ninhos, a
-rainha e salvar o progresso (seção 4).
+**Onde estamos:** a demo 3D já cobre a M2 (visual final, câmera de verdade,
+andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com 8
+formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 
 ---
 
@@ -280,14 +295,14 @@ rainha e salvar o progresso (seção 4).
 ### Demo 3D, PR #1
 
 - **1ª pessoa** no cerrado ao entardecer; o sol vai se pondo enquanto você come.
-- **1000 formigas** saem de 5 formigueiros, andam por trilhas até os arbustos e
-  chegam em **ondas** cada vez maiores. Correr assusta as formigas.
+- **8 formigueiros** (3 com rainha) e **25 câmaras** para abrir e esvaziar.
+- Formigas andando por **trilhas** até os arbustos, em **ondas** cada vez
+  maiores. Correr assusta as formigas.
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
-  através do capim; **cavar formigueiros**; **tremor** que deixa as formigas tontas.
-- **Formigas-soldado** (vão sair) e **tanajura** (fica).
-- **Árvore de habilidades:** 1 ponto a cada 100 formigas, 3 ramos (Língua,
-  Garras, Corpo) com 4 níveis cada (vai virar as 5 habilidades decididas).
-- Uma partida dura de 6 a 10 minutos.
+  através do capim; **tremor** que deixa as formigas tontas.
+- **Tanajura** voadora que dá o Frenesi.
+- **5 habilidades** com pontos (1 a cada 100) e redistribuição grátis.
+- **Salva sozinho**; dá para continuar de onde parou.
 
 ---
 
@@ -309,3 +324,6 @@ rainha e salvar o progresso (seção 4).
 | 02/11/2026 | Preço | Plano: pesquisar quanto cobram os similares | Até R$ 20 |
 | 02/11/2026 | Depois do Cerrado | Documento: Floresta (formigueiros de folha, ninhos em árvores) e Quintal | Outra floresta, com lagoas e cupinzeiros |
 | 02/11/2026 | Inspirações | Documento: Leaf it Alone, Librarian e Supermarket Chaos | Principais: Leaf it Alone e Librarian |
+| 02/11/2026 | Mapa | Documento: regiões separadas | Um mapa só, com várias regiões |
+| 02/11/2026 | Escalada + Cauda | Sem uso no Cerrado (ninhos só no chão) | Só pode ser comprada ao chegar à floresta |
+| 02/11/2026 | Lagoas da floresta | Poderiam trazer a Natação | Só cenário por enquanto |

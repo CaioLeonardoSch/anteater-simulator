@@ -70,7 +70,7 @@ Também dá para ir direto de texto para 3D (*text-to-3D*) com os mesmos prompts
 |---|---|---|---|
 | `formigueiro.glb` | Monte de terra das saúvas | 5 formigueiros do mapa | **já gerado** |
 | `formiga_operaria.glb` | Saúva operária | centenas na tela | alta |
-| `formiga_soldado.glb` | Saúva soldado (cabeçuda) | ~10% das formigas | alta |
+| `formiga_rainha.glb` | Rainha do formigueiro | 3 formigueiros grandes | alta |
 | `formiga_tanajura.glb` | Tanajura (rainha alada) | raras, ativam o Frenesi | média |
 | `tamandua_focinho.glb` | Focinho visto pelos olhos | 1ª pessoa, o tempo todo | alta |
 | `tamandua.glb` | Tamanduá-bandeira inteiro | menu inicial | média |
@@ -106,7 +106,9 @@ subtle hand-painted texture detail, clean readable silhouette. Single game-ready
 prop, centered, isolated, no background.
 ```
 
-No jogo: ~3,8 m de largura × 0,6 m de altura (escala automática).
+No jogo: de 3,4 a 5 m de largura e de 0,55 a 0,8 m de altura (escala automática).
+As câmaras (tampas de terra clara e os buracos) são colocadas pelo jogo por cima
+do modelo, então ele não precisa ter buracos específicos.
 
 ### `formiga_operaria.glb`: saúva operária
 
@@ -126,17 +128,19 @@ sozinho, reconhecendo-as pela posição; pernas coladas no corpo não se mexem
 direito. Mantenha **até ~4 mil triângulos**, porque podem aparecer centenas ao
 mesmo tempo (no gerador, use qualidade média ou peça "low polygon budget").
 
-### `formiga_soldado.glb`: saúva soldado
+### `formiga_rainha.glb`: rainha do formigueiro
 
 ```
-Leafcutter ant soldier (Brazilian "saúva" soldier caste), huge heart-shaped
-head almost twice the size of the body, massive curved crushing mandibles,
-small dark glossy eyes, short elbowed antennae, compact thorax, six sturdy legs
-spread wide in a symmetrical neutral standing pose clearly separated from the
-body, deep crimson to dark brown glossy chitin, tough and grumpy but appealing,
-facing forward, low polygon budget for crowds
+Leafcutter ant queen (Brazilian "saúva" queen, "içá" after losing her wings),
+enormous round glossy abdomen striped with soft golden bands, regal
+heart-shaped head with big dark eyes and small curved mandibles, sturdy
+thorax with tiny wing scars, six legs spread wide in a symmetrical resting
+pose clearly separated from the body, warm chestnut and amber colors with a
+subtle golden sheen, plump, calm and majestic, facing forward
 ```
-+ sufixo de estilo. Mesmas regras de pernas e de polígonos da operária.
++ sufixo de estilo. Ela fica parada no centro da câmara real (~44 cm no jogo),
+brilhando de leve para dar para achar. São só 3 no mapa, então pode ter mais
+detalhe que as operárias (até ~15 mil triângulos).
 
 ### `formiga_tanajura.glb`: tanajura (içá)
 

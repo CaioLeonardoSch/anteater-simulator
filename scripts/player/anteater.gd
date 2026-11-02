@@ -2,11 +2,11 @@ extends CharacterBody3D
 ## O tamanduá-bandeira em primeira pessoa: anda, corre, fareja, lambe formigas
 ## com a língua comprida, cava formigueiros e bate no chão (com os upgrades).
 
-signal ate(count: int, tanajuras: int)
+signal ate(count: int, tanajuras: int, queens: int)
 signal sniffed(count: int)
-signal dug(nest_name: String, released: int)
+signal dug(nest, chamber_index: int, released: int)
 signal tremor_used(count: int)
-signal soldier_knocked
+signal queen_blocked
 
 const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
@@ -56,6 +56,10 @@ var tremor_cd := 0.0
 var pull_time := 0.0
 var dig_progress := 0.0
 var near_nest = null
+## Câmara fechada ao alcance das garras (formigueiro + índice).
+var dig_nest = null
+var dig_chamber := -1
+const DIG_REACH := 1.4
 var arm_anim := 0.0
 var _dig_swipe := 0.0
 var _dig_sound := 0.0
@@ -73,6 +77,10 @@ var _bot_run := false
 var _bot_input := Vector2.ZERO
 var _bot_sniff := 0.0
 var _bot_dig := false
+var _bot_check := 1.2
+var _bot_last_pos := Vector2.ZERO
+var _bot_side := 1.0
+var _bot_side_t := 0.0
 
 
 func _ready() -> void:
@@ -187,14 +195,14 @@ func _physics_process(delta: float) -> void:
 	var want_run := false
 	if controls_enabled:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		want_run = Input.is_action_pressed("run")
+		want_run = Input.is_action_pressed("run") and GameState.can_run()
 		var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
 		yaw -= look.x * delta * 2.6
 		pitch = clampf(pitch - look.y * delta * 2.0, deg_to_rad(-75.0), deg_to_rad(40.0))
 	elif bot:
 		_bot_update(delta)
 		input = _bot_input
-		want_run = _bot_run
+		want_run = _bot_run and GameState.can_run()
 	var digging := _is_digging()
 	var target_speed := GameState.run_speed() if want_run else GameState.walk_speed()
 	if digging:
@@ -268,7 +276,7 @@ func _process(delta: float) -> void:
 
 
 func _is_digging() -> bool:
-	if near_nest == null or not GameState.can_dig() or near_nest.dig_cooldown > 0.0:
+	if dig_nest == null or dig_chamber < 0 or not GameState.can_dig():
 		return false
 	if controls_enabled:
 		return Input.is_action_pressed("dig")
@@ -347,14 +355,14 @@ func _start_flick() -> void:
 
 
 func _capture() -> void:
-	var res: Dictionary = swarm.lick(t_target, GameState.capture_radius(), mouth_real(), GameState.tongue_sweeps())
+	var res: Dictionary = swarm.lick(t_target, GameState.capture_radius(), mouth_real(), GameState.lick_grabs_all())
 	t_stuck = res.captured
 	_stuck_offsets.clear()
 	for i in t_stuck.size():
 		_stuck_offsets.append(Vector3(randf_range(-1, 1), randf_range(-0.3, 1), randf_range(-1, 1)) * 0.04)
-	if res.knocked > 0:
-		soldier_knocked.emit()
-		Sfx.play("knock", -6.0, 1.0, 0.1)
+	if res.queen_protected and t_stuck.is_empty():
+		queen_blocked.emit()
+		Sfx.play("deny", -8.0)
 	if t_stuck.size() > 0:
 		Sfx.play("slurp", -4.0, 1.0, 0.1)
 
@@ -373,16 +381,23 @@ func _swallow() -> void:
 	if n == 0:
 		return
 	var taj := 0
+	var queens := 0
+	var value := 0
 	for i in t_stuck:
 		if swarm.kind[i] == swarm.TANAJURA:
 			taj += 1
+		elif swarm.kind[i] == swarm.QUEEN:
+			queens += 1
+		value += colony.ant_eaten(i)
 		swarm.despawn(i)
 	t_stuck = PackedInt32Array()
-	GameState.add_eaten(n, taj)
-	ate.emit(n, taj)
+	GameState.add_eaten(value, taj, queens)
+	ate.emit(value, taj, queens)
 	Sfx.play("munch", -3.0 + minf(n, 8) * 0.5, 1.0, 0.1, 3)
 	if taj > 0:
 		Sfx.play("frenzy", -2.0)
+	if queens > 0:
+		Sfx.play("queen", 0.0)
 
 
 func _update_tongue_visual() -> void:
@@ -425,15 +440,25 @@ func _update_abilities(delta: float) -> void:
 			want_sniff = true
 	if want_sniff and sniff_cd <= 0.0:
 		do_sniff()
-	# Formigueiro perto?
+	# Formigueiro e câmara fechada mais perto.
 	near_nest = null
 	var p2 := Vector2(global_position.x, global_position.z)
 	for n in world.nests:
-		if p2.distance_to(n.center2) < n.radius + 1.7:
+		if p2.distance_to(n.center2) < n.radius + 2.0:
 			near_nest = n
 			break
-	for n in world.nests:
-		n.dig_cooldown = maxf(n.dig_cooldown - delta, 0.0)
+	var prev_nest = dig_nest
+	var prev_chamber := dig_chamber
+	dig_nest = null
+	dig_chamber = -1
+	if near_nest != null:
+		var ci: int = near_nest.closed_chamber_near(p2, DIG_REACH)
+		if ci >= 0:
+			dig_nest = near_nest
+			dig_chamber = ci
+	if prev_nest != null and (prev_nest != dig_nest or prev_chamber != dig_chamber):
+		prev_nest.reset_dig(prev_chamber)
+		dig_progress = 0.0
 	if _is_digging():
 		dig_progress += delta / GameState.dig_time()
 		_dig_swipe += delta * 11.0
@@ -441,15 +466,21 @@ func _update_abilities(delta: float) -> void:
 		if _dig_sound <= 0.0:
 			_dig_sound = 0.18
 			Sfx.play("dig", -6.0, 1.0, 0.2)
+		dig_nest.set_dig_progress(dig_chamber, dig_progress)
 		if dig_progress >= 1.0:
 			dig_progress = 0.0
-			var released: int = colony.burst(near_nest, GameState.dig_burst())
-			near_nest.dig_cooldown = 18.0
+			var opened_nest = dig_nest
+			var opened_chamber := dig_chamber
+			var released: int = colony.open_chamber(opened_nest, opened_chamber)
 			shake = 0.5
 			Sfx.play("burst", -2.0)
-			dug.emit(near_nest.display_name, released)
-	else:
+			dug.emit(opened_nest, opened_chamber, released)
+	elif dig_progress > 0.0:
 		dig_progress = maxf(dig_progress - delta * 2.0, 0.0)
+		if dig_nest != null:
+			dig_nest.set_dig_progress(dig_chamber, dig_progress)
+			if dig_progress <= 0.0:
+				dig_nest.reset_dig(dig_chamber)
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
 	if bot and GameState.can_tremor() and tremor_cd <= 0.0 and _bot_target >= 0:
 		want_tremor = swarm.alive[_bot_target] == 1 and swarm.pos[_bot_target].distance_to(global_position) < 4.0
@@ -468,7 +499,9 @@ func do_sniff() -> void:
 	sniff_left = GameState.sniff_duration()
 	var n: int = swarm.sniff(global_position, GameState.sniff_radius(), GameState.sniff_duration())
 	swarm.set_scent_overlay(true)
-	sniff_target = swarm.densest_point(global_position, maxf(GameState.sniff_radius(), 40.0))
+	sniff_target = Vector3.INF
+	if GameState.faro_level() >= 1:
+		sniff_target = swarm.densest_point(global_position, maxf(GameState.sniff_radius(), 40.0))
 	Sfx.play("sniff", -3.0)
 	sniffed.emit(n)
 
@@ -505,7 +538,7 @@ func _bot_update(delta: float) -> void:
 		_bot_target = -1
 		var best := INF
 		for i in swarm.CAPACITY:
-			if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK:
+			if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i):
 				continue
 			var d: float = swarm.pos[i].distance_squared_to(global_position)
 			if d < best:
@@ -514,23 +547,90 @@ func _bot_update(delta: float) -> void:
 	_bot_lick = false
 	_bot_input = Vector2.ZERO
 	_bot_run = false
-	_bot_dig = false
-	if near_nest != null and GameState.can_dig() and near_nest.dig_cooldown <= 0.0:
-		_bot_dig = true
+	_bot_dig = dig_nest != null and GameState.can_dig()
+	if _bot_dig:
 		return
-	if _bot_target < 0:
+	var goal := Vector3.INF
+	var to_chamber := false
+	if _bot_target >= 0:
+		goal = swarm.pos[_bot_target]
+	if GameState.can_dig():
+		var ch := _bot_nearest_closed_chamber()
+		if ch != Vector3.INF and (goal == Vector3.INF or ch.distance_to(global_position) + 10.0 < goal.distance_to(global_position)):
+			goal = ch
+			to_chamber = true
+	if goal == Vector3.INF:
 		return
-	var tp: Vector3 = swarm.pos[_bot_target]
-	var to := tp - camera.global_position
-	var flat := Vector2(to.x, to.z)
-	var dist := flat.length()
+	# Anda até um ponto alcançável (contornando montes), mas mira na formiga.
+	var move_goal := _bot_detour(goal)
+	var cam_pos := camera.global_position
+	var to_goal := goal - cam_pos
+	var dist := Vector2(to_goal.x, to_goal.z).length()
+	var reach := GameState.tongue_range()
+	var moving := to_chamber or dist > reach * 0.75
+	var aim := move_goal if moving else goal
+	var to := aim - cam_pos
+	var flat_d := maxf(Vector2(to.x, to.z).length(), 0.01)
 	var want_yaw := atan2(-to.x, -to.z)
 	yaw = lerp_angle(yaw, want_yaw, minf(delta * 6.0, 1.0))
-	var want_pitch := atan2(to.y, maxf(dist, 0.01))
+	var want_pitch := atan2(to.y, flat_d) if not moving else -0.15
 	pitch = lerpf(pitch, clampf(want_pitch, deg_to_rad(-70.0), deg_to_rad(30.0)), minf(delta * 6.0, 1.0))
-	var reach := GameState.tongue_range()
-	if dist > reach * 0.75:
-		_bot_input = Vector2(0, -1)
-		_bot_run = dist > 9.0
+	if moving:
+		if Vector2(move_goal.x - global_position.x, move_goal.z - global_position.z).length() > 0.25:
+			_bot_input = Vector2(0, -1)
+			_bot_run = dist > 9.0
+			_bot_unstuck(delta)
 	else:
 		_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
+
+
+## Se ficar preso numa árvore ou pedra, dá um passo de lado por um tempo.
+func _bot_unstuck(delta: float) -> void:
+	_bot_check -= delta
+	if _bot_side_t > 0.0:
+		_bot_side_t -= delta
+		_bot_input = Vector2(_bot_side, -0.6).normalized()
+		return
+	if _bot_check <= 0.0:
+		_bot_check = 1.2
+		var moved := Vector2(global_position.x, global_position.z).distance_to(_bot_last_pos)
+		_bot_last_pos = Vector2(global_position.x, global_position.z)
+		if moved < 0.5:
+			_bot_side = -1.0 if randf() < 0.5 else 1.0
+			_bot_side_t = 1.4
+
+
+## Contorna o monte do formigueiro em vez de empurrar a parede de frente.
+func _bot_detour(goal: Vector3) -> Vector3:
+	var me := Vector2(global_position.x, global_position.z)
+	var g := Vector2(goal.x, goal.z)
+	for n in world.nests:
+		var c: Vector2 = n.center2
+		var ring: float = n.radius * 0.5 + 0.75
+		var to_me := me - c
+		var to_goal := g - c
+		if to_me.length() > ring + 2.5 or to_goal.length() > ring + 0.5:
+			continue
+		var ang := to_me.angle_to(to_goal)
+		if absf(ang) < 0.7:
+			# Já está do lado certo: vai até a borda, na direção do alvo.
+			var edge := c + to_goal.normalized() * ring
+			return Vector3(edge.x, goal.y, edge.y)
+		var step := c + to_me.normalized().rotated(signf(ang) * 0.6) * ring
+		return Vector3(step.x, goal.y, step.y)
+	return goal
+
+
+func _bot_nearest_closed_chamber() -> Vector3:
+	var best := Vector3.INF
+	var best_d := INF
+	for n in world.nests:
+		for c in n.chambers:
+			if c.opened:
+				continue
+			var p: Vector3 = n.chamber_world_pos(c)
+			var d := p.distance_to(global_position)
+			if d < best_d:
+				best_d = d
+				best = p
+	return best

@@ -1,27 +1,29 @@
 extends Node3D
 ## Enxame de formigas: simulação leve em arrays + desenho com MultiMesh.
-## Modos: seguindo a trilha, fugindo, voltando para a trilha, tonta,
-## grudada na língua, saindo em disparada de um formigueiro escavado.
+## Modos: seguindo a trilha, fugindo, voltando para a trilha, tonta, grudada
+## na língua e morando numa câmara aberta de um formigueiro.
 
 signal ant_entered_nest(nest_index: int)
 
 const AntMeshBuilder := preload("res://scripts/ants/ant_mesh_builder.gd")
 const SCENT_SHADER := preload("res://shaders/ant_scent.gdshader")
 
-const CAPACITY := 720
+const CAPACITY := 1100
 const NEAR_LOD_DIST := 15.0
 const DRAW_DIST := 75.0
 const STRIDE := 20
 
-enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, BURST }
+enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, CHAMBER }
 const WORKER := 0
-const SOLDIER := 1
+const QUEEN := 1
 const TANAJURA := 2
-const SIZE := [0.15, 0.2, 0.22]
-const SPEED := [0.7, 0.55, 0.95]
-const PANIC_SPEED := [1.8, 1.35, 2.2]
+const SIZE := [0.15, 0.44, 0.22]
+const SPEED := [0.7, 0.0, 0.95]
+const PANIC_SPEED := [1.8, 0.0, 2.2]
+const CHAMBER_SPEED := 0.32
 
 var world
+var colony
 var trails: Array = []
 var obstacles: Array[Vector3] = []
 
@@ -29,8 +31,9 @@ var alive := PackedByteArray()
 var kind := PackedByteArray()
 var mode := PackedByteArray()
 var carry := PackedByteArray()
-var hp := PackedByteArray()
 var trail_id := PackedInt32Array()
+## -1 = formiga de trilha; senão ninho * 16 + câmara (moradora de uma câmara).
+var home := PackedInt32Array()
 var s := PackedFloat32Array()
 var dir := PackedFloat32Array()
 var lateral := PackedFloat32Array()
@@ -44,12 +47,14 @@ var rnd := PackedFloat32Array()
 var shrink := PackedFloat32Array()
 var pos := PackedVector3Array()
 var vel := PackedVector2Array()
+## Centro da câmara (x, raio, z) para as moradoras.
+var anchor := PackedVector3Array()
 var _free := PackedInt32Array()
 var alive_count := 0
-## Quando true, as formigas não entram mais nos formigueiros (reta final).
+## Quando true, as formigas de trilha não entram mais nos formigueiros (reta final).
 var stay_outside := false
 
-## Posição do tamanduá (focinho) e raio de fuga, atualizados pelo jogador.
+## Posição do tamanduá e raio de fuga, atualizados pelo jogador.
 var threat_pos := Vector3(9999, 0, 9999)
 var flee_radius := 2.0
 ## Para onde as formigas tontas são puxadas (Terremoto).
@@ -64,29 +69,33 @@ var _time := 0.0
 var cam_pos := Vector3.ZERO
 
 
-func setup(w) -> void:
+func setup(w, col) -> void:
 	world = w
+	colony = col
 	trails = w.trails.trails
 	obstacles = w.vegetation.obstacles
-	for arr in [alive, kind, mode, carry, hp]:
+	for arr in [alive, kind, mode, carry]:
 		arr.resize(CAPACITY)
 		arr.fill(0)
 	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, shrink]:
 		arr.resize(CAPACITY)
 		arr.fill(0.0)
 	trail_id.resize(CAPACITY)
+	home.resize(CAPACITY)
+	home.fill(-1)
 	pos.resize(CAPACITY)
 	vel.resize(CAPACITY)
+	anchor.resize(CAPACITY)
 	_free.resize(CAPACITY)
 	for i in CAPACITY:
 		_free[i] = CAPACITY - 1 - i
 	_scent_mat = ShaderMaterial.new()
 	_scent_mat.shader = SCENT_SHADER
-	# 0 operária perto, 1 operária longe, 2 soldado, 3 tanajura
+	# 0 operária perto, 1 operária longe, 2 rainha, 3 tanajura
 	var meshes: Array[Mesh] = [
 		AntMeshBuilder.build("worker", 0), AntMeshBuilder.build("worker", 1),
-		AntMeshBuilder.build("soldier", 0), AntMeshBuilder.build("tanajura", 0)]
-	var caps := [CAPACITY, CAPACITY, 220, 60]
+		AntMeshBuilder.build("queen", 0), AntMeshBuilder.build("tanajura", 0)]
+	var caps := [CAPACITY, CAPACITY, 8, 60]
 	for k in 4:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -97,7 +106,7 @@ func setup(w) -> void:
 		mm.visible_instance_count = 0
 		mm.custom_aabb = AABB(Vector3(-90, -20, -90), Vector3(180, 60, 180))
 		var mmi := MultiMeshInstance3D.new()
-		mmi.name = ["WorkersNear", "WorkersFar", "Soldiers", "Tanajuras"][k]
+		mmi.name = ["WorkersNear", "WorkersFar", "Queens", "Tanajuras"][k]
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if k != 1 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
@@ -108,45 +117,61 @@ func setup(w) -> void:
 		_buf.append(buf)
 
 
-func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: float = 0.0, carrying: bool = false) -> int:
+func _take_slot() -> int:
 	if _free.is_empty():
 		return -1
 	var i := _free[_free.size() - 1]
 	_free.resize(_free.size() - 1)
 	alive[i] = 1
 	alive_count += 1
-	kind[i] = ant_kind
-	mode[i] = Mode.TRAIL
-	carry[i] = 1 if carrying else 0
-	hp[i] = 2 if ant_kind == SOLDIER else 1
-	trail_id[i] = trail_index
-	s[i] = at_s
-	dir[i] = direction
-	lateral[i] = lat
 	rnd[i] = randf()
-	speed[i] = SPEED[ant_kind] * randf_range(0.85, 1.15)
 	gait[i] = randf() * TAU
 	timer[i] = 0.0
 	highlight[i] = 0.0
 	shrink[i] = 1.0
-	var t = trails[trail_index]
-	var p2: Vector2 = t.point_at(at_s) + t.side_at(at_s) * lat
-	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	carry[i] = 0
 	vel[i] = Vector2.ZERO
+	home[i] = -1
 	return i
 
 
-## Formigas saindo em disparada de um formigueiro escavado.
-func spawn_burst(ant_kind: int, nest, trail_index: int) -> int:
-	var i := spawn(ant_kind, trail_index, 0.0, 1.0, randf_range(-0.2, 0.2))
+## Formiga de trilha (sai do formigueiro e vai até um arbusto).
+func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: float = 0.0, carrying: bool = false) -> int:
+	var i := _take_slot()
 	if i < 0:
 		return -1
-	var a := randf() * TAU
-	var p2: Vector2 = nest.center2 + Vector2(cos(a), sin(a)) * randf_range(0.0, 0.4)
+	kind[i] = ant_kind
+	mode[i] = Mode.TRAIL
+	carry[i] = 1 if carrying else 0
+	trail_id[i] = trail_index
+	s[i] = at_s
+	dir[i] = direction
+	lateral[i] = lat
+	speed[i] = SPEED[ant_kind] * randf_range(0.85, 1.15)
+	var t = trails[trail_index]
+	var p2: Vector2 = t.point_at(at_s) + t.side_at(at_s) * lat
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
-	vel[i] = Vector2(cos(a), sin(a)) * randf_range(1.0, 2.2)
-	mode[i] = Mode.BURST
-	timer[i] = randf_range(1.2, 2.6)
+	return i
+
+
+## Moradora de uma câmara aberta (ou a rainha, parada no centro).
+func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float) -> int:
+	var i := _take_slot()
+	if i < 0:
+		return -1
+	kind[i] = ant_kind
+	mode[i] = Mode.CHAMBER
+	home[i] = home_code
+	anchor[i] = Vector3(center.x, radius, center.y)
+	trail_id[i] = 0
+	speed[i] = CHAMBER_SPEED * randf_range(0.7, 1.3)
+	var p2 := center
+	if ant_kind != QUEEN:
+		var a := randf() * TAU
+		p2 += Vector2(cos(a), sin(a)) * radius * sqrt(randf()) * 0.9
+		vel[i] = Vector2(cos(a + 1.7), sin(a + 1.7)) * speed[i]
+	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	yaw[i] = randf() * TAU
 	return i
 
 
@@ -155,7 +180,15 @@ func despawn(i: int) -> void:
 		return
 	alive[i] = 0
 	alive_count -= 1
+	home[i] = -1
 	_free.append(i)
+
+
+func clear_all() -> void:
+	for i in CAPACITY:
+		if alive[i] == 1:
+			despawn(i)
+	stay_outside = false
 
 
 func _physics_process(delta: float) -> void:
@@ -168,23 +201,24 @@ func _physics_process(delta: float) -> void:
 		if alive[i] == 0:
 			continue
 		var m := mode[i]
-		var k := kind[i]
 		if highlight[i] > 0.0:
 			highlight[i] = maxf(highlight[i] - delta, 0.0)
 		if m == Mode.TRAIL or m == Mode.RETURN:
 			var d2 := Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2)
-			if d2 < flee_r2 * (1.25 if k == SOLDIER else 1.0):
+			if d2 < flee_r2:
 				_start_flee(i, tp2)
 				m = Mode.FLEE
 		match m:
 			Mode.TRAIL:
 				_update_trail(i, delta)
-			Mode.FLEE, Mode.BURST:
+			Mode.FLEE:
 				_update_free(i, delta)
 			Mode.RETURN:
 				_update_return(i, delta)
 			Mode.STUNNED:
 				_update_stunned(i, delta)
+			Mode.CHAMBER:
+				_update_chamber(i, delta, tp2)
 			_:
 				pass
 
@@ -226,7 +260,7 @@ func _update_trail(i: int, delta: float) -> void:
 		y += 0.35 + sin(_time * 2.2 + rnd[i] * 9.0) * 0.12
 	pos[i] = Vector3(p2.x, y, p2.y)
 	yaw[i] = lerp_angle(yaw[i], atan2(-fwd.x, -fwd.y), minf(delta * 10.0, 1.0))
-	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32) * 1.0
+	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32)
 
 
 func _update_free(i: int, delta: float) -> void:
@@ -283,9 +317,38 @@ func _update_return(i: int, delta: float) -> void:
 	s[i] = clampf(s[i] + speed[i] * dir[i] * delta * 0.5, 0.0, t.length)
 
 
+## Moradoras andam em círculos dentro da câmara e se afastam do focinho.
+func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
+	if kind[i] == QUEEN:
+		return
+	var a := anchor[i]
+	var center := Vector2(a.x, a.z)
+	var radius := a.y
+	var p2 := Vector2(pos[i].x, pos[i].z)
+	var v := vel[i].rotated(randf_range(-2.5, 2.5) * delta)
+	var away := p2 - threat
+	var dthreat := away.length()
+	if dthreat < 1.6 and dthreat > 0.001:
+		v = v.lerp(away / dthreat * speed[i] * 2.2, minf(delta * 3.0, 1.0))
+	else:
+		v = v.normalized() * speed[i] if v.length_squared() > 0.000001 else Vector2.RIGHT.rotated(randf() * TAU) * speed[i]
+	p2 += v * delta
+	var off := p2 - center
+	var limit := radius * 0.92
+	if off.length() > limit:
+		var n := off.normalized()
+		p2 = center + n * limit
+		v = v.bounce(n) * 0.8
+	vel[i] = v
+	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	if v.length_squared() > 0.0001:
+		yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * 8.0, 1.0))
+	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
+
+
 func _update_stunned(i: int, delta: float) -> void:
 	timer[i] -= delta
-	if pull_target != Vector3.INF:
+	if pull_target != Vector3.INF and kind[i] != QUEEN:
 		var p := pos[i]
 		var to := pull_target - p
 		to.y = 0.0
@@ -294,9 +357,13 @@ func _update_stunned(i: int, delta: float) -> void:
 			var p2 := Vector2(p.x, p.z) + Vector2(to.x, to.z) / d * minf(2.6 * delta, d)
 			pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	if timer[i] <= 0.0:
-		mode[i] = Mode.RETURN
-		var t = trails[trail_id[i]]
-		s[i] = t.closest_s(Vector2(pos[i].x, pos[i].z), s[i], 30.0)
+		if home[i] >= 0:
+			mode[i] = Mode.CHAMBER
+			vel[i] = (Vector2(anchor[i].x, anchor[i].z) - Vector2(pos[i].x, pos[i].z)).normalized() * speed[i]
+		else:
+			mode[i] = Mode.RETURN
+			var t = trails[trail_id[i]]
+			s[i] = t.closest_s(Vector2(pos[i].x, pos[i].z), s[i], 30.0)
 
 
 ## Deixa tontas (de barriga para cima) as formigas num raio.
@@ -304,7 +371,7 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	var n := 0
 	var r2 := radius * radius
 	for i in CAPACITY:
-		if alive[i] == 0 or mode[i] == Mode.STUCK:
+		if alive[i] == 0 or mode[i] == Mode.STUCK or kind[i] == QUEEN:
 			continue
 		var dx := pos[i].x - center.x
 		var dz := pos[i].z - center.z
@@ -317,33 +384,40 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	return n
 
 
-## Lambida: retorna as formigas grudadas na língua (índices) e quantas
-## ficaram só tontas (soldados resistem à primeira lambida).
-func lick(tip: Vector3, radius: float, mouth: Vector3, sweep: bool) -> Dictionary:
+func _queen_blocked(i: int) -> bool:
+	return kind[i] == QUEEN and colony != null and colony.is_queen_protected(home[i])
+
+
+## Lambida. `multi` = gruda todas no raio (Lambida); senão só a mais próxima
+## da ponta (bicada). Retorna as grudadas e se bateu numa rainha protegida.
+func lick(tip: Vector3, radius: float, mouth: Vector3, multi: bool) -> Dictionary:
 	var captured := PackedInt32Array()
-	var knocked := 0
+	var protected_queen := false
 	var r2 := radius * radius
-	var seg := tip - mouth
-	var seg_len2 := maxf(seg.length_squared(), 0.0001)
+	var best := -1
+	var best_d2 := INF
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
-		var p := pos[i] + Vector3(0, SIZE[kind[i]] * 0.25, 0)
+		var k := kind[i]
+		var p := pos[i] + Vector3(0, SIZE[k] * 0.25, 0)
+		var reach2 := r2 if k != QUEEN else (radius + 0.25) * (radius + 0.25)
 		var d2 := p.distance_squared_to(tip)
-		if sweep and d2 > r2:
-			var t := clampf((p - mouth).dot(seg) / seg_len2, 0.0, 1.0)
-			d2 = p.distance_squared_to(mouth + seg * t) * 1.6
-		if d2 > r2:
+		if d2 > reach2:
 			continue
-		if kind[i] == SOLDIER and hp[i] > 1 and mode[i] != Mode.STUNNED:
-			hp[i] -= 1
-			mode[i] = Mode.STUNNED
-			timer[i] = 2.0
-			knocked += 1
+		if _queen_blocked(i):
+			protected_queen = true
 			continue
-		mode[i] = Mode.STUCK
-		captured.append(i)
-	return {"captured": captured, "knocked": knocked}
+		if multi:
+			mode[i] = Mode.STUCK
+			captured.append(i)
+		elif d2 < best_d2:
+			best_d2 = d2
+			best = i
+	if not multi and best >= 0:
+		mode[best] = Mode.STUCK
+		captured.append(best)
+	return {"captured": captured, "queen_protected": protected_queen}
 
 
 ## Formiga mais próxima da mira (ajuda de mira), ou -1.
@@ -351,7 +425,7 @@ func best_target(origin: Vector3, aim_dir: Vector3, max_dist: float, max_angle_c
 	var best := -1
 	var best_score := -INF
 	for i in CAPACITY:
-		if alive[i] == 0 or mode[i] == Mode.STUCK:
+		if alive[i] == 0 or mode[i] == Mode.STUCK or _queen_blocked(i):
 			continue
 		var to := pos[i] - origin
 		var d := to.length()
@@ -409,6 +483,15 @@ func densest_point(around: Vector3, max_dist: float) -> Vector3:
 	return Vector3((best_key.x + 0.5) * cell, 0.0, (best_key.y + 0.5) * cell)
 
 
+## Quantas formigas de trilha estão vivas (fora dos formigueiros).
+func trail_count() -> int:
+	var n := 0
+	for i in CAPACITY:
+		if alive[i] == 1 and home[i] < 0:
+			n += 1
+	return n
+
+
 func _process(_delta: float) -> void:
 	if _mm.is_empty():
 		return
@@ -424,7 +507,7 @@ func _process(_delta: float) -> void:
 		if d2 > far2:
 			continue
 		var k := kind[i]
-		var layer := 2 if k == SOLDIER else (3 if k == TANAJURA else (0 if d2 < near2 else 1))
+		var layer := 2 if k == QUEEN else (3 if k == TANAJURA else (0 if d2 < near2 else 1))
 		var slot := _counts[layer]
 		if slot * STRIDE >= _buf[layer].size():
 			continue
@@ -434,6 +517,8 @@ func _process(_delta: float) -> void:
 		var state := 0.0
 		var origin := p
 		var m := mode[i]
+		if k == QUEEN:
+			size *= 1.0 + sin(_time * 2.0 + rnd[i] * 6.0) * 0.03
 		if m == Mode.STUNNED:
 			state = 1.0
 			basis = basis * Basis(Vector3.FORWARD, PI)
@@ -445,6 +530,8 @@ func _process(_delta: float) -> void:
 		basis = basis.scaled(Vector3.ONE * size)
 		var tint := 0.88 + rnd[i] * 0.24
 		var hl := clampf(highlight[i], 0.0, 1.0)
+		if k == QUEEN:
+			hl = maxf(hl, 0.45 + sin(_time * 3.0) * 0.15)
 		var buf := _buf[layer]
 		var o := slot * STRIDE
 		buf[o] = basis.x.x

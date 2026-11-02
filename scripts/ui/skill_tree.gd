@@ -1,7 +1,8 @@
 extends Control
-## Árvore de habilidades: 3 ramos (Língua, Garras, Corpo) com 4 níveis cada.
-## A cada 100 formigas comidas você ganha 1 ponto (9 pontos na fase, para 12
-## habilidades: escolha bem!). Cada ramo é aprendido em ordem.
+## Árvore de habilidades: Língua, Garras, Patas, Faro e Escalada + Cauda.
+## A cada 100 formigas comidas você ganha 1 ponto; cada habilidade é aprendida
+## nível a nível. A Escalada + Cauda só pode ser comprada ao chegar à floresta.
+## Dá para redistribuir os pontos de graça a qualquer momento.
 
 signal closed
 
@@ -11,6 +12,7 @@ var _points_label: Label
 var _nodes: Dictionary = {}
 var _connectors: Dictionary = {}
 var _first_focus: Control
+var _respec: Button
 
 
 func _ready() -> void:
@@ -27,16 +29,16 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	center.add_child(panel)
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 14)
+	root.add_theme_constant_override("separation", 12)
 	panel.add_child(root)
-	var title := UiTheme.label("Árvore de Habilidades", 42, UiTheme.GOLD, true)
+	var title := UiTheme.label("Árvore de Habilidades", 40, UiTheme.GOLD, true)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(title)
-	_points_label = UiTheme.label("", 22, UiTheme.CREAM)
+	_points_label = UiTheme.label("", 21, UiTheme.CREAM)
 	_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	root.add_child(_points_label)
 	var cols := HBoxContainer.new()
-	cols.add_theme_constant_override("separation", 26)
+	cols.add_theme_constant_override("separation", 14)
 	cols.alignment = BoxContainer.ALIGNMENT_CENTER
 	root.add_child(cols)
 	for b in GameState.BRANCHES.size():
@@ -45,11 +47,15 @@ func _ready() -> void:
 		col.add_theme_constant_override("separation", 0)
 		col.alignment = BoxContainer.ALIGNMENT_BEGIN
 		cols.add_child(col)
-		var head := UiTheme.label(branch.name, 30, branch.color, true)
+		var head := UiTheme.label(branch.name, 25, branch.color, true)
 		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(head)
+		var region: String = branch.get("region", "")
+		var sub := UiTheme.label("chega com a %s" % region if not region.is_empty() else " ", 14, UiTheme.SAND)
+		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(sub)
 		var spacer := Control.new()
-		spacer.custom_minimum_size = Vector2(0, 10)
+		spacer.custom_minimum_size = Vector2(0, 6)
 		col.add_child(spacer)
 		var tier := 0
 		for u in GameState.UPGRADES:
@@ -57,7 +63,7 @@ func _ready() -> void:
 				continue
 			if tier > 0:
 				var link := ColorRect.new()
-				link.custom_minimum_size = Vector2(6, 22)
+				link.custom_minimum_size = Vector2(6, 16)
 				link.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 				col.add_child(link)
 				_connectors[u.id] = link
@@ -69,53 +75,58 @@ func _ready() -> void:
 			tier += 1
 	var footer := HBoxContainer.new()
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
-	footer.add_theme_constant_override("separation", 20)
+	footer.add_theme_constant_override("separation", 18)
 	root.add_child(footer)
-	var info := UiTheme.label("A cada 100 formigas: +1 ponto.  9 pontos, 12 habilidades: escolha seu estilo!", 18, UiTheme.SAND)
+	var info := UiTheme.label("A cada 100 formigas: +1 ponto.", 18, UiTheme.SAND)
 	footer.add_child(info)
+	_respec = UiTheme.button("Redistribuir pontos", 260)
+	_respec.pressed.connect(_on_respec)
+	footer.add_child(_respec)
 	var back := UiTheme.button("Voltar ao jogo  [TAB]", 280)
 	back.pressed.connect(func(): closed.emit())
 	footer.add_child(back)
 	GameState.upgrade_purchased.connect(func(_id): refresh())
 	GameState.skill_point_gained.connect(func(_n): refresh())
+	GameState.skills_reset.connect(refresh)
 	refresh()
 
 
 func _make_node(u: Dictionary, color: Color) -> Button:
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(330, 112)
+	b.custom_minimum_size = Vector2(272, 112)
 	b.focus_mode = Control.FOCUS_ALL
 	b.text = ""
 	var v := VBoxContainer.new()
 	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	v.offset_left = 16
-	v.offset_right = -16
-	v.offset_top = 10
-	v.offset_bottom = -8
+	v.offset_left = 14
+	v.offset_right = -14
+	v.offset_top = 8
+	v.offset_bottom = -6
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_theme_constant_override("separation", 2)
+	v.add_theme_constant_override("separation", 1)
 	b.add_child(v)
 	var h := HBoxContainer.new()
 	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(h)
-	var tier_lbl := UiTheme.label(["I", "II", "III", "IV"][u.tier], 18, color, true)
-	tier_lbl.custom_minimum_size = Vector2(34, 0)
+	var tier_lbl := UiTheme.label(["I", "II", "III", "IV"][u.tier], 16, color, true)
+	tier_lbl.custom_minimum_size = Vector2(30, 0)
 	tier_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(tier_lbl)
-	var name_lbl := UiTheme.label(u.name, 21, UiTheme.CREAM, true)
+	var name_lbl := UiTheme.label(u.name, 19, UiTheme.CREAM, true)
 	name_lbl.clip_text = true
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(name_lbl)
-	var state_lbl := UiTheme.label("", 14, UiTheme.SAND)
-	state_lbl.name = "State"
-	state_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	h.add_child(state_lbl)
-	var desc := UiTheme.label(u.desc, 16, Color(0.95, 0.88, 0.78))
+	var desc := UiTheme.label(u.desc, 14, Color(0.95, 0.88, 0.78))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	desc.custom_minimum_size = Vector2(290, 0)
+	desc.custom_minimum_size = Vector2(240, 0)
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(desc)
+	var state_lbl := UiTheme.label("", 13, UiTheme.SAND, true)
+	state_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	state_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(state_lbl)
 	b.set_meta("id", u.id)
 	b.set_meta("color", color)
 	b.set_meta("state_label", state_lbl)
@@ -135,6 +146,14 @@ func _on_node_pressed(id: String) -> void:
 		Sfx.play("deny", -6.0)
 
 
+func _on_respec() -> void:
+	if GameState.points_spent == 0:
+		Sfx.play("deny", -6.0)
+		return
+	GameState.respec()
+	Sfx.play("ui_open", -4.0)
+
+
 func refresh() -> void:
 	var pts := GameState.points_available()
 	if pts == 1:
@@ -144,6 +163,8 @@ func refresh() -> void:
 	else:
 		var to_next := GameState.ANTS_PER_POINT - GameState.ants_eaten % GameState.ANTS_PER_POINT
 		_points_label.text = "Sem pontos agora. Faltam %d formigas para o próximo." % to_next
+	if _respec:
+		_respec.disabled = GameState.points_spent == 0
 	for id in _nodes:
 		var node: Button = _nodes[id]
 		var color: Color = node.get_meta("color")
@@ -159,15 +180,21 @@ func refresh() -> void:
 			1:
 				var can := pts > 0
 				bg = UiTheme._box(Color(0.3, 0.17, 0.12, 0.95), color if can else Color(0.6, 0.5, 0.4), 3 if can else 2, 18)
-				state_lbl.text = "Clique!" if can else "Disponível"
+				state_lbl.text = "Clique para aprender" if can else "Disponível"
 				state_lbl.add_theme_color_override("font_color", color if can else UiTheme.SAND)
 				node.modulate = Color.WHITE
+			3:
+				state_lbl.text = "Na %s" % GameState.region_required(id)
+				state_lbl.add_theme_color_override("font_color", Color(0.75, 0.68, 0.6))
+				node.modulate = Color(1, 1, 1, 0.5)
 			_:
 				state_lbl.text = "Bloqueada"
 				state_lbl.add_theme_color_override("font_color", Color(0.6, 0.55, 0.5))
 				node.modulate = Color(1, 1, 1, 0.55)
 		for k in ["normal", "hover", "pressed", "focus"]:
 			var box := bg.duplicate() as StyleBoxFlat
+			box.content_margin_top = 4
+			box.content_margin_bottom = 4
 			if k == "hover" and state == 1:
 				box.bg_color = box.bg_color.lightened(0.12)
 			if k == "focus":

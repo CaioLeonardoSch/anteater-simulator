@@ -13,6 +13,9 @@ extends Node
 ##   --buy=id1,id2                compra upgrades no início
 ##   --timescale=K                acelera o tempo do jogo
 ##   --pose=x,z,yaw,pitch         posiciona o jogador
+##   --open=N                     abre as câmaras do formigueiro N
+##   --allow-save                 deixa o bot salvar o jogo (teste)
+##   --start=continue             continua o jogo salvo
 ##   --stats                      imprime FPS e estatísticas de render a cada segundo
 
 var args: Dictionary = {}

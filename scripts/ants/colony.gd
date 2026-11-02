@@ -1,17 +1,26 @@
 extends Node
-## A colônia da fase: exatamente 1000 formigas. Elas saem dos formigueiros em
-## fluxo contínuo pelas trilhas e em ondas cada vez maiores. Quem volta para o
-## formigueiro sai de novo depois; só as que você come somem de vez.
+## A colônia do Cerrado: 1000 formigas ao todo (cada rainha conta como 20).
+## Cada formigueiro guarda forrageiras, que saem pelas trilhas e voltam, e
+## moradoras, que vivem nas câmaras e só aparecem quando você cava.
+## Só as formigas que você come somem de vez.
 
 signal wave_announced(wave: int, nest_name: String, count: int, nest_index: int)
 signal final_wave(remaining: int)
+signal chamber_opened(nest, chamber_index: int)
+signal chamber_cleaned(nest, chamber_index: int)
+signal nest_cleaned(nest)
+signal queen_eaten(nest)
 
+const Nest := preload("res://scripts/world/nest.gd")
 const TOTAL := 1000
+const QUEEN_VALUE := Nest.QUEEN_VALUE
+## Parte de cada formigueiro que anda pelas trilhas (o resto mora nas câmaras).
+const FORAGER_SHARE := 0.45
+const ROYAL_WEIGHT := 1.7
 
 var swarm
 var world
-var in_nest := TOTAL
-var max_alive := 300
+var max_alive := 220
 var wave_number := 0
 var wave_timer := 22.0
 var final_released := false
@@ -19,6 +28,7 @@ var active := false
 
 var _trail_timers := PackedFloat32Array()
 var _wave := {}
+var _clean_announced := {}
 
 
 func setup(w, sw) -> void:
@@ -28,94 +38,251 @@ func setup(w, sw) -> void:
 	_trail_timers.resize(world.trails.trails.size())
 	for i in _trail_timers.size():
 		_trail_timers[i] = randf_range(0.0, 1.5)
+	_distribute()
 
 
-## Espalha formigas pelas trilhas para o mundo já começar vivo.
-func populate(count: int) -> void:
-	var trails: Array = world.trails.trails
-	for _k in count:
-		if in_nest <= 0:
-			return
-		var ti := randi() % trails.size()
-		var t = trails[ti]
-		var going := randf() < 0.5
-		var i: int = swarm.spawn(_roll_kind(0.08, 0.01), ti, randf() * t.length, 1.0 if going else -1.0,
-			randf_range(-0.22, 0.22), not going)
-		if i >= 0:
-			in_nest -= 1
+## Reparte as 1000 formigas entre os formigueiros, as trilhas e as câmaras.
+func _distribute() -> void:
+	var nests: Array = world.nests
+	var queens := 0
+	var total_w := 0.0
+	for n in nests:
+		if n.big:
+			queens += 1
+		total_w += 1.75 if n.big else 1.0
+	var workers := TOTAL - queens * QUEEN_VALUE
+	var assigned := 0
+	for k in nests.size():
+		var n = nests[k]
+		var share := int(round(workers * (1.75 if n.big else 1.0) / total_w))
+		if k == nests.size() - 1:
+			share = workers - assigned
+		assigned += share
+		n.pool = int(round(share * FORAGER_SHARE))
+		n.outside = 0
+		n.queen_alive = n.big
+		n.cleaned = false
+		var residents: int = share - n.pool
+		var weights := 0.0
+		for c in n.chambers:
+			weights += ROYAL_WEIGHT if c.royal else 1.0
+		var given := 0
+		for ci in n.chambers.size():
+			var c = n.chambers[ci]
+			var r := int(floor(residents * (ROYAL_WEIGHT if c.royal else 1.0) / weights))
+			if ci == n.chambers.size() - 1:
+				r = residents - given
+			c.residents = r
+			c.opened = false
+			given += r
+
+
+func total_remaining() -> int:
+	var n := 0
+	for nest in world.nests:
+		n += nest.remaining()
+	return n
 
 
 func remaining() -> int:
-	return in_nest + swarm.alive_count
+	return total_remaining()
 
 
-func _roll_kind(soldier_chance: float, tanajura_chance: float) -> int:
-	var r := randf()
-	if r < tanajura_chance:
-		return swarm.TANAJURA
-	if r < tanajura_chance + soldier_chance:
-		return swarm.SOLDIER
-	return swarm.WORKER
+func pools_total() -> int:
+	var n := 0
+	for nest in world.nests:
+		n += nest.pool
+	return n
 
 
-func _on_ant_entered_nest(_nest_index: int) -> void:
-	in_nest += 1
+func outside_total() -> int:
+	var n := 0
+	for nest in world.nests:
+		n += nest.outside
+	return n
+
+
+func nests_cleaned() -> int:
+	var n := 0
+	for nest in world.nests:
+		if nest.cleaned:
+			n += 1
+	return n
+
+
+func closed_chambers_total() -> int:
+	var n := 0
+	for nest in world.nests:
+		n += nest.closed_chambers()
+	return n
+
+
+## Espalha forrageiras pelas trilhas para o mundo já começar vivo.
+func populate(count: int) -> void:
+	var trails: Array = world.trails.trails
+	for _k in count:
+		var ti := randi() % trails.size()
+		var t = trails[ti]
+		var nest = world.nests[t.nest]
+		if nest.pool <= 0:
+			continue
+		var going := randf() < 0.5
+		if swarm.spawn(_roll_kind(0.01), ti, randf() * t.length, 1.0 if going else -1.0,
+				randf_range(-0.22, 0.22), not going) >= 0:
+			nest.pool -= 1
+			nest.outside += 1
+
+
+func _roll_kind(tanajura_chance: float) -> int:
+	return swarm.TANAJURA if randf() < tanajura_chance else swarm.WORKER
+
+
+func _on_ant_entered_nest(nest_index: int) -> void:
+	var nest = world.nests[nest_index]
+	nest.outside -= 1
+	nest.pool += 1
+
+
+## Chamado logo antes de uma formiga ser engolida. Retorna quanto ela vale.
+func ant_eaten(i: int) -> int:
+	var code: int = swarm.home[i]
+	if code < 0:
+		var nest = world.nests[world.trails.trails[swarm.trail_id[i]].nest]
+		nest.outside -= 1
+		_check_cleaned(nest)
+		return 1
+	var nest = world.nests[code / 16]
+	var ci := code % 16
+	var value := 1
+	if swarm.kind[i] == swarm.QUEEN:
+		nest.queen_alive = false
+		value = QUEEN_VALUE
+		queen_eaten.emit(nest)
+	else:
+		nest.chambers[ci].residents -= 1
+	_check_chamber(nest, ci)
+	_check_cleaned(nest)
+	return value
+
+
+func is_queen_protected(code: int) -> bool:
+	if code < 0:
+		return false
+	var nest = world.nests[code / 16]
+	return nest.chambers[code % 16].residents > 0
+
+
+func _check_chamber(nest, ci: int) -> void:
+	var key: int = nest.index * 16 + ci
+	if _clean_announced.has(key):
+		return
+	var c = nest.chambers[ci]
+	if c.opened and c.residents == 0 and not (c.royal and nest.queen_alive):
+		_clean_announced[key] = true
+		chamber_cleaned.emit(nest, ci)
+
+
+func _check_cleaned(nest) -> void:
+	if not nest.cleaned and nest.remaining() == 0:
+		nest.set_cleaned()
+		nest_cleaned.emit(nest)
+
+
+## Abre uma câmara: as moradoras (e a rainha) aparecem dentro do buraco.
+func open_chamber(nest, ci: int, instant: bool = false) -> int:
+	var c = nest.chambers[ci]
+	if c.opened and not instant:
+		return 0
+	nest.open_chamber(ci, instant)
+	var code: int = nest.index * 16 + ci
+	var spawned := 0
+	for _k in c.residents:
+		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.radius) >= 0:
+			spawned += 1
+	if c.royal and nest.queen_alive:
+		swarm.spawn_resident(swarm.QUEEN, code, c.pos2, c.radius)
+	if not instant:
+		chamber_opened.emit(nest, ci)
+		_check_chamber(nest, ci)
+		_check_cleaned(nest)
+	return spawned
 
 
 func _process(delta: float) -> void:
 	if not active:
 		return
 	var trails: Array = world.trails.trails
+	var outside := outside_total()
 	# Fluxo contínuo nas trilhas.
 	for ti in _trail_timers.size():
 		_trail_timers[ti] -= delta
 		if _trail_timers[ti] > 0.0:
 			continue
 		_trail_timers[ti] = randf_range(0.9, 1.9)
-		if in_nest <= 0 or swarm.alive_count >= max_alive:
+		var nest = world.nests[trails[ti].nest]
+		if nest.pool <= 0 or outside >= max_alive:
 			continue
-		if swarm.spawn(_roll_kind(0.08, 0.008), ti, 0.0, 1.0, randf_range(-0.2, 0.2)) >= 0:
-			in_nest -= 1
+		if swarm.spawn(_roll_kind(0.008), ti, 0.0, 1.0, randf_range(-0.2, 0.2)) >= 0:
+			nest.pool -= 1
+			nest.outside += 1
+			outside += 1
 	# Ondas.
 	if not _wave.is_empty():
+		var nest = world.nests[_wave.nest]
 		_wave.timer -= delta
-		while _wave.timer <= 0.0 and _wave.left > 0 and in_nest > 0:
+		while _wave.timer <= 0.0 and _wave.left > 0 and nest.pool > 0:
 			_wave.timer += _wave.interval
 			var ti: int = _wave.trails[randi() % _wave.trails.size()]
-			var k := _roll_kind(0.12, 0.0)
+			var k: int = swarm.WORKER
 			if _wave.tanajuras > 0 and randf() < 0.08:
 				k = swarm.TANAJURA
 				_wave.tanajuras -= 1
 			if swarm.spawn(k, ti, 0.0, 1.0, randf_range(-0.38, 0.38)) >= 0:
-				in_nest -= 1
+				nest.pool -= 1
+				nest.outside += 1
 				_wave.left -= 1
 			else:
 				break
-		if _wave.left <= 0 or in_nest <= 0:
+		if _wave.left <= 0 or nest.pool <= 0:
 			_wave = {}
 	wave_timer -= delta
-	if wave_timer <= 0.0 and _wave.is_empty() and in_nest > 0:
+	if wave_timer <= 0.0 and _wave.is_empty():
 		_start_wave()
-	# Reta final: libera todo mundo e ninguém mais volta para casa.
-	if not final_released and remaining() <= 90:
-		final_released = true
-		swarm.stay_outside = true
-		var left := in_nest
-		_start_wave(left)
-		final_wave.emit(remaining())
+	# Reta final das trilhas: todas as forrageiras saem e ninguém volta para casa.
+	if not final_released and pools_total() + outside <= 60 and pools_total() > 0:
+		_release_all()
+		final_wave.emit(pools_total() + outside_total())
 
 
-func _start_wave(forced_count: int = -1) -> void:
-	wave_number += 1
+func _release_all() -> void:
+	final_released = true
+	swarm.stay_outside = true
+	var trails: Array = world.trails.trails
+	for nest in world.nests:
+		while nest.pool > 0:
+			var ti: int = nest.trail_ids[randi() % nest.trail_ids.size()]
+			var t = trails[ti]
+			if swarm.spawn(_roll_kind(0.0), ti, randf() * t.length * 0.5, 1.0, randf_range(-0.3, 0.3)) < 0:
+				break
+			nest.pool -= 1
+			nest.outside += 1
+
+
+func _start_wave() -> void:
 	wave_timer = randf_range(34.0, 44.0)
-	var nest = world.nests[randi() % world.nests.size()]
-	var count := mini(in_nest, 26 + wave_number * 13) if forced_count < 0 else forced_count
-	count = mini(count, in_nest)
-	if count <= 0:
+	var candidates: Array = []
+	for n in world.nests:
+		if n.pool >= 8:
+			candidates.append(n)
+	if candidates.is_empty():
 		return
+	wave_number += 1
+	var nest = candidates[randi() % candidates.size()]
+	var count := mini(nest.pool, 18 + wave_number * 8)
 	_wave = {
+		"nest": nest.index,
 		"left": count,
-		"interval": clampf(5.0 / count, 0.03, 0.12),
+		"interval": clampf(5.0 / count, 0.04, 0.14),
 		"timer": 2.5,
 		"trails": nest.trail_ids.duplicate(),
 		"tanajuras": 1 + wave_number / 3,
@@ -123,14 +290,44 @@ func _start_wave(forced_count: int = -1) -> void:
 	wave_announced.emit(wave_number, nest.display_name, count, nest.index)
 
 
-## Escavação: solta várias formigas de uma vez de um formigueiro.
-func burst(nest, count: int) -> int:
-	var released := 0
-	for _k in count:
-		if in_nest <= 0:
-			break
-		var ti: int = nest.trail_ids[randi() % nest.trail_ids.size()]
-		if swarm.spawn_burst(_roll_kind(0.1, 0.02), nest, ti) >= 0:
-			in_nest -= 1
-			released += 1
-	return released
+# ------------------------------------------------------------------ Salvar
+
+func to_save() -> Dictionary:
+	var nests := []
+	for n in world.nests:
+		var ch := []
+		for c in n.chambers:
+			ch.append({"residents": c.residents, "opened": c.opened})
+		nests.append({"pool": n.pool + n.outside, "queen": n.queen_alive, "chambers": ch})
+	return {"nests": nests, "wave_number": wave_number, "wave_timer": wave_timer,
+		"final_released": final_released}
+
+
+func from_save(d: Dictionary) -> void:
+	swarm.clear_all()
+	_wave = {}
+	_clean_announced.clear()
+	var saved: Array = d.get("nests", [])
+	for k in mini(saved.size(), world.nests.size()):
+		var n = world.nests[k]
+		var sd: Dictionary = saved[k]
+		n.pool = int(sd.get("pool", 0))
+		n.outside = 0
+		n.queen_alive = bool(sd.get("queen", false)) and n.big
+		var ch: Array = sd.get("chambers", [])
+		for ci in mini(ch.size(), n.chambers.size()):
+			n.chambers[ci].residents = int(ch[ci].get("residents", 0))
+			if bool(ch[ci].get("opened", false)):
+				open_chamber(n, ci, true)
+				var c = n.chambers[ci]
+				if c.residents == 0 and not (c.royal and n.queen_alive):
+					_clean_announced[k * 16 + ci] = true
+		if n.remaining() == 0:
+			n.set_cleaned(true)
+	wave_number = int(d.get("wave_number", 0))
+	wave_timer = float(d.get("wave_timer", 22.0))
+	final_released = false
+	if bool(d.get("final_released", false)):
+		_release_all()
+	else:
+		populate(150)

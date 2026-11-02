@@ -17,8 +17,9 @@ const Props := preload("res://scripts/world/props.gd")
 
 enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 
-## Ao recomeçar, pula o menu e vai direto para a fase.
+## Ao recomeçar, pula o menu e vai direto para um jogo novo.
 static var skip_menu := false
+const AUTOSAVE_EVERY := 30.0
 
 var state := State.LOADING
 var world: World
@@ -39,6 +40,7 @@ var _complete_wait := -1.0
 var _base_time_scale := 1.0
 var _new_record := false
 var _reloading := false
+var _autosave := AUTOSAVE_EVERY
 
 
 func _ready() -> void:
@@ -62,7 +64,9 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_build_game()
-	if skip_menu or DevTools.start_mode != "":
+	if DevTools.start_mode == "continue":
+		_continue_game()
+	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()
 		if DevTools.start_mode == "tree":
@@ -81,12 +85,12 @@ func _build_game() -> void:
 	swarm = Swarm.new()
 	swarm.name = "Swarm"
 	add_child(swarm)
-	swarm.setup(world)
 	colony = Colony.new()
 	colony.name = "Colony"
 	add_child(colony)
+	swarm.setup(world, colony)
 	colony.setup(world, swarm)
-	colony.populate(210)
+	colony.populate(150)
 	colony.active = true
 	player = Player.new()
 	player.name = "Anteater"
@@ -98,7 +102,7 @@ func _build_game() -> void:
 	menu_cam.fov = 62.0
 	menu_cam.near = 0.03
 	add_child(menu_cam)
-	var t = world.trails.trails[5]
+	var t = world.trails.trails[world.start_trail_index]
 	var c2: Vector2 = t.point_at(t.length * 0.62)
 	_menu_center = Vector3(c2.x, world.ground_height(c2.x, c2.y), c2.y)
 	# Tamanduá de corpo inteiro (modelo de IA opcional) posando no menu.
@@ -119,6 +123,7 @@ func _build_game() -> void:
 	tree_ui.closed.connect(_close_tree)
 	ui.move_child(menus, -1)
 	menus.play_pressed.connect(_on_play_pressed)
+	menus.continue_pressed.connect(_on_continue_pressed)
 	menus.resume_pressed.connect(_resume)
 	menus.restart_pressed.connect(_restart)
 	menus.main_menu_pressed.connect(_to_main_menu)
@@ -150,20 +155,22 @@ func _on_play_pressed() -> void:
 	tw.tween_property(fade, "modulate:a", 0.0, 0.6)
 
 
+func _on_continue_pressed() -> void:
+	var tw := create_tween()
+	tw.tween_property(fade, "modulate:a", 1.0, 0.35)
+	tw.tween_callback(_continue_game)
+	tw.tween_property(fade, "modulate:a", 0.0, 0.6)
+
+
+## Jogo novo.
 func _start_play() -> void:
 	GameState.reset_run()
-	GameState.playing = true
-	state = State.PLAYING
 	world.set_day_progress(0.0, true)
 	player.place_at(world.player_start, world.player_start_yaw)
-	player.camera.current = true
-	player.bot = DevTools.autoplay
-	player.controls_enabled = not DevTools.autoplay
-	menus.show_screen("")
-	hud.visible = true
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	Sfx.set_music_duck(0.35)
+	_begin_playing()
+	save_game()
 	if DevTools.give > 0:
+		_first_point_done = true
 		GameState.add_eaten(DevTools.give)
 		GameState.combo = 0
 		GameState.best_combo = 0
@@ -174,6 +181,57 @@ func _start_play() -> void:
 	if DevTools.pose.size() >= 4:
 		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
 		player.pitch = deg_to_rad(DevTools.pose[3])
+	if DevTools.args.has("open"):
+		# Teste: abre todas as câmaras de um formigueiro.
+		var nest = world.nests[int(DevTools.args.open)]
+		for ci in nest.chambers.size():
+			colony.open_chamber(nest, ci)
+
+
+## Continua o jogo salvo (ou começa um novo, se não houver).
+func _continue_game() -> void:
+	var data := GameState.read_saved_game()
+	if data.is_empty():
+		_start_play()
+		return
+	GameState.reset_run()
+	GameState.from_save(data.get("state", {}))
+	colony.from_save(data.get("colony", {}))
+	var p: Dictionary = data.get("player", {})
+	player.place_at(Vector2(float(p.get("x", world.player_start.x)), float(p.get("z", world.player_start.y))),
+		float(p.get("yaw", world.player_start_yaw)))
+	player.pitch = float(p.get("pitch", -0.12))
+	world.set_day_progress(float(GameState.ants_eaten) / GameState.GOAL, true)
+	_first_point_done = GameState.points_earned > 0
+	_begin_playing()
+
+
+func _begin_playing() -> void:
+	GameState.playing = true
+	state = State.PLAYING
+	_autosave = AUTOSAVE_EVERY
+	player.camera.current = true
+	player.bot = DevTools.autoplay
+	player.controls_enabled = not DevTools.autoplay
+	menus.show_screen("")
+	hud.visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Sfx.set_music_duck(0.35)
+
+
+## Salva o progresso (formigas, câmaras, habilidades e onde o tamanduá está).
+func save_game() -> void:
+	if state == State.COMPLETE or GameState.completed:
+		return
+	var gp := player.global_position
+	GameState.write_saved_game({
+		"version": 1,
+		"state": GameState.to_save(),
+		"colony": colony.to_save(),
+		"player": {"x": gp.x, "z": gp.z, "yaw": player.yaw, "pitch": player.pitch},
+	})
+	if hud:
+		hud.show_saved()
 
 
 ## Pausa e árvore são tratadas em _input (antes da interface): assim o TAB
@@ -211,10 +269,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and state == State.PLAYING and not DevTools.autoplay:
 		_pause()
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST and state in [State.PLAYING, State.PAUSED, State.TREE]:
+		save_game()
 
 
 func _pause() -> void:
 	state = State.PAUSED
+	save_game()
 	get_tree().paused = true
 	menus.show_screen("pause")
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -247,11 +308,14 @@ func _close_tree() -> void:
 
 
 func _restart() -> void:
+	GameState.delete_saved_game()
 	skip_menu = true
 	_reload()
 
 
 func _to_main_menu() -> void:
+	if state in [State.PLAYING, State.PAUSED, State.TREE]:
+		save_game()
 	skip_menu = false
 	_reload()
 
@@ -281,7 +345,8 @@ func _reload() -> void:
 func _on_point(_available: int) -> void:
 	if DevTools.autoplay:
 		# O bot de teste compra a primeira habilidade disponível, alternando ramos.
-		var order := ["lingua_1", "garras_1", "corpo_1", "lingua_2", "garras_2", "corpo_2", "lingua_3", "garras_3", "lingua_4", "corpo_3", "garras_4", "corpo_4"]
+		var order := ["lingua_1", "garras_1", "patas_1", "lingua_2", "faro_1", "garras_2", "lingua_3", "faro_2",
+			"lingua_4", "garras_3", "faro_3", "patas_2", "patas_3", "garras_4"]
 		for id in order:
 			if GameState.can_buy(id):
 				GameState.buy(id)
@@ -299,6 +364,7 @@ func _on_point(_available: int) -> void:
 
 func _on_complete(_time: float) -> void:
 	state = State.COMPLETE
+	GameState.delete_saved_game()
 	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
 	player.controls_enabled = false
 	player.bot = false
@@ -309,6 +375,11 @@ func _on_complete(_time: float) -> void:
 
 
 func _process(delta: float) -> void:
+	if state == State.PLAYING:
+		_autosave -= delta / maxf(Engine.time_scale, 0.01)
+		if _autosave <= 0.0:
+			_autosave = AUTOSAVE_EVERY
+			save_game()
 	if state == State.MENU and menu_cam:
 		_menu_t += delta
 		var a := _menu_t * 0.06 + 2.2

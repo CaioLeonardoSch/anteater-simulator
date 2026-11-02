@@ -1,6 +1,6 @@
 extends RefCounted
-## Gera as malhas das formigas (saúvas): operária com folha, soldado cabeçudo e
-## tanajura alada. Cada vértice carrega dados de animação (CUSTOM0/CUSTOM1) que o
+## Gera as malhas das formigas (saúvas): operária com folha, rainha de abdômen
+## enorme e tanajura alada. Cada vértice carrega dados de animação (CUSTOM0/CUSTOM1) que o
 ## shader usa para mexer pernas, antenas, mandíbulas e asas.
 ## Unidade: a formiga tem ~1 de comprimento, olha para -Z e pisa em y = 0.
 
@@ -11,7 +11,7 @@ const WING_SHADER := preload("res://shaders/ant_wing.gdshader")
 
 enum Part { BODY, LEG, ANTENNA, LEAF, WING, MANDIBLE }
 
-const KIND_MODEL := {"worker": "formiga_operaria", "soldier": "formiga_soldado", "tanajura": "formiga_tanajura"}
+const KIND_MODEL := {"worker": "formiga_operaria", "queen": "formiga_rainha", "tanajura": "formiga_tanajura"}
 
 static var body_material: ShaderMaterial
 static var wing_material: ShaderMaterial
@@ -50,13 +50,15 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 	var c_gaster := Color(0.27, 0.09, 0.05)
 	var c_leg := Color(0.32, 0.12, 0.06)
 	match kind:
-		"soldier":
-			head_s = 1.42
-			mand_s = 1.7
-			c_head = Color(0.34, 0.07, 0.04)
-			c_meso = Color(0.28, 0.07, 0.04)
-			c_gaster = Color(0.18, 0.05, 0.03)
-			c_leg = Color(0.26, 0.07, 0.04)
+		"queen":
+			# Rainha: abdômen enorme e listrado, cabeça grande, sem asas.
+			head_s = 1.12
+			gaster_s = 2.35
+			mand_s = 1.2
+			c_head = Color(0.36, 0.13, 0.06)
+			c_meso = Color(0.40, 0.15, 0.07)
+			c_gaster = Color(0.52, 0.22, 0.08)
+			c_leg = Color(0.30, 0.11, 0.05)
 		"tanajura":
 			head_s = 0.92
 			gaster_s = 1.75
@@ -69,8 +71,8 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 	b.color = c_gaster
 	var gz := 0.30 + (gaster_s - 1.0) * 0.16
 	b.add_ellipsoid(Vector3(0, 0.21 + (gaster_s - 1.0) * 0.05, gz), Vector3(0.15, 0.13, 0.2) * gaster_s, rings, segs, Basis(Vector3.RIGHT, -0.25))
-	if kind == "tanajura":
-		# Listras douradas no abdômen da tanajura.
+	if kind == "tanajura" or kind == "queen":
+		# Listras douradas no abdômen da tanajura e da rainha.
 		b.color = Color(0.88, 0.62, 0.22)
 		for k in 3:
 			var zz := gz - 0.12 + k * 0.12

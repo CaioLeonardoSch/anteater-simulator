@@ -29,6 +29,7 @@ var ipe_ground: ShaderMaterial
 var clay: ShaderMaterial
 var rock: ShaderMaterial
 var nest_soil: ShaderMaterial
+var nest_cap: ShaderMaterial
 
 
 func _init() -> void:
@@ -93,6 +94,11 @@ func _init() -> void:
 	nest_soil.set_shader_parameter("roughness_value", 0.97)
 	nest_soil.set_shader_parameter("specular_value", 0.15)
 	nest_soil.set_shader_parameter("rim_amount", 0.0)
+	# Terra fofa e mais clara que tampa as câmaras (dá para ver de longe).
+	nest_cap = nest_soil.duplicate()
+	nest_cap.set_shader_parameter("color_a", Color(0.70, 0.50, 0.34))
+	nest_cap.set_shader_parameter("color_b", Color(0.90, 0.72, 0.52))
+	nest_cap.set_shader_parameter("accent_color", Color(0.96, 0.84, 0.64))
 	nest_soil.set_shader_parameter("accent_threshold", 0.7)
 
 

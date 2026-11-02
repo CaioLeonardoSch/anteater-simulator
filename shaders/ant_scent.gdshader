@@ -5,6 +5,7 @@ render_mode unshaded, blend_add, depth_test_disabled, depth_draw_never, cull_bac
 #include "res://shaders/ant_anim.gdshaderinc"
 
 global uniform float sniff_amount;
+uniform vec3 tint : source_color = vec3(1.0, 0.16, 0.12);
 
 varying float v_highlight;
 
@@ -19,6 +20,6 @@ void vertex() {
 void fragment() {
 	float fres = pow(1.0 - abs(dot(NORMAL, VIEW)), 1.5);
 	float a = v_highlight * sniff_amount;
-	ALBEDO = vec3(1.0, 0.58, 0.16) * (0.4 + fres * 0.9) * a;
+	ALBEDO = tint * (0.4 + fres * 0.9) * a;
 	ALPHA = a;
 }

@@ -23,6 +23,8 @@ class Chamber extends RefCounted:
 	var shown := 0
 	var opened := false
 	var royal := false
+	## Câmara no meio do campo, longe do monte (é deste formigueiro, mas fica sozinha).
+	var satellite := false
 	var cap: Node3D
 	var pit: Node3D
 
@@ -47,6 +49,9 @@ var queen_alive := false
 var cleaned := false
 var used_ai_model := false
 
+## Altura do chão (terreno + montes), dada pelo mundo: as câmaras do campo
+## ficam no chão de verdade, e não na altura do monte.
+var ground: Callable
 var _noise := FastNoiseLite.new()
 var _mats
 var _flowers: MultiMeshInstance3D
@@ -242,7 +247,16 @@ func open_chamber_near(p2: Vector2, reach: float) -> int:
 
 
 func chamber_world_pos(c: Chamber) -> Vector3:
-	return global_position + Vector3(c.local.x, dome_height(c.pos2.x, c.pos2.y), c.local.y)
+	return global_position + Vector3(c.local.x, _surf(c.local), c.local.y)
+
+
+## Câmaras que ficam no monte (sem as do campo).
+func mound_chambers() -> int:
+	var n := 0
+	for c in chambers:
+		if not c.satellite:
+			n += 1
+	return n
 
 
 # ------------------------------------------------------------------ Efeitos
@@ -440,7 +454,10 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 	return pivot
 
 
+## Altura do chão neste ponto, medida a partir da base do formigueiro.
 func _surf(local: Vector2) -> float:
+	if ground.is_valid():
+		return float(ground.call(center2.x + local.x, center2.y + local.y)) - position.y
 	return dome_height(center2.x + local.x, center2.y + local.y)
 
 

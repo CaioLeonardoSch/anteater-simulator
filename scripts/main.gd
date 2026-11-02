@@ -21,10 +21,11 @@ enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 static var skip_menu := false
 const AUTOSAVE_EVERY := 30.0
 ## Ordem em que o bot de teste aprende as habilidades (junta pontos para a próxima).
-const BOT_ORDER := ["lingua_segurar", "garras_cavar", "lingua_lambida", "patas_corrida", "faro_apurado",
-	"garras_rapidas", "lingua_comprida", "garras_fortes", "patas_lamber", "lingua_saliva",
-	"garras_relampago", "garras_tremor", "faro_folego", "lingua_turbo", "patas_ligeiras", "faro_ninho",
-	"garras_terremoto", "faro_duradouro", "garras_recarga", "patas_galope", "faro_incansavel", "faro_lendario"]
+const BOT_ORDER := ["lingua_segurar", "faro_farejar", "garras_cavar", "lingua_bocado_1", "patas_corrida",
+	"garras_ageis", "faro_preciso", "lingua_bocado_2", "lingua_comprida", "garras_fortes", "faro_atento",
+	"patas_lamber", "lingua_bocado_3", "lingua_saliva", "garras_incansaveis", "garras_tremor", "faro_nitido",
+	"faro_apurado", "faro_camara", "lingua_turbo", "lingua_bocado_4", "patas_ligeiras", "garras_terremoto",
+	"faro_agucado", "garras_recarga", "patas_galope", "faro_lendario", "garras_recarga_2"]
 
 var state := State.LOADING
 var world: World
@@ -88,13 +89,17 @@ func _ready() -> void:
 func _build_game() -> void:
 	world = World.new()
 	world.name = "World"
+	# O Main roda sempre (menus), mas o mundo, as formigas e o tamanduá param na pausa.
+	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(world)
 	world.build()
 	swarm = Swarm.new()
 	swarm.name = "Swarm"
+	swarm.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(swarm)
 	colony = Colony.new()
 	colony.name = "Colony"
+	colony.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(colony)
 	swarm.setup(world, colony)
 	colony.setup(world, swarm)
@@ -102,6 +107,7 @@ func _build_game() -> void:
 	colony.active = true
 	player = Player.new()
 	player.name = "Anteater"
+	player.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(player)
 	player.setup(world, swarm, colony)
 	player.place_at(world.player_start, world.player_start_yaw)
@@ -140,8 +146,15 @@ func _build_game() -> void:
 	GameState.upgrade_affordable.connect(_on_affordable)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	Settings.changed.connect(world.apply_graphics)
+	Settings.changed.connect(_apply_sniff_color)
+	_apply_sniff_color()
 	Sfx.start_ambience()
 	Sfx.start_music()
+
+
+func _apply_sniff_color() -> void:
+	swarm.set_sniff_color(Settings.sniff_color())
+	world.scent_marks.set_color(Settings.sniff_color())
 
 
 func _enter_menu() -> void:
@@ -187,6 +200,9 @@ func _start_play() -> void:
 	if DevTools.pose.size() >= 4:
 		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
 		player.pitch = deg_to_rad(DevTools.pose[3])
+	if DevTools.args.has("sniff"):
+		# Teste: fareja sozinho nesse instante (para capturas do faro).
+		get_tree().create_timer(float(DevTools.args.sniff)).timeout.connect(player.do_sniff)
 	if DevTools.args.has("open"):
 		# Teste: abre todas as câmaras de um formigueiro (ou de todos, com --open=all).
 		for nest in world.nests:

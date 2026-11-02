@@ -18,6 +18,8 @@ const CHAMBER_VISIBLE := 40
 ## Parte de cada formigueiro que anda pelas trilhas (o resto mora nas câmaras).
 const FORAGER_SHARE := 0.45
 const ROYAL_WEIGHT := 1.7
+## Câmaras no meio do campo são menores.
+const SATELLITE_WEIGHT := 0.6
 
 var swarm
 var world
@@ -67,17 +69,26 @@ func _distribute() -> void:
 		var residents: int = share - n.pool
 		var weights := 0.0
 		for c in n.chambers:
-			weights += ROYAL_WEIGHT if c.royal else 1.0
+			weights += _chamber_weight(c)
 		var given := 0
 		for ci in n.chambers.size():
 			var c = n.chambers[ci]
-			var r := int(floor(residents * (ROYAL_WEIGHT if c.royal else 1.0) / weights))
+			var r := int(floor(residents * _chamber_weight(c) / weights))
 			if ci == n.chambers.size() - 1:
 				r = residents - given
 			c.residents = r
 			c.shown = 0
 			c.opened = false
 			given += r
+
+
+## Peso de cada câmara na hora de repartir as moradoras.
+func _chamber_weight(c) -> float:
+	if c.royal:
+		return ROYAL_WEIGHT
+	if c.satellite:
+		return SATELLITE_WEIGHT
+	return 1.0
 
 
 func total_remaining() -> int:
@@ -209,6 +220,9 @@ func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> in
 		swarm.spawn_resident(swarm.QUEEN, code, c.pos2, c.radius)
 	if stun > 0.0:
 		swarm.stun_home(code, stun)
+	elif not instant:
+		# Sem Garras Fortes, as moradoras saem correndo para longe.
+		swarm.scatter_home(code)
 	if not instant:
 		chamber_opened.emit(nest, ci)
 		_check_chamber(nest, ci)

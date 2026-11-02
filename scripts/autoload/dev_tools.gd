@@ -17,6 +17,7 @@ extends Node
 ##   --allow-save                 deixa o bot salvar o jogo (teste)
 ##   --start=continue             continua o jogo salvo
 ##   --start=settings --tab=N     abre as configurações na aba N
+##   --sniff=SEG                  fareja sozinho depois de SEG segundos
 ##   --stats                      imprime FPS e estatísticas de render a cada segundo
 
 var args: Dictionary = {}

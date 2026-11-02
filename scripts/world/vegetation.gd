@@ -170,6 +170,9 @@ func _spot_ok(world, pos: Vector2, trail_gap: float, spacing: float, radius: flo
 	for f in world.food_sources:
 		if pos.distance_to(f) < 3.0 + radius:
 			return false
+	for q in world.satellite_spots:
+		if pos.distance_to(q) < 2.5 + radius:
+			return false
 	if pos.distance_to(world.player_start) < 5.0:
 		return false
 	for o in obstacles:

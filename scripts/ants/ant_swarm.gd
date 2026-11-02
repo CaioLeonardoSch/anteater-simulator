@@ -1,7 +1,9 @@
 extends Node3D
 ## Enxame de formigas: simulação leve em arrays + desenho com MultiMesh.
-## Modos: seguindo a trilha, fugindo, voltando para a trilha, tonta, grudada
-## na língua e morando numa câmara aberta de um formigueiro.
+## Modos: seguindo a trilha, fugindo, voltando (para a trilha ou para a câmara),
+## tonta, grudada na língua e morando numa câmara aberta de um formigueiro.
+## As moradoras de uma câmara recém-aberta saem correndo, e todas fogem quando
+## o tamanduá chega perto; depois voltam para casa.
 
 signal ant_entered_nest(nest_index: int)
 
@@ -211,11 +213,18 @@ func _physics_process(delta: float) -> void:
 		var m := mode[i]
 		if highlight[i] > 0.0:
 			highlight[i] = maxf(highlight[i] - delta, 0.0)
-		if m == Mode.TRAIL or m == Mode.RETURN:
+		if m == Mode.TRAIL or m == Mode.RETURN or m == Mode.CHAMBER:
 			var d2 := Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2)
-			if d2 < flee_r2:
+			if d2 < flee_r2 and kind[i] != QUEEN:
 				_start_flee(i, tp2)
 				m = Mode.FLEE
+			elif m == Mode.CHAMBER:
+				if d2 > lod_r2:
+					if (i & 3) == lod_tick:
+						_update_chamber(i, delta * 4.0, tp2)
+				else:
+					_update_chamber(i, delta, tp2)
+				continue
 		match m:
 			Mode.TRAIL:
 				_update_trail(i, delta)
@@ -225,12 +234,6 @@ func _physics_process(delta: float) -> void:
 				_update_return(i, delta)
 			Mode.STUNNED:
 				_update_stunned(i, delta)
-			Mode.CHAMBER:
-				if Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2) > lod_r2:
-					if (i & 3) == lod_tick:
-						_update_chamber(i, delta * 4.0, tp2)
-				else:
-					_update_chamber(i, delta, tp2)
 			_:
 				pass
 
@@ -243,7 +246,8 @@ func _start_flee(i: int, from: Vector2) -> void:
 	away = away.normalized().rotated(randf_range(-0.7, 0.7))
 	mode[i] = Mode.FLEE
 	vel[i] = away * PANIC_SPEED[kind[i]] * randf_range(0.85, 1.15)
-	timer[i] = randf_range(1.6, 2.8)
+	# Moradoras correm mais longe antes de pensar em voltar para a câmara.
+	timer[i] = randf_range(2.4, 3.8) if home[i] >= 0 else randf_range(1.6, 2.8)
 
 
 func _update_trail(i: int, delta: float) -> void:
@@ -303,11 +307,15 @@ func _update_free(i: int, delta: float) -> void:
 	timer[i] -= delta
 	if timer[i] <= 0.0:
 		mode[i] = Mode.RETURN
-		var t = trails[trail_id[i]]
-		s[i] = t.closest_s(p2, s[i], 30.0)
+		if home[i] < 0:
+			var t = trails[trail_id[i]]
+			s[i] = t.closest_s(p2, s[i], 30.0)
 
 
 func _update_return(i: int, delta: float) -> void:
+	if home[i] >= 0:
+		_update_homing(i, delta)
+		return
 	var t = trails[trail_id[i]]
 	var target: Vector2 = t.point_at(s[i]) + t.side_at(s[i]) * lateral[i]
 	var p2 := Vector2(pos[i].x, pos[i].z)
@@ -327,6 +335,25 @@ func _update_return(i: int, delta: float) -> void:
 	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
 	# Vai avançando o ponto-alvo para não voltar para trás.
 	s[i] = clampf(s[i] + speed[i] * dir[i] * delta * 0.5, 0.0, t.length)
+
+
+## Moradora voltando para a sua câmara depois de fugir.
+func _update_homing(i: int, delta: float) -> void:
+	var a := anchor[i]
+	var center := Vector2(a.x, a.z)
+	var p2 := Vector2(pos[i].x, pos[i].z)
+	var to := center - p2
+	var dist := to.length()
+	if dist < a.y * 0.6:
+		mode[i] = Mode.CHAMBER
+		vel[i] = (to / dist if dist > 0.001 else Vector2.RIGHT) * speed[i]
+		return
+	var sp := maxf(speed[i] * 2.4, 0.75)
+	var v := to / dist * sp
+	p2 += v * delta
+	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * 10.0, 1.0))
+	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32)
 
 
 ## Moradoras andam em círculos dentro da câmara e se afastam do focinho.
@@ -370,12 +397,37 @@ func _update_stunned(i: int, delta: float) -> void:
 			pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	if timer[i] <= 0.0:
 		if home[i] >= 0:
-			mode[i] = Mode.CHAMBER
-			vel[i] = (Vector2(anchor[i].x, anchor[i].z) - Vector2(pos[i].x, pos[i].z)).normalized() * speed[i]
+			# Longe da câmara (puxada pelo Terremoto ou tonta no meio da fuga): volta andando.
+			var off := Vector2(pos[i].x - anchor[i].x, pos[i].z - anchor[i].z)
+			if off.length() > anchor[i].y * 0.92:
+				mode[i] = Mode.RETURN
+			else:
+				mode[i] = Mode.CHAMBER
+				vel[i] = -off.normalized() * speed[i]
 		else:
 			mode[i] = Mode.RETURN
 			var t = trails[trail_id[i]]
 			s[i] = t.closest_s(Vector2(pos[i].x, pos[i].z), s[i], 30.0)
+
+
+## Câmara recém-aberta: as moradoras saem correndo para longe do tamanduá.
+func scatter_home(home_code: int) -> void:
+	var tp2 := Vector2(threat_pos.x, threat_pos.z)
+	for i in CAPACITY:
+		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN or mode[i] != Mode.CHAMBER:
+			continue
+		var a := anchor[i]
+		var p2 := Vector2(pos[i].x, pos[i].z)
+		var out := p2 - Vector2(a.x, a.z)
+		if out.length_squared() < 0.0001:
+			out = Vector2.RIGHT.rotated(randf() * TAU)
+		var away := p2 - tp2
+		if away.length_squared() < 0.0001:
+			away = out
+		var dir := (out.normalized() + away.normalized() * 0.8).normalized().rotated(randf_range(-0.6, 0.6))
+		mode[i] = Mode.FLEE
+		vel[i] = dir * PANIC_SPEED[kind[i]] * randf_range(0.8, 1.2)
+		timer[i] = randf_range(2.2, 4.0)
 
 
 ## Deixa tontas as moradoras de uma câmara (Garras Fortes, ao abrir).
@@ -412,14 +464,12 @@ func _queen_blocked(i: int) -> bool:
 	return kind[i] == QUEEN and colony != null and colony.is_queen_protected(home[i])
 
 
-## Lambida. `multi` = gruda todas no raio (Lambida); senão só a mais próxima
-## da ponta (bicada). Retorna as grudadas e se bateu numa rainha protegida.
-func lick(tip: Vector3, radius: float, mouth: Vector3, multi: bool) -> Dictionary:
-	var captured := PackedInt32Array()
+## Lambida: gruda até `capacity` formigas no raio, as mais perto da ponta
+## primeiro. Retorna as grudadas e se bateu numa rainha protegida.
+func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 	var protected_queen := false
 	var r2 := radius * radius
-	var best := -1
-	var best_d2 := INF
+	var near: Array[Vector2] = []
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
@@ -432,15 +482,13 @@ func lick(tip: Vector3, radius: float, mouth: Vector3, multi: bool) -> Dictionar
 		if _queen_blocked(i):
 			protected_queen = true
 			continue
-		if multi:
-			mode[i] = Mode.STUCK
-			captured.append(i)
-		elif d2 < best_d2:
-			best_d2 = d2
-			best = i
-	if not multi and best >= 0:
-		mode[best] = Mode.STUCK
-		captured.append(best)
+		near.append(Vector2(d2, i))
+	near.sort()
+	var captured := PackedInt32Array()
+	for k in mini(capacity, near.size()):
+		var i := int(near[k].y)
+		mode[i] = Mode.STUCK
+		captured.append(i)
 	return {"captured": captured, "queen_protected": protected_queen}
 
 
@@ -465,24 +513,44 @@ func best_target(origin: Vector3, aim_dir: Vector3, max_dist: float, max_angle_c
 	return best
 
 
-## Destaca (faro) as formigas num raio por alguns segundos.
-func sniff(center: Vector3, radius: float, duration: float) -> int:
-	var n := 0
+## Faro: sente as `max_ants` formigas mais perto num raio. Com `sharp`
+## (Faro Nítido), elas brilham por `duration` segundos. Retorna quantas sentiu,
+## se havia mais, a distância da mais perto e onde elas estão.
+func sniff(center: Vector3, radius: float, max_ants: int, duration: float, sharp: bool) -> Dictionary:
 	var r2 := radius * radius
+	var near: Array[Vector2] = []
 	for i in CAPACITY:
-		if alive[i] == 0:
+		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
 		var dx := pos[i].x - center.x
 		var dz := pos[i].z - center.z
-		if dx * dx + dz * dz <= r2:
+		var d2 := dx * dx + dz * dz
+		if d2 <= r2:
+			near.append(Vector2(d2, i))
+	near.sort()
+	var n := mini(max_ants, near.size())
+	var points := PackedVector3Array()
+	for k in n:
+		var i := int(near[k].y)
+		points.append(pos[i])
+		if sharp:
 			highlight[i] = duration
-			n += 1
-	return n
+	return {"count": n, "capped": near.size() > max_ants,
+		"nearest": sqrt(near[0].x) if n > 0 else -1.0, "points": points}
 
 
 func set_scent_overlay(enabled: bool) -> void:
 	for mmi in _mmi:
 		mmi.material_overlay = _scent_mat if enabled else null
+
+
+## Cor do faro (configurável). A rainha continua com o brilho dourado dela.
+func set_sniff_color(c: Color) -> void:
+	if _scent_mat:
+		_scent_mat.set_shader_parameter("tint", c)
+	for k in [0, 1, 3]:
+		if k < _mmi.size():
+			_mmi[k].set_instance_shader_parameter("glow_color", c)
 
 
 ## Centro aproximado do maior grupo de formigas (para a bússola do faro).

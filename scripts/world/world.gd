@@ -9,6 +9,7 @@ const Vegetation := preload("res://scripts/world/vegetation.gd")
 const Grass := preload("res://scripts/world/grass.gd")
 const Nest := preload("res://scripts/world/nest.gd")
 const Props := preload("res://scripts/world/props.gd")
+const ScentMarks := preload("res://scripts/world/scent_marks.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const SKY_SHADER := preload("res://shaders/sky_dusk.gdshader")
 
@@ -23,6 +24,10 @@ var food_sources: Array[Vector2] = []
 var vegetation: Vegetation
 var grass: Grass
 var player_start := Vector2(2.0, 6.0)
+## Câmaras no meio do campo (posição), para a vegetação não cobrir.
+var satellite_spots: Array[Vector2] = []
+## Nuvens e colunas de cheiro do faro.
+var scent_marks: ScentMarks
 var player_start_yaw := 0.0
 var start_trail_index := 0
 
@@ -67,6 +72,8 @@ const LINKS := [[0, 0], [0, 1], [1, 1], [2, 2], [2, 1], [3, 3], [3, 2], [4, 3], 
 	[8, 1], [8, 2], [9, 3], [9, 2], [10, 4], [10, 5], [11, 0], [11, 5]]
 ## Grade que diz qual formigueiro (se algum) cobre cada pedaço do mapa.
 const NEST_GRID_CELL := 2.0
+## Câmaras sozinhas no meio do campo, longe das trilhas.
+const SATELLITE_COUNT := 12
 ## Trilha onde o jogador começa (formigueiro Leste -> arbusto 2), olhando para o sol.
 const START_LINK := [2, 2]
 
@@ -128,8 +135,10 @@ func build() -> void:
 	# mudar quando o visual dos montes muda.
 	for nest in nests:
 		nest.plan_chambers(_rng)
+	_plan_satellites()
 	for nest in nests:
 		nest.position = Vector3(nest.center2.x, terrain.get_height(nest.center2.x, nest.center2.y), nest.center2.y)
+		nest.ground = ground_height
 		add_child(nest)
 		nest.build(_rng, mats)
 	# Arbustos onde as saúvas cortam folhas.
@@ -154,8 +163,51 @@ func build() -> void:
 	grass.build(terrain, mats, _rng, Settings.grass_density(), Settings.grass_view_distance())
 	_grass_quality_built = Settings.grass_quality
 	_build_particles()
+	scent_marks = ScentMarks.new()
+	scent_marks.name = "ScentMarks"
+	add_child(scent_marks)
+	scent_marks.setup(self)
 	set_day_progress(0.0, true)
 	apply_graphics()
+
+
+## Espalha câmaras pelo campo, longe das trilhas, dos montes e dos arbustos.
+## Cada uma pertence ao formigueiro mais perto (no máximo 2 por formigueiro).
+func _plan_satellites() -> void:
+	var per_nest := {}
+	var tries := 0
+	while satellite_spots.size() < SATELLITE_COUNT and tries < 600:
+		tries += 1
+		var a := _rng.randf() * TAU
+		var r := sqrt(_rng.randf_range(8.0 * 8.0, 54.0 * 54.0))
+		var p := Vector2(cos(a), sin(a)) * r
+		if trails.distance_to_trails(p) < 3.5 or p.distance_to(player_start) < 7.0:
+			continue
+		var ok := true
+		for n in nests:
+			if p.distance_to(n.center2) < n.radius + 4.5:
+				ok = false
+				break
+		for f in food_sources:
+			if p.distance_to(f) < 4.0:
+				ok = false
+		for q in satellite_spots:
+			if p.distance_to(q) < 9.0:
+				ok = false
+		if not ok:
+			continue
+		var owner := nearest_nest(p)
+		if int(per_nest.get(owner.index, 0)) >= 2:
+			continue
+		per_nest[owner.index] = int(per_nest.get(owner.index, 0)) + 1
+		var c := Nest.Chamber.new()
+		c.satellite = true
+		c.radius = _rng.randf_range(0.46, 0.54)
+		c.pos2 = p
+		c.local = p - owner.center2
+		owner.chambers.append(c)
+		satellite_spots.append(p)
+		terrain.mask_paint(p.x, p.y, 1.3, 1, 1.0)
 
 
 func vegetation_ai(model_name: String, target: Vector3) -> Node3D:

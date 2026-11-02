@@ -20,92 +20,110 @@ const GOAL := 3200
 const RECORD_PATH := "user://save.cfg"
 const GAME_SAVE_PATH := "user://jogo_salvo.json"
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 ## As 5 habilidades. "lines" = nomes das duas linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.
 const BRANCHES := [
-	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": []},
+	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza"]},
 	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Rapidez"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Velocidade", "Agilidade"]},
-	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Fôlego"]},
+	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
 	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Floresta"},
 ]
 
 ## Cada habilidade: ramo, posição na árvore (col -1 = topo do ramo, centralizado;
 ## 0/1 = linha da esquerda/direita), preço em formigas e o que precisa antes.
 const UPGRADES := [
-	# Língua
-	{"id": "lingua_segurar", "branch": 0, "col": 0, "row": 0, "cost": 25, "requires": [],
+	# Língua: Lambida Contínua abre as linhas de Bocado (quantas por lambida) e Destreza.
+	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "cost": 25, "requires": [],
 		"name": "Lambida Contínua",
 		"desc": "Segure o botão para lamber sem parar. Sem ela, cada clique é uma lambida."},
-	{"id": "lingua_lambida", "branch": 0, "col": 0, "row": 1, "cost": 50, "requires": ["lingua_segurar"],
+	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"],
 		"name": "Lambida",
-		"desc": "A língua gruda todas as formigas perto da ponta, não só uma."},
-	{"id": "lingua_comprida", "branch": 0, "col": 0, "row": 2, "cost": 90, "requires": ["lingua_lambida"],
+		"desc": "Cada lambida pega até 5 formigas perto da ponta da língua (antes, só 1)."},
+	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 75, "requires": ["lingua_bocado_1"],
+		"name": "Lambida Larga",
+		"desc": "Até 15 formigas por lambida, e a ponta gruda num raio um pouco maior."},
+	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "cost": 115, "requires": ["lingua_bocado_2"],
+		"name": "Lambida Gulosa",
+		"desc": "Até 25 formigas por lambida."},
+	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 170, "requires": ["lingua_bocado_3"],
+		"name": "Lambida Voraz",
+		"desc": "Até 40 formigas por lambida: uma câmara inteira de uma vez."},
+	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"],
 		"name": "Língua Comprida",
 		"desc": "Alcance da língua +50%."},
-	{"id": "lingua_saliva", "branch": 0, "col": 0, "row": 3, "cost": 140, "requires": ["lingua_comprida"],
+	{"id": "lingua_saliva", "branch": 0, "col": 1, "row": 2, "cost": 100, "requires": ["lingua_comprida"],
 		"name": "Saliva Grudenta",
-		"desc": "Raio de captura +70%: uma lambida pega o grupo inteiro."},
-	{"id": "lingua_turbo", "branch": 0, "col": 0, "row": 4, "cost": 200, "requires": ["lingua_saliva"],
+		"desc": "A ponta da língua gruda num raio 70% maior."},
+	{"id": "lingua_turbo", "branch": 0, "col": 1, "row": 3, "cost": 150, "requires": ["lingua_saliva"],
 		"name": "Língua Turbo",
 		"desc": "A língua lambe 2x mais rápido."},
-	# Garras: Cavar abre as duas linhas (Força e Rapidez), que não se excluem.
+	# Garras: Cavar abre as linhas de Força e de Rapidez (o descanso entre usos).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
-		"desc": "Segure [E] perto de uma câmara fechada para abri-la e comer quem mora lá dentro."},
-	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 80, "requires": ["garras_cavar"],
+		"desc": "Segure [E] perto de uma câmara fechada para abri-la. Depois, as garras descansam 25 s."},
+	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 70, "requires": ["garras_cavar"],
 		"name": "Garras Fortes",
-		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: nenhuma foge da língua."},
-	{"id": "garras_tremor", "branch": 1, "col": 0, "row": 2, "cost": 130, "requires": ["garras_fortes"],
+		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
+	{"id": "garras_tremor", "branch": 1, "col": 0, "row": 2, "cost": 110, "requires": ["garras_fortes"],
 		"name": "Tremor",
-		"desc": "[Espaço] Bata no chão: as formigas num raio de 6 m ficam tontas por 3 s."},
-	{"id": "garras_terremoto", "branch": 1, "col": 0, "row": 3, "cost": 200, "requires": ["garras_tremor"],
+		"desc": "[Espaço] Pule e caia com força: as formigas num raio de 6 m ficam tontas por 3 s. Recarrega em 21 s."},
+	{"id": "garras_terremoto", "branch": 1, "col": 0, "row": 3, "cost": 170, "requires": ["garras_tremor"],
 		"name": "Terremoto",
-		"desc": "Tremor quase 2x maior, e as formigas tontas são puxadas para a sua boca."},
-	{"id": "garras_rapidas", "branch": 1, "col": 1, "row": 1, "cost": 60, "requires": ["garras_cavar"],
-		"name": "Cavada Rápida",
-		"desc": "Menos espera para abrir uma câmara: 1,2 s vira 0,75 s."},
-	{"id": "garras_relampago", "branch": 1, "col": 1, "row": 2, "cost": 110, "requires": ["garras_rapidas"],
-		"name": "Cavada Relâmpago",
-		"desc": "Abre uma câmara em 0,35 s."},
-	{"id": "garras_recarga", "branch": 1, "col": 1, "row": 3, "cost": 160, "requires": ["garras_relampago"],
-		"name": "Recarga Rápida",
-		"desc": "O Tremor (e o Terremoto) recarrega 2x mais rápido: 8 s vira 4 s."},
+		"desc": "Pulo mais alto e tremor quase 2x maior; as formigas tontas são puxadas para a sua boca."},
+	{"id": "garras_ageis", "branch": 1, "col": 1, "row": 1, "cost": 50, "requires": ["garras_cavar"],
+		"name": "Garras Ágeis",
+		"desc": "As garras descansam menos depois de cavar: 25 s vira 15 s."},
+	{"id": "garras_incansaveis", "branch": 1, "col": 1, "row": 2, "cost": 95, "requires": ["garras_ageis"],
+		"name": "Garras Incansáveis",
+		"desc": "Descanso de só 5 s, e a câmara abre na metade do tempo."},
+	{"id": "garras_recarga", "branch": 1, "col": 1, "row": 3, "cost": 130, "requires": ["garras_incansaveis"],
+		"name": "Recarga do Tremor",
+		"desc": "O Tremor (e o Terremoto) recarrega em 14 s em vez de 21 s."},
+	{"id": "garras_recarga_2", "branch": 1, "col": 1, "row": 4, "cost": 150, "requires": ["garras_recarga"],
+		"name": "Recarga Relâmpago",
+		"desc": "O Tremor (e o Terremoto) recarrega em só 7 s."},
 	# Patas
 	{"id": "patas_corrida", "branch": 2, "col": -1, "row": 0, "cost": 30, "requires": [],
 		"name": "Corrida",
 		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e as formigas fogem mais cedo."},
-	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 90, "requires": ["patas_corrida"],
+	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 80, "requires": ["patas_corrida"],
 		"name": "Patas Ligeiras",
 		"desc": "Corre mais 25%: o dobro do bônus (+50%)."},
-	{"id": "patas_galope", "branch": 2, "col": 0, "row": 2, "cost": 150, "requires": ["patas_ligeiras"],
+	{"id": "patas_galope", "branch": 2, "col": 0, "row": 2, "cost": 130, "requires": ["patas_ligeiras"],
 		"name": "Galope Silencioso",
 		"desc": "Correndo, você não assusta mais as formigas."},
-	{"id": "patas_lamber", "branch": 2, "col": 1, "row": 1, "cost": 70, "requires": ["patas_corrida"],
+	{"id": "patas_lamber", "branch": 2, "col": 1, "row": 1, "cost": 60, "requires": ["patas_corrida"],
 		"name": "Lamber Correndo",
 		"desc": "Dá para lamber enquanto corre."},
-	# Faro: Faro Apurado abre as linhas de Alcance e de Fôlego.
-	{"id": "faro_apurado", "branch": 3, "col": -1, "row": 0, "cost": 30, "requires": [],
+	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
+	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "cost": 20, "requires": [],
+		"name": "Farejar",
+		"desc": "[Q] Fareje: descubra quantas formigas há a até 10 m (até 10 delas) e a que distância está a mais perto. Recarrega em 10 s."},
+	{"id": "faro_atento", "branch": 3, "col": 0, "row": 1, "cost": 40, "requires": ["faro_farejar"],
+		"name": "Faro Atento",
+		"desc": "Fareja até 16 m e até 25 formigas. Recarrega em 9 s."},
+	{"id": "faro_apurado", "branch": 3, "col": 0, "row": 2, "cost": 70, "requires": ["faro_atento"],
 		"name": "Faro Apurado",
-		"desc": "[Q] Farejar alcança 30 m e a bússola aponta o maior grupo de formigas."},
-	{"id": "faro_ninho", "branch": 3, "col": 0, "row": 1, "cost": 80, "requires": ["faro_apurado"],
-		"name": "Faro de Ninho",
-		"desc": "Farejar mostra na bússola os formigueiros que ainda têm formigas, e quantas."},
-	{"id": "faro_lendario", "branch": 3, "col": 0, "row": 2, "cost": 170, "requires": ["faro_ninho"],
+		"desc": "Fareja até 24 m e até 50 formigas, e o cheiro dura mais. Recarrega em 8 s."},
+	{"id": "faro_agucado", "branch": 3, "col": 0, "row": 3, "cost": 110, "requires": ["faro_apurado"],
+		"name": "Faro Aguçado",
+		"desc": "Fareja até 34 m e até 100 formigas; a bússola mostra quanto falta em cada formigueiro. Recarrega em 7 s."},
+	{"id": "faro_lendario", "branch": 3, "col": 0, "row": 4, "cost": 160, "requires": ["faro_agucado"],
 		"name": "Faro Lendário",
-		"desc": "Farejar alcança o mapa todo e marca as rainhas na bússola."},
-	{"id": "faro_folego", "branch": 3, "col": 1, "row": 1, "cost": 50, "requires": ["faro_apurado"],
-		"name": "Fôlego",
-		"desc": "Menos espera entre uma farejada e outra: 8 s vira 5 s."},
-	{"id": "faro_duradouro", "branch": 3, "col": 1, "row": 2, "cost": 90, "requires": ["faro_folego"],
-		"name": "Faro Duradouro",
-		"desc": "O faro dura mais: 4 s vira 7 s."},
-	{"id": "faro_incansavel", "branch": 3, "col": 1, "row": 3, "cost": 140, "requires": ["faro_duradouro"],
-		"name": "Faro Incansável",
-		"desc": "Quase sem espera: fareje de novo depois de 2 s."},
-	# Escalada + Cauda (Floresta)
+		"desc": "Fareja até 50 m e até 200 formigas, e marca as rainhas na bússola. Recarrega em 6 s."},
+	{"id": "faro_preciso", "branch": 3, "col": 1, "row": 1, "cost": 45, "requires": ["faro_farejar"],
+		"name": "Faro Preciso",
+		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão as formigas farejadas."},
+	{"id": "faro_nitido", "branch": 3, "col": 1, "row": 2, "cost": 85, "requires": ["faro_preciso"],
+		"name": "Faro Nítido",
+		"desc": "As formigas farejadas brilham nítidas, mesmo atrás do capim."},
+	{"id": "faro_camara", "branch": 3, "col": 1, "row": 3, "cost": 100, "requires": ["faro_nitido"],
+		"name": "Faro de Câmara",
+		"desc": "Farejar também mostra as câmaras fechadas por perto (até no meio do campo), com uma coluna de cheiro."},
+	# Escalada + Cauda (ainda não feita: aparece com cadeado)
 	{"id": "escalada_1", "branch": 4, "col": 0, "row": 0, "cost": 300, "requires": [],
 		"name": "Escalada",
 		"desc": "Sobe em árvores e cupinzeiros para alcançar ninhos no alto."},
@@ -324,9 +342,17 @@ func lick_hold() -> bool:
 	return has("lingua_segurar")
 
 
-## Sem a Lambida, cada lambida pega só uma formiga (bicada).
-func lick_grabs_all() -> bool:
-	return has("lingua_lambida")
+## Nível da linha de Bocado (0 = nenhum, 1..4).
+func bocado_level() -> int:
+	for k in [4, 3, 2, 1]:
+		if has("lingua_bocado_%d" % k):
+			return k
+	return 0
+
+
+## Quantas formigas uma lambida pega de uma vez.
+func lick_capacity() -> int:
+	return [1, 5, 15, 25, 40][bocado_level()]
 
 
 func tongue_range() -> float:
@@ -339,7 +365,10 @@ func tongue_range() -> float:
 
 
 func capture_radius() -> float:
-	return 0.34 * (1.7 if has("lingua_saliva") else 1.0)
+	var r: float = 0.34 * [1.0, 1.0, 1.15, 1.3, 1.45][bocado_level()]
+	if has("lingua_saliva"):
+		r *= 1.7
+	return r
 
 
 func lick_rate() -> float:
@@ -355,12 +384,18 @@ func can_dig() -> bool:
 	return has("garras_cavar")
 
 
+## Quanto tempo segurando [E] para abrir uma câmara.
 func dig_time() -> float:
-	if has("garras_relampago"):
-		return 0.35
-	if has("garras_rapidas"):
-		return 0.75
-	return 1.2
+	return 0.6 if has("garras_incansaveis") else 1.2
+
+
+## Descanso das garras depois de abrir uma câmara.
+func dig_cooldown() -> float:
+	if has("garras_incansaveis"):
+		return 5.0
+	if has("garras_ageis"):
+		return 15.0
+	return 25.0
 
 
 ## Quanto tempo as moradoras ficam tontas quando a câmara é aberta (0 = nada).
@@ -381,7 +416,16 @@ func tremor_pulls() -> bool:
 
 
 func tremor_cooldown() -> float:
-	return 4.0 if has("garras_recarga") else 8.0
+	if has("garras_recarga_2"):
+		return 7.0
+	if has("garras_recarga"):
+		return 14.0
+	return 21.0
+
+
+## Força do pulo do Tremor (o Terremoto pula mais alto).
+func tremor_jump_speed() -> float:
+	return 7.4 if has("garras_terremoto") else 6.0
 
 
 func can_run() -> bool:
@@ -405,31 +449,55 @@ func flee_multiplier(running: bool) -> float:
 	return 1.8 if running and not has("patas_galope") else 1.0
 
 
-## Linha de Alcance do Faro: 0 = faro básico, 1..3 = níveis comprados.
+func can_sniff() -> bool:
+	return has("faro_farejar")
+
+
+## Linha de Alcance do Faro: 0 = só Farejar, 1..4 = níveis comprados.
 func faro_level() -> int:
-	if has("faro_lendario"):
-		return 3
-	if has("faro_ninho"):
+	var lvl := 0
+	for id in ["faro_atento", "faro_apurado", "faro_agucado", "faro_lendario"]:
+		if has(id):
+			lvl += 1
+	return lvl
+
+
+func sniff_radius() -> float:
+	return [10.0, 16.0, 24.0, 34.0, 50.0][faro_level()]
+
+
+## Quantas formigas o faro consegue sentir de uma vez (as mais perto).
+func sniff_max_ants() -> int:
+	return [10, 25, 50, 100, 200][faro_level()]
+
+
+func sniff_duration() -> float:
+	return [4.0, 4.5, 5.5, 6.0, 7.0][faro_level()]
+
+
+func sniff_cooldown() -> float:
+	return [10.0, 9.0, 8.0, 7.0, 6.0][faro_level()]
+
+
+## 0 = só conta, 1 = nuvem borrada onde estão, 2 = formigas nítidas.
+func sniff_precision() -> int:
+	if has("faro_nitido"):
 		return 2
-	if has("faro_apurado"):
+	if has("faro_preciso"):
 		return 1
 	return 0
 
 
-func sniff_radius() -> float:
-	return [14.0, 30.0, 45.0, 400.0][faro_level()]
+func sniff_chambers() -> bool:
+	return has("faro_camara")
 
 
-func sniff_duration() -> float:
-	return 7.0 if has("faro_duradouro") else 4.0
+func sniff_nest_counts() -> bool:
+	return has("faro_agucado")
 
 
-func sniff_cooldown() -> float:
-	if has("faro_incansavel"):
-		return 2.0
-	if has("faro_folego"):
-		return 5.0
-	return 8.0
+func sniff_queens() -> bool:
+	return has("faro_lendario")
 
 
 # ---------------------------------------------------------------- Recorde e jogo salvo

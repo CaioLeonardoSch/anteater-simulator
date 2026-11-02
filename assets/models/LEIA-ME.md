@@ -6,7 +6,7 @@ importa cada arquivo e o jogo passa a usá-lo no lugar da versão feita por cód
 
 | Arquivo | Substitui | Tamanho no jogo |
 |---|---|---|
-| `formigueiro.glb` | monte de terra dos formigueiros (as câmaras são colocadas por cima) | 3,4 a 5 m de largura |
+| `formigueiro.glb` | monte de terra dos formigueiros (as câmaras são colocadas por cima) | 5 a 7,6 m de largura |
 | `formiga_operaria.glb` | saúva operária | 15 cm de comprimento |
 | `formiga_rainha.glb` | rainha dos formigueiros grandes | 44 cm |
 | `formiga_tanajura.glb` | tanajura | 22 cm |

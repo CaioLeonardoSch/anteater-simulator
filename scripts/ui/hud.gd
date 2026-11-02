@@ -1,6 +1,6 @@
 extends Control
-## HUD da partida: contador de formigas, progresso até o próximo ponto de
-## habilidade, bússola com formigueiros e ondas, mira, habilidades e avisos.
+## HUD da partida: contador de formigas, pontos e a próxima habilidade,
+## bússola com formigueiros e ondas, mira, habilidades e avisos.
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 
@@ -64,13 +64,15 @@ func setup(p, sw, col, w) -> void:
 	player.tremor_used.connect(func(n): note("Tremor! %d formigas ficaram tontas" % n, UiTheme.SAND))
 	player.sniffed.connect(_on_sniffed)
 	player.queen_blocked.connect(_on_queen_blocked)
+	player.lick_blocked_running.connect(_on_lick_blocked_running)
 	colony.wave_announced.connect(_on_wave)
 	colony.final_wave.connect(func(_n): big_note("RETA FINAL DAS TRILHAS", "As últimas forrageiras saíram de casa. O resto está nas câmaras!"))
 	colony.chamber_cleaned.connect(_on_chamber_cleaned)
 	colony.nest_cleaned.connect(_on_nest_cleaned)
 	colony.queen_eaten.connect(func(_nest): big_note("RAINHA!", "Ela valeu 20 formigas", 4.0))
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
-	GameState.skill_point_gained.connect(_on_point)
+	GameState.upgrade_affordable.connect(_on_affordable)
+	GameState.skills_reset.connect(_refresh_points)
 	GameState.frenzy_changed.connect(func(on): if on: big_note("FRENESI!", "Você comeu uma tanajura: língua turbinada por 6 s"))
 	GameState.upgrade_purchased.connect(func(_id): _refresh_points())
 	_on_eaten_changed(GameState.ants_eaten, 0)
@@ -123,7 +125,7 @@ func _ready() -> void:
 	_place(_hint, Control.PRESET_CENTER, Vector2(-500, 70), Vector2(1000, 40))
 	_build_abilities()
 	_controls_hint = UiTheme.label(
-		"WASD andar  ·  Mouse olhar  ·  Clique segurado: lamber  ·  Q ou botão direito: farejar  ·  TAB: habilidades",
+		"WASD andar  ·  Mouse olhar  ·  Clique: lamber  ·  Q ou botão direito: farejar  ·  TAB: habilidades",
 		19, UiTheme.CREAM)
 	_controls_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -161,7 +163,7 @@ func _build_counter() -> void:
 	h.add_child(icon)
 	_count_label = UiTheme.label("0", 46, UiTheme.CREAM, true)
 	h.add_child(_count_label)
-	_goal_label = UiTheme.label("/ 1000", 26, UiTheme.SAND)
+	_goal_label = UiTheme.label("/ %d" % GameState.GOAL, 26, UiTheme.SAND)
 	_goal_label.size_flags_vertical = Control.SIZE_SHRINK_END
 	h.add_child(_goal_label)
 	_next_bar = ProgressBar.new()
@@ -169,9 +171,9 @@ func _build_counter() -> void:
 	_next_bar.show_percentage = false
 	_next_bar.max_value = 100
 	v.add_child(_next_bar)
-	_next_label = UiTheme.label("Próximo ponto de habilidade: 0/100", 17, UiTheme.SAND)
+	_next_label = UiTheme.label("", 17, UiTheme.SAND)
 	v.add_child(_next_label)
-	_nests_label = UiTheme.label("Formigueiros limpos: 0/8", 17, UiTheme.LEAF)
+	_nests_label = UiTheme.label("", 17, UiTheme.LEAF)
 	v.add_child(_nests_label)
 	_points_badge = PanelContainer.new()
 	var badge_box := UiTheme._box(Color(0.75, 0.32, 0.2, 0.95), UiTheme.GOLD, 2, 14)
@@ -254,7 +256,7 @@ func _process(delta: float) -> void:
 				a.progress = player.dig_progress
 			"tremor":
 				a.locked = not GameState.can_tremor()
-				a.cooldown = player.tremor_cd / 7.0 if player.tremor_cd > 0.0 else 0.0
+				a.cooldown = player.tremor_cd / GameState.tremor_cooldown() if player.tremor_cd > 0.0 else 0.0
 		a.queue_redraw()
 	# Dica de contexto.
 	_hint.text = _context_hint()
@@ -279,27 +281,40 @@ func _process(delta: float) -> void:
 	_crosshair.queue_redraw()
 
 
-func _on_eaten_changed(total: int, _delta: int) -> void:
-	var into := total % GameState.ANTS_PER_POINT
-	if total >= GameState.GOAL:
-		into = GameState.ANTS_PER_POINT
-	_next_bar.value = into
-	if total >= GameState.GOAL - GameState.ANTS_PER_POINT:
-		_next_label.text = "Rumo às 1000: %d/100" % into
-	else:
-		_next_label.text = "Próximo ponto de habilidade: %d/100" % into
-
-
-func _refresh_points() -> void:
-	var n := GameState.points_available()
-	_points_badge.visible = n > 0
-	_points_label.text = ("1 ponto de habilidade  [TAB]" if n == 1 else "%d pontos de habilidade  [TAB]" % n)
-
-
-func _on_point(_available: int) -> void:
+func _on_eaten_changed(_total: int, _delta: int) -> void:
 	_refresh_points()
+
+
+## Pontos para gastar, barra até a próxima habilidade e o aviso de [TAB].
+func _refresh_points() -> void:
+	var pts := GameState.points_available()
+	var goal := GameState.next_goal()
+	if goal.is_empty():
+		_next_bar.value = 100.0 if GameState.affordable_count() > 0 or pts > 0 else 0.0
+		_next_label.text = "Pontos: %d" % pts
+	else:
+		_next_bar.value = clampf(float(pts) / float(goal.cost) * 100.0, 0.0, 100.0)
+		_next_label.text = "Pontos: %d  ·  %s: %d" % [pts, goal.name, goal.cost]
+	var n := GameState.affordable_count()
+	_points_badge.visible = n > 0
+	if n == 1:
+		for u in GameState.UPGRADES:
+			if GameState.can_buy(u.id):
+				_points_label.text = "Dá para aprender: %s  [TAB]" % u.name
+				break
+	else:
+		_points_label.text = "%d habilidades para aprender  [TAB]" % n
+
+
+func _on_affordable(id: String) -> void:
+	_refresh_points()
+	var u := GameState.get_upgrade(id)
 	Sfx.play("point", -2.0)
-	big_note("%d FORMIGAS!" % (GameState.points_earned * GameState.ANTS_PER_POINT), "Novo ponto de habilidade: aperte TAB para evoluir")
+	note("Já dá para aprender %s (%d pontos)  [TAB]" % [u.name, u.cost], UiTheme.GOLD, 3.5)
+
+
+func _on_lick_blocked_running() -> void:
+	note("Correndo não dá para lamber: solte o Shift (ou aprenda Lamber Correndo)", UiTheme.SAND, 3.0)
 
 
 func _context_hint() -> String:
@@ -337,7 +352,7 @@ func _maybe_help() -> void:
 	_help_next = now + 45.0
 	if GameState.can_dig():
 		note("As formigas que faltam estão dentro dos formigueiros: cave as câmaras fechadas", UiTheme.SAND, 4.5)
-	elif GameState.points_available() > 0:
+	elif GameState.can_buy("garras_cavar"):
 		note("Aprenda Cavar (Garras) na árvore [TAB] para abrir as câmaras", UiTheme.SAND, 4.5)
 	else:
 		note("Para abrir as câmaras, redistribua seus pontos na árvore [TAB] e aprenda Cavar", UiTheme.SAND, 5.0)

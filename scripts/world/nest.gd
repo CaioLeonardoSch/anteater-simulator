@@ -3,6 +3,7 @@ extends Node3D
 ## formigas das trilhas entram e saem) e câmaras fechadas, onde moram as
 ## outras. Cavar abre uma câmara; os formigueiros grandes guardam a rainha na
 ## câmara do topo. Quando tudo é comido, o monte floresce.
+## O tamanduá pode subir no monte (o chão acompanha a forma dele).
 ## Se existir assets/models/formigueiro.glb, ele substitui o monte feito por código.
 
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
@@ -18,6 +19,8 @@ class Chamber extends RefCounted:
 	var radius := 0.4
 	## Moradoras que ainda não foram comidas (dentro da câmara, aberta ou não).
 	var residents := 0
+	## Moradoras que estão à vista agora (o resto sai do túnel aos poucos).
+	var shown := 0
 	var opened := false
 	var royal := false
 	var cap: Node3D
@@ -79,16 +82,17 @@ func hole_position(trail_dir: Vector2) -> Vector2:
 
 
 ## Escolhe onde ficam as câmaras, longe dos olheiros das trilhas.
+## Grandes: a câmara da rainha no topo + 4 em volta. Pequenos: 3.
 func plan_chambers(rng: RandomNumberGenerator) -> void:
 	chambers.clear()
 	if big:
 		var royal := Chamber.new()
 		royal.royal = true
-		royal.radius = 0.6
+		royal.radius = 0.74
 		royal.local = Vector2.ZERO
 		chambers.append(royal)
-	var count := 3 if big else rng.randi_range(2, 3)
-	var dist := radius * (0.5 if big else 0.38)
+	var count := 4 if big else 3
+	var dist := radius * (0.56 if big else 0.43)
 	var best_angles: Array[float] = []
 	var best_score := -INF
 	for _attempt in 24:
@@ -106,10 +110,8 @@ func plan_chambers(rng: RandomNumberGenerator) -> void:
 			best_angles = angles
 	for a in best_angles:
 		var c := Chamber.new()
-		c.radius = rng.randf_range(0.42, 0.5)
+		c.radius = rng.randf_range(0.52, 0.6) if big else rng.randf_range(0.48, 0.56)
 		c.local = Vector2(cos(a), sin(a)) * dist
-		if count == 2 and not big:
-			c.local *= 1.15
 		chambers.append(c)
 	for c in chambers:
 		c.pos2 = center2 + c.local
@@ -129,14 +131,47 @@ func build(rng: RandomNumberGenerator, mats) -> void:
 		add_child(c.pit)
 		c.cap = _build_cap(c, rng, mats)
 		add_child(c.cap)
-	var body := StaticBody3D.new()
+	add_child(_build_collision())
+
+
+## Chão do monte: uma malha que segue a forma do domo, para dar para subir nele.
+func _build_collision() -> StaticBody3D:
+	var rings := 12
+	var segs := 32
+	var outer := radius * 1.04
+	var faces := PackedVector3Array()
+	var top := Vector3(0, _surf(Vector2.ZERO), 0)
+	var prev := PackedVector3Array()
+	for i in range(1, rings + 1):
+		var r := outer * float(i) / rings
+		var ring := PackedVector3Array()
+		for j in segs:
+			var a := TAU * j / segs
+			var lp := Vector2(cos(a), sin(a)) * r
+			ring.append(Vector3(lp.x, _surf(lp), lp.y))
+		for j in segs:
+			var j1 := (j + 1) % segs
+			if i == 1:
+				faces.append(top)
+				faces.append(ring[j1])
+				faces.append(ring[j])
+			else:
+				faces.append(prev[j])
+				faces.append(prev[j1])
+				faces.append(ring[j1])
+				faces.append(prev[j])
+				faces.append(ring[j1])
+				faces.append(ring[j])
+		prev = ring
+	var shape := ConcavePolygonShape3D.new()
+	shape.backface_collision = true
+	shape.set_faces(faces)
 	var col := CollisionShape3D.new()
-	var shape := CylinderShape3D.new()
-	shape.radius = radius * 0.5
-	shape.height = height * 2.0
 	col.shape = shape
+	var body := StaticBody3D.new()
+	body.name = "ChaoDoMonte"
 	body.add_child(col)
-	add_child(body)
+	return body
 
 
 # ------------------------------------------------------------------ Estado
@@ -289,7 +324,7 @@ func set_cleaned(instant: bool = false) -> void:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = true
 	mm.mesh = Props.build_flower_mesh()
-	var n := 46
+	var n := int(46.0 * pow(radius / 1.9, 2.0))
 	mm.instance_count = n
 	var colors: Array[Color] = [Color(0.98, 0.78, 0.18), Color(0.98, 0.95, 0.88), Color(0.72, 0.52, 0.86), Color(0.98, 0.70, 0.82)]
 	var bases: Array[Transform3D] = []
@@ -441,7 +476,7 @@ func _build_procedural(rng: RandomNumberGenerator, mats) -> MeshInstance3D:
 	# Torrões de terra escavada (fora das câmaras e dos olheiros).
 	var crumb_noise := FastNoiseLite.new()
 	crumb_noise.frequency = 2.0
-	for _k in 120:
+	for _k in int(90 + radius * 30.0):
 		var a := rng.randf() * TAU
 		var r := radius * sqrt(rng.randf()) * 1.05
 		var p2 := Vector2(cos(a), sin(a)) * r

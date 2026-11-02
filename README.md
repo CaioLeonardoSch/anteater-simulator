@@ -15,7 +15,7 @@ produção, os protótipos e as decisões, num lugar só.
 
 | | |
 |---|---|
-| ![Lambendo formigas perto de um formigueiro](docs/screenshots/trilha.jpg) | ![Câmaras abertas, com a rainha brilhando no topo](docs/screenshots/formigueiro.jpg) |
+| ![Lambendo formigas na trilha](docs/screenshots/trilha.jpg) | ![Em cima de um formigueiro grande, com a câmara da rainha aberta](docs/screenshots/formigueiro.jpg) |
 | ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
@@ -25,11 +25,11 @@ produção, os protótipos e as decisões, num lugar só.
 
 ## A demo jogável
 
-O **Cerrado ao entardecer**: a colônia tem **1000 formigas** e **8
+O **Cerrado ao entardecer**: a colônia tem **3200 formigas** e **12
 formigueiros**. Parte das formigas anda pelas trilhas de terra e chega em
 **ondas**; o resto mora nas **câmaras** dos formigueiros, que você abre cavando.
-Os 3 formigueiros grandes guardam uma **rainha**. A cada **100 formigas** você
-ganha um ponto de habilidade, e o sol vai se pondo conforme você come.
+Os 5 formigueiros grandes guardam uma **rainha**. **Cada formiga comida vale 1
+ponto**, cada habilidade tem o seu preço, e o sol vai se pondo conforme você come.
 
 ### Como rodar
 
@@ -40,9 +40,10 @@ ganha um ponto de habilidade, e o sol vai se pondo conforme você come.
 3. Aperte **F5** (ou o botão ▶). Na primeira vez o Godot importa sons e
    texturas, o que leva alguns segundos.
 
-O projeto usa o renderizador **Forward+** (PC com placa de vídeo compatível com
-Vulkan, Direct3D 12 ou Metal). Em **Configurações** dá para baixar a qualidade
-gráfica se o PC sofrer.
+O jogo abre em **tela cheia**; **F11** (ou Alt+Enter) alterna com a janela. O
+projeto usa o renderizador **Forward+** (PC com placa de vídeo compatível com
+Vulkan, Direct3D 12 ou Metal). Em **Configurações** dá para trocar o modo de
+tela, a resolução e a qualidade gráfica.
 
 ### Controles
 
@@ -51,24 +52,28 @@ gráfica se o PC sofrer.
 | Andar | `W` `A` `S` `D` | analógico esquerdo |
 | Olhar | mouse | analógico direito |
 | Correr* | `Shift` | clicar o analógico esquerdo |
-| **Lamber** (segure) | clique esquerdo | `RT` |
+| **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar | `Q` ou clique direito | `LT` |
 | Abrir câmara* | segure `E` perto dela | `X` |
 | Tremor* | `Espaço` | `A` |
 | Árvore de habilidades | `Tab` | `Back` |
 | Pausa | `Esc` | `Start` |
+| Tela cheia | `F11` ou `Alt+Enter` | |
 
 \* liberados pela árvore de habilidades.
 
 ### O que tem na demo hoje
 
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
-  fechadas. Com **Cavar** (Garras), segure `E` perto de uma para abri-la.
+  fechadas. Com **Cavar** (Garras), segure `E` perto de uma para abri-la. Até 40
+  moradoras ficam à vista; as outras saem do túnel conforme você come.
+- **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
 - **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
   outras formigas. Coma todas em volta e ela vale **20**.
 - **Trilhas e ondas:** quem volta para o formigueiro sai de novo mais tarde; só
   as que você come somem de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
+  Correndo também não dá para lamber, até aprender **Lamber Correndo**.
 - **Faro:** mostra as formigas através do capim; nos níveis mais altos, a
   bússola mostra quanto falta em cada formigueiro e onde estão as rainhas.
 - **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
@@ -80,26 +85,37 @@ gráfica se o PC sofrer.
 
 ### Habilidades
 
-| Habilidade | Níveis |
+| Habilidade | Níveis (preço em pontos) |
 |---|---|
-| **Língua** | Lambida (pega várias de uma vez) · Língua Comprida · Saliva Grudenta · Língua Turbo |
-| **Garras** | Cavar · Garras Fortes · Tremor · Terremoto |
-| **Patas** | Corrida · Patas Ligeiras · Galope Silencioso |
-| **Faro** | Faro Apurado · Faro de Ninho · Faro Lendário |
-| **Escalada + Cauda** | Escalada · Cauda Preênsil (só ao chegar à floresta) |
+| **Língua** | Lambida Contínua (25: segurar para lamber) · Lambida (50: pega várias) · Língua Comprida (90) · Saliva Grudenta (140) · Língua Turbo (200) |
+| **Garras** | Cavar (35), e depois duas linhas: **Força** · Garras Fortes (80) · Tremor (130) · Terremoto (200); **Rapidez** · Cavada Rápida (60) · Cavada Relâmpago (110) · Recarga Rápida (160) |
+| **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (90: mais 25%) · Galope Silencioso (150); **Agilidade** · Lamber Correndo (70) |
+| **Faro** | Faro Apurado (30), e depois: **Alcance** · Faro de Ninho (80) · Faro Lendário (170); **Fôlego** · Fôlego (50) · Faro Duradouro (90) · Faro Incansável (140) |
+| **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400), só ao chegar à floresta |
 
-1 ponto a cada 100 formigas; dá para redistribuir os pontos de graça na árvore.
+1 formiga comida = 1 ponto (a rainha vale 20). As duas linhas de um ramo não se
+excluem. Tudo o que dá para aprender no Cerrado soma 2180 pontos, e dá para
+redistribuir os pontos de graça na árvore.
 
-### Qualidade gráfica
+### Tela e gráficos
+
+Em **Configurações**:
+
+- **Tela:** janela, tela cheia ou tela cheia exclusiva; resolução (em tela
+  cheia, ela muda só o 3D e a interface continua nítida); resolução do 3D (50 a
+  100%); VSync; limite de FPS.
+- **Gráficos:** um preset ajusta tudo de uma vez, ou ajuste item por item:
+  sombras, capim, suavização (FXAA, MSAA ou TAA), sombra de contato (SSAO), luz
+  rebatida (SSIL), neblina volumétrica e brilho do sol.
+- **Jogo:** sensibilidade do mouse, inverter eixo Y, campo de visão e balanço
+  da câmera.
 
 | Preset | O que muda |
 |---|---|
-| Baixa | menos capim, sombras curtas, sem SSAO, resolução 3D a 80% |
+| Baixa | menos capim, sombras curtas, sem SSAO, FXAA, resolução 3D a 80% |
 | Média | SSAO, sombras médias, MSAA 2x (padrão com vídeo integrado) |
 | Alta | capim denso, sombras longas (padrão com placa de vídeo dedicada) |
 | Ultra | ainda mais capim, neblina volumétrica, SSIL, MSAA 4x |
-
-A densidade do capim muda ao recomeçar a fase.
 
 ---
 
@@ -158,9 +174,11 @@ Opções de teste (depois de `--` na linha de comando do Godot):
 godot --path . -- --start=play --autoplay --timescale=4 --stats
 ```
 
-`--start=play|tree` pula o menu · `--autoplay` um bot joga sozinho ·
-`--give=N` começa com N formigas · `--buy=lingua_1,garras_1` compra habilidades ·
-`--captures=SEG:arquivo.png` tira capturas · `--quit` fecha depois.
+`--start=play|tree|settings` pula o menu · `--autoplay` um bot joga sozinho ·
+`--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
+habilidades · `--open=N|all` abre as câmaras · `--captures=SEG:arquivo.png` tira
+capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
+FPS, formigas vivas e o tempo gasto por quadro.
 
 ## Créditos
 

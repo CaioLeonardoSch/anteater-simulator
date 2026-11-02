@@ -20,6 +20,11 @@ enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 ## Ao recomeçar, pula o menu e vai direto para um jogo novo.
 static var skip_menu := false
 const AUTOSAVE_EVERY := 30.0
+## Ordem em que o bot de teste aprende as habilidades (junta pontos para a próxima).
+const BOT_ORDER := ["lingua_segurar", "garras_cavar", "lingua_lambida", "patas_corrida", "faro_apurado",
+	"garras_rapidas", "lingua_comprida", "garras_fortes", "patas_lamber", "lingua_saliva",
+	"garras_relampago", "garras_tremor", "faro_folego", "lingua_turbo", "patas_ligeiras", "faro_ninho",
+	"garras_terremoto", "faro_duradouro", "garras_recarga", "patas_galope", "faro_incansavel", "faro_lendario"]
 
 var state := State.LOADING
 var world: World
@@ -66,6 +71,9 @@ func _ready() -> void:
 	_build_game()
 	if DevTools.start_mode == "continue":
 		_continue_game()
+	elif DevTools.start_mode == "settings":
+		_enter_menu()
+		menus.open_settings(int(DevTools.args.get("tab", "0")))
 	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()
@@ -90,7 +98,7 @@ func _build_game() -> void:
 	add_child(colony)
 	swarm.setup(world, colony)
 	colony.setup(world, swarm)
-	colony.populate(150)
+	colony.populate(220)
 	colony.active = true
 	player = Player.new()
 	player.name = "Anteater"
@@ -129,9 +137,9 @@ func _build_game() -> void:
 	menus.main_menu_pressed.connect(_to_main_menu)
 	menus.skill_tree_pressed.connect(_open_tree)
 	GameState.level_completed.connect(_on_complete)
-	GameState.skill_point_gained.connect(_on_point)
-	GameState.ants_eaten_changed.connect(func(total, _d): world.set_day_progress(float(total) / GameState.GOAL))
-	Settings.changed.connect(func(): world.apply_quality(Settings.graphics_quality))
+	GameState.upgrade_affordable.connect(_on_affordable)
+	GameState.ants_eaten_changed.connect(_on_eaten_changed)
+	Settings.changed.connect(world.apply_graphics)
 	Sfx.start_ambience()
 	Sfx.start_music()
 
@@ -175,17 +183,16 @@ func _start_play() -> void:
 		GameState.combo = 0
 		GameState.best_combo = 0
 	for id in DevTools.buy:
-		if GameState.points_available() <= 0:
-			GameState.points_earned += 1
-		GameState.buy(id)
+		GameState.grant(id)
 	if DevTools.pose.size() >= 4:
 		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
 		player.pitch = deg_to_rad(DevTools.pose[3])
 	if DevTools.args.has("open"):
-		# Teste: abre todas as câmaras de um formigueiro.
-		var nest = world.nests[int(DevTools.args.open)]
-		for ci in nest.chambers.size():
-			colony.open_chamber(nest, ci)
+		# Teste: abre todas as câmaras de um formigueiro (ou de todos, com --open=all).
+		for nest in world.nests:
+			if DevTools.args.open == "all" or nest.index == int(DevTools.args.open):
+				for ci in nest.chambers.size():
+					colony.open_chamber(nest, ci)
 
 
 ## Continua o jogo salvo (ou começa um novo, se não houver).
@@ -202,7 +209,7 @@ func _continue_game() -> void:
 		float(p.get("yaw", world.player_start_yaw)))
 	player.pitch = float(p.get("pitch", -0.12))
 	world.set_day_progress(float(GameState.ants_eaten) / GameState.GOAL, true)
-	_first_point_done = GameState.points_earned > 0
+	_first_point_done = GameState.ants_eaten >= GameState.cost_of("lingua_segurar")
 	_begin_playing()
 
 
@@ -225,7 +232,7 @@ func save_game() -> void:
 		return
 	var gp := player.global_position
 	GameState.write_saved_game({
-		"version": 1,
+		"version": GameState.SAVE_VERSION,
 		"state": GameState.to_save(),
 		"colony": colony.to_save(),
 		"player": {"x": gp.x, "z": gp.z, "yaw": player.yaw, "pitch": player.pitch},
@@ -342,18 +349,25 @@ func _reload() -> void:
 	tw.tween_callback(func(): get_tree().reload_current_scene())
 
 
-func _on_point(_available: int) -> void:
-	if DevTools.autoplay:
-		# O bot de teste compra a primeira habilidade disponível, alternando ramos.
-		var order := ["lingua_1", "garras_1", "patas_1", "lingua_2", "faro_1", "garras_2", "lingua_3", "faro_2",
-			"lingua_4", "garras_3", "faro_3", "patas_2", "patas_3", "garras_4"]
-		for id in order:
-			if GameState.can_buy(id):
-				GameState.buy(id)
-				print("[bot] comprou ", id)
-				break
-		return
-	if _first_point_done or state != State.PLAYING:
+func _on_eaten_changed(total: int, _delta: int) -> void:
+	world.set_day_progress(float(total) / GameState.GOAL)
+	if DevTools.autoplay and state == State.PLAYING:
+		_bot_buy()
+
+
+## Bot de teste: aprende as habilidades na ordem de BOT_ORDER.
+func _bot_buy() -> void:
+	for id in BOT_ORDER:
+		if GameState.has(id):
+			continue
+		if not GameState.can_buy(id):
+			return
+		GameState.buy(id)
+		print("[bot] comprou %s com %d formigas comidas" % [id, GameState.ants_eaten])
+
+
+func _on_affordable(_id: String) -> void:
+	if DevTools.autoplay or _first_point_done or state != State.PLAYING:
 		return
 	_first_point_done = true
 	# Na primeira vez, abre a árvore sozinho para ensinar.
@@ -370,7 +384,7 @@ func _on_complete(_time: float) -> void:
 	player.bot = false
 	Engine.time_scale = _base_time_scale * 0.35
 	_complete_wait = 2.2
-	hud.big_note("1000 FORMIGAS!", "A colônia inteira virou janta.", 4.0)
+	hud.big_note("%d FORMIGAS!" % GameState.GOAL, "A colônia inteira virou janta.", 4.0)
 	Sfx.play("complete", 0.0)
 
 

@@ -36,8 +36,13 @@ var fireflies: GPUParticles3D
 var day_progress := 0.0
 var _day_target := 0.0
 var _rng := RandomNumberGenerator.new()
+var _nest_grid := PackedInt32Array()
+var _nest_grid_n := 0
+var _grass_quality_built := -1
+var _shadow_atlas := 0
 
-## 8 formigueiros; os grandes ("big") têm a câmara da rainha.
+## 12 formigueiros: 8 num anel em volta do mapa e 4 no meio. Os grandes
+## ("big") têm a câmara da rainha.
 const NEST_LAYOUT := [
 	{"name": "Formigueiro Norte", "pos": Vector2(4, -42), "big": true},
 	{"name": "Formigueiro Nordeste", "pos": Vector2(32, -30), "big": false},
@@ -45,8 +50,12 @@ const NEST_LAYOUT := [
 	{"name": "Formigueiro Sudeste", "pos": Vector2(28, 36), "big": false},
 	{"name": "Formigueiro Sul", "pos": Vector2(-2, 46), "big": true},
 	{"name": "Formigueiro Sudoeste", "pos": Vector2(-32, 30), "big": false},
-	{"name": "Formigueiro Oeste", "pos": Vector2(-45, -6), "big": false},
+	{"name": "Formigueiro Oeste", "pos": Vector2(-45, -6), "big": true},
 	{"name": "Formigueiro Noroeste", "pos": Vector2(-26, -36), "big": false},
+	{"name": "Formigueiro Centro-Nordeste", "pos": Vector2(11, -7), "big": false},
+	{"name": "Formigueiro Centro-Sudeste", "pos": Vector2(7, 12), "big": false},
+	{"name": "Formigueiro Centro-Sudoeste", "pos": Vector2(-12, 7), "big": false},
+	{"name": "Formigueiro Centro-Noroeste", "pos": Vector2(-7, -12), "big": true},
 ]
 ## Arbustos onde as saúvas cortam folhas.
 const FOOD_LAYOUT := [
@@ -54,7 +63,10 @@ const FOOD_LAYOUT := [
 	Vector2(-14, 22), Vector2(-26, -2)]
 ## Trilhas: [formigueiro, arbusto].
 const LINKS := [[0, 0], [0, 1], [1, 1], [2, 2], [2, 1], [3, 3], [3, 2], [4, 3], [4, 4],
-	[5, 4], [5, 5], [6, 5], [7, 0], [7, 5]]
+	[5, 4], [5, 5], [6, 5], [7, 0], [7, 5],
+	[8, 1], [8, 2], [9, 3], [9, 2], [10, 4], [10, 5], [11, 0], [11, 5]]
+## Grade que diz qual formigueiro (se algum) cobre cada pedaço do mapa.
+const NEST_GRID_CELL := 2.0
 ## Trilha onde o jogador começa (formigueiro Leste -> arbusto 2), olhando para o sol.
 const START_LINK := [2, 2]
 
@@ -63,11 +75,18 @@ func build() -> void:
 	_rng.seed = SEED
 	mats = Materials.new()
 	_build_environment()
-	# Formigueiros e fontes de folhas.
+	# Formigueiros (tamanho de cada um) e o chão plano em volta deles.
 	var spots: Array[Vector3] = []
 	for i in NEST_LAYOUT.size():
-		var p: Vector2 = NEST_LAYOUT[i].pos
-		spots.append(Vector3(p.x, p.y, 5.2 if NEST_LAYOUT[i].big else 4.5))
+		var nest: Nest = Nest.new()
+		nest.name = "Nest%d" % i
+		var big: bool = NEST_LAYOUT[i].big
+		var r := _rng.randf_range(3.3, 3.6) if big else _rng.randf_range(2.4, 2.75)
+		var h := _rng.randf_range(1.0, 1.12) if big else _rng.randf_range(0.76, 0.88)
+		nest.setup(i, NEST_LAYOUT[i].name, NEST_LAYOUT[i].pos, r, h, big)
+		nests.append(nest)
+		spots.append(Vector3(nest.center2.x, nest.center2.y, r * 2.0 + 0.4))
+	_build_nest_grid()
 	for f in FOOD_LAYOUT:
 		food_sources.append(f)
 	terrain = Terrain.new()
@@ -75,14 +94,6 @@ func build() -> void:
 	add_child(terrain)
 	terrain.setup(SEED, spots)
 	terrain.build(mats.terrain)
-	for i in NEST_LAYOUT.size():
-		var nest: Nest = Nest.new()
-		nest.name = "Nest%d" % i
-		var big: bool = NEST_LAYOUT[i].big
-		var r := _rng.randf_range(2.25, 2.45) if big else _rng.randf_range(1.6, 1.9)
-		var h := _rng.randf_range(0.72, 0.8) if big else _rng.randf_range(0.55, 0.65)
-		nest.setup(i, NEST_LAYOUT[i].name, NEST_LAYOUT[i].pos, r, h, big)
-		nests.append(nest)
 	# Trilhas.
 	trails = TrailNetwork.new(SEED)
 	for link in LINKS:
@@ -141,21 +152,46 @@ func build() -> void:
 	grass.name = "Grass"
 	add_child(grass)
 	grass.build(terrain, mats, _rng, Settings.grass_density(), Settings.grass_view_distance())
+	_grass_quality_built = Settings.grass_quality
 	_build_particles()
 	set_day_progress(0.0, true)
-	apply_quality(Settings.graphics_quality)
+	apply_graphics()
 
 
 func vegetation_ai(model_name: String, target: Vector3) -> Node3D:
 	return ModelLibrary.instantiate(model_name, target)
 
 
-## Altura do chão para as formigas (terreno + montes dos formigueiros).
+## Altura do chão (terreno + monte do formigueiro, se houver um ali).
+## O tamanduá anda por cima dos montes, e as formigas também.
 func ground_height(x: float, z: float) -> float:
 	var h := terrain.get_height(x, z)
-	for n in nests:
-		h += n.dome_height(x, z)
+	var ix := int(floor(x / NEST_GRID_CELL)) + _nest_grid_n / 2
+	var iz := int(floor(z / NEST_GRID_CELL)) + _nest_grid_n / 2
+	if ix >= 0 and iz >= 0 and ix < _nest_grid_n and iz < _nest_grid_n:
+		var k := _nest_grid[iz * _nest_grid_n + ix]
+		if k >= 0:
+			h += nests[k].dome_height(x, z)
 	return h
+
+
+## Marca, numa grade de 2 m, as células cobertas por cada monte (eles não se
+## encostam, então cada célula tem no máximo um formigueiro).
+func _build_nest_grid() -> void:
+	_nest_grid_n = int(Terrain.SIZE / NEST_GRID_CELL)
+	_nest_grid.resize(_nest_grid_n * _nest_grid_n)
+	_nest_grid.fill(-1)
+	var half := _nest_grid_n / 2
+	for k in nests.size():
+		var n: Nest = nests[k]
+		var r := n.radius + 0.1
+		var x0 := int(floor((n.center2.x - r) / NEST_GRID_CELL)) + half
+		var x1 := int(floor((n.center2.x + r) / NEST_GRID_CELL)) + half
+		var z0 := int(floor((n.center2.y - r) / NEST_GRID_CELL)) + half
+		var z1 := int(floor((n.center2.y + r) / NEST_GRID_CELL)) + half
+		for iz in range(maxi(z0, 0), mini(z1, _nest_grid_n - 1) + 1):
+			for ix in range(maxi(x0, 0), mini(x1, _nest_grid_n - 1) + 1):
+				_nest_grid[iz * _nest_grid_n + ix] = k
 
 
 func nearest_nest(p: Vector2) -> Nest:
@@ -367,17 +403,42 @@ func _apply_day() -> void:
 		fireflies.emitting = p > 0.55
 
 
-func apply_quality(q: int) -> void:
-	env.ssao_enabled = q >= 1
-	env.ssil_enabled = q >= 3
-	env.volumetric_fog_enabled = q >= 3
-	env.glow_enabled = true
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if q == 0 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	sun.directional_shadow_max_distance = [35.0, 55.0, 70.0, 90.0][q]
+## Aplica as opções de "Gráficos" e "Tela" (Settings).
+func apply_graphics() -> void:
+	var sq: int = Settings.shadow_quality
+	env.ssao_enabled = Settings.ssao
+	env.ssil_enabled = Settings.ssil
+	env.volumetric_fog_enabled = Settings.volumetric_fog
+	env.glow_enabled = Settings.glow
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if sq == 0 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun.directional_shadow_max_distance = [35.0, 55.0, 70.0, 90.0][sq]
+	var atlas: int = [2048, 4096, 4096, 8192][sq]
+	if atlas != _shadow_atlas:
+		_shadow_atlas = atlas
+		RenderingServer.directional_shadow_atlas_set_size(atlas, true)
 	var vp := get_viewport()
 	if vp:
-		vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_2X, Viewport.MSAA_4X][q]
-		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if q == 0 else Viewport.SCREEN_SPACE_AA_DISABLED
-		vp.scaling_3d_scale = 0.8 if q == 0 else 1.0
+		var aa: int = Settings.antialiasing
+		vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X, Viewport.MSAA_DISABLED][aa]
+		vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA if aa == 1 else Viewport.SCREEN_SPACE_AA_DISABLED
+		vp.use_taa = aa == 4
+		var scale := Settings.effective_3d_scale()
+		vp.scaling_3d_scale = scale
+		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if scale < 0.99 else Viewport.SCALING_3D_MODE_BILINEAR
 	if dust:
-		dust.amount = [80, 160, 260, 360][q]
+		dust.amount = [80, 160, 260, 360][Settings.grass_quality]
+	if grass and Settings.grass_quality != _grass_quality_built:
+		rebuild_grass()
+
+
+## Refaz o capim com a densidade nova (sem precisar recomeçar a fase).
+func rebuild_grass() -> void:
+	remove_child(grass)
+	grass.queue_free()
+	grass = Grass.new()
+	grass.name = "Grass"
+	add_child(grass)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED + 7
+	grass.build(terrain, mats, rng, Settings.grass_density(), Settings.grass_view_distance())
+	_grass_quality_built = Settings.grass_quality

@@ -8,9 +8,13 @@ signal ant_entered_nest(nest_index: int)
 const AntMeshBuilder := preload("res://scripts/ants/ant_mesh_builder.gd")
 const SCENT_SHADER := preload("res://shaders/ant_scent.gdshader")
 
-const CAPACITY := 1100
+const CAPACITY := 1600
 const NEAR_LOD_DIST := 15.0
 const DRAW_DIST := 75.0
+## Moradoras de câmaras longe do tamanduá: simuladas 1 vez a cada 4 passos
+## e não desenhadas muito longe (estão dentro do buraco, nem dá para ver).
+const CHAMBER_SIM_LOD_DIST := 20.0
+const CHAMBER_DRAW_DIST := 48.0
 const STRIDE := 20
 
 enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, CHAMBER }
@@ -155,7 +159,8 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 
 
 ## Moradora de uma câmara aberta (ou a rainha, parada no centro).
-func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float) -> int:
+## `from_tunnel` = acabou de sair do túnel, no meio da câmara.
+func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false) -> int:
 	var i := _take_slot()
 	if i < 0:
 		return -1
@@ -168,8 +173,9 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	var p2 := center
 	if ant_kind != QUEEN:
 		var a := randf() * TAU
-		p2 += Vector2(cos(a), sin(a)) * radius * sqrt(randf()) * 0.9
-		vel[i] = Vector2(cos(a + 1.7), sin(a + 1.7)) * speed[i]
+		var spread := 0.22 if from_tunnel else 0.9
+		p2 += Vector2(cos(a), sin(a)) * radius * sqrt(randf()) * spread
+		vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
 	return i
@@ -197,6 +203,8 @@ func _physics_process(delta: float) -> void:
 	_time += delta
 	var tp2 := Vector2(threat_pos.x, threat_pos.z)
 	var flee_r2 := flee_radius * flee_radius
+	var lod_r2 := CHAMBER_SIM_LOD_DIST * CHAMBER_SIM_LOD_DIST
+	var lod_tick := Engine.get_physics_frames() % 4
 	for i in CAPACITY:
 		if alive[i] == 0:
 			continue
@@ -218,7 +226,11 @@ func _physics_process(delta: float) -> void:
 			Mode.STUNNED:
 				_update_stunned(i, delta)
 			Mode.CHAMBER:
-				_update_chamber(i, delta, tp2)
+				if Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2) > lod_r2:
+					if (i & 3) == lod_tick:
+						_update_chamber(i, delta * 4.0, tp2)
+				else:
+					_update_chamber(i, delta, tp2)
 			_:
 				pass
 
@@ -366,6 +378,18 @@ func _update_stunned(i: int, delta: float) -> void:
 			s[i] = t.closest_s(Vector2(pos[i].x, pos[i].z), s[i], 30.0)
 
 
+## Deixa tontas as moradoras de uma câmara (Garras Fortes, ao abrir).
+func stun_home(home_code: int, duration: float) -> int:
+	var n := 0
+	for i in CAPACITY:
+		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN or mode[i] == Mode.STUCK:
+			continue
+		mode[i] = Mode.STUNNED
+		timer[i] = duration * randf_range(0.9, 1.15)
+		n += 1
+	return n
+
+
 ## Deixa tontas (de barriga para cima) as formigas num raio.
 func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	var n := 0
@@ -499,12 +523,13 @@ func _process(_delta: float) -> void:
 	var cam := cam_pos
 	var near2 := NEAR_LOD_DIST * NEAR_LOD_DIST
 	var far2 := DRAW_DIST * DRAW_DIST
+	var chamber_far2 := CHAMBER_DRAW_DIST * CHAMBER_DRAW_DIST
 	for i in CAPACITY:
 		if alive[i] == 0:
 			continue
 		var p := pos[i]
 		var d2 := p.distance_squared_to(cam)
-		if d2 > far2:
+		if d2 > far2 or (d2 > chamber_far2 and mode[i] == Mode.CHAMBER):
 			continue
 		var k := kind[i]
 		var layer := 2 if k == QUEEN else (3 if k == TANAJURA else (0 if d2 < near2 else 1))

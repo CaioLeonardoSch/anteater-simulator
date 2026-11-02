@@ -126,6 +126,7 @@ func _build_game() -> void:
 	GameState.level_completed.connect(_on_complete)
 	GameState.skill_point_gained.connect(_on_point)
 	GameState.ants_eaten_changed.connect(func(total, _d): world.set_day_progress(float(total) / GameState.GOAL))
+	Settings.changed.connect(func(): world.apply_quality(Settings.graphics_quality))
 	Sfx.start_ambience()
 	Sfx.start_music()
 
@@ -175,7 +176,9 @@ func _start_play() -> void:
 		player.pitch = deg_to_rad(DevTools.pose[3])
 
 
-func _unhandled_input(event: InputEvent) -> void:
+## Pausa e árvore são tratadas em _input (antes da interface): assim o TAB
+## fecha a árvore em vez de só trocar o foco entre os botões.
+func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		match state:
 			State.PLAYING:
@@ -191,14 +194,16 @@ func _unhandled_input(event: InputEvent) -> void:
 				if menus.current() != "title":
 					menus.show_screen("title")
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("skill_tree"):
-		match state:
-			State.PLAYING:
-				_open_tree()
-			State.TREE:
-				_close_tree()
+	elif event.is_action_pressed("skill_tree") and state in [State.PLAYING, State.TREE]:
+		if state == State.PLAYING:
+			_open_tree()
+		else:
+			_close_tree()
 		get_viewport().set_input_as_handled()
-	elif state == State.PLAYING and event is InputEventMouseButton and event.pressed \
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if state == State.PLAYING and event is InputEventMouseButton and event.pressed \
 			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 

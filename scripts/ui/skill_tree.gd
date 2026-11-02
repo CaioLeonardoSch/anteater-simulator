@@ -102,11 +102,12 @@ func _make_node(u: Dictionary, color: Color) -> Button:
 	tier_lbl.custom_minimum_size = Vector2(34, 0)
 	tier_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(tier_lbl)
-	var name_lbl := UiTheme.label(u.name, 24, UiTheme.CREAM, true)
+	var name_lbl := UiTheme.label(u.name, 21, UiTheme.CREAM, true)
+	name_lbl.clip_text = true
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h.add_child(name_lbl)
-	var state_lbl := UiTheme.label("", 16, UiTheme.SAND)
+	var state_lbl := UiTheme.label("", 14, UiTheme.SAND)
 	state_lbl.name = "State"
 	state_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	h.add_child(state_lbl)

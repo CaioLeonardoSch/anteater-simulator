@@ -99,8 +99,8 @@ plano com créditos de IA; depois de baixar, salve como
 | Preset | O que muda |
 |---|---|
 | Baixa | menos capim, sombras curtas, sem SSAO, resolução 3D a 80% |
-| Média | SSAO, sombras médias, MSAA 2x |
-| Alta (padrão) | capim denso, sombras longas |
+| Média | SSAO, sombras médias, MSAA 2x (padrão com vídeo integrado) |
+| Alta | capim denso, sombras longas (padrão com placa de vídeo dedicada) |
 | Ultra | ainda mais capim, neblina volumétrica, SSIL, MSAA 4x |
 
 A densidade do capim muda ao recomeçar a fase.

@@ -534,7 +534,8 @@ class AbilityIcon extends Control:
 			draw_arc(c + Vector2(0, 0), 6, PI, TAU, 12, Color(0.7, 0.62, 0.55), 3, true)
 		if font:
 			draw_string(font, Vector2(0, 84), name_text if not locked else "Bloqueado", HORIZONTAL_ALIGNMENT_CENTER, size.x, 16, ink)
-			var kb := Rect2(Vector2(box.end.x - 30, box.position.y - 8), Vector2(42, 22))
+			var kw := maxf(42.0, font.get_string_size(key_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 14.0)
+			var kb := Rect2(Vector2(box.end.x + 12 - kw, box.position.y - 8), Vector2(kw, 22))
 			var kbg := StyleBoxFlat.new()
 			kbg.bg_color = Color(0.85, 0.42, 0.28) if not locked else Color(0.35, 0.3, 0.28)
 			kbg.set_corner_radius_all(8)

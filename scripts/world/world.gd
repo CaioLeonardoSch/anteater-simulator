@@ -85,6 +85,13 @@ func build() -> void:
 			var p: Vector2 = t.points[k]
 			terrain.mask_paint(p.x, p.y, 0.62, 0, 1.0)
 			terrain.mask_paint(p.x, p.y, 1.25, 0, 0.35)
+	# Início: ao lado de uma trilha movimentada, olhando ao longo dela, contra o sol.
+	var start_trail = trails.trails[5]
+	var s0: float = start_trail.length * 0.5
+	player_start = start_trail.point_at(s0) + start_trail.side_at(s0) * 1.4
+	var target: Vector2 = start_trail.point_at(start_trail.length * 0.72)
+	var to := target - player_start
+	player_start_yaw = atan2(-to.x, -to.y)
 	for nest in nests:
 		terrain.mask_paint(nest.center2.x, nest.center2.y, nest.radius + 1.0, 1, 1.0)
 	for f in food_sources:
@@ -115,10 +122,6 @@ func build() -> void:
 	add_child(grass)
 	grass.build(terrain, mats, _rng, Settings.grass_density(), Settings.grass_view_distance())
 	_build_particles()
-	# Início: perto do centro, olhando para a trilha mais próxima.
-	var target := trails.trails[5].point_at(trails.trails[5].length * 0.45)
-	var to := target - player_start
-	player_start_yaw = atan2(-to.x, -to.y)
 	set_day_progress(0.0, true)
 	apply_quality(Settings.graphics_quality)
 

@@ -102,6 +102,7 @@ func _bind_axis(action: String, axis: JoyAxis, value: float) -> void:
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
+		_pick_default_quality()
 		return
 	graphics_quality = int(cfg.get_value("video", "quality", graphics_quality))
 	fov = float(cfg.get_value("video", "fov", fov))
@@ -111,6 +112,21 @@ func load_settings() -> void:
 	master_volume = float(cfg.get_value("audio", "master", master_volume))
 	music_volume = float(cfg.get_value("audio", "music", music_volume))
 	graphics_quality = clampi(graphics_quality, 0, 3)
+
+
+## Primeira vez: escolhe a qualidade pelo tipo de placa de vídeo.
+func _pick_default_quality() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	match RenderingServer.get_video_adapter_type():
+		RenderingDevice.DEVICE_TYPE_DISCRETE_GPU:
+			graphics_quality = 2
+		RenderingDevice.DEVICE_TYPE_INTEGRATED_GPU:
+			graphics_quality = 1
+		RenderingDevice.DEVICE_TYPE_CPU, RenderingDevice.DEVICE_TYPE_VIRTUAL_GPU:
+			graphics_quality = 0
+		_:
+			graphics_quality = 1
 
 
 func save_settings() -> void:

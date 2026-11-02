@@ -17,6 +17,9 @@ const RENDER_SCALES := [1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
 const SHADOW_NAMES := ["Baixa", "Média", "Alta", "Ultra"]
 const GRASS_NAMES := ["Pouco", "Médio", "Muito", "Máximo"]
 const AA_NAMES := ["Desligado", "FXAA", "MSAA 2x", "MSAA 4x", "TAA"]
+## Cor do faro: precisa contrastar com o cerrado (dourado e vermelho de terra).
+const SNIFF_COLOR_NAMES := ["Vermelho", "Ciano", "Magenta", "Branco"]
+const SNIFF_COLORS := [Color(1.0, 0.16, 0.12), Color(0.2, 0.95, 1.0), Color(1.0, 0.25, 0.85), Color(1.0, 1.0, 1.0)]
 
 ## Cada preset de qualidade escolhe todos os itens de "Gráficos".
 const PRESETS := [
@@ -73,6 +76,7 @@ var invert_y: bool = false
 var fov: float = 78.0
 ## Balanço da câmera ao andar e correr (0 = parada, 1 = normal).
 var camera_bob: float = 1.0
+var sniff_color_index: int = 0
 var master_volume: float = 0.85
 var music_volume: float = 0.55
 
@@ -198,6 +202,7 @@ func load_settings() -> void:
 	max_fps = int(cfg.get_value("video", "max_fps", max_fps))
 	fov = float(cfg.get_value("video", "fov", fov))
 	camera_bob = clampf(float(cfg.get_value("video", "camera_bob", camera_bob)), 0.0, 1.0)
+	sniff_color_index = clampi(int(cfg.get_value("game", "sniff_color", sniff_color_index)), 0, SNIFF_COLORS.size() - 1)
 	mouse_sensitivity = float(cfg.get_value("input", "mouse_sensitivity", mouse_sensitivity))
 	invert_y = bool(cfg.get_value("input", "invert_y", invert_y))
 	master_volume = float(cfg.get_value("audio", "master", master_volume))
@@ -234,6 +239,7 @@ func save_settings() -> void:
 	cfg.set_value("video", "max_fps", max_fps)
 	cfg.set_value("video", "fov", fov)
 	cfg.set_value("video", "camera_bob", camera_bob)
+	cfg.set_value("game", "sniff_color", sniff_color_index)
 	for key in GRAPHICS_KEYS:
 		cfg.set_value("graphics", key, get(key))
 	cfg.set_value("input", "mouse_sensitivity", mouse_sensitivity)
@@ -343,6 +349,10 @@ func apply_audio() -> void:
 	var music := AudioServer.get_bus_index("Music")
 	if music >= 0:
 		AudioServer.set_bus_volume_db(music, linear_to_db(maxf(music_volume, 0.0001)))
+
+
+func sniff_color() -> Color:
+	return SNIFF_COLORS[clampi(sniff_color_index, 0, SNIFF_COLORS.size() - 1)]
 
 
 ## Densidade e alcance do capim.

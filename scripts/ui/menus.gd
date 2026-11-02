@@ -252,13 +252,13 @@ Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; a
 
 [b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)
 [b]Clique esquerdo[/b] lamber: cada clique é uma lambida (com a [b]Lambida Contínua[/b], é só segurar)
-[b]Q[/b] ou [b]clique direito[/b] farejar · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] Tremor
+[b]Q[/b] ou [b]clique direito[/b] farejar (com Farejar) · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] pulo do Tremor
 [b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
 · [b]Cada formiga comida vale 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
-· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 20.
+· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 20.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
 · Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
 · Não dá para perder: aproveite o pôr do sol e tente bater seu recorde de tempo.""" % GameState.GOAL
@@ -324,6 +324,7 @@ func _build_settings() -> Control:
 	_add_check(g, "invert_y", "Inverter eixo Y")
 	_add_slider(g, "fov", "Campo de visão", 60.0, 100.0)
 	_add_slider(g, "camera_bob", "Balanço da câmera", 0.0, 1.0)
+	_add_option(g, "sniff_color_index", "Cor do faro", Settings.SNIFF_COLOR_NAMES)
 	# Áudio
 	g = _settings_page(stack)
 	_add_slider(g, "master_volume", "Volume geral", 0.0, 1.0)
@@ -364,7 +365,7 @@ func _show_settings_tab(i: int) -> void:
 	_settings_note.text = [
 		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
 		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
-		"Sem balanço, a câmera fica parada ao andar e correr.",
+		"Sem balanço, a câmera fica parada ao andar e correr. A cor do faro é a das formigas e nuvens farejadas.",
 		"",
 	][i]
 

@@ -1,17 +1,17 @@
 extends Control
 ## Árvore de habilidades: Língua, Garras, Patas, Faro e Escalada + Cauda.
 ## Cada formiga comida vale 1 ponto e cada habilidade tem o seu preço.
-## Garras, Patas e Faro se dividem em duas linhas, que não se excluem.
-## A Escalada + Cauda só pode ser comprada ao chegar à floresta.
+## Cada ramo começa com uma habilidade e se divide em duas linhas, que não se
+## excluem. O que ainda não existe no jogo (Escalada + Cauda) aparece com cadeado.
 ## Dá para redistribuir os pontos de graça a qualquer momento.
 
 signal closed
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 
-const NODE_SIZE := Vector2(166, 74)
-const COL_GAP := 12.0
-const BRANCH_GAP := 26.0
+const NODE_SIZE := Vector2(150, 74)
+const COL_GAP := 10.0
+const BRANCH_GAP := 22.0
 const ROW_GAP := 20.0
 ## Espaço extra entre o topo do ramo e as duas linhas (para o nome das linhas).
 const SPLIT_GAP := 24.0
@@ -143,7 +143,7 @@ func _make_node(u: Dictionary, color: Color) -> Button:
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_theme_constant_override("separation", 0)
 	b.add_child(v)
-	var name_lbl := UiTheme.label(u.name, 16, UiTheme.CREAM, true)
+	var name_lbl := UiTheme.label(u.name, 15, UiTheme.CREAM, true)
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_lbl.max_lines_visible = 2
 	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -154,6 +154,12 @@ func _make_node(u: Dictionary, color: Color) -> Button:
 	b.set_meta("id", u.id)
 	b.set_meta("color", color)
 	b.set_meta("state_label", state_lbl)
+	b.set_meta("name_label", name_lbl)
+	var lock := Padlock.new()
+	lock.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lock.visible = false
+	b.add_child(lock)
+	b.set_meta("lock", lock)
 	b.pressed.connect(_on_node_pressed.bind(u.id))
 	b.focus_entered.connect(_on_node_focus.bind(u.id))
 	b.mouse_entered.connect(_show_detail.bind(u.id))
@@ -232,6 +238,8 @@ func refresh() -> void:
 		var cost := GameState.cost_of(id)
 		var state_lbl: Label = node.get_meta("state_label")
 		var bg := UiTheme._box(Color(0.2, 0.12, 0.1, 0.92), Color(0.5, 0.4, 0.33, 0.6), 2, 16)
+		# O que ainda não existe no jogo aparece só com o cadeado.
+		(node.get_meta("name_label") as Label).visible = state != 3
 		match state:
 			2:
 				bg = UiTheme._box(Color(color.r * 0.45, color.g * 0.32, color.b * 0.25, 0.95), UiTheme.GOLD, 3, 16)
@@ -245,13 +253,13 @@ func refresh() -> void:
 				state_lbl.add_theme_color_override("font_color", color.lightened(0.25) if can else UiTheme.SAND)
 				node.modulate = Color.WHITE
 			3:
-				state_lbl.text = "%d · na %s" % [cost, GameState.region_required(id)]
-				state_lbl.add_theme_color_override("font_color", Color(0.75, 0.68, 0.6))
+				state_lbl.text = ""
 				node.modulate = Color(1, 1, 1, 0.5)
 			_:
 				state_lbl.text = "%d pontos" % cost
 				state_lbl.add_theme_color_override("font_color", Color(0.7, 0.62, 0.55))
 				node.modulate = Color(1, 1, 1, 0.55)
+		(node.get_meta("lock") as Control).visible = state == 3
 		for k in ["normal", "hover", "pressed", "focus"]:
 			var box := bg.duplicate() as StyleBoxFlat
 			box.content_margin_top = 4
@@ -294,7 +302,7 @@ func _show_detail(id: String) -> void:
 			text = "Você já aprendeu esta habilidade."
 			col = UiTheme.GOLD
 		3:
-			text = "Custa %d pontos. Só pode ser aprendida quando você chegar à %s." % [cost, GameState.region_required(id)]
+			text = "Ainda não disponível."
 		0:
 			var names := []
 			for r in GameState.missing_requirements(id):
@@ -302,7 +310,7 @@ func _show_detail(id: String) -> void:
 			text = "Custa %d pontos. Aprenda antes: %s." % [cost, ", ".join(names)]
 		_:
 			if pts >= cost:
-				text = "Clique para aprender por %d pontos (você tem %d)." % [cost, pts]
+				text = "Clique para aprender por %d pontos." % cost
 				col = branch.color.lightened(0.3)
 			else:
 				text = "Custa %d pontos: faltam %d formigas." % [cost, cost - pts]
@@ -313,9 +321,9 @@ func _show_detail(id: String) -> void:
 func _summary_text() -> String:
 	var n := GameState.affordable_count()
 	if n == 1:
-		return "Você tem pontos para 1 habilidade."
+		return "Já dá para aprender 1 habilidade."
 	if n > 1:
-		return "Você tem pontos para %d habilidades." % n
+		return "Já dá para aprender %d habilidades." % n
 	var goal := GameState.next_goal()
 	if goal.is_empty():
 		return ""
@@ -387,3 +395,22 @@ class TreeCanvas extends Control:
 					draw_style_box(sb, pill)
 					draw_string(font, Vector2(cx - tsz.x * 0.5, y + 5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14,
 						branch.color.lightened(0.25))
+
+
+## Cadeado por cima das habilidades que ainda não existem no jogo.
+class Padlock extends Control:
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var c := size * 0.5 + Vector2(0, 4)
+		var metal := Color(0.95, 0.85, 0.65)
+		draw_arc(c + Vector2(0, -8), 9.0, PI, TAU, 16, metal, 4.0, true)
+		draw_line(c + Vector2(-9, -8), c + Vector2(-9, -2), metal, 4.0, true)
+		draw_line(c + Vector2(9, -8), c + Vector2(9, -2), metal, 4.0, true)
+		var body := StyleBoxFlat.new()
+		body.bg_color = metal
+		body.set_corner_radius_all(4)
+		draw_style_box(body, Rect2(c + Vector2(-14, -3), Vector2(28, 22)))
+		draw_circle(c + Vector2(0, 6), 3.5, Color(0.3, 0.2, 0.15))
+		draw_line(c + Vector2(0, 7), c + Vector2(0, 13), Color(0.3, 0.2, 0.15), 3.0)

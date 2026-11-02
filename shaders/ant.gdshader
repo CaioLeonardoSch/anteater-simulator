@@ -8,6 +8,8 @@ uniform float roughness_body : hint_range(0.0, 1.0) = 0.3;
 uniform float rim_amount : hint_range(0.0, 1.0) = 0.55;
 uniform sampler2D albedo_tex : source_color, filter_linear_mipmap;
 uniform float use_albedo_tex : hint_range(0.0, 1.0) = 0.0;
+// Brilho do faro (cor configurável); a rainha usa o dourado padrão.
+instance uniform vec3 glow_color : source_color = vec3(1.0, 0.75, 0.3);
 
 varying float v_part;
 varying float v_highlight;
@@ -30,5 +32,5 @@ void fragment() {
 	RIM = leaf ? 0.1 : rim_amount;
 	RIM_TINT = 0.35;
 	BACKLIGHT = leaf ? base * 0.6 : vec3(0.0);
-	EMISSION = vec3(1.0, 0.75, 0.3) * v_highlight * 0.5;
+	EMISSION = glow_color * v_highlight * 0.5;
 }

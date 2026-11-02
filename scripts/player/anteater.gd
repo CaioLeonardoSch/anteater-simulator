@@ -3,7 +3,9 @@ extends CharacterBody3D
 ## com a língua comprida, cava formigueiros e bate no chão (com os upgrades).
 
 signal ate(count: int, tanajuras: int, queens: int)
-signal sniffed(count: int)
+## Farejou: quantas formigas sentiu, se havia mais, a distância da mais perto
+## (-1 = nenhuma) e quantas câmaras fechadas achou (Faro de Câmara).
+signal sniffed(count: int, capped: bool, nearest: float, chambers: int)
 signal dug(nest, chamber_index: int, released: int)
 signal tremor_used(count: int)
 signal queen_blocked
@@ -58,7 +60,14 @@ var _blocked_note := 0.0
 var sniff_cd := 0.0
 var sniff_left := 0.0
 var sniff_target := Vector3.INF
+## Câmaras fechadas achadas pelo último faro (Faro de Câmara).
+var sniff_chambers: Array[Vector3] = []
 var tremor_cd := 0.0
+## Descanso das garras depois de abrir uma câmara.
+var dig_cd := 0.0
+var _jump_request := false
+var _stomp_pending := false
+var _air_time := 0.0
 var pull_time := 0.0
 var dig_progress := 0.0
 var near_nest = null
@@ -231,9 +240,21 @@ func _physics_process(delta: float) -> void:
 	velocity.z = hv.z
 	if is_on_floor():
 		velocity.y = -0.5
+		if _jump_request:
+			# Pulo do Tremor: a pancada vem quando ele cai de volta no chão.
+			velocity.y = GameState.tremor_jump_speed()
 	else:
 		velocity.y -= GRAVITY * delta
+	_jump_request = false
 	move_and_slide()
+	if is_on_floor():
+		if _stomp_pending and _air_time > 0.12:
+			_stomp()
+		_air_time = 0.0
+	else:
+		_air_time += delta
+		if _stomp_pending and _air_time > 3.0:
+			_stomp()
 	var flat := Vector2(global_position.x, global_position.z)
 	if flat.length() > PLAY_RADIUS:
 		flat = flat.normalized() * PLAY_RADIUS
@@ -298,7 +319,7 @@ func _process(delta: float) -> void:
 
 
 func _is_digging() -> bool:
-	if dig_nest == null or dig_chamber < 0 or not GameState.can_dig():
+	if dig_nest == null or dig_chamber < 0 or not GameState.can_dig() or dig_cd > 0.0:
 		return false
 	if controls_enabled:
 		return Input.is_action_pressed("dig")
@@ -393,7 +414,7 @@ func _start_flick() -> void:
 
 
 func _capture() -> void:
-	var res: Dictionary = swarm.lick(t_target, GameState.capture_radius(), mouth_real(), GameState.lick_grabs_all())
+	var res: Dictionary = swarm.lick(t_target, GameState.capture_radius(), GameState.lick_capacity())
 	t_stuck = res.captured
 	_stuck_offsets.clear()
 	for i in t_stuck.size():
@@ -464,11 +485,15 @@ func _update_tongue_visual() -> void:
 func _update_abilities(delta: float) -> void:
 	sniff_cd = maxf(sniff_cd - delta, 0.0)
 	tremor_cd = maxf(tremor_cd - delta, 0.0)
+	dig_cd = maxf(dig_cd - delta, 0.0)
 	if sniff_left > 0.0:
 		sniff_left -= delta
+		world.scent_marks.set_fade(clampf(sniff_left / 0.8, 0.0, 1.0))
 		if sniff_left <= 0.0:
 			swarm.set_scent_overlay(false)
 			sniff_target = Vector3.INF
+			sniff_chambers.clear()
+			world.scent_marks.set_fade(0.0)
 	RenderingServer.global_shader_parameter_set("sniff_amount", clampf(sniff_left / 0.8, 0.0, 1.0))
 	var want_sniff := controls_enabled and Input.is_action_just_pressed("sniff")
 	if bot:
@@ -476,9 +501,10 @@ func _update_abilities(delta: float) -> void:
 		if _bot_sniff <= 0.0:
 			_bot_sniff = 14.0
 			want_sniff = true
-	if want_sniff and sniff_cd <= 0.0:
+	if want_sniff and sniff_cd <= 0.0 and GameState.can_sniff():
 		do_sniff()
-	# Formigueiro e câmara fechada mais perto.
+	# Formigueiro mais perto (para as dicas) e câmara fechada ao alcance das
+	# garras (no monte ou no meio do campo).
 	near_nest = null
 	var p2 := Vector2(global_position.x, global_position.z)
 	for n in world.nests:
@@ -489,11 +515,13 @@ func _update_abilities(delta: float) -> void:
 	var prev_chamber := dig_chamber
 	dig_nest = null
 	dig_chamber = -1
-	if near_nest != null:
-		var ci: int = near_nest.closed_chamber_near(p2, DIG_REACH)
+	var best_reach := DIG_REACH
+	for n in world.nests:
+		var ci: int = n.closed_chamber_near(p2, best_reach)
 		if ci >= 0:
-			dig_nest = near_nest
+			dig_nest = n
 			dig_chamber = ci
+			best_reach = p2.distance_to(n.chambers[ci].pos2) - n.chambers[ci].radius
 	if prev_nest != null and (prev_nest != dig_nest or prev_chamber != dig_chamber):
 		prev_nest.reset_dig(prev_chamber)
 		dig_progress = 0.0
@@ -510,6 +538,7 @@ func _update_abilities(delta: float) -> void:
 			var opened_nest = dig_nest
 			var opened_chamber := dig_chamber
 			var released: int = colony.open_chamber(opened_nest, opened_chamber, false, GameState.dig_stun_time())
+			dig_cd = GameState.dig_cooldown()
 			shake = 0.5
 			Sfx.play("burst", -2.0)
 			dug.emit(opened_nest, opened_chamber, released)
@@ -522,7 +551,7 @@ func _update_abilities(delta: float) -> void:
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
 	if bot and GameState.can_tremor() and tremor_cd <= 0.0 and _bot_target >= 0:
 		want_tremor = swarm.alive[_bot_target] == 1 and swarm.pos[_bot_target].distance_to(global_position) < 4.0
-	if want_tremor and GameState.can_tremor() and tremor_cd <= 0.0:
+	if want_tremor and GameState.can_tremor() and tremor_cd <= 0.0 and is_on_floor():
 		do_tremor()
 	if pull_time > 0.0:
 		pull_time -= delta
@@ -535,24 +564,100 @@ func _update_abilities(delta: float) -> void:
 func do_sniff() -> void:
 	sniff_cd = GameState.sniff_cooldown()
 	sniff_left = GameState.sniff_duration()
-	var n: int = swarm.sniff(global_position, GameState.sniff_radius(), GameState.sniff_duration())
-	swarm.set_scent_overlay(true)
+	var precision := GameState.sniff_precision()
+	var res: Dictionary = swarm.sniff(global_position, GameState.sniff_radius(), GameState.sniff_max_ants(),
+		sniff_left, precision >= 2)
+	# Faro Nítido: as formigas farejadas brilham através do capim.
+	swarm.set_scent_overlay(precision >= 2)
 	sniff_target = Vector3.INF
-	if GameState.faro_level() >= 1:
-		sniff_target = swarm.densest_point(global_position, maxf(GameState.sniff_radius(), 40.0))
+	var points: PackedVector3Array = res.points
+	if precision >= 1 and not points.is_empty():
+		# Faro Preciso: nuvens borradas onde elas estão (com o Faro Nítido, as
+		# próprias formigas brilham no lugar da nuvem), e a bússola aponta o maior grupo.
+		if precision == 1:
+			world.scent_marks.show_clouds(points)
+		var groups: Array = world.scent_marks.clusters(points)
+		sniff_target = groups[0].center
+	sniff_chambers.clear()
+	if GameState.sniff_chambers():
+		# Faro de Câmara: colunas de cheiro nas câmaras fechadas por perto.
+		var reach := maxf(GameState.sniff_radius() * 1.5, 20.0)
+		var here := Vector2(global_position.x, global_position.z)
+		for n in world.nests:
+			for c in n.chambers:
+				if not c.opened and here.distance_to(c.pos2) <= reach:
+					sniff_chambers.append(n.chamber_world_pos(c))
+		world.scent_marks.show_pillars(sniff_chambers)
 	Sfx.play("sniff", -3.0)
-	sniffed.emit(n)
+	sniffed.emit(res.count, res.capped, res.nearest, sniff_chambers.size())
 
 
+## Tremor: um pulo; a pancada (formigas tontas) vem quando ele cai no chão.
 func do_tremor() -> void:
 	tremor_cd = GameState.tremor_cooldown()
+	_jump_request = true
+	_stomp_pending = true
+	Sfx.play("step", -4.0, 0.7)
+
+
+func _stomp() -> void:
+	_stomp_pending = false
 	var n: int = swarm.stun_radius(global_position, GameState.tremor_radius(), 3.0)
 	if GameState.tremor_pulls():
 		pull_time = 2.4
-	shake = 0.9
+	shake = 1.0
 	_tremor_anim = 1.0
 	Sfx.play("tremor", 0.0)
+	_dust_ring(GameState.tremor_radius())
 	tremor_used.emit(n)
+
+
+## Poeira que sobe em volta quando ele cai com força.
+func _dust_ring(radius: float) -> void:
+	var p := GPUParticles3D.new()
+	p.one_shot = true
+	p.amount = 64
+	p.lifetime = 1.0
+	p.explosiveness = 0.95
+	var pm := ParticleProcessMaterial.new()
+	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
+	pm.emission_ring_axis = Vector3.UP
+	pm.emission_ring_radius = 0.6
+	pm.emission_ring_inner_radius = 0.3
+	pm.emission_ring_height = 0.05
+	pm.direction = Vector3.UP
+	pm.spread = 70.0
+	pm.initial_velocity_min = 0.8
+	pm.initial_velocity_max = 1.8
+	pm.radial_velocity_min = radius * 0.45
+	pm.radial_velocity_max = radius * 0.7
+	pm.damping_min = 2.0
+	pm.damping_max = 3.0
+	pm.gravity = Vector3(0, -2.5, 0)
+	pm.scale_min = 0.8
+	pm.scale_max = 1.8
+	var fade := Gradient.new()
+	fade.set_color(0, Color(0.72, 0.5, 0.34, 0.8))
+	fade.set_color(1, Color(0.72, 0.5, 0.34, 0.0))
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = fade
+	pm.color_ramp = ramp
+	p.process_material = pm
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.06
+	mesh.height = 0.12
+	mesh.radial_segments = 8
+	mesh.rings = 4
+	var m := StandardMaterial3D.new()
+	m.vertex_color_use_as_albedo = true
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.roughness = 1.0
+	mesh.material = m
+	p.draw_pass_1 = mesh
+	world.add_child(p)
+	p.global_position = global_position + Vector3(0, 0.05, 0)
+	p.emitting = true
+	get_tree().create_timer(2.0).timeout.connect(p.queue_free)
 
 
 func _update_arms(delta: float) -> void:
@@ -585,14 +690,14 @@ func _bot_update(delta: float) -> void:
 	_bot_lick = false
 	_bot_input = Vector2.ZERO
 	_bot_run = false
-	_bot_dig = dig_nest != null and GameState.can_dig()
+	_bot_dig = dig_nest != null and GameState.can_dig() and dig_cd <= 0.0
 	if _bot_dig:
 		return
 	var goal := Vector3.INF
 	var to_chamber := false
 	if _bot_target >= 0:
 		goal = swarm.pos[_bot_target]
-	if GameState.can_dig():
+	if GameState.can_dig() and dig_cd <= 0.0:
 		var ch := _bot_nearest_closed_chamber()
 		if ch != Vector3.INF and (goal == Vector3.INF or ch.distance_to(global_position) + 10.0 < goal.distance_to(global_position)):
 			goal = ch

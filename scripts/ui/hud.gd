@@ -21,6 +21,9 @@ var _points_badge: PanelContainer
 var _points_label: Label
 var _timer_label: Label
 var _wave_label: Label
+## Aviso de onda no painel da direita (em vez de no meio da tela).
+var _wave_note := ""
+var _wave_note_time := 0.0
 var _compass: Compass
 var _crosshair: Crosshair
 var _notes: VBoxContainer
@@ -198,6 +201,8 @@ func _build_top_right() -> void:
 	v.add_child(_timer_label)
 	_wave_label = UiTheme.label("Calmaria", 18, UiTheme.SAND)
 	_wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_wave_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_wave_label.custom_minimum_size = Vector2(190, 0)
 	v.add_child(_wave_label)
 
 
@@ -232,7 +237,11 @@ func _process(delta: float) -> void:
 	_timer_label.text = GameState.format_time(GameState.elapsed)
 	var wave_active: bool = colony._wave.size() > 0
 	_nests_label.text = "Formigueiros limpos: %d/%d" % [colony.nests_cleaned(), world.nests.size()]
-	if colony.final_released:
+	_wave_note_time = maxf(_wave_note_time - delta, 0.0)
+	_wave_label.add_theme_color_override("font_color", UiTheme.GOLD if _wave_note_time > 0.0 else UiTheme.SAND)
+	if _wave_note_time > 0.0:
+		_wave_label.text = _wave_note
+	elif colony.final_released:
 		if colony.outside_total() == 0:
 			_wave_label.text = "Faltam %d nas câmaras" % colony.remaining()
 		else:
@@ -248,11 +257,11 @@ func _process(delta: float) -> void:
 				a.locked = false
 				a.cooldown = 0.0
 			"sniff":
-				a.locked = false
+				a.locked = not GameState.can_sniff()
 				a.cooldown = player.sniff_cd / GameState.sniff_cooldown() if player.sniff_cd > 0.0 else 0.0
 			"dig":
 				a.locked = not GameState.can_dig()
-				a.cooldown = 0.0
+				a.cooldown = player.dig_cd / GameState.dig_cooldown() if player.dig_cd > 0.0 else 0.0
 				a.progress = player.dig_progress
 			"tremor":
 				a.locked = not GameState.can_tremor()
@@ -275,7 +284,7 @@ func _process(delta: float) -> void:
 		_vignette_mat.set_shader_parameter("tint", Color(1.0, 0.45, 0.2))
 	elif player.sniff_left > 0.0:
 		vig = clampf(player.sniff_left, 0.0, 1.0) * 0.35
-		_vignette_mat.set_shader_parameter("tint", Color(1.0, 0.8, 0.35))
+		_vignette_mat.set_shader_parameter("tint", Settings.sniff_color())
 	_vignette_mat.set_shader_parameter("amount", vig)
 	_compass.queue_redraw()
 	_crosshair.queue_redraw()
@@ -318,28 +327,46 @@ func _on_lick_blocked_running() -> void:
 
 
 func _context_hint() -> String:
+	if player.dig_nest != null:
+		if not GameState.can_dig():
+			return "Câmara fechada: aprenda Cavar (Garras) na árvore [TAB]"
+		if player.dig_cd > 0.0:
+			return "As garras estão descansando: %d s" % int(ceil(player.dig_cd))
+		var c = player.dig_nest.chambers[player.dig_chamber]
+		if c.royal:
+			return "Segure E para abrir a câmara da rainha"
+		return "Segure E para abrir esta câmara do campo" if c.satellite else "Segure E para abrir a câmara"
+	# Câmara aberta por perto (no monte ou no campo).
+	var p2 := Vector2(player.global_position.x, player.global_position.z)
+	for n in world.nests:
+		var ci: int = n.open_chamber_near(p2, 3.0)
+		if ci < 0:
+			continue
+		var c = n.chambers[ci]
+		if c.royal and n.queen_alive and c.residents > 0:
+			return "Rainha protegida: faltam %d formigas nesta câmara" % c.residents
+		if c.royal and n.queen_alive:
+			return "A rainha está sozinha: lamba!"
+		return "Câmara aberta: %d formigas" % c.residents
 	var nest = player.near_nest
 	if nest == null:
 		return ""
-	if player.dig_nest != null:
-		if GameState.can_dig():
-			var c = player.dig_nest.chambers[player.dig_chamber]
-			return "Segure E para abrir a câmara da rainha" if c.royal else "Segure E para abrir a câmara"
-		return "Câmara fechada: aprenda Cavar (Garras) na árvore [TAB]"
-	var p2 := Vector2(player.global_position.x, player.global_position.z)
-	var ci: int = nest.open_chamber_near(p2, 3.0)
-	if ci >= 0:
-		var c = nest.chambers[ci]
-		if c.royal and nest.queen_alive and c.residents > 0:
-			return "Rainha protegida: faltam %d formigas nesta câmara" % c.residents
-		if c.royal and nest.queen_alive:
-			return "A rainha está sozinha: lamba!"
-		return "Câmara aberta: %d formigas" % c.residents
 	if nest.cleaned:
 		return "%s limpo!" % nest.display_name
 	if nest.closed_chambers() > 0:
+		var field: int = nest.closed_chambers() - _closed_on_mound(nest)
+		if field > 0 and _closed_on_mound(nest) == 0:
+			return "%s: faltam %d câmaras no campo (fareje!)" % [nest.display_name, field]
 		return "%s: %d câmaras fechadas" % [nest.display_name, nest.closed_chambers()]
 	return nest.display_name
+
+
+func _closed_on_mound(nest) -> int:
+	var n := 0
+	for c in nest.chambers:
+		if not c.opened and not c.satellite:
+			n += 1
+	return n
 
 
 ## Ajuda quando só restam formigas dentro das câmaras.
@@ -400,21 +427,31 @@ func _on_ate(count: int, _taj: int, _queens: int) -> void:
 		note("Combo x%d!" % GameState.combo, UiTheme.PINK, 1.6)
 
 
-func _on_sniffed(n: int) -> void:
+func _on_sniffed(n: int, capped: bool, nearest: float, chambers: int) -> void:
+	var radius := int(GameState.sniff_radius())
 	if n == 0:
-		note("Nenhuma formiga por perto... siga as trilhas de terra", UiTheme.SAND)
+		note("Nenhuma formiga a até %d m... siga as trilhas de terra" % radius, UiTheme.SAND)
 	else:
-		note("Faro: %d formigas por perto" % n, UiTheme.SAND, 2.0)
+		var how_many := ("%d+" % n) if capped else str(n)
+		note("Faro: %s formigas a até %d m · a mais perto a uns %d m" % [how_many, radius, int(round(nearest))], UiTheme.SAND, 2.5)
+	if GameState.sniff_chambers():
+		if chambers > 0:
+			note("Faro: %d %s por perto" % [chambers, "câmara fechada" if chambers == 1 else "câmaras fechadas"], Settings.sniff_color().lightened(0.3), 2.5)
+		else:
+			note("Nenhuma câmara fechada por perto", UiTheme.SAND, 2.0)
 	var now := Time.get_ticks_msec() / 1000.0
 	_compass.sniff_target = player.sniff_target
 	_compass.sniff_until = now + GameState.sniff_duration() + 3.0
-	_compass.nests_until = now + 12.0 if GameState.faro_level() >= 2 else 0.0
-	_compass.queens_until = now + 12.0 if GameState.faro_level() >= 3 else 0.0
+	_compass.chamber_marks = player.sniff_chambers.duplicate()
+	_compass.nests_until = now + 12.0 if GameState.sniff_nest_counts() else 0.0
+	_compass.queens_until = now + 12.0 if GameState.sniff_queens() else 0.0
 
 
+## Onda: aviso discreto no painel da direita (a bússola marca o formigueiro).
 func _on_wave(wave: int, nest_name: String, count: int, nest_index: int) -> void:
-	big_note("ONDA %d" % wave, "%d formigas saindo do %s" % [count, nest_name])
-	Sfx.play("wave", -3.0)
+	_wave_note = "Onda %d: %d formigas saindo do %s" % [wave, count, nest_name]
+	_wave_note_time = 7.0
+	Sfx.play("wave", -6.0)
 	_compass.wave_nest = world.nests[nest_index]
 	_compass.wave_until = Time.get_ticks_msec() / 1000.0 + 25.0
 
@@ -487,6 +524,8 @@ class Compass extends Control:
 	var sniff_until := 0.0
 	var nests_until := 0.0
 	var queens_until := 0.0
+	## Câmaras fechadas achadas pelo Faro de Câmara.
+	var chamber_marks: Array[Vector3] = []
 	const SPAN := PI * 0.6
 
 	func _ready() -> void:
@@ -550,11 +589,19 @@ class Compass extends Control:
 				var q := Vector2(x, 10)
 				draw_colored_polygon(PackedVector2Array([q + Vector2(-8, 6), q + Vector2(-8, -3), q + Vector2(-4, 2), q + Vector2(0, -6),
 					q + Vector2(4, 2), q + Vector2(8, -3), q + Vector2(8, 6)]), Color(1.0, 0.82, 0.25))
+		var scent: Color = Settings.sniff_color()
+		if now < sniff_until:
+			for cpos in chamber_marks:
+				var cx := _x_for(_yaw_to(cpos))
+				if cx < 10 or cx > size.x - 10:
+					continue
+				var q := Vector2(cx, size.y * 0.5 - 6)
+				draw_colored_polygon(PackedVector2Array([q + Vector2(0, -7), q + Vector2(6, 0), q + Vector2(0, 7), q + Vector2(-6, 0)]), scent)
 		if sniff_target != Vector3.INF and now < sniff_until:
 			var x := _x_for(_yaw_to(sniff_target))
 			x = clampf(x, 14, size.x - 14)
-			draw_circle(Vector2(x, size.y * 0.5 - 4), 9.0, Color(1.0, 0.78, 0.3, 0.9))
-			draw_circle(Vector2(x, size.y * 0.5 - 4), 4.0, Color(0.4, 0.2, 0.05))
+			draw_circle(Vector2(x, size.y * 0.5 - 4), 9.0, Color(scent, 0.9))
+			draw_circle(Vector2(x, size.y * 0.5 - 4), 4.0, Color(0.15, 0.05, 0.05))
 		draw_line(Vector2(size.x * 0.5, 2), Vector2(size.x * 0.5, 12), Color(1, 1, 1, 0.9), 3)
 
 

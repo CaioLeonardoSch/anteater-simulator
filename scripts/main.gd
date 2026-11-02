@@ -1,0 +1,324 @@
+extends Node
+## Ponto de entrada da demo. Monta o mundo, o enxame, o tamanduá e a interface,
+## e controla os estados: menu inicial, jogando, pausa, árvore de habilidades e fim.
+
+const World := preload("res://scripts/world/world.gd")
+const Swarm := preload("res://scripts/ants/ant_swarm.gd")
+const Colony := preload("res://scripts/ants/colony.gd")
+const Player := preload("res://scripts/player/anteater.gd")
+const Hud := preload("res://scripts/ui/hud.gd")
+const SkillTree := preload("res://scripts/ui/skill_tree.gd")
+const Menus := preload("res://scripts/ui/menus.gd")
+const ModelLibrary := preload("res://scripts/model_library.gd")
+const UiTheme := preload("res://scripts/ui/ui_theme.gd")
+const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
+const AntMeshBuilder := preload("res://scripts/ants/ant_mesh_builder.gd")
+const Props := preload("res://scripts/world/props.gd")
+
+enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
+
+## Ao recomeçar, pula o menu e vai direto para a fase.
+static var skip_menu := false
+
+var state := State.LOADING
+var world: World
+var swarm: Swarm
+var colony: Colony
+var player: Player
+var menu_cam: Camera3D
+var ui: CanvasLayer
+var hud: Hud
+var tree_ui: SkillTree
+var menus: Menus
+var fade: ColorRect
+
+var _menu_t := 0.0
+var _menu_center := Vector3.ZERO
+var _first_point_done := false
+var _complete_wait := -1.0
+var _base_time_scale := 1.0
+var _new_record := false
+var _reloading := false
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_base_time_scale = Engine.time_scale
+	ui = CanvasLayer.new()
+	ui.layer = 10
+	add_child(ui)
+	menus = Menus.new()
+	ui.add_child(menus)
+	menus.show_screen("loading")
+	fade = ColorRect.new()
+	fade.color = Color(0.06, 0.03, 0.02, 1.0)
+	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var top := CanvasLayer.new()
+	top.layer = 20
+	add_child(top)
+	top.add_child(fade)
+	fade.modulate.a = 0.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_build_game()
+	if skip_menu or DevTools.start_mode != "":
+		skip_menu = false
+		_start_play()
+		if DevTools.start_mode == "tree":
+			_open_tree()
+	else:
+		_enter_menu()
+	fade.modulate.a = 1.0
+	create_tween().tween_property(fade, "modulate:a", 0.0, 0.8)
+
+
+func _build_game() -> void:
+	world = World.new()
+	world.name = "World"
+	add_child(world)
+	world.build()
+	swarm = Swarm.new()
+	swarm.name = "Swarm"
+	add_child(swarm)
+	swarm.setup(world)
+	colony = Colony.new()
+	colony.name = "Colony"
+	add_child(colony)
+	colony.setup(world, swarm)
+	colony.populate(210)
+	colony.active = true
+	player = Player.new()
+	player.name = "Anteater"
+	add_child(player)
+	player.setup(world, swarm, colony)
+	player.place_at(world.player_start, world.player_start_yaw)
+	menu_cam = Camera3D.new()
+	menu_cam.name = "MenuCamera"
+	menu_cam.fov = 62.0
+	menu_cam.near = 0.03
+	add_child(menu_cam)
+	var t = world.trails.trails[5]
+	var c2: Vector2 = t.point_at(t.length * 0.62)
+	_menu_center = Vector3(c2.x, world.ground_height(c2.x, c2.y), c2.y)
+	# Tamanduá de corpo inteiro (modelo de IA opcional) posando no menu.
+	var showcase := ModelLibrary.instantiate("tamandua", Vector3(2.2, 0, 2.2))
+	if showcase:
+		var sp := _menu_center + Vector3(1.4, 0, 1.0)
+		sp.y = world.ground_height(sp.x, sp.z)
+		showcase.position = sp
+		showcase.rotation.y = 0.8
+		world.add_child(showcase)
+	hud = Hud.new()
+	ui.add_child(hud)
+	hud.setup(player, swarm, colony, world)
+	hud.visible = false
+	tree_ui = SkillTree.new()
+	ui.add_child(tree_ui)
+	tree_ui.visible = false
+	tree_ui.closed.connect(_close_tree)
+	ui.move_child(menus, -1)
+	menus.play_pressed.connect(_on_play_pressed)
+	menus.resume_pressed.connect(_resume)
+	menus.restart_pressed.connect(_restart)
+	menus.main_menu_pressed.connect(_to_main_menu)
+	menus.skill_tree_pressed.connect(_open_tree)
+	GameState.level_completed.connect(_on_complete)
+	GameState.skill_point_gained.connect(_on_point)
+	GameState.ants_eaten_changed.connect(func(total, _d): world.set_day_progress(float(total) / GameState.GOAL))
+	Sfx.start_ambience()
+	Sfx.start_music()
+
+
+func _enter_menu() -> void:
+	state = State.MENU
+	GameState.playing = false
+	get_tree().paused = false
+	menu_cam.current = true
+	hud.visible = false
+	player.controls_enabled = false
+	menus.show_screen("title")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Sfx.set_music_duck(0.0)
+
+
+func _on_play_pressed() -> void:
+	var tw := create_tween()
+	tw.tween_property(fade, "modulate:a", 1.0, 0.35)
+	tw.tween_callback(_start_play)
+	tw.tween_property(fade, "modulate:a", 0.0, 0.6)
+
+
+func _start_play() -> void:
+	GameState.reset_run()
+	GameState.playing = true
+	state = State.PLAYING
+	world.set_day_progress(0.0, true)
+	player.place_at(world.player_start, world.player_start_yaw)
+	player.camera.current = true
+	player.bot = DevTools.autoplay
+	player.controls_enabled = not DevTools.autoplay
+	menus.show_screen("")
+	hud.visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Sfx.set_music_duck(0.35)
+	if DevTools.give > 0:
+		GameState.add_eaten(DevTools.give)
+		GameState.combo = 0
+		GameState.best_combo = 0
+	for id in DevTools.buy:
+		if GameState.points_available() <= 0:
+			GameState.points_earned += 1
+		GameState.buy(id)
+	if DevTools.pose.size() >= 4:
+		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
+		player.pitch = deg_to_rad(DevTools.pose[3])
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause"):
+		match state:
+			State.PLAYING:
+				_pause()
+			State.PAUSED:
+				if menus.current() == "pause":
+					_resume()
+				else:
+					menus.show_screen("pause")
+			State.TREE:
+				_close_tree()
+			State.MENU:
+				if menus.current() != "title":
+					menus.show_screen("title")
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("skill_tree"):
+		match state:
+			State.PLAYING:
+				_open_tree()
+			State.TREE:
+				_close_tree()
+		get_viewport().set_input_as_handled()
+	elif state == State.PLAYING and event is InputEventMouseButton and event.pressed \
+			and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and state == State.PLAYING and not DevTools.autoplay:
+		_pause()
+
+
+func _pause() -> void:
+	state = State.PAUSED
+	get_tree().paused = true
+	menus.show_screen("pause")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Sfx.set_music_duck(0.8)
+
+
+func _resume() -> void:
+	state = State.PLAYING
+	get_tree().paused = false
+	menus.show_screen("")
+	tree_ui.visible = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Sfx.set_music_duck(0.35)
+
+
+func _open_tree() -> void:
+	if state == State.COMPLETE:
+		return
+	state = State.TREE
+	get_tree().paused = true
+	menus.show_screen("")
+	tree_ui.open()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Sfx.play("ui_open", -6.0)
+
+
+func _close_tree() -> void:
+	tree_ui.visible = false
+	_resume()
+
+
+func _restart() -> void:
+	skip_menu = true
+	_reload()
+
+
+func _to_main_menu() -> void:
+	skip_menu = false
+	_reload()
+
+
+func _exit_tree() -> void:
+	if _reloading:
+		return
+	# Saindo do jogo: solta os recursos guardados em variáveis estáticas.
+	UiTheme._theme = null
+	SnoutBuilder._strands = null
+	AntMeshBuilder.body_material = null
+	AntMeshBuilder.wing_material = null
+	Props.noise = null
+
+
+func _reload() -> void:
+	_reloading = true
+	get_tree().paused = false
+	Engine.time_scale = _base_time_scale
+	GameState.playing = false
+	var tw := create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(fade, "modulate:a", 1.0, 0.3)
+	tw.tween_callback(func(): get_tree().reload_current_scene())
+
+
+func _on_point(_available: int) -> void:
+	if DevTools.autoplay:
+		# O bot de teste compra a primeira habilidade disponível, alternando ramos.
+		var order := ["lingua_1", "garras_1", "corpo_1", "lingua_2", "garras_2", "corpo_2", "lingua_3", "garras_3", "lingua_4", "corpo_3", "garras_4", "corpo_4"]
+		for id in order:
+			if GameState.can_buy(id):
+				GameState.buy(id)
+				print("[bot] comprou ", id)
+				break
+		return
+	if _first_point_done or state != State.PLAYING:
+		return
+	_first_point_done = true
+	# Na primeira vez, abre a árvore sozinho para ensinar.
+	await get_tree().create_timer(1.6).timeout
+	if state == State.PLAYING:
+		_open_tree()
+
+
+func _on_complete(_time: float) -> void:
+	state = State.COMPLETE
+	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
+	player.controls_enabled = false
+	player.bot = false
+	Engine.time_scale = _base_time_scale * 0.35
+	_complete_wait = 2.2
+	hud.big_note("1000 FORMIGAS!", "A colônia inteira virou janta.", 4.0)
+	Sfx.play("complete", 0.0)
+
+
+func _process(delta: float) -> void:
+	if state == State.MENU and menu_cam:
+		_menu_t += delta
+		var a := _menu_t * 0.06 + 2.2
+		var pos := _menu_center + Vector3(cos(a) * 3.2, 0.0, sin(a) * 3.2)
+		pos.y = world.ground_height(pos.x, pos.z) + 0.55 + sin(_menu_t * 0.3) * 0.08
+		menu_cam.global_position = pos
+		menu_cam.look_at(_menu_center + Vector3(0, 0.25, 0) + Vector3(cos(a + 1.9), 0, sin(a + 1.9)) * 2.0)
+		RenderingServer.global_shader_parameter_set("player_pos", Vector3(9999, 0, 9999))
+		world.follow_camera(pos)
+		swarm.cam_pos = pos
+	if state == State.COMPLETE and _complete_wait > 0.0:
+		_complete_wait -= delta / maxf(Engine.time_scale, 0.01)
+		if _complete_wait <= 0.0:
+			Engine.time_scale = _base_time_scale
+			GameState.playing = false
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			hud.visible = false
+			menus.show_end(GameState.elapsed, _new_record)

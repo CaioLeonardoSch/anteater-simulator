@@ -1,21 +1,41 @@
-# Godot 4
+# ---- Godot 4 ----
+# Cache do editor. Contem UIDs e imports gerados; commitar isso quebra o
+# projeto em outra maquina e gera conflito em toda troca de branch.
 .godot/
 /android/
 *.translation
-export_presets.cfg
-*.tmp
 
-# Builds
-/build/
-/exports/
+# Builds exportados
+build/
+builds/
+export/
+exports/
+*.exe
+*.pck
+*.zip
+*.apk
+*.aab
+*.dmg
+*.x86_64
 
-# OS / editors
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-/tests_tmp/
+# Credenciais de export (contem chaves de assinatura)
+export_credentials.cfg
 
-# Python
+# ---- Blender ----
+*.blend1
+*.blend2
+
+# ---- Python (scripts de tools/) ----
 __pycache__/
 *.pyc
+
+# ---- Testes automaticos ----
+/tests_tmp/
+*.tmp
+
+# ---- Sistema e editores ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

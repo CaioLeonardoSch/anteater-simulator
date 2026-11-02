@@ -138,7 +138,8 @@ scripts/
 shaders/                 capim, terreno, céu, folhagem, pelagem, língua, formigas...
 assets/                  fontes, texturas e sons gerados, modelos de IA
 tools/                   scripts Python que geram os sons e as texturas
-docs/                    documento do jogo, prompts de IA e capturas de tela
+docs/                    documento do jogo, plano de produção, prompts de IA e capturas
+prototipos/m1-loop/      protótipo 2D do loop (M1): outro projeto Godot, abra à parte
 ```
 
 Sons e texturas são gerados por código (só precisam de Python 3 + numpy):

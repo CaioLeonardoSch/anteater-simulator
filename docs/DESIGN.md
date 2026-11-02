@@ -3,9 +3,10 @@
 Este documento junta, em um lugar só, tudo o que já foi definido sobre o jogo:
 
 - o **documento de design** original (antes no README da `main`);
-- o **plano de produção** (`docs/PLANO.md`, na branch `m1-prototipo-do-loop`);
-- o **protótipo 2D do loop** (mesma branch, pasta `prototipos/m1-loop/`);
-- a **demo 3D** (PR #1) e as escolhas feitas na conversa em que ela foi criada;
+- o **plano de produção** ([`docs/PLANO.md`](PLANO.md));
+- o **protótipo 2D do loop** (pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/));
+- a **demo 3D** (o projeto principal deste repositório) e as escolhas feitas na
+  conversa em que ela foi criada;
 - as **decisões de 02/11/2026**, tomadas para resolver o que não batia.
 
 Quando algo aqui contradiz uma fonte antiga, **vale este documento**.
@@ -41,9 +42,9 @@ buscamos, no espírito delas:
 | | O que é | Onde está | Situação |
 |---|---|---|---|
 | **Documento de design** | As regras e ideias do jogo inteiro | Seção 6 deste documento | Consolidado aqui |
-| **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | `docs/PLANO.md` na branch `m1-prototipo-do-loop` (resumo na seção 7) | Escrito |
-| **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Branch `m1-prototipo-do-loop` (detalhes na seção 8) | Jogável |
-| **Demo 3D** | O Cerrado ao entardecer, em 1ª pessoa: 1000 formigas, 8 formigueiros com câmaras e rainhas, 5 habilidades e jogo salvo | PR #1 (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
+| **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
+| **Demo 3D** | O Cerrado ao entardecer, em 1ª pessoa: 1000 formigas, 8 formigueiros com câmaras e rainhas, 5 habilidades e jogo salvo | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -235,7 +236,7 @@ Como estava no README da `main`. Onde ele contradiz a seção 3, vale a seção 
 
 ## 7. Plano de produção (resumo)
 
-O plano completo está em `docs/PLANO.md`, na branch `m1-prototipo-do-loop`.
+O plano completo está em [`docs/PLANO.md`](PLANO.md).
 
 **A pergunta que vem antes de tudo:** comer um inseto é gostoso o bastante para
 sustentar o jogo inteiro? O protótipo 2D existe só para responder isso: jogue
@@ -282,8 +283,11 @@ formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 
 ## 8. As versões jogáveis
 
-### Protótipo M1 (2D), branch `m1-prototipo-do-loop`
+### Protótipo M1 (2D), pasta `prototipos/m1-loop/`
 
+- **Como abrir:** é um projeto separado da demo 3D. No Godot, clique em
+  **Importar** e escolha o `project.godot` de dentro de `prototipos/m1-loop/`.
+  Testado no Godot 4.7, jogado do começo ao fim.
 - **Clique:** come 1 inseto. **Segurar e arrastar:** lambida. **F:** Faro.
   **R:** recomeça.
 - **Ninho:** 6 câmaras com 259 insetos. A câmara do topo é a mais cheia e guarda
@@ -292,7 +296,7 @@ formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
   Faro II (100), Garras (150), Faro III (175), Língua III (185).
 - No fim, mostra **insetos por minuto** e o **tempo total**.
 
-### Demo 3D, PR #1
+### Demo 3D, projeto principal
 
 - **1ª pessoa** no cerrado ao entardecer; o sol vai se pondo enquanto você come.
 - **8 formigueiros** (3 com rainha) e **25 câmaras** para abrir e esvaziar.
@@ -327,3 +331,4 @@ formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 | 02/11/2026 | Mapa | Documento: regiões separadas | Um mapa só, com várias regiões |
 | 02/11/2026 | Escalada + Cauda | Sem uso no Cerrado (ninhos só no chão) | Só pode ser comprada ao chegar à floresta |
 | 02/11/2026 | Lagoas da floresta | Poderiam trazer a Natação | Só cenário por enquanto |
+| 02/11/2026 | Organização do repositório | Demo 3D num PR; protótipo e plano numa branch à parte | Tudo junto na `main`; as outras branches foram apagadas |

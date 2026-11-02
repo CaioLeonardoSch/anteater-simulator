@@ -1,64 +1,170 @@
 # Anteater Simulator
 
-Jogo relaxante de tarefas, no estilo de *Leaf it Alone*, *Librarian: Tidy Up the Arcane Library* e *Supermarket Chaos*. Você controla um tamanduá que se alimenta de cupins e formigas, evoluindo habilidades e desbloqueando regiões até limpar o mapa por completo.
+Um jogo **relaxante de "arrumar e limpar"**, inspirado em *Leaf it Alone* e
+*Librarian: Tidy Up the Arcane Library*: você é um **tamanduá-bandeira** que
+come formigas e cupins no **cerrado**, evolui habilidades e deixa a região
+**100% limpa**. Não dá para perder, e o jogo tem fim. Para **PC (Steam)**, em
+**3D estilizado** com cara de filme de animação, visto pelos olhos do tamanduá.
+Feito em **Godot 4.7**.
 
-## Escopo
+**Tudo o que foi decidido sobre o jogo está em
+[`docs/DESIGN.md`](docs/DESIGN.md)**: o documento de design, o plano de
+produção, os protótipos e as decisões, num lugar só.
 
-- **Tempo alvo:** 3–5h ou menos para o 100%, por um jogador comum
-- **Sem loop infinito:** mapa 100% limpo = fim do jogo, como em *Leaf it Alone*
-- **3 regiões:** Savana, Floresta e Quintal urbano
-- **8–10 ninhos por região** (~27 no total)
-- **3–6 min por ninho** (~90–160 min de "comer" puro, com espaço para deslocamento e habilidades dentro do teto de 3–5h)
-- **~800–1.200 insetos** ao todo, crescendo por ninho conforme a região avança
+![Tela inicial da demo](docs/screenshots/menu.jpg)
 
-## Loop principal
-
-1. Toque em um inseto: ele é comido e some, com feedback visual/sonoro rápido.
-2. A língua evoluída desbloqueia a **lambida**: arrastar o dedo pelo ninho come vários insetos de uma vez. A progressão vira gesto novo, não só número subindo.
-3. Cada ninho tem **câmaras internas**; esvaziar cada uma dá a mesma satisfação de terminar de organizar uma prateleira.
-
-## Regiões
-
-| Região | Arquitetura do ninho |
+| | |
 |---|---|
-| Savana | Cupinzeiros-torre |
-| Floresta | Formigueiros de folha + ninhos em árvore |
-| Quintal urbano | Fendas de cimento |
+| ![Lambendo formigas perto de um formigueiro](docs/screenshots/trilha.jpg) | ![Câmaras abertas, com a rainha brilhando no topo](docs/screenshots/formigueiro.jpg) |
+| ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | |
 
-> O desbloqueio de cada região por Faro ou Garras (ordem exata e critério) ainda está em aberto.
+> Capturas feitas em um servidor sem placa de vídeo (renderização por software).
+> No seu PC fica igual ou melhor.
 
-## Árvore de habilidades
+---
 
-| Habilidade | Efeito |
+## A demo jogável
+
+O **Cerrado ao entardecer**: a colônia tem **1000 formigas** e **8
+formigueiros**. Parte das formigas anda pelas trilhas de terra e chega em
+**ondas**; o resto mora nas **câmaras** dos formigueiros, que você abre cavando.
+Os 3 formigueiros grandes guardam uma **rainha**. A cada **100 formigas** você
+ganha um ponto de habilidade, e o sol vai se pondo conforme você come.
+
+### Como rodar
+
+1. Instale o **Godot 4.7** (versão padrão, não precisa da .NET):
+   <https://godotengine.org/download>
+2. No Gerenciador de Projetos, clique em **Importar** e escolha o arquivo
+   `project.godot` desta pasta.
+3. Aperte **F5** (ou o botão ▶). Na primeira vez o Godot importa sons e
+   texturas, o que leva alguns segundos.
+
+O projeto usa o renderizador **Forward+** (PC com placa de vídeo compatível com
+Vulkan, Direct3D 12 ou Metal). Em **Configurações** dá para baixar a qualidade
+gráfica se o PC sofrer.
+
+### Controles
+
+| Ação | Teclado e mouse | Controle |
+|---|---|---|
+| Andar | `W` `A` `S` `D` | analógico esquerdo |
+| Olhar | mouse | analógico direito |
+| Correr* | `Shift` | clicar o analógico esquerdo |
+| **Lamber** (segure) | clique esquerdo | `RT` |
+| Farejar | `Q` ou clique direito | `LT` |
+| Abrir câmara* | segure `E` perto dela | `X` |
+| Tremor* | `Espaço` | `A` |
+| Árvore de habilidades | `Tab` | `Back` |
+| Pausa | `Esc` | `Start` |
+
+\* liberados pela árvore de habilidades.
+
+### O que tem na demo hoje
+
+- **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
+  fechadas. Com **Cavar** (Garras), segure `E` perto de uma para abri-la.
+- **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
+  outras formigas. Coma todas em volta e ela vale **20**.
+- **Trilhas e ondas:** quem volta para o formigueiro sai de novo mais tarde; só
+  as que você come somem de vez.
+- **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
+- **Faro:** mostra as formigas através do capim; nos níveis mais altos, a
+  bússola mostra quanto falta em cada formigueiro e onde estão as rainhas.
+- **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
+  mais longa por 6 s.
+- **Progresso:** formigueiro limpo ganha flores, e o contador mostra quantos
+  faltam.
+- **Sem derrota.** O jogo **salva sozinho**; na tela inicial aparecem
+  **Continuar** e **Novo jogo**.
+
+### Habilidades
+
+| Habilidade | Níveis |
 |---|---|
-| **Língua** | Come mais rápido; mais comprida e grudenta; desbloqueia a lambida |
-| **Patas** | Anda mais rápido; desbloqueia corrida |
-| **Garras** | Abre ninhos maiores/mais resistentes e bloqueios no caminho; chave para novas regiões |
-| **Escalada + Cauda preênsil** | Sobe em árvores; a cauda permite pendurar e balançar entre galhos para alcançar ninhos embaixo de um galho ou do outro lado de um vão |
-| **Focinho** | Sonda fendas estreitas que a garra não abre; essencial para o quintal urbano |
-| **Camuflagem** | Insetos reagem menos à presença (ficam mais estáticos); rota alternativa à língua para ganhar eficiência |
-| **Faro** | Três usos que evoluem juntos (veja abaixo) |
-| **Natação** *(opcional / futuro)* | Nadar; chave natural para uma eventual 4ª região, como brejo ou beira de rio |
+| **Língua** | Lambida (pega várias de uma vez) · Língua Comprida · Saliva Grudenta · Língua Turbo |
+| **Garras** | Cavar · Garras Fortes · Tremor · Terremoto |
+| **Patas** | Corrida · Patas Ligeiras · Galope Silencioso |
+| **Faro** | Faro Apurado · Faro de Ninho · Faro Lendário |
+| **Escalada + Cauda** | Escalada · Cauda Preênsil (só ao chegar à floresta) |
 
-### Faro em detalhe
+1 ponto a cada 100 formigas; dá para redistribuir os pontos de graça na árvore.
 
-Aumenta em precisão e alcance conforme evolui:
+### Qualidade gráfica
 
-- Revela ninhos escondidos, incluindo entradas de novas regiões
-- Revela a "qualidade" de um ninho antes de você ir até lá (vale a pena ou não)
-- Detecta insetos esquecidos, em 3 níveis:
-  - **Nível 1:** avisa que sobrou algo perto (raio curto, sem direção)
-  - **Nível 2:** aponta a área dentro do ninho
-  - **Nível 3:** marca o inseto exato, funciona à distância e avisa até em ninhos que pareciam "prontos"
+| Preset | O que muda |
+|---|---|
+| Baixa | menos capim, sombras curtas, sem SSAO, resolução 3D a 80% |
+| Média | SSAO, sombras médias, MSAA 2x (padrão com vídeo integrado) |
+| Alta | capim denso, sombras longas (padrão com placa de vídeo dedicada) |
+| Ultra | ainda mais capim, neblina volumétrica, SSIL, MSAA 4x |
 
-## Rainha
+A densidade do capim muda ao recomeçar a fase.
 
-- Aparece no ponto mais cheio do ninho, coberta por outros insetos; só dá para comer depois de limpar tudo ao redor
-- Vale **15–20x** um inseto comum
-- Efeito visual/sonoro próprio ao comer, para marcar o momento
-- Faro nível 3 (o mesmo que acha insetos esquecidos) ajuda a localizar a rainha
+---
 
-## Descartado por enquanto
+## Modelos 3D gerados por IA
 
-- **Ninhos retomados/dominados** por vizinhos: ia contra o escopo curto e finito definido
-- **Insetos mais fortes/resistentes:** a rainha já cobre a necessidade de desafio extra, sem precisar de sistema de dano
+Tudo na demo funciona com modelos **feitos por código** (formas suaves,
+pelagem, folhas recortadas). Para trocar por modelos gerados por IA no mesmo
+estilo:
+
+- **[`docs/prompts-ia.md`](docs/prompts-ia.md)**: guia de estilo, paleta e o
+  prompt de cada modelo.
+- **[`assets/models/LEIA-ME.md`](assets/models/LEIA-ME.md)**: nomes de arquivo
+  e ajustes. Basta colocar o `.glb` em `assets/models/` que o jogo troca sozinho.
+
+O **formigueiro** já foi gerado na Artlist (Hyper3D Rodin, com a geração 3D
+gratuita da conta) e está no seu histórico de lá. O download do `.glb` exige um
+plano com créditos de IA; depois de baixar, salve como
+`assets/models/formigueiro.glb`.
+
+---
+
+## Para quem mexe no código
+
+```
+project.godot            configuração (Forward+, autoloads, uniforms globais)
+scenes/main.tscn         cena principal
+scripts/
+  main.gd                estados do jogo (menu, jogando, pausa, árvore, fim)
+  model_library.gd       troca automática pelos modelos de IA (.glb)
+  autoload/              Settings, GameState (habilidades/progresso), Sfx, DevTools
+  world/                 terreno, trilhas, formigueiros, vegetação, capim, céu e sol
+  ants/                  malhas das formigas, simulação do enxame, colônia e ondas
+  player/                tamanduá em 1ª pessoa, focinho, patas e língua
+  procedural/            construtor de malhas suaves (elipsoides, tubos, icosferas)
+  ui/                    HUD, árvore de habilidades, menus e tema
+shaders/                 capim, terreno, céu, folhagem, pelagem, língua, formigas...
+assets/                  fontes, texturas e sons gerados, modelos de IA
+tools/                   scripts Python que geram os sons e as texturas
+docs/                    documento do jogo, plano de produção, prompts de IA e capturas
+prototipos/m1-loop/      protótipo 2D do loop (M1): outro projeto Godot, abra à parte
+```
+
+Sons e texturas são gerados por código (só precisam de Python 3 + numpy):
+
+```bash
+python3 tools/gen_audio.py
+```
+
+```bash
+python3 tools/gen_textures.py
+```
+
+Opções de teste (depois de `--` na linha de comando do Godot):
+
+```bash
+godot --path . -- --start=play --autoplay --timescale=4 --stats
+```
+
+`--start=play|tree` pula o menu · `--autoplay` um bot joga sozinho ·
+`--give=N` começa com N formigas · `--buy=lingua_1,garras_1` compra habilidades ·
+`--captures=SEG:arquivo.png` tira capturas · `--quit` fecha depois.
+
+## Créditos
+
+- Fonte **Fredoka**: The Fredoka Project Authors, licença SIL Open Font License
+  1.1 (`assets/fonts/OFL.txt`).
+- Todo o resto (modelos provisórios, texturas, sons e a música de violão) é
+  gerado por código neste repositório.

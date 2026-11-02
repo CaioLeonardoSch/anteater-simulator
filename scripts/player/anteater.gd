@@ -1,0 +1,636 @@
+extends CharacterBody3D
+## O tamanduá-bandeira em primeira pessoa: anda, corre, fareja, lambe formigas
+## com a língua comprida, cava formigueiros e bate no chão (com os upgrades).
+
+signal ate(count: int, tanajuras: int, queens: int)
+signal sniffed(count: int)
+signal dug(nest, chamber_index: int, released: int)
+signal tremor_used(count: int)
+signal queen_blocked
+
+const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
+const ModelLibrary := preload("res://scripts/model_library.gd")
+const TONGUE_SHADER := preload("res://shaders/tongue.gdshader")
+
+## O focinho é desenhado em escala reduzida bem perto da câmera: na tela fica
+## idêntico, mas não atravessa o chão quando você olha para baixo.
+const VIEW_SCALE := 0.25
+const EYE_HEIGHT := 0.5
+const GRAVITY := 20.0
+const PLAY_RADIUS := 61.0
+
+enum Tongue { IDLE, OUT, BACK }
+
+var world
+var swarm
+var colony
+var controls_enabled := false
+var bot := false
+
+var head: Node3D
+var camera: Camera3D
+var viewmodel: Node3D
+var snout_mi: MeshInstance3D
+var arm_pivots: Array[Node3D] = []
+var tongue_mi: MeshInstance3D
+var tongue_mat: ShaderMaterial
+
+var yaw := 0.0
+var pitch := -0.12
+var _sway := Vector2.ZERO
+
+var t_state := Tongue.IDLE
+var t_time := 0.0
+var t_dur_out := 0.1
+var t_dur_back := 0.14
+var t_target := Vector3.ZERO
+var t_tip := Vector3.ZERO
+var t_stuck := PackedInt32Array()
+var _stuck_offsets: Array[Vector3] = []
+var lick_cooldown := 0.0
+
+var sniff_cd := 0.0
+var sniff_left := 0.0
+var sniff_target := Vector3.INF
+var tremor_cd := 0.0
+var pull_time := 0.0
+var dig_progress := 0.0
+var near_nest = null
+## Câmara fechada ao alcance das garras (formigueiro + índice).
+var dig_nest = null
+var dig_chamber := -1
+const DIG_REACH := 1.4
+var arm_anim := 0.0
+var _dig_swipe := 0.0
+var _dig_sound := 0.0
+var _tremor_anim := 0.0
+var shake := 0.0
+var _bob := 0.0
+var _last_step_sign := 1.0
+var running := false
+
+# Bot (teste automático)
+var _bot_target := -1
+var _bot_think := 0.0
+var _bot_lick := false
+var _bot_run := false
+var _bot_input := Vector2.ZERO
+var _bot_sniff := 0.0
+var _bot_dig := false
+var _bot_check := 1.2
+var _bot_last_pos := Vector2.ZERO
+var _bot_side := 1.0
+var _bot_side_t := 0.0
+
+
+func _ready() -> void:
+	floor_snap_length = 0.45
+	floor_max_angle = deg_to_rad(55.0)
+	var col := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.36
+	cap.height = 1.0
+	col.shape = cap
+	col.position.y = 0.5
+	add_child(col)
+	head = Node3D.new()
+	head.name = "Head"
+	head.position.y = EYE_HEIGHT
+	add_child(head)
+	camera = Camera3D.new()
+	camera.name = "Camera"
+	camera.fov = Settings.fov
+	camera.near = 0.02
+	camera.far = 600.0
+	head.add_child(camera)
+	viewmodel = Node3D.new()
+	viewmodel.name = "Viewmodel"
+	viewmodel.scale = Vector3.ONE * VIEW_SCALE
+	camera.add_child(viewmodel)
+	var ai_snout := _ai_snout()
+	if ai_snout:
+		viewmodel.add_child(ai_snout)
+	else:
+		snout_mi = MeshInstance3D.new()
+		snout_mi.name = "Snout"
+		snout_mi.mesh = SnoutBuilder.build_snout()
+		snout_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		viewmodel.add_child(snout_mi)
+	for side in [-1.0, 1.0]:
+		var pivot := Node3D.new()
+		pivot.position = Vector3(side * 0.2, -0.62, 0.05)
+		viewmodel.add_child(pivot)
+		var arm := MeshInstance3D.new()
+		arm.mesh = SnoutBuilder.build_arm(side)
+		arm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		pivot.add_child(arm)
+		pivot.visible = false
+		arm_pivots.append(pivot)
+	tongue_mat = ShaderMaterial.new()
+	tongue_mat.shader = TONGUE_SHADER
+	tongue_mi = MeshInstance3D.new()
+	tongue_mi.name = "Tongue"
+	tongue_mi.mesh = SnoutBuilder.build_tongue_mesh()
+	tongue_mi.material_override = tongue_mat
+	tongue_mi.top_level = true
+	tongue_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	tongue_mi.custom_aabb = AABB(Vector3(-200, -50, -200), Vector3(400, 100, 400))
+	tongue_mi.visible = false
+	add_child(tongue_mi)
+	Settings.changed.connect(func(): camera.fov = Settings.fov)
+
+
+## Focinho gerado por IA (assets/models/tamandua_focinho.glb), se existir:
+## o modelo deve apontar para -Z, com a boca na ponta da frente.
+func _ai_snout() -> Node3D:
+	var node := ModelLibrary.instantiate("tamandua_focinho", Vector3(0, 0, 0.62))
+	if node == null:
+		return null
+	var box := ModelLibrary.compute_aabb(node)
+	node.position += Vector3(0, SnoutBuilder.MOUTH.y - box.get_center().y, SnoutBuilder.MOUTH.z - box.position.z)
+	_no_shadows(node)
+	return node
+
+
+func _no_shadows(n: Node) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for c in n.get_children():
+		_no_shadows(c)
+
+
+func setup(w, sw, col_) -> void:
+	world = w
+	swarm = sw
+	colony = col_
+
+
+func place_at(pos2: Vector2, yaw_value: float) -> void:
+	global_position = Vector3(pos2.x, world.terrain.get_height(pos2.x, pos2.y) + 0.05, pos2.y)
+	yaw = yaw_value
+	pitch = -0.12
+	velocity = Vector3.ZERO
+	rotation.y = yaw
+	head.rotation.x = pitch
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not controls_enabled:
+		return
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		var sens := Settings.mouse_sensitivity * 0.01
+		var rel: Vector2 = event.relative
+		yaw -= rel.x * sens
+		pitch -= rel.y * sens * (-1.0 if Settings.invert_y else 1.0)
+		pitch = clampf(pitch, deg_to_rad(-75.0), deg_to_rad(40.0))
+		_sway += rel * 0.00035
+
+
+# ------------------------------------------------------------- Movimento
+
+func _physics_process(delta: float) -> void:
+	if world == null:
+		return
+	var input := Vector2.ZERO
+	var want_run := false
+	if controls_enabled:
+		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+		want_run = Input.is_action_pressed("run") and GameState.can_run()
+		var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
+		yaw -= look.x * delta * 2.6
+		pitch = clampf(pitch - look.y * delta * 2.0, deg_to_rad(-75.0), deg_to_rad(40.0))
+	elif bot:
+		_bot_update(delta)
+		input = _bot_input
+		want_run = _bot_run and GameState.can_run()
+	var digging := _is_digging()
+	var target_speed := GameState.run_speed() if want_run else GameState.walk_speed()
+	if digging:
+		target_speed = 0.0
+	var wish := Basis(Vector3.UP, yaw) * Vector3(input.x, 0.0, input.y)
+	if wish.length() > 1.0:
+		wish = wish.normalized()
+	var hv := Vector3(velocity.x, 0.0, velocity.z)
+	var accel := 16.0 if wish.length() > 0.05 else 20.0
+	hv = hv.move_toward(wish * target_speed, accel * delta)
+	velocity.x = hv.x
+	velocity.z = hv.z
+	if is_on_floor():
+		velocity.y = -0.5
+	else:
+		velocity.y -= GRAVITY * delta
+	move_and_slide()
+	var flat := Vector2(global_position.x, global_position.z)
+	if flat.length() > PLAY_RADIUS:
+		flat = flat.normalized() * PLAY_RADIUS
+		global_position.x = flat.x
+		global_position.z = flat.y
+	if global_position.y < world.terrain.get_height(global_position.x, global_position.z) - 1.0:
+		global_position.y = world.terrain.get_height(global_position.x, global_position.z) + 0.2
+	rotation.y = yaw
+	head.rotation.x = pitch
+	var spd := hv.length()
+	running = want_run and spd > GameState.walk_speed() * 1.1
+	swarm.threat_pos = global_position
+	swarm.flee_radius = (1.0 + clampf(spd / maxf(GameState.walk_speed(), 0.1), 0.0, 2.0) * 0.9) \
+		* GameState.flee_multiplier(running)
+	_update_tongue(delta)
+	_update_abilities(delta)
+
+
+func _process(delta: float) -> void:
+	if world == null:
+		return
+	var spd := Vector2(velocity.x, velocity.z).length()
+	if is_on_floor() and spd > 0.2:
+		_bob += delta * (4.0 + spd * 1.6)
+	var amp := clampf(spd / 6.0, 0.0, 1.2) * 0.02
+	head.position = Vector3(sin(_bob * 0.5) * amp * 0.7, EYE_HEIGHT + absf(sin(_bob)) * amp, 0.0)
+	camera.rotation.z = sin(_bob * 0.5) * amp * 0.25
+	var s := signf(sin(_bob))
+	if s != _last_step_sign and spd > 0.4:
+		Sfx.play("step", -14.0 + minf(spd, 6.0), 1.0, 0.15, 4)
+	_last_step_sign = s
+	if shake > 0.0:
+		shake = maxf(shake - delta * 1.4, 0.0)
+		camera.h_offset = randf_range(-1, 1) * shake * 0.03
+		camera.v_offset = randf_range(-1, 1) * shake * 0.03
+	else:
+		camera.h_offset = 0.0
+		camera.v_offset = 0.0
+	var fov_target := Settings.fov + (7.0 if running else 0.0)
+	camera.fov = lerpf(camera.fov, fov_target, minf(delta * 6.0, 1.0))
+	# Balanço do focinho.
+	_sway = _sway.lerp(Vector2.ZERO, minf(delta * 8.0, 1.0))
+	var lick_kick := 0.0
+	if t_state == Tongue.OUT:
+		lick_kick = 0.012
+	viewmodel.position = Vector3(-_sway.x * 0.02 + sin(_bob * 0.5) * amp * 0.08,
+		_sway.y * 0.02 - absf(sin(_bob)) * amp * 0.06, -lick_kick)
+	viewmodel.rotation = Vector3(_sway.y * 0.25, -_sway.x * 0.25, 0.0)
+	_update_arms(delta)
+	_update_tongue_visual()
+	world.follow_camera(camera.global_position)
+	swarm.cam_pos = camera.global_position
+	RenderingServer.global_shader_parameter_set("player_pos", global_position)
+
+
+func _is_digging() -> bool:
+	if dig_nest == null or dig_chamber < 0 or not GameState.can_dig():
+		return false
+	if controls_enabled:
+		return Input.is_action_pressed("dig")
+	return bot and _bot_dig
+
+
+# ------------------------------------------------------------- Língua
+
+func mouth_real() -> Vector3:
+	return camera.global_transform * SnoutBuilder.MOUTH
+
+
+func mouth_view() -> Vector3:
+	return viewmodel.global_transform * SnoutBuilder.MOUTH
+
+
+func _wants_lick() -> bool:
+	if controls_enabled:
+		return Input.is_action_pressed("lick")
+	return bot and _bot_lick
+
+
+func _update_tongue(delta: float) -> void:
+	lick_cooldown -= delta
+	if t_state == Tongue.IDLE and lick_cooldown <= 0.0 and _wants_lick() and not _is_digging():
+		_start_flick()
+	match t_state:
+		Tongue.OUT:
+			t_time += delta
+			var k := clampf(t_time / t_dur_out, 0.0, 1.0)
+			t_tip = mouth_view().lerp(t_target, 1.0 - pow(1.0 - k, 3.0))
+			if k >= 1.0:
+				_capture()
+				t_state = Tongue.BACK
+				t_time = 0.0
+		Tongue.BACK:
+			t_time += delta
+			var k := clampf(t_time / t_dur_back, 0.0, 1.0)
+			t_tip = t_target.lerp(mouth_view(), k * k)
+			_carry_stuck()
+			if k >= 1.0:
+				_swallow()
+				t_state = Tongue.IDLE
+
+
+func _start_flick() -> void:
+	var period := 1.0 / GameState.lick_rate()
+	lick_cooldown = period
+	t_dur_out = period * 0.36
+	t_dur_back = period * 0.5
+	var cam_t := camera.global_transform
+	var origin := cam_t.origin
+	var fwd := -cam_t.basis.z
+	var mouth := mouth_real()
+	var reach := GameState.tongue_range()
+	var space := get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(origin, origin + fwd * (reach + 1.0))
+	q.exclude = [get_rid()]
+	var hit := space.intersect_ray(q)
+	var target := origin + fwd * (reach + 0.5)
+	if not hit.is_empty():
+		target = hit.position
+	var off := target - mouth
+	if off.length() > reach:
+		target = mouth + off.normalized() * reach
+	# Ajuda de mira: puxa a ponta para a formiga mais perto da mira.
+	var best: int = swarm.best_target(origin, fwd, reach + 0.7, cos(deg_to_rad(10.0)))
+	if best >= 0:
+		var ap: Vector3 = swarm.pos[best] + Vector3(0, 0.02, 0)
+		if ap.distance_to(mouth) <= reach + 0.2:
+			target = ap
+	t_target = target
+	t_state = Tongue.OUT
+	t_time = 0.0
+	Sfx.play("tongue", -7.0, 1.0, 0.12)
+
+
+func _capture() -> void:
+	var res: Dictionary = swarm.lick(t_target, GameState.capture_radius(), mouth_real(), GameState.lick_grabs_all())
+	t_stuck = res.captured
+	_stuck_offsets.clear()
+	for i in t_stuck.size():
+		_stuck_offsets.append(Vector3(randf_range(-1, 1), randf_range(-0.3, 1), randf_range(-1, 1)) * 0.04)
+	if res.queen_protected and t_stuck.is_empty():
+		queen_blocked.emit()
+		Sfx.play("deny", -8.0)
+	if t_stuck.size() > 0:
+		Sfx.play("slurp", -4.0, 1.0, 0.1)
+
+
+func _carry_stuck() -> void:
+	var cam := camera.global_position
+	var shrink := clampf(t_tip.distance_to(cam) / 0.9, 0.12, 1.0)
+	for k in t_stuck.size():
+		var i := t_stuck[k]
+		swarm.pos[i] = t_tip + _stuck_offsets[k] * shrink - Vector3(0, 0.02, 0) * shrink
+		swarm.shrink[i] = shrink
+
+
+func _swallow() -> void:
+	var n := t_stuck.size()
+	if n == 0:
+		return
+	var taj := 0
+	var queens := 0
+	var value := 0
+	for i in t_stuck:
+		if swarm.kind[i] == swarm.TANAJURA:
+			taj += 1
+		elif swarm.kind[i] == swarm.QUEEN:
+			queens += 1
+		value += colony.ant_eaten(i)
+		swarm.despawn(i)
+	t_stuck = PackedInt32Array()
+	GameState.add_eaten(value, taj, queens)
+	ate.emit(value, taj, queens)
+	Sfx.play("munch", -3.0 + minf(n, 8) * 0.5, 1.0, 0.1, 3)
+	if taj > 0:
+		Sfx.play("frenzy", -2.0)
+	if queens > 0:
+		Sfx.play("queen", 0.0)
+
+
+func _update_tongue_visual() -> void:
+	if t_state == Tongue.IDLE:
+		tongue_mi.visible = false
+		return
+	tongue_mi.visible = true
+	tongue_mi.global_transform = Transform3D.IDENTITY
+	var p0 := mouth_view()
+	var p3 := t_tip
+	var length := p0.distance_to(p3)
+	var sdir := (camera.global_transform.basis * SnoutBuilder.SNOUT_DIR).normalized()
+	var p1 := p0 + sdir * length * 0.3
+	var p2 := p3.lerp(p0, 0.3) + Vector3(0, 0.05 * length, 0)
+	tongue_mat.set_shader_parameter("p0", p0)
+	tongue_mat.set_shader_parameter("p1", p1)
+	tongue_mat.set_shader_parameter("p2", p2)
+	tongue_mat.set_shader_parameter("p3", p3)
+	tongue_mat.set_shader_parameter("r0", 0.0032)
+	tongue_mat.set_shader_parameter("r1", 0.0095)
+	tongue_mat.set_shader_parameter("wobble", 1.0 if t_state == Tongue.BACK else 0.3)
+
+
+# ------------------------------------------------------------- Habilidades
+
+func _update_abilities(delta: float) -> void:
+	sniff_cd = maxf(sniff_cd - delta, 0.0)
+	tremor_cd = maxf(tremor_cd - delta, 0.0)
+	if sniff_left > 0.0:
+		sniff_left -= delta
+		if sniff_left <= 0.0:
+			swarm.set_scent_overlay(false)
+			sniff_target = Vector3.INF
+	RenderingServer.global_shader_parameter_set("sniff_amount", clampf(sniff_left / 0.8, 0.0, 1.0))
+	var want_sniff := controls_enabled and Input.is_action_just_pressed("sniff")
+	if bot:
+		_bot_sniff -= delta
+		if _bot_sniff <= 0.0:
+			_bot_sniff = 14.0
+			want_sniff = true
+	if want_sniff and sniff_cd <= 0.0:
+		do_sniff()
+	# Formigueiro e câmara fechada mais perto.
+	near_nest = null
+	var p2 := Vector2(global_position.x, global_position.z)
+	for n in world.nests:
+		if p2.distance_to(n.center2) < n.radius + 2.0:
+			near_nest = n
+			break
+	var prev_nest = dig_nest
+	var prev_chamber := dig_chamber
+	dig_nest = null
+	dig_chamber = -1
+	if near_nest != null:
+		var ci: int = near_nest.closed_chamber_near(p2, DIG_REACH)
+		if ci >= 0:
+			dig_nest = near_nest
+			dig_chamber = ci
+	if prev_nest != null and (prev_nest != dig_nest or prev_chamber != dig_chamber):
+		prev_nest.reset_dig(prev_chamber)
+		dig_progress = 0.0
+	if _is_digging():
+		dig_progress += delta / GameState.dig_time()
+		_dig_swipe += delta * 11.0
+		_dig_sound -= delta
+		if _dig_sound <= 0.0:
+			_dig_sound = 0.18
+			Sfx.play("dig", -6.0, 1.0, 0.2)
+		dig_nest.set_dig_progress(dig_chamber, dig_progress)
+		if dig_progress >= 1.0:
+			dig_progress = 0.0
+			var opened_nest = dig_nest
+			var opened_chamber := dig_chamber
+			var released: int = colony.open_chamber(opened_nest, opened_chamber)
+			shake = 0.5
+			Sfx.play("burst", -2.0)
+			dug.emit(opened_nest, opened_chamber, released)
+	elif dig_progress > 0.0:
+		dig_progress = maxf(dig_progress - delta * 2.0, 0.0)
+		if dig_nest != null:
+			dig_nest.set_dig_progress(dig_chamber, dig_progress)
+			if dig_progress <= 0.0:
+				dig_nest.reset_dig(dig_chamber)
+	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
+	if bot and GameState.can_tremor() and tremor_cd <= 0.0 and _bot_target >= 0:
+		want_tremor = swarm.alive[_bot_target] == 1 and swarm.pos[_bot_target].distance_to(global_position) < 4.0
+	if want_tremor and GameState.can_tremor() and tremor_cd <= 0.0:
+		do_tremor()
+	if pull_time > 0.0:
+		pull_time -= delta
+		swarm.pull_target = mouth_real() + Basis(Vector3.UP, yaw) * Vector3(0, 0, -0.6)
+	else:
+		swarm.pull_target = Vector3.INF
+	_tremor_anim = maxf(_tremor_anim - delta * 2.5, 0.0)
+
+
+func do_sniff() -> void:
+	sniff_cd = GameState.sniff_cooldown()
+	sniff_left = GameState.sniff_duration()
+	var n: int = swarm.sniff(global_position, GameState.sniff_radius(), GameState.sniff_duration())
+	swarm.set_scent_overlay(true)
+	sniff_target = Vector3.INF
+	if GameState.faro_level() >= 1:
+		sniff_target = swarm.densest_point(global_position, maxf(GameState.sniff_radius(), 40.0))
+	Sfx.play("sniff", -3.0)
+	sniffed.emit(n)
+
+
+func do_tremor() -> void:
+	tremor_cd = 7.0
+	var n: int = swarm.stun_radius(global_position, GameState.tremor_radius(), 3.0)
+	if GameState.tremor_pulls():
+		pull_time = 2.4
+	shake = 0.9
+	_tremor_anim = 1.0
+	Sfx.play("tremor", 0.0)
+	tremor_used.emit(n)
+
+
+func _update_arms(delta: float) -> void:
+	var target := 1.0 if (_is_digging() or _tremor_anim > 0.0) else 0.0
+	arm_anim = move_toward(arm_anim, target, delta * 6.0)
+	for k in arm_pivots.size():
+		var pivot := arm_pivots[k]
+		pivot.visible = arm_anim > 0.01
+		var side := -1.0 if k == 0 else 1.0
+		var swipe := sin(_dig_swipe + k * PI) * 0.35 if _is_digging() else -_tremor_anim * 0.5
+		pivot.rotation = Vector3(lerpf(-1.4, 0.15, arm_anim) + swipe * arm_anim, side * 0.15, side * 0.1)
+
+
+# ------------------------------------------------------------- Bot de teste
+
+func _bot_update(delta: float) -> void:
+	_bot_think -= delta
+	if _bot_think <= 0.0 or _bot_target < 0 or swarm.alive[_bot_target] == 0 \
+			or swarm.mode[_bot_target] == swarm.Mode.STUCK:
+		_bot_think = 0.6
+		_bot_target = -1
+		var best := INF
+		for i in swarm.CAPACITY:
+			if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i):
+				continue
+			var d: float = swarm.pos[i].distance_squared_to(global_position)
+			if d < best:
+				best = d
+				_bot_target = i
+	_bot_lick = false
+	_bot_input = Vector2.ZERO
+	_bot_run = false
+	_bot_dig = dig_nest != null and GameState.can_dig()
+	if _bot_dig:
+		return
+	var goal := Vector3.INF
+	var to_chamber := false
+	if _bot_target >= 0:
+		goal = swarm.pos[_bot_target]
+	if GameState.can_dig():
+		var ch := _bot_nearest_closed_chamber()
+		if ch != Vector3.INF and (goal == Vector3.INF or ch.distance_to(global_position) + 10.0 < goal.distance_to(global_position)):
+			goal = ch
+			to_chamber = true
+	if goal == Vector3.INF:
+		return
+	# Anda até um ponto alcançável (contornando montes), mas mira na formiga.
+	var move_goal := _bot_detour(goal)
+	var cam_pos := camera.global_position
+	var to_goal := goal - cam_pos
+	var dist := Vector2(to_goal.x, to_goal.z).length()
+	var reach := GameState.tongue_range()
+	var moving := to_chamber or dist > reach * 0.75
+	var aim := move_goal if moving else goal
+	var to := aim - cam_pos
+	var flat_d := maxf(Vector2(to.x, to.z).length(), 0.01)
+	var want_yaw := atan2(-to.x, -to.z)
+	yaw = lerp_angle(yaw, want_yaw, minf(delta * 6.0, 1.0))
+	var want_pitch := atan2(to.y, flat_d) if not moving else -0.15
+	pitch = lerpf(pitch, clampf(want_pitch, deg_to_rad(-70.0), deg_to_rad(30.0)), minf(delta * 6.0, 1.0))
+	if moving:
+		if Vector2(move_goal.x - global_position.x, move_goal.z - global_position.z).length() > 0.25:
+			_bot_input = Vector2(0, -1)
+			_bot_run = dist > 9.0
+			_bot_unstuck(delta)
+	else:
+		_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
+
+
+## Se ficar preso numa árvore ou pedra, dá um passo de lado por um tempo.
+func _bot_unstuck(delta: float) -> void:
+	_bot_check -= delta
+	if _bot_side_t > 0.0:
+		_bot_side_t -= delta
+		_bot_input = Vector2(_bot_side, -0.6).normalized()
+		return
+	if _bot_check <= 0.0:
+		_bot_check = 1.2
+		var moved := Vector2(global_position.x, global_position.z).distance_to(_bot_last_pos)
+		_bot_last_pos = Vector2(global_position.x, global_position.z)
+		if moved < 0.5:
+			_bot_side = -1.0 if randf() < 0.5 else 1.0
+			_bot_side_t = 1.4
+
+
+## Contorna o monte do formigueiro em vez de empurrar a parede de frente.
+func _bot_detour(goal: Vector3) -> Vector3:
+	var me := Vector2(global_position.x, global_position.z)
+	var g := Vector2(goal.x, goal.z)
+	for n in world.nests:
+		var c: Vector2 = n.center2
+		var ring: float = n.radius * 0.5 + 0.75
+		var to_me := me - c
+		var to_goal := g - c
+		if to_me.length() > ring + 2.5 or to_goal.length() > ring + 0.5:
+			continue
+		var ang := to_me.angle_to(to_goal)
+		if absf(ang) < 0.7:
+			# Já está do lado certo: vai até a borda, na direção do alvo.
+			var edge := c + to_goal.normalized() * ring
+			return Vector3(edge.x, goal.y, edge.y)
+		var step := c + to_me.normalized().rotated(signf(ang) * 0.6) * ring
+		return Vector3(step.x, goal.y, step.y)
+	return goal
+
+
+func _bot_nearest_closed_chamber() -> Vector3:
+	var best := Vector3.INF
+	var best_d := INF
+	for n in world.nests:
+		for c in n.chambers:
+			if c.opened:
+				continue
+			var p: Vector3 = n.chamber_world_pos(c)
+			var d := p.distance_to(global_position)
+			if d < best_d:
+				best_d = d
+				best = p
+	return best

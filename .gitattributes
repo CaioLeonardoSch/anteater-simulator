@@ -1,0 +1,37 @@
+# Normaliza final de linha: o repositorio guarda LF, o checkout respeita a plataforma.
+# Sem isso, salvar em CRLF no Windows reescreve o arquivo inteiro em todo diff.
+* text=auto
+
+# Texto, sempre LF no repositorio
+*.md        text eol=lf
+*.gd        text eol=lf
+*.gdshader  text eol=lf
+*.gdshaderinc text eol=lf
+*.tscn      text eol=lf
+*.tres      text eol=lf
+*.godot     text eol=lf
+*.import    text eol=lf
+*.uid       text eol=lf
+*.cfg       text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.py        text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+
+# Binarios: nunca normalizar nem tentar fazer diff
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.svg  text eol=lf
+*.ogg  binary
+*.wav  binary
+*.mp3  binary
+*.ttf  binary
+*.otf  binary
+*.blend  binary
+*.blend1 binary
+*.glb  binary
+*.fbx  binary

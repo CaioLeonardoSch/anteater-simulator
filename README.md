@@ -70,7 +70,7 @@ tela, a resolução e a qualidade gráfica.
   segure `E` perto de uma para abri-la: as moradoras **saem correndo**, fogem
   quando você chega perto e depois voltam para casa. Até 40 ficam à vista; as
   outras saem do túnel conforme você come. Depois de cavar, as garras descansam
-  (30 s no começo).
+  (25 s no começo).
 - **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
 - **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
   outras formigas. Coma todas em volta e ela vale **20**.
@@ -97,13 +97,13 @@ tela, a resolução e a qualidade gráfica.
 | Habilidade | Níveis (preço em pontos) |
 |---|---|
 | **Língua** | Lambida Contínua (25: segurar para lamber), e depois duas linhas: **Bocado** · Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40); **Destreza** · Língua Comprida (70) · Saliva Grudenta (100) · Língua Turbo (150) |
-| **Garras** | Cavar (35: depois as garras descansam 30 s), e depois: **Força** · Garras Fortes (70) · Tremor (110) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 18 s) · Garras Incansáveis (95: 8 s) · Recarga do Tremor (130) |
+| **Garras** | Cavar (35: depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s) |
 | **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (80: mais 25%) · Galope Silencioso (130); **Agilidade** · Lamber Correndo (60) |
 | **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
 1 formiga comida = 1 ponto (a rainha vale 20). As duas linhas de um ramo não se
-excluem. Tudo o que dá para aprender no Cerrado soma 2335 pontos, e dá para
+excluem. Tudo o que dá para aprender no Cerrado soma 2485 pontos, e dá para
 redistribuir os pontos de graça na árvore.
 
 ### Tela e gráficos

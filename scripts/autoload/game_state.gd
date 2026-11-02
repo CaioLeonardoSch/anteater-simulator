@@ -63,25 +63,28 @@ const UPGRADES := [
 	# Garras: Cavar abre as linhas de Força e de Rapidez (o descanso entre usos).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
-		"desc": "Segure [E] perto de uma câmara fechada para abri-la. Depois, as garras descansam 30 s."},
+		"desc": "Segure [E] perto de uma câmara fechada para abri-la. Depois, as garras descansam 25 s."},
 	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 70, "requires": ["garras_cavar"],
 		"name": "Garras Fortes",
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
 	{"id": "garras_tremor", "branch": 1, "col": 0, "row": 2, "cost": 110, "requires": ["garras_fortes"],
 		"name": "Tremor",
-		"desc": "[Espaço] Pule e caia com força: as formigas num raio de 6 m ficam tontas por 3 s. Recarrega em 20 s."},
+		"desc": "[Espaço] Pule e caia com força: as formigas num raio de 6 m ficam tontas por 3 s. Recarrega em 21 s."},
 	{"id": "garras_terremoto", "branch": 1, "col": 0, "row": 3, "cost": 170, "requires": ["garras_tremor"],
 		"name": "Terremoto",
 		"desc": "Pulo mais alto e tremor quase 2x maior; as formigas tontas são puxadas para a sua boca."},
 	{"id": "garras_ageis", "branch": 1, "col": 1, "row": 1, "cost": 50, "requires": ["garras_cavar"],
 		"name": "Garras Ágeis",
-		"desc": "As garras descansam menos depois de cavar: 30 s vira 18 s."},
+		"desc": "As garras descansam menos depois de cavar: 25 s vira 15 s."},
 	{"id": "garras_incansaveis", "branch": 1, "col": 1, "row": 2, "cost": 95, "requires": ["garras_ageis"],
 		"name": "Garras Incansáveis",
-		"desc": "Descanso de só 8 s, e a câmara abre na metade do tempo."},
+		"desc": "Descanso de só 5 s, e a câmara abre na metade do tempo."},
 	{"id": "garras_recarga", "branch": 1, "col": 1, "row": 3, "cost": 130, "requires": ["garras_incansaveis"],
 		"name": "Recarga do Tremor",
-		"desc": "O Tremor (e o Terremoto) recarrega em 11 s em vez de 20 s."},
+		"desc": "O Tremor (e o Terremoto) recarrega em 14 s em vez de 21 s."},
+	{"id": "garras_recarga_2", "branch": 1, "col": 1, "row": 4, "cost": 150, "requires": ["garras_recarga"],
+		"name": "Recarga Relâmpago",
+		"desc": "O Tremor (e o Terremoto) recarrega em só 7 s."},
 	# Patas
 	{"id": "patas_corrida", "branch": 2, "col": -1, "row": 0, "cost": 30, "requires": [],
 		"name": "Corrida",
@@ -389,10 +392,10 @@ func dig_time() -> float:
 ## Descanso das garras depois de abrir uma câmara.
 func dig_cooldown() -> float:
 	if has("garras_incansaveis"):
-		return 8.0
+		return 5.0
 	if has("garras_ageis"):
-		return 18.0
-	return 30.0
+		return 15.0
+	return 25.0
 
 
 ## Quanto tempo as moradoras ficam tontas quando a câmara é aberta (0 = nada).
@@ -413,7 +416,11 @@ func tremor_pulls() -> bool:
 
 
 func tremor_cooldown() -> float:
-	return 11.0 if has("garras_recarga") else 20.0
+	if has("garras_recarga_2"):
+		return 7.0
+	if has("garras_recarga"):
+		return 14.0
+	return 21.0
 
 
 ## Força do pulo do Tremor (o Terremoto pula mais alto).

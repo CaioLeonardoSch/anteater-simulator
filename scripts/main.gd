@@ -25,7 +25,7 @@ const BOT_ORDER := ["lingua_segurar", "faro_farejar", "garras_cavar", "lingua_bo
 	"garras_ageis", "faro_preciso", "lingua_bocado_2", "lingua_comprida", "garras_fortes", "faro_atento",
 	"patas_lamber", "lingua_bocado_3", "lingua_saliva", "garras_incansaveis", "garras_tremor", "faro_nitido",
 	"faro_apurado", "faro_camara", "lingua_turbo", "lingua_bocado_4", "patas_ligeiras", "garras_terremoto",
-	"faro_agucado", "garras_recarga", "patas_galope", "faro_lendario"]
+	"faro_agucado", "garras_recarga", "patas_galope", "faro_lendario", "garras_recarga_2"]
 
 var state := State.LOADING
 var world: World

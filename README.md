@@ -1,10 +1,11 @@
 # Anteater Simulator
 
-Um jogo **relaxante de "arrumar e limpar"**, na linha de *Leaf it Alone*: você é
-um **tamanduá-bandeira** que come formigas e cupins no **cerrado**, evolui
-habilidades e deixa a região **100% limpa**. Não dá para perder, e o jogo tem
-fim. Para **PC (Steam)**, em **3D estilizado** com cara de filme de animação,
-visto pelos olhos do tamanduá. Feito em **Godot 4.7**.
+Um jogo **relaxante de "arrumar e limpar"**, inspirado em *Leaf it Alone* e
+*Librarian: Tidy Up the Arcane Library*: você é um **tamanduá-bandeira** que
+come formigas e cupins no **cerrado**, evolui habilidades e deixa a região
+**100% limpa**. Não dá para perder, e o jogo tem fim. Para **PC (Steam)**, em
+**3D estilizado** com cara de filme de animação, visto pelos olhos do tamanduá.
+Feito em **Godot 4.7**.
 
 **Tudo o que foi decidido sobre o jogo está em
 [`docs/DESIGN.md`](docs/DESIGN.md)**: o documento de design, o plano de

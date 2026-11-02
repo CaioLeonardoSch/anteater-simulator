@@ -14,14 +14,25 @@ Quando algo aqui contradiz uma fonte antiga, **vale este documento**.
 
 ## 1. O jogo em poucas palavras
 
-Um jogo **relaxante de "arrumar e limpar"**, na linha de *Leaf it Alone*,
-*Librarian: Tidy Up the Arcane Library* e *Supermarket Chaos*. Você é um
-**tamanduá-bandeira** que come **formigas e cupins** no **cerrado**, evolui
-habilidades e deixa a região **100% limpa**. Aí o jogo acaba: não existe loop
-infinito e não dá para perder.
+Um jogo **relaxante de "arrumar e limpar"**. Você é um **tamanduá-bandeira**
+que come **formigas e cupins** no **cerrado**, evolui habilidades e deixa a
+região **100% limpa**. Aí o jogo acaba: não existe loop infinito e não dá para
+perder.
 
-**Para PC (Steam)**, em **3D estilizado** com cara de filme de animação, visto
-**pelos olhos do tamanduá**.
+**Para PC (Steam)**, por **até R$ 20**, em **3D estilizado** com cara de filme
+de animação, visto **pelos olhos do tamanduá**.
+
+### Inspirações
+
+As principais são ***Leaf it Alone*** e ***Librarian: Tidy Up the Arcane
+Library***. O documento original também cita *Supermarket Chaos*. O que
+buscamos, no espírito delas:
+
+- uma tarefa simples que dá prazer de repetir;
+- progresso sempre visível: dá para ver quanto falta limpar;
+- sem pressa e sem punição;
+- um fim claro, quando tudo está limpo;
+- melhorias que deixam a tarefa mais gostosa, não só mais rápida.
 
 ---
 
@@ -38,10 +49,11 @@ infinito e não dá para perder.
 
 ## 3. O jogo, como está decidido
 
-### Plataforma, visual e câmera
+### Plataforma, preço, visual e câmera
 
 - **PC primeiro, na Steam.** Mouse e teclado, e também controle. Celular pode
   vir depois.
+- **Preço:** no máximo **R$ 20**.
 - **3D estilizado**, com cara de filme de animação. Nada de pixel art, nada de
   low poly.
 - **1ª pessoa:** você vê o mundo pelos olhos do tamanduá, com o focinho na parte
@@ -57,10 +69,14 @@ infinito e não dá para perder.
 - **Só o Cerrado por enquanto.** O cerrado é a savana brasileira (a "Savana" do
   documento original).
 - O Cerrado é uma **região completa de 45 a 60 minutos**, com **8 ninhos**.
-- A quantidade de insetos será **ajustada em testes** para chegar nesse tempo
-  (a demo de hoje tem 1000 formigas e dura de 6 a 10 minutos).
-- Floresta e Quintal urbano ficam para **depois de testar o Cerrado com
-  jogadores**.
+- **Os ninhos do Cerrado são só formigueiros.** Os cupinzeiros aparecem apenas
+  como cenário.
+- **1000 formigas por enquanto.** Na demo de hoje, elas acabam em 6 a 10
+  minutos. Para chegar aos 45 a 60 minutos, o tempo a mais deve vir de cavar e
+  esvaziar os ninhos, achar as últimas formigas com o Faro e explorar, e não de
+  colocar mais formigas. Se não bastar, o número muda nos testes.
+- **Depois do Cerrado:** **outra floresta, com lagoas, cupinzeiros e mais**.
+  O Quintal urbano fica para mais tarde.
 
 ### Como se come: os dois jeitos juntos
 
@@ -112,8 +128,9 @@ novos (lambida, cavar, escalar) também são comprados assim.
 4. **Habilidades:** os 3 ramos de hoje (Língua, Garras, Corpo) viram as 5 do
    plano. A "Pelagem Silenciosa" sai, porque é a Camuflagem com outro nome.
 5. **Duração:** a fase de 10 minutos vira uma região de 45 a 60 minutos com 8
-   ninhos. A quantidade de formigas e o ritmo de 1 ponto a cada 100 serão
-   ajustados nos testes.
+   formigueiros (hoje são 5), ainda com **1000 formigas** e 1 ponto a cada 100.
+   O tempo a mais vem dos ninhos com câmaras, da busca pelas últimas formigas e
+   da exploração.
 6. **Salvar o progresso:** com 45 a 60 minutos, o jogo precisa salvar. A demo
    ainda não salva.
 
@@ -123,12 +140,13 @@ Plataforma (PC), visual, câmera e tanajura já estão como foi decidido.
 
 ## 5. Ainda em aberto
 
-- **Ninhos do Cerrado:** o documento original fala em cupinzeiros-torre; a demo
-  usa formigueiros (e os cupinzeiros são só cenário). Podem ser os dois?
-- **Quantos insetos** no Cerrado: será definido nos testes, para durar 45 a 60
-  minutos.
-- **Preço:** o plano sugere pesquisar quanto cobram os jogos parecidos.
-- **Depois do Cerrado:** Floresta e Quintal urbano, e em que ordem.
+- **Escalada + Cauda no Cerrado:** se os ninhos do Cerrado são só formigueiros
+  no chão, onde o tamanduá vai escalar? Algumas ideias: formigueiros em árvores
+  ou em cima de cupinzeiros, ou deixar a Escalada para a floresta.
+- **A floresta com lagoas:** as lagoas trazem de volta a Natação (que estava
+  fora)? Os cupinzeiros de lá são ninhos, com rainha? Os formigueiros de folha
+  e os ninhos em árvores do documento original continuam?
+- **Quintal urbano:** quando entra, e se o Focinho volta com ele.
 
 ---
 
@@ -286,3 +304,8 @@ rainha e salvar o progresso (seção 4).
 | 02/11/2026 | Desafio extra | Documento: só a rainha. Demo: soldados e tanajura | Rainha nos ninhos grandes + tanajura; sem soldados |
 | 02/11/2026 | Habilidades | Documento: 8. Plano: 5. Demo: 3 ramos | As 5 do plano |
 | 02/11/2026 | Como evoluir | Protótipo: marcos automáticos. Demo: pontos | Pontos para escolher |
+| 02/11/2026 | Ninhos do Cerrado | Documento: cupinzeiros-torre. Demo: formigueiros | Só formigueiros (cupinzeiros só como cenário) |
+| 02/11/2026 | Quantidade de insetos | Documento: ~800 a 1.200 no jogo todo. Demo: 1000 numa fase | 1000 por enquanto |
+| 02/11/2026 | Preço | Plano: pesquisar quanto cobram os similares | Até R$ 20 |
+| 02/11/2026 | Depois do Cerrado | Documento: Floresta (formigueiros de folha, ninhos em árvores) e Quintal | Outra floresta, com lagoas e cupinzeiros |
+| 02/11/2026 | Inspirações | Documento: Leaf it Alone, Librarian e Supermarket Chaos | Principais: Leaf it Alone e Librarian |

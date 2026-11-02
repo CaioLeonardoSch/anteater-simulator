@@ -32,6 +32,10 @@ no meio do campo), que você abre cavando.
 Os 5 formigueiros grandes guardam uma **rainha**. **Cada formiga comida vale 1
 ponto**, cada habilidade tem o seu preço, e o sol vai se pondo conforme você come.
 
+A demo é a **primeira área** (uma clareira) de um mapa maior, cercado por
+penhascos, que leva até um cupinzeiro gigante; o plano está em
+[`docs/DESIGN.md`](docs/DESIGN.md).
+
 ### Como rodar
 
 1. Instale o **Godot 4.7** (versão padrão, não precisa da .NET):

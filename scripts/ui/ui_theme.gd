@@ -57,6 +57,13 @@ static func get_theme() -> Theme:
 	t.set_stylebox("grabber_area", "HSlider", fill)
 	t.set_stylebox("grabber_area_highlight", "HSlider", fill)
 	t.set_color("font_color", "CheckBox", CREAM)
+	for k in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		t.set_stylebox(k, "CheckBox", StyleBoxEmpty.new())
+	var check_focus := _box(Color(0, 0, 0, 0), Color(1.0, 0.9, 0.6), 2, 10)
+	check_focus.draw_center = false
+	t.set_stylebox("focus", "CheckBox", check_focus)
+	t.set_icon("checked", "CheckBox", _check_icon(true))
+	t.set_icon("unchecked", "CheckBox", _check_icon(false))
 	t.set_color("font_color", "OptionButton", CREAM)
 	t.set_stylebox("normal", "OptionButton", normal)
 	t.set_stylebox("hover", "OptionButton", hover)
@@ -69,6 +76,38 @@ static func get_theme() -> Theme:
 	t.set_color("font_color", "ProgressBar", CREAM)
 	_theme = t
 	return t
+
+
+## Ícone de caixa de seleção desenhado na hora (combina com o tema quente).
+static func _check_icon(on: bool) -> Texture2D:
+	var size := 30
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in size:
+		for x in size:
+			var edge := mini(mini(x, y), mini(size - 1 - x, size - 1 - y))
+			if edge < 2:
+				img.set_pixel(x, y, GOLD)
+			elif on:
+				img.set_pixel(x, y, TERRACOTTA)
+			else:
+				img.set_pixel(x, y, Color(0.18, 0.11, 0.09, 0.9))
+	if on:
+		_stroke(img, Vector2(8, 15), Vector2(13, 20))
+		_stroke(img, Vector2(13, 20), Vector2(22, 9))
+	return ImageTexture.create_from_image(img)
+
+
+static func _stroke(img: Image, a: Vector2, b: Vector2) -> void:
+	var steps := int(a.distance_to(b) * 3.0)
+	for i in steps + 1:
+		var p := a.lerp(b, float(i) / steps)
+		for dy in range(-1, 2):
+			for dx in range(-1, 2):
+				var x := int(p.x) + dx
+				var y := int(p.y) + dy
+				if x >= 0 and y >= 0 and x < img.get_width() and y < img.get_height():
+					img.set_pixel(x, y, Color.WHITE)
 
 
 static func _box(bg: Color, border: Color, border_w: int = 2, radius: int = 16) -> StyleBoxFlat:

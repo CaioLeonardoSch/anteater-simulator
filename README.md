@@ -81,6 +81,9 @@ tela, a resolução e a qualidade gráfica.
 - **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
 - **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
   outras formigas. Coma todas em volta e ela vale **20**.
+- **Língua:** no começo ela vai reta até onde você mira e pega a formiga perto
+  da ponta. Com **Língua Certeira**, ela vai sozinha atrás da formiga mais perto
+  da mira (marcada com um anel verde); a **Mira Ampla** aumenta essa área.
 - **Trilhas e ondas:** quem volta para o formigueiro sai de novo mais tarde; só
   as que você come somem de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
@@ -97,9 +100,13 @@ tela, a resolução e a qualidade gráfica.
 - **Progresso:** formigueiro limpo ganha flores, e o contador mostra quantos
   faltam.
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
-  do mapa). Você começa numa caverna no pé deles, e o cupinzeiro gigante aparece
-  lá longe, por cima dos penhascos. É sempre o mesmo fim de tarde, e há duas
-  lagoas de enfeite.
+  do mapa). Você começa numa caverna no pé deles, e uma trilha de terra leva até
+  o formigueiro mais perto. O cupinzeiro gigante aparece lá longe, por cima dos
+  penhascos. É sempre o mesmo fim de tarde, e há duas lagoas de enfeite.
+- **Árvore de habilidades** (`Tab`): uma constelação, com os ramos saindo do
+  centro. Passe o mouse numa habilidade para ver o que ela faz e clique para
+  aprender; as aprendidas acendem em dourado. Ela não abre sozinha: um aviso
+  lembra quando já dá para aprender algo.
 - **Fim da demo:** um tronco caído fecha a passagem para a próxima área. Com
   todas as formigas comidas, a bússola mostra a saída: segure `E` perto do
   tronco e as garras quebram o tronco.
@@ -110,14 +117,14 @@ tela, a resolução e a qualidade gráfica.
 
 | Habilidade | Níveis (preço em pontos) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber), e depois duas linhas: **Bocado** · Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40); **Destreza** · Língua Comprida (70) · Saliva Grudenta (100) · Língua Turbo (150) |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40); **Destreza** · Língua Comprida (70) · Saliva Grudenta (100) · Língua Turbo (150); **Mira** · Língua Certeira (30: a língua vai atrás da formiga mais perto da mira) · Mira Ampla (60: essa área 25% maior) |
 | **Garras** | Cavar (35: depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s) |
 | **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (80: mais 25%) · Galope Silencioso (130); **Agilidade** · Lamber Correndo (60) |
 | **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
-1 formiga comida = 1 ponto (a rainha vale 20). As duas linhas de um ramo não se
-excluem. Tudo o que dá para aprender no Cerrado soma 2485 pontos, e dá para
+1 formiga comida = 1 ponto (a rainha vale 20). As linhas de um ramo não se
+excluem. Tudo o que dá para aprender no Cerrado soma 2575 pontos, e dá para
 redistribuir os pontos de graça na árvore.
 
 ### Tela e gráficos
@@ -197,10 +204,11 @@ Opções de teste (depois de `--` na linha de comando do Godot):
 godot --path . -- --start=play --autoplay --timescale=4 --stats
 ```
 
-`--start=play|tree|settings` pula o menu · `--autoplay` um bot joga sozinho ·
+`--start=play|tree|settings|howto` pula o menu · `--autoplay` um bot joga sozinho ·
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·
+`--focus=ID` abre a árvore já com uma habilidade escolhida ·
 `--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.

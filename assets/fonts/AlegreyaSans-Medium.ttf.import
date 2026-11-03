@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://ldwqb1n01dnh"
-path="res://.godot/imported/Fredoka-Bold.ttf-017e563dac8763748f52aa6bec51fda7.fontdata"
+uid="uid://r6dpm4dadjdo"
+path="res://.godot/imported/AlegreyaSans-Medium.ttf-b08635d81291c3b640fcee7a2823ec07.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/Fredoka-Bold.ttf"
-dest_files=["res://.godot/imported/Fredoka-Bold.ttf-017e563dac8763748f52aa6bec51fda7.fontdata"]
+source_file="res://assets/fonts/AlegreyaSans-Medium.ttf"
+dest_files=["res://.godot/imported/AlegreyaSans-Medium.ttf-b08635d81291c3b640fcee7a2823ec07.fontdata"]
 
 [params]
 

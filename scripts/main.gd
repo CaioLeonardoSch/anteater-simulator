@@ -390,7 +390,7 @@ func _bot_buy() -> void:
 func _on_complete(_time: float) -> void:
 	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
 	world.exit_breakable = true
-	hud.big_note("CLAREIRA LIMPA!", "Vá até o tronco caído na saída e segure E para quebrá-lo", 5.0)
+	hud.big_note("Clareira limpa!", "Vá até o tronco caído na saída e segure E para quebrá-lo", 5.0)
 	Sfx.play("complete", 0.0)
 	save_game()
 
@@ -411,7 +411,7 @@ func _on_exit_broken() -> void:
 	player.bot = false
 	Engine.time_scale = _base_time_scale * 0.35
 	_complete_wait = 2.6
-	hud.big_note("O CAMINHO ESTÁ ABERTO", "Lá longe, o cupinzeiro gigante espera...", 4.0)
+	hud.big_note("O caminho está aberto", "Lá longe, o cupinzeiro gigante espera...", 4.0)
 
 
 func _process(delta: float) -> void:

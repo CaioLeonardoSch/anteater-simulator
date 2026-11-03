@@ -69,7 +69,7 @@ func _screen(dim: float = 0.0) -> Control:
 	s.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	if dim > 0.0:
 		var bg := ColorRect.new()
-		bg.color = Color(0.05, 0.02, 0.02, dim)
+		bg.color = Color(0.03, 0.02, 0.018, dim)
 		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		s.add_child(bg)
 	return s
@@ -100,7 +100,7 @@ func _centered_column(parent: Control, panel: bool = true) -> VBoxContainer:
 func _build_loading() -> Control:
 	var s := _screen(1.0)
 	var v := _centered_column(s, false)
-	var t := UiTheme.label("Preparando o cerrado...", 34, UiTheme.SAND, true)
+	var t := UiTheme.display_label("Preparando o cerrado...", 36, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	return s
@@ -110,8 +110,8 @@ func _build_title() -> Control:
 	var s := _screen(0.0)
 	var grad := TextureRect.new()
 	var g := Gradient.new()
-	g.set_color(0, Color(0.08, 0.03, 0.02, 0.0))
-	g.set_color(1, Color(0.08, 0.03, 0.02, 0.75))
+	g.set_color(0, Color(0.03, 0.02, 0.018, 0.0))
+	g.set_color(1, Color(0.03, 0.02, 0.018, 0.82))
 	var gt := GradientTexture2D.new()
 	gt.gradient = g
 	gt.fill_from = Vector2(0.5, 0.2)
@@ -129,18 +129,26 @@ func _build_title() -> Control:
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override("separation", 12)
 	s.add_child(v)
-	var title := UiTheme.label("Anteater\nSimulator", 96, UiTheme.CREAM, true)
-	title.add_theme_constant_override("line_spacing", -22)
-	title.add_theme_constant_override("outline_size", 14)
-	title.add_theme_color_override("font_outline_color", Color(0.45, 0.16, 0.08))
+	var title := UiTheme.display_label("Anteater\nSimulator", 100, UiTheme.PALE)
+	title.add_theme_constant_override("line_spacing", -26)
+	title.add_theme_constant_override("outline_size", 12)
+	title.add_theme_color_override("font_outline_color", Color(0.06, 0.035, 0.02, 0.95))
+	title.add_theme_color_override("font_shadow_color", Color(UiTheme.GOLD, 0.4))
+	title.add_theme_constant_override("shadow_outline_size", 22)
+	title.add_theme_constant_override("shadow_offset_y", 0)
 	v.add_child(title)
-	var sub := UiTheme.label("Demo · Fase 1: Cerrado ao Entardecer", 28, UiTheme.GOLD, true)
-	sub.add_theme_constant_override("outline_size", 6)
-	sub.add_theme_color_override("font_outline_color", Color(0.25, 0.1, 0.05))
+	var divider := Divider.new()
+	divider.custom_minimum_size = Vector2(520, 18)
+	divider.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	v.add_child(divider)
+	var sub := UiTheme.caps_label("Demo · Fase 1: Cerrado ao Entardecer", 18, UiTheme.GOLD)
+	sub.add_theme_constant_override("outline_size", 4)
+	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada formiga comida vale 1 ponto para aprender habilidades." % GameState.GOAL, 21, UiTheme.CREAM)
-	tag.add_theme_constant_override("outline_size", 5)
-	tag.add_theme_color_override("font_outline_color", Color(0.15, 0.06, 0.03, 0.9))
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada formiga comida vale 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
+	tag.add_theme_font_override("font", UiTheme.semi_font())
+	tag.add_theme_constant_override("outline_size", 4)
+	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
 	v.add_child(tag)
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 18)
@@ -211,7 +219,7 @@ func _goto(screen_name: String, back: String) -> void:
 func _build_pause() -> Control:
 	var s := _screen(0.55)
 	var v := _centered_column(s)
-	var t := UiTheme.label("Pausa", 48, UiTheme.GOLD, true)
+	var t := UiTheme.display_label("Pausa", 52, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	var buttons := [
@@ -236,7 +244,7 @@ func _build_pause() -> Control:
 func _build_howto() -> Control:
 	var s := _screen(0.7)
 	var v := _centered_column(s)
-	var t := UiTheme.label("Como jogar", 44, UiTheme.GOLD, true)
+	var t := UiTheme.display_label("Como jogar", 46, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	var text := RichTextLabel.new()
@@ -244,7 +252,7 @@ func _build_howto() -> Control:
 	text.fit_content = true
 	text.custom_minimum_size = Vector2(760, 0)
 	text.add_theme_font_size_override("normal_font_size", 20)
-	text.add_theme_font_override("bold_font", UiTheme.FONT_BOLD)
+	text.add_theme_font_override("bold_font", UiTheme.bold_font())
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
 	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d formigas[/b]. Coma todas e deixe os [b]12 formigueiros[/b] limpos.
@@ -275,7 +283,7 @@ Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; a
 func _build_settings() -> Control:
 	var s := _screen(0.65)
 	var v := _centered_column(s)
-	var t := UiTheme.label("Configurações", 44, UiTheme.GOLD, true)
+	var t := UiTheme.display_label("Configurações", 46, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	var tabs := HBoxContainer.new()
@@ -374,6 +382,7 @@ func _show_settings_tab(i: int) -> void:
 
 func _setting_label(grid: GridContainer, text: String) -> void:
 	var l := UiTheme.label(text, 21)
+	l.add_theme_font_override("font", UiTheme.semi_font())
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	grid.add_child(l)
 
@@ -449,7 +458,7 @@ func _sync_settings() -> void:
 func _build_end() -> Control:
 	var s := _screen(0.45)
 	var v := _centered_column(s)
-	_end_title = UiTheme.label("Fim da demo!", 56, UiTheme.GOLD, true)
+	_end_title = UiTheme.display_label("Fim da demo!", 60, UiTheme.PALE)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
 	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.GOAL, 24, UiTheme.CREAM)
@@ -494,3 +503,22 @@ func show_end(time_sec: float, new_record: bool) -> void:
 	_end_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_end_stats.custom_minimum_size = Vector2(760, 0)
 	show_screen("end")
+
+
+## Enfeite embaixo do nome do jogo: um traço dourado que some nas pontas e um losango.
+class Divider extends Control:
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var gold := Color("e8b44f")
+		var y := size.y * 0.5
+		var mid := 150.0
+		draw_polyline_colors(PackedVector2Array([Vector2(0, y), Vector2(mid - 10.0, y)]),
+			PackedColorArray([Color(gold, 0.15), gold]), 1.5, true)
+		draw_polyline_colors(PackedVector2Array([Vector2(mid + 10.0, y), Vector2(size.x, y)]),
+			PackedColorArray([gold, Color(gold, 0.0)]), 1.5, true)
+		var c := Vector2(mid, y)
+		draw_colored_polygon(PackedVector2Array([c + Vector2(0, -6), c + Vector2(6, 0), c + Vector2(0, 6), c + Vector2(-6, 0)]), gold)
+		draw_circle(c + Vector2(-16, 0), 2.0, gold)
+		draw_circle(c + Vector2(16, 0), 2.0, gold)

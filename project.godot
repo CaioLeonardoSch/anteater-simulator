@@ -39,7 +39,7 @@ window/stretch/aspect="expand"
 
 [gui]
 
-theme/custom_font="res://assets/fonts/Fredoka-Medium.ttf"
+theme/custom_font="res://assets/fonts/AlegreyaSans-Medium.ttf"
 
 [rendering]
 

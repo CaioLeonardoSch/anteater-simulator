@@ -15,7 +15,7 @@ produção, os protótipos e as decisões, num lugar só.
 
 | | |
 |---|---|
-| ![Lambendo formigas na trilha](docs/screenshots/trilha.jpg) | ![Em cima de um formigueiro grande, com a câmara da rainha aberta](docs/screenshots/formigueiro.jpg) |
+| ![Farejando formigas na trilha: elas brilham através do capim](docs/screenshots/trilha.jpg) | ![Em cima de um formigueiro grande, com uma câmara aberta](docs/screenshots/formigueiro.jpg) |
 | ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
@@ -72,6 +72,10 @@ tela, a resolução e a qualidade gráfica.
 
 ### O que tem na demo hoje
 
+- **Interface no estilo "Constelação"** (o mesmo da árvore de habilidades):
+  painéis com moldura dourada, as formigas comidas num medalhão e as habilidades
+  em círculos. A bússola é uma faixa com o rumo no meio; só o formigueiro à sua
+  frente mostra o nome e a distância.
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
   fechadas, e 12 delas ficam sozinhas no meio do campo. Com **Cavar** (Garras),
   segure `E` perto de uma para abri-la: as moradoras **saem correndo**, fogem
@@ -208,14 +212,16 @@ godot --path . -- --start=play --autoplay --timescale=4 --stats
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·
-`--focus=ID` abre a árvore já com uma habilidade escolhida ·
+`--focus=ID` abre a árvore já com uma habilidade escolhida · `--nohud` esconde a
+interface (capturas limpas do cenário) ·
 `--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.
 
 ## Créditos
 
-- Fonte **Fredoka**: The Fredoka Project Authors, licença SIL Open Font License
-  1.1 (`assets/fonts/OFL.txt`).
+- Fontes **Alegreya Sans** e **Alegreya SC**: The Alegreya Sans Project Authors e
+  The Alegreya Project Authors, licença SIL Open Font License 1.1
+  (`assets/fonts/OFL-AlegreyaSans.txt` e `assets/fonts/OFL-AlegreyaSC.txt`).
 - Todo o resto (modelos provisórios, texturas, sons e a música de violão) é
   gerado por código neste repositório.

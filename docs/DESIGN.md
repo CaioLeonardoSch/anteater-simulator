@@ -71,6 +71,17 @@ buscamos, no espírito delas:
   fases mais cara do que câmera fixa.*
 - **Tela:** janela, tela cheia ou tela cheia exclusiva, em várias resoluções, e
   opções gráficas separadas (sombras, capim, suavização, efeitos de luz).
+- **Interface no estilo "Constelação"**, o mesmo da árvore de habilidades
+  (escolhido entre 5 estilos em 03/11/2026):
+  - painéis quase pretos com moldura dourada dupla e losangos de enfeite;
+  - textos em **Alegreya Sans**; números e títulos em **Alegreya SC**, com
+    algarismos alinhados (as duas fontes são gratuitas, licença OFL);
+  - as formigas comidas ficam num **medalhão** redondo, como o centro da árvore;
+  - as habilidades da barra de baixo são **círculos**, como os da árvore;
+  - a **bússola** é uma faixa com moldura dourada, risquinhos a cada 15° e um
+    medalhão no meio com o rumo. Os formigueiros são montinhos em cima da faixa;
+    só o que está à sua frente mostra nome e distância, então os números não se
+    embolam.
 - **Modelos 3D gerados por IA**, todos no mesmo estilo. Os prompts estão em
   [`prompts-ia.md`](prompts-ia.md). O formigueiro já foi gerado na Artlist e
   falta baixar (precisa de um plano com créditos).
@@ -257,6 +268,9 @@ Feito, seguindo as decisões:
    tronco, as garras quebram o tronco e a demo termina.
 14. **Sempre o mesmo fim de tarde** (o sol não se põe mais) e **duas lagoas** de
    enfeite.
+15. **Interface nova, no estilo Constelação:** HUD, menus, pausa, configurações e
+   árvore com a mesma cara (moldura dourada, Alegreya SC e Alegreya Sans), e a
+   bússola em faixa com medalhão (seção 3).
 
 Ainda a ajustar:
 
@@ -489,3 +503,5 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 02/11/2026 | Primeiro caminho | Nenhum | Trilha de terra sem capim da caverna até o formigueiro mais perto |
 | 02/11/2026 | Mira da língua | Ajuda de mira desde o começo | A língua vai reta; nova linha de Mira: Língua Certeira (30) e Mira Ampla (60, área 25% maior) |
 | 02/11/2026 | Árvore de habilidades | Abria sozinha nos primeiros 25 pontos; caixas em colunas | Não abre sozinha; visual de constelação, inspirado em Path of Exile |
+| 03/11/2026 | Estilo da interface | Fredoka, painéis marrons arredondados | Estilo "Constelação" (o mesmo da árvore): moldura dourada dupla, Alegreya SC e Alegreya Sans |
+| 03/11/2026 | Bússola | Barra com triângulos e todas as distâncias (os números se embolavam) | Faixa com medalhão do rumo; formigueiros em montinhos; só o da frente mostra nome e distância |

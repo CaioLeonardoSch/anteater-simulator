@@ -11,6 +11,7 @@ extends Control
 signal closed
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
+const Glyphs := preload("res://scripts/ui/glyphs.gd")
 
 ## Direção de cada ramo, em graus (0 = direita, 90 = para baixo), na ordem de
 ## GameState.BRANCHES.
@@ -80,13 +81,14 @@ func _ready() -> void:
 		_nodes[u.id] = node
 		if _first_node == null:
 			_first_node = node
-	var title := UiTheme.label("Árvore de Habilidades", 34, UiTheme.GOLD, true)
-	title.position = Vector2(34, 14)
+	var title := UiTheme.display_label("Árvore de Habilidades", 36, UiTheme.PALE)
+	title.position = Vector2(34, 12)
 	add_child(title)
 	var sub := UiTheme.label("1 formiga comida = 1 ponto", 17, UiTheme.SAND)
 	sub.position = Vector2(38, 56)
 	add_child(sub)
-	_hint = UiTheme.label("", 19, UiTheme.SAND, true)
+	_hint = UiTheme.label("", 19, UiTheme.SAND)
+	_hint.add_theme_font_override("font", UiTheme.semi_font())
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_hint.offset_top = -FOOTER_H + 6
@@ -171,9 +173,9 @@ func center() -> Vector2:
 
 func _build_tip() -> void:
 	_tip = PanelContainer.new()
-	var style := UiTheme._box(Color(0.07, 0.045, 0.04, 0.96), Color(1, 0.78, 0.4, 0.75), 2, 12)
-	style.content_margin_left = 16
-	style.content_margin_right = 16
+	var style := UiTheme.frame(Color(0.065, 0.044, 0.036, 0.97), Color(0.035, 0.026, 0.021, 0.97), Color(UiTheme.GOLD, 0.8),
+		Color(UiTheme.GOLD, 0.25), 18, 12)
+	style.corners = true
 	_tip.add_theme_stylebox_override("panel", style)
 	_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tip.visible = false
@@ -182,12 +184,12 @@ func _build_tip() -> void:
 	v.add_theme_constant_override("separation", 3)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tip.add_child(v)
-	_tip_title = UiTheme.label("", 24, UiTheme.GOLD, true)
+	_tip_title = UiTheme.display_label("", 25, UiTheme.GOLD)
 	v.add_child(_tip_title)
 	_tip_where = UiTheme.label("", 15, UiTheme.SAND)
 	v.add_child(_tip_where)
 	var sep := ColorRect.new()
-	sep.color = Color(1, 0.78, 0.4, 0.35)
+	sep.color = Color(UiTheme.GOLD, 0.3)
 	sep.custom_minimum_size = Vector2(0, 1)
 	v.add_child(sep)
 	_tip_desc = UiTheme.label("", 18, UiTheme.CREAM)
@@ -413,13 +415,14 @@ class TreeCanvas extends Control:
 			draw_line(c + dir * (tree.CENTER_R + 3.0), c + dir * (tree.CENTER_R + (12.0 if long else 7.0)),
 				Color(UT.GOLD, 0.8 if long else 0.45), 2.0 if long else 1.2, true)
 		var pts := GameState.points_available()
-		var font: Font = UT.FONT_BOLD
+		var font: Font = UT.display_font()
 		var num := str(pts)
-		var nsz := font.get_string_size(num, HORIZONTAL_ALIGNMENT_LEFT, -1, 40)
-		draw_string(font, c + Vector2(-nsz.x * 0.5, 8), num, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, UT.CREAM)
-		var word := "ponto" if pts == 1 else "pontos"
-		var wsz := UT.FONT.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, 16)
-		draw_string(UT.FONT, c + Vector2(-wsz.x * 0.5, 30), word, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UT.SAND)
+		var nsz := font.get_string_size(num, HORIZONTAL_ALIGNMENT_LEFT, -1, 42)
+		draw_string(font, c + Vector2(-nsz.x * 0.5, 9), num, HORIZONTAL_ALIGNMENT_LEFT, -1, 42, UT.PALE)
+		var word := "PONTO" if pts == 1 else "PONTOS"
+		var cf: Font = UT.caps_font()
+		var wsz := cf.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
+		draw_string(cf, c + Vector2(-wsz.x * 0.5, 30), word, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, UT.MUTED)
 		# Nome de cada ramo, no caminho entre o centro e a 1ª habilidade dele.
 		for b in GameState.BRANCHES.size():
 			var branch: Dictionary = GameState.BRANCHES[b]
@@ -470,12 +473,12 @@ class TreeCanvas extends Control:
 				draw_line(a, b, Color(0.36, 0.28, 0.22), 3.0, true)
 
 	func _pill_size(text: String, fsize: int, big: bool) -> Vector2:
-		var tsz := UT.FONT_BOLD.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize)
+		var tsz := (UT.display_bold_font() if big else UT.bold_font()).get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize)
 		var pad := Vector2(12, 5) if big else Vector2(9, 3)
 		return Vector2(tsz.x, fsize * 1.24) + pad * 2.0
 
 	func _pill(p: Vector2, text: String, fsize: int, col: Color, big: bool) -> void:
-		var font: Font = UT.FONT_BOLD
+		var font: Font = UT.display_bold_font() if big else UT.bold_font()
 		var tsz := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize)
 		var pad := Vector2(12, 5) if big else Vector2(9, 3)
 		var rect := Rect2(p - Vector2(tsz.x * 0.5, fsize * 0.62) - pad, Vector2(tsz.x, fsize * 1.24) + pad * 2.0)
@@ -576,7 +579,7 @@ class SkillNode extends Button:
 			draw_circle(c, radius + 6.0, Color(halo_col, halo * 0.25))
 		draw_circle(c, radius + 2.5, Color(0.02, 0.012, 0.01))
 		draw_circle(c, radius, disc)
-		Glyph.paint(self, glyph, c, radius * 0.6, glyph_col)
+		Glyphs.paint(self, glyph, c, radius * 0.6, glyph_col)
 		draw_arc(c, radius, 0, TAU, 48, ring, ring_w, true)
 		if root:
 			# Habilidade que abre o ramo: moldura dupla com pinos, como as grandes do PoE.
@@ -590,9 +593,9 @@ class SkillNode extends Button:
 			_padlock(c)
 		elif state != 2:
 			# Preço embaixo.
-			var font: Font = UT.FONT_BOLD
+			var font: Font = UT.display_bold_font()
 			var txt := str(cost)
-			var tsz := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
+			var tsz := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15)
 			var y := c.y + radius + (19.0 if root else 15.0)
 			var rect := Rect2(Vector2(c.x - tsz.x * 0.5 - 6, y - 12), Vector2(tsz.x + 12, 17))
 			var sb := StyleBoxFlat.new()
@@ -600,7 +603,7 @@ class SkillNode extends Button:
 			sb.set_corner_radius_all(8)
 			draw_style_box(sb, rect)
 			var tc := color.lightened(0.3) if can else Color(0.75, 0.66, 0.56, 0.9 if state == 1 else 0.6)
-			draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, tc)
+			draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, tc)
 
 	func _padlock(c: Vector2) -> void:
 		var metal := Color(0.95, 0.85, 0.65)
@@ -613,97 +616,3 @@ class SkillNode extends Button:
 		body.set_corner_radius_all(3)
 		draw_style_box(body, Rect2(p + Vector2(-10, -2), Vector2(20, 15)))
 		draw_circle(p + Vector2(0, 4), 2.5, Color(0.3, 0.2, 0.15))
-
-
-## Ícones das habilidades, desenhados com formas simples.
-class Glyph:
-	static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color) -> void:
-		match kind:
-			"tongue":
-				var pts := PackedVector2Array()
-				for i in 13:
-					var t := i / 12.0
-					pts.append(c + Vector2(lerpf(-0.78, 0.5, t), 0.32 - t * 0.55 + sin(t * PI * 1.7) * 0.28) * s)
-				ci.draw_polyline(pts, col, s * 0.24, true)
-				ci.draw_circle(pts[pts.size() - 1], s * 0.17, col)
-			"ant":
-				var w := maxf(s * 0.11, 1.5)
-				var thorax := c + Vector2(-0.05, 0.02) * s
-				for k in 3:
-					var x := (k - 1) * 0.3
-					ci.draw_polyline(PackedVector2Array([thorax, thorax + Vector2(x * 0.6, -0.3) * s,
-						thorax + Vector2(x * 1.2, -0.62) * s]), col, w, true)
-					ci.draw_polyline(PackedVector2Array([thorax, thorax + Vector2(x * 0.6, 0.3) * s,
-						thorax + Vector2(x * 1.2, 0.62) * s]), col, w, true)
-				var head := c + Vector2(-0.52, 0.0) * s
-				ci.draw_line(head, head + Vector2(-0.32, -0.42) * s, col, w, true)
-				ci.draw_line(head, head + Vector2(-0.42, -0.2) * s, col, w, true)
-				ci.draw_circle(head, s * 0.2, col)
-				ci.draw_circle(thorax, s * 0.17, col)
-				ci.draw_circle(c + Vector2(0.45, 0.0) * s, s * 0.32, col)
-			"bolt":
-				var poly := PackedVector2Array()
-				for p in [Vector2(0.18, -0.9), Vector2(-0.5, 0.12), Vector2(-0.04, 0.12), Vector2(-0.2, 0.9),
-						Vector2(0.5, -0.16), Vector2(0.05, -0.16)]:
-					poly.append(c + p * s)
-				ci.draw_colored_polygon(poly, col)
-			"cross":
-				ci.draw_arc(c, s * 0.58, 0, TAU, 32, col, s * 0.13, true)
-				for k in 4:
-					var d := Vector2.RIGHT.rotated(TAU * k / 4.0)
-					ci.draw_line(c + d * s * 0.3, c + d * s * 0.92, col, s * 0.13, true)
-				ci.draw_circle(c, s * 0.1, col)
-			"claws":
-				for k in 3:
-					var off := (k - 1) * 0.42
-					var pts := PackedVector2Array()
-					for i in 7:
-						var t := i / 6.0
-						pts.append(c + Vector2(off + lerpf(-0.3, 0.3, t) + sin(t * PI) * 0.12, lerpf(-0.75, 0.75, t)) * s)
-					ci.draw_polyline(pts, col, s * 0.15, true)
-			"burst":
-				var poly := PackedVector2Array()
-				for i in 16:
-					var a := TAU * i / 16.0 - PI * 0.5
-					var r := 0.9 if i % 2 == 0 else 0.38
-					poly.append(c + Vector2(cos(a), sin(a)) * r * s)
-				ci.draw_colored_polygon(poly, col)
-			"clock":
-				ci.draw_arc(c, s * 0.72, 0, TAU, 32, col, s * 0.14, true)
-				ci.draw_line(c, c + Vector2(0, -0.48) * s, col, s * 0.13, true)
-				ci.draw_line(c, c + Vector2(0.36, 0.12) * s, col, s * 0.13, true)
-			"paw":
-				var pad := PackedVector2Array()
-				for i in 24:
-					var a := TAU * i / 24.0
-					pad.append(c + Vector2(cos(a) * 0.46, 0.3 + sin(a) * 0.36) * s)
-				ci.draw_colored_polygon(pad, col)
-				for p in [Vector2(-0.62, -0.18), Vector2(-0.24, -0.55), Vector2(0.24, -0.55), Vector2(0.62, -0.18)]:
-					ci.draw_circle(c + p * s, s * 0.18, col)
-			"chevrons":
-				for x0 in [-0.62, -0.02]:
-					ci.draw_polyline(PackedVector2Array([c + Vector2(x0, -0.55) * s, c + Vector2(x0 + 0.5, 0) * s,
-						c + Vector2(x0, 0.55) * s]), col, s * 0.17, true)
-			"nose":
-				var o := c + Vector2(-0.5, 0) * s
-				ci.draw_circle(o, s * 0.2, col)
-				for k in 3:
-					ci.draw_arc(o, s * (0.48 + k * 0.32), -0.75, 0.75, 12, Color(col, 1.0 - k * 0.22), s * 0.12, true)
-			"rings":
-				ci.draw_arc(c, s * 0.78, 0, TAU, 32, col, s * 0.11, true)
-				ci.draw_arc(c, s * 0.46, 0, TAU, 32, col, s * 0.11, true)
-				ci.draw_circle(c, s * 0.15, col)
-			"eye":
-				var top := PackedVector2Array()
-				var bottom := PackedVector2Array()
-				for i in 13:
-					var t := i / 12.0
-					var x := lerpf(-0.88, 0.88, t)
-					top.append(c + Vector2(x, -sin(t * PI) * 0.5) * s)
-					bottom.append(c + Vector2(x, sin(t * PI) * 0.5) * s)
-				ci.draw_polyline(top, col, s * 0.12, true)
-				ci.draw_polyline(bottom, col, s * 0.12, true)
-				ci.draw_circle(c, s * 0.25, col)
-			"peak":
-				ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.85, 0.6) * s, c + Vector2(-0.1, -0.7) * s,
-					c + Vector2(0.25, -0.1) * s, c + Vector2(0.45, -0.35) * s, c + Vector2(0.9, 0.6) * s]), col)

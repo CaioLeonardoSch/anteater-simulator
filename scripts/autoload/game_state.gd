@@ -25,7 +25,7 @@ const SAVE_VERSION := 3
 ## As 5 habilidades. "lines" = nomes das duas linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.
 const BRANCHES := [
-	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza"]},
+	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Mira"]},
 	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Rapidez"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Velocidade", "Agilidade"]},
 	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
@@ -35,7 +35,8 @@ const BRANCHES := [
 ## Cada habilidade: ramo, posição na árvore (col -1 = topo do ramo, centralizado;
 ## 0/1 = linha da esquerda/direita), preço em formigas e o que precisa antes.
 const UPGRADES := [
-	# Língua: Lambida Contínua abre as linhas de Bocado (quantas por lambida) e Destreza.
+	# Língua: Lambida Contínua abre as linhas de Bocado (quantas por lambida),
+	# Destreza e Mira (a língua ir atrás da formiga).
 	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "cost": 25, "requires": [],
 		"name": "Lambida Contínua",
 		"desc": "Segure o botão para lamber sem parar. Sem ela, cada clique é uma lambida."},
@@ -60,6 +61,12 @@ const UPGRADES := [
 	{"id": "lingua_turbo", "branch": 0, "col": 1, "row": 3, "cost": 150, "requires": ["lingua_saliva"],
 		"name": "Língua Turbo",
 		"desc": "A língua lambe 2x mais rápido."},
+	{"id": "lingua_certeira", "branch": 0, "col": 2, "row": 1, "cost": 30, "requires": ["lingua_segurar"],
+		"name": "Língua Certeira",
+		"desc": "A língua vai sozinha atrás da formiga mais perto da mira. Sem ela, a língua vai reta até onde você mira."},
+	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"],
+		"name": "Mira Ampla",
+		"desc": "A área da mira em que a língua procura formigas fica 25% maior."},
 	# Garras: Cavar abre as linhas de Força e de Rapidez (o descanso entre usos).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
@@ -362,6 +369,17 @@ func tongue_range() -> float:
 	if frenzy_active():
 		r *= 1.25
 	return r
+
+
+## Língua Certeira: a língua vai atrás da formiga mais perto da mira.
+func tongue_tracking() -> bool:
+	return has("lingua_certeira")
+
+
+## Abertura (graus, do centro até a borda) da área da mira em que a língua
+## procura formigas. Mira Ampla: 25% maior.
+func aim_cone_deg() -> float:
+	return 12.5 if has("lingua_mira") else 10.0
 
 
 func capture_radius() -> float:

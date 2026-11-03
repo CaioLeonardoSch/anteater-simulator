@@ -38,6 +38,8 @@ var cliffs: Cliffs
 var giant_mound: GiantMound
 ## Lagoas (só enfeite): Vector3(x, z, raio).
 var ponds: Array[Vector3] = []
+## Trilha de terra (sem capim) da caverna até o formigueiro mais perto.
+var cave_path := PackedVector2Array()
 ## Tronco caído que fecha a passagem para a área 2.
 var exit_log: Node3D
 ## A clareira está 100% limpa: o tronco já pode ser quebrado.
@@ -160,6 +162,7 @@ func build() -> void:
 		nest.plan_chambers(_rng)
 	_plan_satellites()
 	_plan_ponds()
+	_plan_cave_path()
 	terrain.build(mats.terrain)
 	cliffs.build(mats)
 	# O tamanduá acorda no fundo da caverna, olhando para o cupinzeiro gigante.
@@ -212,6 +215,76 @@ func build() -> void:
 ## Até onde dá para andar nessa direção (penhascos, caverna e o tronco da saída).
 func walk_limit(p2: Vector2) -> float:
 	return cliffs.walk_limit(p2, exit_open)
+
+
+## Trilha de terra, sem capim, da caverna até o formigueiro mais perto: mostra
+## ao jogador por onde começar. Tem um sorteio próprio (o resto do mapa não muda).
+func _plan_cave_path() -> void:
+	var mouth := cliffs.cave_mouth()
+	var target: Nest = null
+	var best := INF
+	for n in nests:
+		var d: float = mouth.distance_to(n.center2) - n.radius
+		if d < best:
+			best = d
+			target = n
+	if target == null:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED + 47
+	var start := cliffs.cave_spot()
+	var inward := -mouth.normalized()
+	var out := mouth + inward * 3.0
+	var end: Vector2 = target.center2 + (out - target.center2).normalized() * (target.radius + 1.0)
+	var side := (end - out).orthogonal().normalized()
+	for attempt in 12:
+		var bend := rng.randf_range(-3.5, 3.5) * (1.0 - attempt / 12.0)
+		var ctrl := PackedVector2Array([start - inward * 2.0, start, mouth, out,
+			(out + end) * 0.5 + side * bend, end, end + (end - target.center2).normalized() * -2.0])
+		var pts := PackedVector2Array()
+		for i in range(1, ctrl.size() - 2):
+			var steps := maxi(2, int(ctrl[i].distance_to(ctrl[i + 1]) / 0.5))
+			for k in steps:
+				pts.append(_catmull(ctrl[i - 1], ctrl[i], ctrl[i + 1], ctrl[i + 2], float(k) / steps))
+		pts.append(end)
+		if _path_clear(pts, target):
+			cave_path = pts
+			break
+	for q in cave_path:
+		terrain.mask_paint(q.x, q.y, 0.72, 0, 1.0)
+		terrain.mask_paint(q.x, q.y, 1.4, 0, 0.35)
+
+
+func _catmull(p0: Vector2, p1: Vector2, p2: Vector2, p3: Vector2, t: float) -> Vector2:
+	var t2 := t * t
+	var t3 := t2 * t
+	return 0.5 * ((2.0 * p1) + (p2 - p0) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 + (3.0 * p1 - p0 - 3.0 * p2 + p3) * t3)
+
+
+## A trilha não passa por cima de outro formigueiro, de arbusto, câmara ou lagoa.
+func _path_clear(pts: PackedVector2Array, target: Nest) -> bool:
+	for q in pts:
+		for n in nests:
+			if n != target and q.distance_to(n.center2) < n.radius + 1.5:
+				return false
+		for f in food_sources:
+			if q.distance_to(f) < 2.0:
+				return false
+		for c in satellite_spots:
+			if q.distance_to(c) < 2.0:
+				return false
+		for w in ponds:
+			if q.distance_to(Vector2(w.x, w.y)) < w.z + 1.0:
+				return false
+	return true
+
+
+## Algum ponto da trilha da caverna está a menos de `dist` daqui?
+func near_cave_path(p: Vector2, dist: float) -> bool:
+	for q in cave_path:
+		if p.distance_squared_to(q) < dist * dist:
+			return true
+	return false
 
 
 ## Uma ou duas lagoas, só de enfeite: longe das trilhas, dos formigueiros, das
@@ -663,6 +736,8 @@ func _apply_day() -> void:
 	sky_mat.set_shader_parameter("zenith_color", Color(0.26, 0.36, 0.62).lerp(Color(0.18, 0.20, 0.45), p))
 	sky_mat.set_shader_parameter("sun_glow_color", Color(1.0, 0.6, 0.3).lerp(Color(1.0, 0.42, 0.25), p))
 	env.fog_light_color = Color(0.92, 0.74, 0.6).lerp(Color(0.85, 0.55, 0.52), p)
+	if giant_mound:
+		giant_mound.set_atmosphere(sky_mat, env, s, sun)
 	if fireflies:
 		fireflies.emitting = p > 0.55
 
@@ -673,6 +748,8 @@ func apply_graphics() -> void:
 	env.ssao_enabled = Settings.ssao
 	env.ssil_enabled = Settings.ssil
 	env.volumetric_fog_enabled = Settings.volumetric_fog
+	if giant_mound:
+		giant_mound.set_volumetric(Settings.volumetric_fog)
 	env.glow_enabled = Settings.glow
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS if sq == 0 else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	sun.directional_shadow_max_distance = [35.0, 55.0, 70.0, 90.0][sq]

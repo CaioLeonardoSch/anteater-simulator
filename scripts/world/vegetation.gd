@@ -191,6 +191,8 @@ func _spot_ok(world, pos: Vector2, trail_gap: float, spacing: float, radius: flo
 	for w in world.ponds:
 		if pos.distance_to(Vector2(w.x, w.y)) < w.z + 1.5 + radius:
 			return false
+	if world.near_cave_path(pos, 1.6 + radius):
+		return false
 	for o in obstacles:
 		if pos.distance_to(Vector2(o.x, o.y)) < o.z + radius + spacing:
 			return false

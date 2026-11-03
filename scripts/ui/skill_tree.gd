@@ -1,201 +1,226 @@
 extends Control
-## Árvore de habilidades: Língua, Garras, Patas, Faro e Escalada + Cauda.
-## Cada formiga comida vale 1 ponto e cada habilidade tem o seu preço.
-## Cada ramo começa com uma habilidade e se divide em duas linhas, que não se
-## excluem. O que ainda não existe no jogo (Escalada + Cauda) aparece com cadeado.
-## Dá para redistribuir os pontos de graça a qualquer momento.
+## Árvore de habilidades com cara de constelação (inspirada na árvore passiva de
+## Path of Exile, só no visual): os 5 ramos (Língua, Garras, Patas, Faro e
+## Escalada + Cauda) saem do centro, onde ficam os pontos. Cada habilidade é um
+## círculo com ícone, e as ligações acendem em dourado conforme você aprende.
+## Passe o mouse (ou o controle) numa habilidade para ver o que ela faz; clique
+## para aprender. Cada formiga comida vale 1 ponto e cada habilidade tem o seu
+## preço; as linhas de um ramo não se excluem. O que ainda não existe no jogo
+## aparece com cadeado. Dá para redistribuir os pontos de graça.
 
 signal closed
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 
-const NODE_SIZE := Vector2(150, 74)
-const COL_GAP := 10.0
-const BRANCH_GAP := 22.0
-const ROW_GAP := 20.0
-## Espaço extra entre o topo do ramo e as duas linhas (para o nome das linhas).
-const SPLIT_GAP := 24.0
-const HEADER_H := 36.0
-## Folga nas laterais (o nome do último ramo é mais largo que a coluna).
-const MARGIN_X := 14.0
+## Direção de cada ramo, em graus (0 = direita, 90 = para baixo), na ordem de
+## GameState.BRANCHES.
+const BRANCH_ANGLE := [-150.0, -30.0, 150.0, 30.0, 90.0]
+## Abertura entre as linhas de um ramo.
+const LINE_SPREAD := 19.0
+## Distância do centro até a 1ª habilidade do ramo, e de um nível para o outro.
+const ROOT_DIST := 165.0
+const ROW_STEP := 74.0
+## A tela é larga: o desenho estica mais na horizontal.
+const STRETCH := Vector2(1.42, 0.98)
+const NODE_R := 22.0
+const ROOT_R := 30.0
+const CENTER_R := 64.0
+const HEADER_H := 70.0
+const FOOTER_H := 128.0
+## Ícone da 1ª habilidade de cada ramo e de cada linha dele.
+const GLYPHS := [
+	["tongue", "ant", "bolt", "cross"],
+	["claws", "burst", "clock"],
+	["paw", "chevrons", "tongue"],
+	["nose", "rings", "eye"],
+	["peak"],
+]
 
-var _points_label: Label
-var _points_hint: Label
-var _nodes: Dictionary = {}
 var _canvas: TreeCanvas
-var _detail_title: Label
-var _detail_where: Label
-var _detail_desc: Label
-var _detail_state: Label
-var _first_focus: Control
+var _nodes: Dictionary = {}
+var _offsets: Dictionary = {}
+var _center := Vector2.ZERO
+var _tip: PanelContainer
+var _tip_title: Label
+var _tip_where: Label
+var _tip_desc: Label
+var _tip_state: Label
+var _hint: Label
 var _respec: Button
+var _first_node: Control
 var _shown_id := ""
-var _focus_id := ""
+var _hover_id := ""
+var _time := 0.0
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = UiTheme.get_theme()
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	var dim := ColorRect.new()
-	dim.color = Color(0.06, 0.03, 0.03, 0.74)
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(dim)
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-	var panel := PanelContainer.new()
-	center.add_child(panel)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	panel.add_child(root)
-	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 22)
-	top.alignment = BoxContainer.ALIGNMENT_CENTER
-	root.add_child(top)
-	var title := UiTheme.label("Árvore de Habilidades", 36, UiTheme.GOLD, true)
-	top.add_child(title)
-	_points_label = UiTheme.label("", 26, UiTheme.CREAM, true)
-	_points_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top.add_child(_points_label)
-	_points_hint = UiTheme.label("1 formiga comida = 1 ponto", 17, UiTheme.SAND)
-	_points_hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top.add_child(_points_hint)
 	_canvas = TreeCanvas.new()
 	_canvas.tree = self
-	_canvas.node_size = NODE_SIZE
-	_canvas.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	root.add_child(_canvas)
-	_build_nodes()
-	root.add_child(_build_detail())
+	_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_canvas)
+	for u in GameState.UPGRADES:
+		_offsets[u.id] = _offset_of(u)
+		var node := SkillNode.new()
+		node.id = u.id
+		node.tree = self
+		node.root = (u.requires as Array).is_empty()
+		node.radius = ROOT_R if node.root else NODE_R
+		node.color = GameState.BRANCHES[u.branch].color
+		var glyphs: Array = GLYPHS[u.branch]
+		node.glyph = glyphs[0] if node.root or u.col < 0 else glyphs[mini(int(u.col) + 1, glyphs.size() - 1)]
+		node.pressed.connect(_on_node_pressed.bind(u.id))
+		node.focus_entered.connect(_show_tip.bind(u.id))
+		node.focus_exited.connect(_on_focus_lost)
+		node.mouse_entered.connect(_on_hover.bind(u.id))
+		node.mouse_exited.connect(_on_unhover.bind(u.id))
+		_canvas.add_child(node)
+		_nodes[u.id] = node
+		if _first_node == null:
+			_first_node = node
+	var title := UiTheme.label("Árvore de Habilidades", 34, UiTheme.GOLD, true)
+	title.position = Vector2(34, 14)
+	add_child(title)
+	var sub := UiTheme.label("1 formiga comida = 1 ponto", 17, UiTheme.SAND)
+	sub.position = Vector2(38, 56)
+	add_child(sub)
+	_hint = UiTheme.label("", 19, UiTheme.SAND, true)
+	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_hint.offset_top = -FOOTER_H + 6
+	_hint.offset_bottom = -FOOTER_H + 40
+	add_child(_hint)
 	var footer := HBoxContainer.new()
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
 	footer.add_theme_constant_override("separation", 18)
-	root.add_child(footer)
+	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	footer.offset_top = -86
+	footer.offset_bottom = -26
+	add_child(footer)
 	_respec = UiTheme.button("Redistribuir pontos", 280)
 	_respec.pressed.connect(_on_respec)
 	footer.add_child(_respec)
 	var back := UiTheme.button("Voltar ao jogo  [TAB]", 300)
 	back.pressed.connect(func(): closed.emit())
 	footer.add_child(back)
+	_build_tip()
+	resized.connect(_layout)
 	GameState.upgrade_purchased.connect(func(_id): refresh())
 	GameState.upgrade_affordable.connect(func(_id): refresh())
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	GameState.skills_reset.connect(refresh)
+	_layout()
 	refresh()
+
+
+func _process(delta: float) -> void:
+	if not visible:
+		return
+	_time += delta
+	# As habilidades que já dá para aprender pulsam.
+	for id in _nodes:
+		if GameState.upgrade_state(id) == 1:
+			(_nodes[id] as Control).queue_redraw()
+
+
+## Com o controle (ou as setas), a primeira direção apertada escolhe a 1ª habilidade.
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or _first_node == null:
+		return
+	for a in ["ui_left", "ui_right", "ui_up", "ui_down"]:
+		if event.is_action_pressed(a) and get_viewport().gui_get_focus_owner() == null:
+			_first_node.grab_focus()
+			get_viewport().set_input_as_handled()
+			return
 
 
 # ------------------------------------------------------------------ Montagem
 
-## Largura de cada ramo (1 ou 2 colunas) e onde ele começa.
-func _branch_layout() -> Array:
-	var out := []
-	var x := MARGIN_X
-	for b in GameState.BRANCHES.size():
-		var cols: int = 2 if GameState.BRANCHES[b].lines.size() == 2 else 1
-		var w := cols * NODE_SIZE.x + (cols - 1) * COL_GAP
-		out.append({"x": x, "w": w, "cols": cols})
-		x += w + BRANCH_GAP
-	return out
+## Posição de uma habilidade em relação ao centro: cada ramo sai numa direção,
+## e as linhas dele se abrem em leque, um nível mais longe a cada habilidade.
+func _offset_of(u: Dictionary) -> Vector2:
+	var b: int = u.branch
+	var lines: int = GameState.BRANCHES[b].lines.size()
+	var ang: float = BRANCH_ANGLE[b]
+	if lines > 1 and int(u.col) >= 0:
+		ang += (float(u.col) - (lines - 1) * 0.5) * LINE_SPREAD
+	var d := ROOT_DIST + float(u.row) * ROW_STEP
+	var r := deg_to_rad(ang)
+	return Vector2(cos(r) * STRETCH.x, sin(r) * STRETCH.y) * d
 
 
-func row_y(row: int) -> float:
-	return HEADER_H + row * (NODE_SIZE.y + ROW_GAP) + (SPLIT_GAP if row >= 1 else 0.0)
+func _layout() -> void:
+	_center = Vector2(size.x * 0.5, (HEADER_H + size.y - FOOTER_H) * 0.5)
+	for id in _nodes:
+		var node: Control = _nodes[id]
+		node.position = (_center + _offsets[id] - node.size * 0.5).round()
+	_canvas.queue_redraw()
+	if not _shown_id.is_empty():
+		_show_tip(_shown_id)
 
 
-func column_x(branch: int, col: int) -> float:
-	var lay: Dictionary = _branch_layout()[branch]
-	if col < 0:
-		return lay.x + (lay.w - NODE_SIZE.x) * 0.5
-	return lay.x + col * (NODE_SIZE.x + COL_GAP)
+func node_pos(id: String) -> Vector2:
+	return _center + _offsets.get(id, Vector2.ZERO)
 
 
-func _build_nodes() -> void:
-	var layout := _branch_layout()
-	var last: Dictionary = layout[layout.size() - 1]
-	var max_row := 0
-	for u in GameState.UPGRADES:
-		max_row = maxi(max_row, int(u.row))
-	_canvas.custom_minimum_size = Vector2(last.x + last.w + MARGIN_X, row_y(max_row) + NODE_SIZE.y)
-	for u in GameState.UPGRADES:
-		var color: Color = GameState.BRANCHES[u.branch].color
-		var node := _make_node(u, color)
-		node.position = Vector2(column_x(u.branch, u.col), row_y(u.row))
-		node.size = NODE_SIZE
-		_canvas.add_child(node)
-		_nodes[u.id] = node
-		if _first_focus == null:
-			_first_focus = node
+func center() -> Vector2:
+	return _center
 
 
-func _make_node(u: Dictionary, color: Color) -> Button:
-	var b := Button.new()
-	b.custom_minimum_size = NODE_SIZE
-	b.focus_mode = Control.FOCUS_ALL
-	b.text = ""
+func _build_tip() -> void:
+	_tip = PanelContainer.new()
+	var style := UiTheme._box(Color(0.07, 0.045, 0.04, 0.96), Color(1, 0.78, 0.4, 0.75), 2, 12)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	_tip.add_theme_stylebox_override("panel", style)
+	_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tip.visible = false
+	add_child(_tip)
 	var v := VBoxContainer.new()
-	v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	v.offset_left = 12
-	v.offset_right = -10
-	v.offset_top = 6
-	v.offset_bottom = -6
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_theme_constant_override("separation", 3)
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_theme_constant_override("separation", 0)
-	b.add_child(v)
-	var name_lbl := UiTheme.label(u.name, 15, UiTheme.CREAM, true)
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_lbl.max_lines_visible = 2
-	name_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(name_lbl)
-	var state_lbl := UiTheme.label("", 15, UiTheme.SAND, true)
-	state_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	v.add_child(state_lbl)
-	b.set_meta("id", u.id)
-	b.set_meta("color", color)
-	b.set_meta("state_label", state_lbl)
-	b.set_meta("name_label", name_lbl)
-	var lock := Padlock.new()
-	lock.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	lock.visible = false
-	b.add_child(lock)
-	b.set_meta("lock", lock)
-	b.pressed.connect(_on_node_pressed.bind(u.id))
-	b.focus_entered.connect(_on_node_focus.bind(u.id))
-	b.mouse_entered.connect(_show_detail.bind(u.id))
-	b.mouse_exited.connect(func(): _show_detail(_focus_id))
-	return b
-
-
-func _build_detail() -> Control:
-	var box := PanelContainer.new()
-	var style := UiTheme._box(Color(0.1, 0.06, 0.05, 0.75), Color(1, 0.85, 0.6, 0.3), 2, 16)
-	box.add_theme_stylebox_override("panel", style)
-	box.custom_minimum_size = Vector2(0, 118)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 2)
-	box.add_child(v)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
-	v.add_child(h)
-	_detail_title = UiTheme.label("", 24, UiTheme.GOLD, true)
-	h.add_child(_detail_title)
-	_detail_where = UiTheme.label("", 17, UiTheme.SAND)
-	_detail_where.size_flags_vertical = Control.SIZE_SHRINK_END
-	h.add_child(_detail_where)
-	_detail_desc = UiTheme.label("", 19, UiTheme.CREAM)
-	_detail_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	v.add_child(_detail_desc)
-	_detail_state = UiTheme.label("", 18, UiTheme.SAND, true)
-	v.add_child(_detail_state)
-	return box
+	_tip.add_child(v)
+	_tip_title = UiTheme.label("", 24, UiTheme.GOLD, true)
+	v.add_child(_tip_title)
+	_tip_where = UiTheme.label("", 15, UiTheme.SAND)
+	v.add_child(_tip_where)
+	var sep := ColorRect.new()
+	sep.color = Color(1, 0.78, 0.4, 0.35)
+	sep.custom_minimum_size = Vector2(0, 1)
+	v.add_child(sep)
+	_tip_desc = UiTheme.label("", 18, UiTheme.CREAM)
+	_tip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip_desc.custom_minimum_size = Vector2(340, 0)
+	v.add_child(_tip_desc)
+	_tip_state = UiTheme.label("", 17, UiTheme.SAND, true)
+	_tip_state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tip_state.custom_minimum_size = Vector2(340, 0)
+	v.add_child(_tip_state)
 
 
 # ------------------------------------------------------------------ Ações
 
-func _on_node_focus(id: String) -> void:
-	_focus_id = id
-	_show_detail(id)
+func _on_hover(id: String) -> void:
+	_hover_id = id
+	_show_tip(id)
+	Sfx.play("ui_hover", -16.0, 1.0, 0.05)
+
+
+func _on_unhover(id: String) -> void:
+	if _hover_id == id:
+		_hover_id = ""
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused is SkillNode:
+		_show_tip((focused as SkillNode).id)
+	else:
+		_hide_tip()
+
+
+func _on_focus_lost() -> void:
+	if _hover_id.is_empty():
+		_hide_tip()
 
 
 func _on_eaten_changed(_total: int, _delta: int) -> void:
@@ -206,14 +231,14 @@ func _on_eaten_changed(_total: int, _delta: int) -> void:
 func _on_node_pressed(id: String) -> void:
 	if GameState.buy(id):
 		Sfx.play("upgrade", -2.0)
-		var node: Button = _nodes[id]
+		var node: Control = _nodes[id]
 		node.pivot_offset = node.size * 0.5
 		var tw := create_tween()
-		tw.tween_property(node, "scale", Vector2(1.08, 1.08), 0.1)
-		tw.tween_property(node, "scale", Vector2.ONE, 0.18)
+		tw.tween_property(node, "scale", Vector2(1.25, 1.25), 0.1)
+		tw.tween_property(node, "scale", Vector2.ONE, 0.22)
 	else:
 		Sfx.play("deny", -6.0)
-	_show_detail(id)
+	_show_tip(id)
 
 
 func _on_respec() -> void:
@@ -227,79 +252,43 @@ func _on_respec() -> void:
 # ------------------------------------------------------------------ Estado
 
 func refresh() -> void:
-	var pts := GameState.points_available()
-	_points_label.text = "%d %s" % [pts, "ponto" if pts == 1 else "pontos"]
 	if _respec:
 		_respec.disabled = GameState.purchased.is_empty()
+	_hint.text = _summary_text()
 	for id in _nodes:
-		var node: Button = _nodes[id]
-		var color: Color = node.get_meta("color")
-		var state := GameState.upgrade_state(id)
-		var cost := GameState.cost_of(id)
-		var state_lbl: Label = node.get_meta("state_label")
-		var bg := UiTheme._box(Color(0.2, 0.12, 0.1, 0.92), Color(0.5, 0.4, 0.33, 0.6), 2, 16)
-		# O que ainda não existe no jogo aparece só com o cadeado.
-		(node.get_meta("name_label") as Label).visible = state != 3
-		match state:
-			2:
-				bg = UiTheme._box(Color(color.r * 0.45, color.g * 0.32, color.b * 0.25, 0.95), UiTheme.GOLD, 3, 16)
-				state_lbl.text = "Aprendida"
-				state_lbl.add_theme_color_override("font_color", UiTheme.GOLD)
-				node.modulate = Color.WHITE
-			1:
-				var can := pts >= cost
-				bg = UiTheme._box(Color(0.3, 0.17, 0.12, 0.95), color if can else Color(0.6, 0.5, 0.4), 3 if can else 2, 16)
-				state_lbl.text = "%d pontos" % cost
-				state_lbl.add_theme_color_override("font_color", color.lightened(0.25) if can else UiTheme.SAND)
-				node.modulate = Color.WHITE
-			3:
-				state_lbl.text = ""
-				node.modulate = Color(1, 1, 1, 0.5)
-			_:
-				state_lbl.text = "%d pontos" % cost
-				state_lbl.add_theme_color_override("font_color", Color(0.7, 0.62, 0.55))
-				node.modulate = Color(1, 1, 1, 0.55)
-		(node.get_meta("lock") as Control).visible = state == 3
-		for k in ["normal", "hover", "pressed", "focus"]:
-			var box := bg.duplicate() as StyleBoxFlat
-			box.content_margin_top = 4
-			box.content_margin_bottom = 4
-			box.shadow_size = 4
-			if k == "hover" and state == 1:
-				box.bg_color = box.bg_color.lightened(0.12)
-			if k == "focus":
-				box.draw_center = false
-				box.border_color = Color(1, 0.95, 0.7)
-			node.add_theme_stylebox_override(k, box)
+		(_nodes[id] as Control).queue_redraw()
 	_canvas.queue_redraw()
-	_show_detail(_shown_id)
+	if _tip.visible and not _shown_id.is_empty():
+		_show_tip(_shown_id)
 
 
-func _show_detail(id: String) -> void:
-	_shown_id = id
+func _hide_tip() -> void:
+	_tip.visible = false
+	_shown_id = ""
+
+
+## Quadro com o nome, o ramo, o que a habilidade faz e quanto custa, ao lado dela.
+func _show_tip(id: String) -> void:
 	var u := GameState.get_upgrade(id)
 	if u.is_empty():
-		_detail_title.text = "Escolha uma habilidade"
-		_detail_where.text = ""
-		_detail_desc.text = "Passe o mouse (ou o controle) numa habilidade para ver o que ela faz e quanto custa. Clique para aprender."
-		_detail_state.text = _summary_text()
-		_detail_state.add_theme_color_override("font_color", UiTheme.SAND)
+		_hide_tip()
 		return
+	_shown_id = id
 	var branch: Dictionary = GameState.BRANCHES[u.branch]
-	_detail_title.text = u.name
-	_detail_title.add_theme_color_override("font_color", branch.color.lightened(0.2))
+	_tip_title.text = u.name
+	_tip_title.add_theme_color_override("font_color", branch.color.lightened(0.25))
 	var where: String = branch.name
-	if u.col >= 0 and branch.lines.size() == 2:
+	if int(u.col) >= 0 and branch.lines.size() > 1:
 		where += " · linha de %s" % branch.lines[u.col]
-	_detail_where.text = where
-	_detail_desc.text = u.desc
+	_tip_where.text = where
+	_tip_desc.text = u.desc
 	var pts := GameState.points_available()
 	var cost: int = u.cost
 	var col := UiTheme.SAND
 	var text := ""
 	match GameState.upgrade_state(id):
 		2:
-			text = "Você já aprendeu esta habilidade."
+			text = "Aprendida."
 			col = UiTheme.GOLD
 		3:
 			text = "Ainda não disponível."
@@ -314,103 +303,407 @@ func _show_detail(id: String) -> void:
 				col = branch.color.lightened(0.3)
 			else:
 				text = "Custa %d pontos: faltam %d formigas." % [cost, cost - pts]
-	_detail_state.text = text
-	_detail_state.add_theme_color_override("font_color", col)
+	_tip_state.text = text
+	_tip_state.add_theme_color_override("font_color", col)
+	_tip.visible = true
+	_tip.reset_size()
+	var tsize := _tip.get_combined_minimum_size()
+	_tip.size = tsize
+	# Ao lado da habilidade, do lado de fora da árvore, sem sair da tela.
+	var p := node_pos(id)
+	var r := (ROOT_R if (u.requires as Array).is_empty() else NODE_R) + 22.0
+	var pos := Vector2(p.x + r, p.y - tsize.y * 0.5)
+	if p.x < _center.x - 10.0:
+		pos.x = p.x - r - tsize.x
+	elif absf(p.x - _center.x) <= 10.0:
+		pos = Vector2(p.x + r, p.y - tsize.y * 0.5)
+	pos.x = clampf(pos.x, 12.0, size.x - tsize.x - 12.0)
+	pos.y = clampf(pos.y, HEADER_H, size.y - FOOTER_H - tsize.y)
+	_tip.position = pos
 
 
 func _summary_text() -> String:
 	var n := GameState.affordable_count()
 	if n == 1:
-		return "Já dá para aprender 1 habilidade."
+		return "Já dá para aprender 1 habilidade: passe o mouse para ver, clique para aprender."
 	if n > 1:
-		return "Já dá para aprender %d habilidades." % n
+		return "Já dá para aprender %d habilidades: passe o mouse para ver, clique para aprender." % n
 	var goal := GameState.next_goal()
 	if goal.is_empty():
-		return ""
+		return "Passe o mouse numa habilidade para ver o que ela faz."
 	return "Próxima: %s (%d pontos) · faltam %d formigas." % [goal.name, goal.cost, goal.cost - GameState.points_available()]
 
 
 func open() -> void:
-	_focus_id = ""
+	_hover_id = ""
+	_hide_tip()
 	refresh()
 	visible = true
-	if _first_focus:
-		_first_focus.grab_focus.call_deferred()
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused:
+		focused.release_focus()
+	# Teste (capturas): já abre com uma habilidade escolhida, como com o controle.
+	if DevTools.args.has("focus") and _nodes.has(String(DevTools.args.focus)):
+		(_nodes[String(DevTools.args.focus)] as Control).grab_focus.call_deferred()
 
 
 # ------------------------------------------------------------------ Desenho
 
-## Área da árvore: nomes dos ramos, das linhas e as ligações entre habilidades.
+## Fundo: céu escuro com estrelas, órbitas em volta do centro, as ligações
+## entre as habilidades, o medalhão do centro com os pontos e os nomes.
 class TreeCanvas extends Control:
 	const UT := preload("res://scripts/ui/ui_theme.gd")
 	var tree
-	var node_size := Vector2.ZERO
+	var _stars: Array[Vector4] = []
 
 	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mouse_filter = Control.MOUSE_FILTER_PASS
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 77
+		for i in 260:
+			_stars.append(Vector4(rng.randf(), rng.randf(), rng.randf_range(0.6, 1.7), rng.randf_range(0.12, 0.6)))
 
 	func _draw() -> void:
 		if tree == null:
 			return
-		var font: Font = UT.FONT_BOLD
-		var layout: Array = tree._branch_layout()
-		var ns := node_size
-		# Ligações (pré-requisito -> habilidade).
+		var c: Vector2 = tree.center()
+		# Céu: escuro nas bordas, um brilho quente no meio.
+		draw_rect(Rect2(Vector2.ZERO, size), Color(0.035, 0.024, 0.024))
+		for k in 8:
+			var t := float(k) / 7.0
+			_ellipse_fill(c, Vector2(1.5, 1.0) * lerpf(560.0, 90.0, t), Color(0.55, 0.3, 0.16, 0.022 + t * 0.012))
+		for s in _stars:
+			var p := Vector2(s.x * size.x, s.y * size.y)
+			draw_circle(p, s.z, Color(1.0, 0.9, 0.75, s.w))
+		# Órbitas (as distâncias de cada nível).
+		var st: Vector2 = tree.STRETCH
+		for k in 6:
+			var d: float = tree.ROOT_DIST + k * tree.ROW_STEP
+			_ellipse_line(c, st * d, Color(1.0, 0.8, 0.5, 0.05 if k > 0 else 0.08), 1.5)
+		# Ligações: do centro até a 1ª habilidade de cada ramo, e de cada uma
+		# para a seguinte.
 		for u in GameState.UPGRADES:
-			var to: Vector2 = Vector2(tree.column_x(u.branch, u.col) + ns.x * 0.5, tree.row_y(u.row))
+			var to: Vector2 = tree.node_pos(u.id)
 			var state := GameState.upgrade_state(u.id)
-			var branch_col: Color = GameState.BRANCHES[u.branch].color
-			var col := Color(0.42, 0.34, 0.29)
-			if state == 2:
-				col = UT.GOLD
-			elif state == 1:
-				col = branch_col
+			var bcol: Color = GameState.BRANCHES[u.branch].color
+			if (u.requires as Array).is_empty():
+				var dir := (to - c).normalized()
+				_link(c + dir * (tree.CENTER_R + 4.0), to, 2 if state == 2 else (1 if state == 1 else 0), bcol)
+				continue
 			for r in u.requires:
-				var p := GameState.get_upgrade(String(r))
-				var from := Vector2(tree.column_x(p.branch, p.col) + ns.x * 0.5, tree.row_y(p.row) + ns.y)
-				if is_equal_approx(from.x, to.x):
-					draw_line(from, to, col, 5.0, true)
-				else:
-					var mid := from.y + (to.y - from.y) * 0.35
-					draw_polyline(PackedVector2Array([from, Vector2(from.x, mid), Vector2(to.x, mid), to]), col, 5.0, true)
-		# Nome dos ramos e das linhas.
+				var from: Vector2 = tree.node_pos(String(r))
+				var lit := 0
+				if state == 2:
+					lit = 2
+				elif state == 1:
+					lit = 1
+				_link(from, to, lit, bcol)
+		# Medalhão do centro, com os pontos para gastar.
+		draw_circle(c, tree.CENTER_R + 10.0, Color(1.0, 0.76, 0.3, 0.07))
+		draw_circle(c, tree.CENTER_R + 3.0, Color(0.03, 0.02, 0.02))
+		draw_circle(c, tree.CENTER_R, Color(0.16, 0.09, 0.06))
+		draw_circle(c, tree.CENTER_R - 9.0, Color(0.1, 0.06, 0.045))
+		draw_arc(c, tree.CENTER_R, 0, TAU, 64, UT.GOLD, 3.0, true)
+		draw_arc(c, tree.CENTER_R - 9.0, 0, TAU, 64, Color(UT.GOLD, 0.55), 1.5, true)
+		draw_arc(c, tree.CENTER_R + 8.0, 0, TAU, 64, Color(UT.GOLD, 0.35), 1.2, true)
+		for k in 16:
+			var a := TAU * k / 16.0
+			var dir := Vector2(cos(a), sin(a))
+			var long := k % 4 == 0
+			draw_line(c + dir * (tree.CENTER_R + 3.0), c + dir * (tree.CENTER_R + (12.0 if long else 7.0)),
+				Color(UT.GOLD, 0.8 if long else 0.45), 2.0 if long else 1.2, true)
+		var pts := GameState.points_available()
+		var font: Font = UT.FONT_BOLD
+		var num := str(pts)
+		var nsz := font.get_string_size(num, HORIZONTAL_ALIGNMENT_LEFT, -1, 40)
+		draw_string(font, c + Vector2(-nsz.x * 0.5, 8), num, HORIZONTAL_ALIGNMENT_LEFT, -1, 40, UT.CREAM)
+		var word := "ponto" if pts == 1 else "pontos"
+		var wsz := UT.FONT.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, 16)
+		draw_string(UT.FONT, c + Vector2(-wsz.x * 0.5, 30), word, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UT.SAND)
+		# Nome de cada ramo, no caminho entre o centro e a 1ª habilidade dele.
 		for b in GameState.BRANCHES.size():
 			var branch: Dictionary = GameState.BRANCHES[b]
-			var lay: Dictionary = layout[b]
-			var name_size := font.get_string_size(branch.name, HORIZONTAL_ALIGNMENT_LEFT, -1, 23)
-			draw_string(font, Vector2(lay.x + (lay.w - name_size.x) * 0.5, 24), branch.name,
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 23, branch.color)
-			if branch.lines.size() == 2:
-				for c in 2:
-					var text: String = branch.lines[c]
-					var tsz := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
-					var cx: float = tree.column_x(b, c) + ns.x * 0.5
-					var y: float = tree.row_y(1) - 15.0
-					var pill := Rect2(Vector2(cx - tsz.x * 0.5 - 9, y - 11), Vector2(tsz.x + 18, 21))
-					var sb := StyleBoxFlat.new()
-					sb.bg_color = Color(0.16, 0.09, 0.07, 0.95)
-					sb.border_color = Color(branch.color, 0.7)
-					sb.set_border_width_all(1)
-					sb.set_corner_radius_all(10)
-					draw_style_box(sb, pill)
-					draw_string(font, Vector2(cx - tsz.x * 0.5, y + 5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14,
-						branch.color.lightened(0.25))
+			var root_id := ""
+			for u in GameState.UPGRADES:
+				if int(u.branch) == b and (u.requires as Array).is_empty():
+					root_id = u.id
+					break
+			if root_id.is_empty():
+				continue
+			var rp: Vector2 = tree.node_pos(root_id)
+			var dir := (rp - c).normalized()
+			var gap_a: float = tree.CENTER_R + 8.0
+			var gap_b: float = (rp - c).length() - tree.ROOT_R - 8.0
+			_pill(c + dir * (gap_a + gap_b) * 0.5, branch.name, 18, branch.color, true)
+		# Nome de cada linha, depois da última habilidade dela.
+		for b in GameState.BRANCHES.size():
+			var branch: Dictionary = GameState.BRANCHES[b]
+			if branch.lines.size() < 2:
+				continue
+			for col in branch.lines.size():
+				var last := {}
+				for u in GameState.UPGRADES:
+					if int(u.branch) == b and int(u.col) == col and (last.is_empty() or int(u.row) > int(last.row)):
+						last = u
+				if last.is_empty():
+					continue
+				var lp: Vector2 = tree.node_pos(last.id)
+				var dir := (lp - c).normalized()
+				# Encostado na última habilidade, sem cobrir o círculo nem o preço.
+				var half := _pill_size(branch.lines[col], 14, false) * 0.5
+				var gap: float = tree.NODE_R + 16.0 + absf(dir.x) * half.x + absf(dir.y) * half.y
+				if dir.y > 0.3:
+					gap += 14.0
+				_pill(lp + dir * gap, branch.lines[col], 14, branch.color, false)
+
+	## Ligação: escura (0), clara (1, a próxima que dá para aprender) ou dourada (2, aprendida).
+	func _link(a: Vector2, b: Vector2, lit: int, _bcol: Color) -> void:
+		draw_line(a, b, Color(0.02, 0.012, 0.01, 0.9), 8.0, true)
+		match lit:
+			2:
+				draw_line(a, b, Color(UT.GOLD, 0.28), 10.0, true)
+				draw_line(a, b, UT.GOLD, 4.0, true)
+				draw_line(a, b, Color(1.0, 0.95, 0.75), 1.5, true)
+			1:
+				draw_line(a, b, Color(1.0, 0.93, 0.8, 0.55), 2.5, true)
+			_:
+				draw_line(a, b, Color(0.36, 0.28, 0.22), 3.0, true)
+
+	func _pill_size(text: String, fsize: int, big: bool) -> Vector2:
+		var tsz := UT.FONT_BOLD.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize)
+		var pad := Vector2(12, 5) if big else Vector2(9, 3)
+		return Vector2(tsz.x, fsize * 1.24) + pad * 2.0
+
+	func _pill(p: Vector2, text: String, fsize: int, col: Color, big: bool) -> void:
+		var font: Font = UT.FONT_BOLD
+		var tsz := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize)
+		var pad := Vector2(12, 5) if big else Vector2(9, 3)
+		var rect := Rect2(p - Vector2(tsz.x * 0.5, fsize * 0.62) - pad, Vector2(tsz.x, fsize * 1.24) + pad * 2.0)
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.06, 0.035, 0.03, 0.95)
+		sb.border_color = Color(col, 0.75 if big else 0.5)
+		sb.set_border_width_all(2 if big else 1)
+		sb.set_corner_radius_all(int(rect.size.y * 0.5))
+		sb.anti_aliasing = true
+		draw_style_box(sb, rect)
+		draw_string(font, Vector2(p.x - tsz.x * 0.5, p.y + fsize * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+			fsize, col.lightened(0.3 if big else 0.2))
+
+	func _ellipse_fill(c: Vector2, r: Vector2, col: Color) -> void:
+		var pts := PackedVector2Array()
+		for i in 48:
+			var a := TAU * i / 48.0
+			pts.append(c + Vector2(cos(a) * r.x, sin(a) * r.y))
+		draw_colored_polygon(pts, col)
+
+	func _ellipse_line(c: Vector2, r: Vector2, col: Color, w: float) -> void:
+		var pts := PackedVector2Array()
+		for i in 97:
+			var a := TAU * i / 96.0
+			pts.append(c + Vector2(cos(a) * r.x, sin(a) * r.y))
+		draw_polyline(pts, col, w, true)
 
 
-## Cadeado por cima das habilidades que ainda não existem no jogo.
-class Padlock extends Control:
+## Uma habilidade: círculo com moldura e ícone (o botão em si é invisível).
+class SkillNode extends Button:
+	const UT := preload("res://scripts/ui/ui_theme.gd")
+	var id := ""
+	var radius := 22.0
+	var glyph := "tongue"
+	var color := Color.WHITE
+	var root := false
+	var tree
+
 	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		focus_mode = Control.FOCUS_ALL
+		text = ""
+		for k in ["normal", "hover", "pressed", "focus", "disabled", "hover_pressed"]:
+			add_theme_stylebox_override(k, StyleBoxEmpty.new())
+		custom_minimum_size = Vector2.ONE * (radius * 2.0 + 16.0)
+		size = custom_minimum_size
+		pivot_offset = size * 0.5
+		mouse_entered.connect(queue_redraw)
+		mouse_exited.connect(queue_redraw)
+		focus_entered.connect(queue_redraw)
+		focus_exited.connect(queue_redraw)
+
+	func _has_point(p: Vector2) -> bool:
+		return p.distance_to(size * 0.5) <= radius + 5.0
 
 	func _draw() -> void:
-		var c := size * 0.5 + Vector2(0, 4)
+		var c := size * 0.5
+		var state := GameState.upgrade_state(id)
+		var cost := GameState.cost_of(id)
+		var can := state == 1 and GameState.points_available() >= cost
+		var t: float = tree._time if tree else 0.0
+		var hot := is_hovered() or has_focus()
+		var bronze := Color(0.6, 0.46, 0.32)
+		var disc := Color(0.1, 0.065, 0.05)
+		var ring := bronze
+		var ring_w := 2.5
+		var glyph_col := Color(color, 0.6)
+		var halo := 0.0
+		var halo_col := color
+		match state:
+			2:
+				disc = color.darkened(0.5)
+				ring = UT.GOLD
+				ring_w = 3.5
+				glyph_col = Color(1.0, 0.97, 0.88)
+				halo = 0.55
+				halo_col = UT.GOLD
+			1:
+				if can:
+					# Dá para aprender agora: anel claro pulsando (o dourado é só
+					# para as aprendidas).
+					var pulse := 0.5 + 0.5 * sin(t * 4.0)
+					ring = Color(1.0, 0.95, 0.85)
+					ring_w = 2.5 + pulse
+					glyph_col = color.lightened(0.2)
+					halo = 0.25 + 0.35 * pulse
+					halo_col = Color(1.0, 0.92, 0.8)
+				else:
+					glyph_col = Color(color, 0.75)
+			3:
+				ring = Color(0.32, 0.27, 0.23)
+				glyph_col = Color(0.5, 0.45, 0.4, 0.35)
+			_:
+				disc = Color(0.07, 0.05, 0.045)
+				ring = Color(0.34, 0.27, 0.22)
+				glyph_col = Color(0.5, 0.44, 0.38, 0.75)
+		if halo > 0.0:
+			draw_circle(c, radius + 11.0, Color(halo_col, halo * 0.12))
+			draw_circle(c, radius + 6.0, Color(halo_col, halo * 0.25))
+		draw_circle(c, radius + 2.5, Color(0.02, 0.012, 0.01))
+		draw_circle(c, radius, disc)
+		Glyph.paint(self, glyph, c, radius * 0.6, glyph_col)
+		draw_arc(c, radius, 0, TAU, 48, ring, ring_w, true)
+		if root:
+			# Habilidade que abre o ramo: moldura dupla com pinos, como as grandes do PoE.
+			draw_arc(c, radius + 5.5, 0, TAU, 56, Color(ring, 0.75), 1.5, true)
+			for k in 4:
+				var a := TAU * k / 4.0 + PI * 0.25
+				draw_circle(c + Vector2(cos(a), sin(a)) * (radius + 5.5), 3.0, ring)
+		if hot:
+			draw_arc(c, radius + (10.0 if root else 6.5), 0, TAU, 56, Color(1.0, 0.96, 0.8, 0.95), 2.0, true)
+		if state == 3:
+			_padlock(c)
+		elif state != 2:
+			# Preço embaixo.
+			var font: Font = UT.FONT_BOLD
+			var txt := str(cost)
+			var tsz := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
+			var y := c.y + radius + (19.0 if root else 15.0)
+			var rect := Rect2(Vector2(c.x - tsz.x * 0.5 - 6, y - 12), Vector2(tsz.x + 12, 17))
+			var sb := StyleBoxFlat.new()
+			sb.bg_color = Color(0.05, 0.03, 0.025, 0.9)
+			sb.set_corner_radius_all(8)
+			draw_style_box(sb, rect)
+			var tc := color.lightened(0.3) if can else Color(0.75, 0.66, 0.56, 0.9 if state == 1 else 0.6)
+			draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, tc)
+
+	func _padlock(c: Vector2) -> void:
 		var metal := Color(0.95, 0.85, 0.65)
-		draw_arc(c + Vector2(0, -8), 9.0, PI, TAU, 16, metal, 4.0, true)
-		draw_line(c + Vector2(-9, -8), c + Vector2(-9, -2), metal, 4.0, true)
-		draw_line(c + Vector2(9, -8), c + Vector2(9, -2), metal, 4.0, true)
+		var p := c + Vector2(0, 3)
+		draw_arc(p + Vector2(0, -6), 6.5, PI, TAU, 14, metal, 3.0, true)
+		draw_line(p + Vector2(-6.5, -6), p + Vector2(-6.5, -2), metal, 3.0, true)
+		draw_line(p + Vector2(6.5, -6), p + Vector2(6.5, -2), metal, 3.0, true)
 		var body := StyleBoxFlat.new()
 		body.bg_color = metal
-		body.set_corner_radius_all(4)
-		draw_style_box(body, Rect2(c + Vector2(-14, -3), Vector2(28, 22)))
-		draw_circle(c + Vector2(0, 6), 3.5, Color(0.3, 0.2, 0.15))
-		draw_line(c + Vector2(0, 7), c + Vector2(0, 13), Color(0.3, 0.2, 0.15), 3.0)
+		body.set_corner_radius_all(3)
+		draw_style_box(body, Rect2(p + Vector2(-10, -2), Vector2(20, 15)))
+		draw_circle(p + Vector2(0, 4), 2.5, Color(0.3, 0.2, 0.15))
+
+
+## Ícones das habilidades, desenhados com formas simples.
+class Glyph:
+	static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color) -> void:
+		match kind:
+			"tongue":
+				var pts := PackedVector2Array()
+				for i in 13:
+					var t := i / 12.0
+					pts.append(c + Vector2(lerpf(-0.78, 0.5, t), 0.32 - t * 0.55 + sin(t * PI * 1.7) * 0.28) * s)
+				ci.draw_polyline(pts, col, s * 0.24, true)
+				ci.draw_circle(pts[pts.size() - 1], s * 0.17, col)
+			"ant":
+				var w := maxf(s * 0.11, 1.5)
+				var thorax := c + Vector2(-0.05, 0.02) * s
+				for k in 3:
+					var x := (k - 1) * 0.3
+					ci.draw_polyline(PackedVector2Array([thorax, thorax + Vector2(x * 0.6, -0.3) * s,
+						thorax + Vector2(x * 1.2, -0.62) * s]), col, w, true)
+					ci.draw_polyline(PackedVector2Array([thorax, thorax + Vector2(x * 0.6, 0.3) * s,
+						thorax + Vector2(x * 1.2, 0.62) * s]), col, w, true)
+				var head := c + Vector2(-0.52, 0.0) * s
+				ci.draw_line(head, head + Vector2(-0.32, -0.42) * s, col, w, true)
+				ci.draw_line(head, head + Vector2(-0.42, -0.2) * s, col, w, true)
+				ci.draw_circle(head, s * 0.2, col)
+				ci.draw_circle(thorax, s * 0.17, col)
+				ci.draw_circle(c + Vector2(0.45, 0.0) * s, s * 0.32, col)
+			"bolt":
+				var poly := PackedVector2Array()
+				for p in [Vector2(0.18, -0.9), Vector2(-0.5, 0.12), Vector2(-0.04, 0.12), Vector2(-0.2, 0.9),
+						Vector2(0.5, -0.16), Vector2(0.05, -0.16)]:
+					poly.append(c + p * s)
+				ci.draw_colored_polygon(poly, col)
+			"cross":
+				ci.draw_arc(c, s * 0.58, 0, TAU, 32, col, s * 0.13, true)
+				for k in 4:
+					var d := Vector2.RIGHT.rotated(TAU * k / 4.0)
+					ci.draw_line(c + d * s * 0.3, c + d * s * 0.92, col, s * 0.13, true)
+				ci.draw_circle(c, s * 0.1, col)
+			"claws":
+				for k in 3:
+					var off := (k - 1) * 0.42
+					var pts := PackedVector2Array()
+					for i in 7:
+						var t := i / 6.0
+						pts.append(c + Vector2(off + lerpf(-0.3, 0.3, t) + sin(t * PI) * 0.12, lerpf(-0.75, 0.75, t)) * s)
+					ci.draw_polyline(pts, col, s * 0.15, true)
+			"burst":
+				var poly := PackedVector2Array()
+				for i in 16:
+					var a := TAU * i / 16.0 - PI * 0.5
+					var r := 0.9 if i % 2 == 0 else 0.38
+					poly.append(c + Vector2(cos(a), sin(a)) * r * s)
+				ci.draw_colored_polygon(poly, col)
+			"clock":
+				ci.draw_arc(c, s * 0.72, 0, TAU, 32, col, s * 0.14, true)
+				ci.draw_line(c, c + Vector2(0, -0.48) * s, col, s * 0.13, true)
+				ci.draw_line(c, c + Vector2(0.36, 0.12) * s, col, s * 0.13, true)
+			"paw":
+				var pad := PackedVector2Array()
+				for i in 24:
+					var a := TAU * i / 24.0
+					pad.append(c + Vector2(cos(a) * 0.46, 0.3 + sin(a) * 0.36) * s)
+				ci.draw_colored_polygon(pad, col)
+				for p in [Vector2(-0.62, -0.18), Vector2(-0.24, -0.55), Vector2(0.24, -0.55), Vector2(0.62, -0.18)]:
+					ci.draw_circle(c + p * s, s * 0.18, col)
+			"chevrons":
+				for x0 in [-0.62, -0.02]:
+					ci.draw_polyline(PackedVector2Array([c + Vector2(x0, -0.55) * s, c + Vector2(x0 + 0.5, 0) * s,
+						c + Vector2(x0, 0.55) * s]), col, s * 0.17, true)
+			"nose":
+				var o := c + Vector2(-0.5, 0) * s
+				ci.draw_circle(o, s * 0.2, col)
+				for k in 3:
+					ci.draw_arc(o, s * (0.48 + k * 0.32), -0.75, 0.75, 12, Color(col, 1.0 - k * 0.22), s * 0.12, true)
+			"rings":
+				ci.draw_arc(c, s * 0.78, 0, TAU, 32, col, s * 0.11, true)
+				ci.draw_arc(c, s * 0.46, 0, TAU, 32, col, s * 0.11, true)
+				ci.draw_circle(c, s * 0.15, col)
+			"eye":
+				var top := PackedVector2Array()
+				var bottom := PackedVector2Array()
+				for i in 13:
+					var t := i / 12.0
+					var x := lerpf(-0.88, 0.88, t)
+					top.append(c + Vector2(x, -sin(t * PI) * 0.5) * s)
+					bottom.append(c + Vector2(x, sin(t * PI) * 0.5) * s)
+				ci.draw_polyline(top, col, s * 0.12, true)
+				ci.draw_polyline(bottom, col, s * 0.12, true)
+				ci.draw_circle(c, s * 0.25, col)
+			"peak":
+				ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.85, 0.6) * s, c + Vector2(-0.1, -0.7) * s,
+					c + Vector2(0.25, -0.1) * s, c + Vector2(0.45, -0.35) * s, c + Vector2(0.9, 0.6) * s]), col)

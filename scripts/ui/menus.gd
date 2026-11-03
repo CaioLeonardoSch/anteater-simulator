@@ -257,6 +257,7 @@ Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; a
 
 [b]Dicas[/b]
 · [b]Cada formiga comida vale 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
+· A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
 · Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 20.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.

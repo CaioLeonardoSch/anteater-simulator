@@ -635,14 +635,21 @@ class Crosshair extends Control:
 			return
 		var c := size * 0.5
 		var cam: Camera3D = player.camera
-		var fwd := -cam.global_transform.basis.z
-		var reach := GameState.tongue_range()
-		var target: int = swarm.best_target(cam.global_position, fwd, reach + 0.7, cos(deg_to_rad(10.0)))
-		var locked := target >= 0
+		# Verde: a lambida vai pegar formiga (com Língua Certeira, a língua vai
+		# atrás dela; sem, só se ela estiver perto de onde a língua chega reta).
+		var locked: bool = player.aim_hits
 		var col := Color(0.6, 1.0, 0.5, 0.95) if locked else Color(1, 0.96, 0.88, 0.85)
 		var r := 13.0 if locked else 10.0
 		draw_arc(c, r, 0, TAU, 32, col, 2.5, true)
 		draw_circle(c, 2.5, col)
+		# Língua Certeira: um anel pequeno na formiga que a língua vai buscar.
+		var ant: int = player.aim_ant
+		if ant >= 0 and ant < swarm.pos.size():
+			var p: Vector3 = swarm.pos[ant]
+			if not cam.is_position_behind(p):
+				var sp: Vector2 = get_global_transform_with_canvas().affine_inverse() * cam.unproject_position(p)
+				if sp.distance_to(c) > r + 4.0:
+					draw_arc(sp, 6.0, 0, TAU, 20, Color(0.6, 1.0, 0.5, 0.85), 2.0, true)
 		var work := maxf(player.dig_progress, player.exit_progress)
 		if work > 0.0:
 			draw_arc(c, 24, -PI * 0.5, -PI * 0.5 + TAU * work, 48, Color(1, 0.75, 0.3), 5, true)

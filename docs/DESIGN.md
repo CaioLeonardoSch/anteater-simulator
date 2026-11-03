@@ -51,7 +51,7 @@ buscamos, no espírito delas:
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
 | **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
-| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 3200 formigas, 12 formigueiros e 58 câmaras (12 no meio do campo), rainhas, 5 habilidades (28 níveis), jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 3200 formigas, 12 formigueiros e 58 câmaras (12 no meio do campo), rainhas, 5 habilidades (30 níveis), jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -89,8 +89,8 @@ buscamos, no espírito delas:
 - **Na área 1, os ninhos são só formigueiros**, de uma formiga que fica só no
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
 - **3200 formigas** (eram 1000). Somando o preço de todas as habilidades do
-  Cerrado dá **2485 pontos**: dá para aprender tudo e ainda sobram cerca de
-  **715 formigas** (uns 3 formigueiros) para jogar com tudo liberado.
+  Cerrado dá **2575 pontos**: dá para aprender tudo e ainda sobram cerca de
+  **625 formigas** (2 ou 3 formigueiros) para jogar com tudo liberado.
 - **Por enquanto as habilidades ficam como estão.** A pontuação e a quantidade
   de formigas e cupins para liberar tudo serão reavaliadas mais para a frente.
 
@@ -146,6 +146,10 @@ buscamos, no espírito delas:
 - A **língua** começa com **um clique por lambida**, e cada lambida pega um
   inseto. A primeira habilidade (**Lambida Contínua**, 25 pontos) deixa segurar
   o botão; a linha de **Bocado** aumenta quantas vêm de uma vez: 5, 15, 25 e 40.
+- No começo a língua vai **reta** até onde você mira e pega a formiga que
+  estiver perto da ponta. A **Língua Certeira** (30 pontos) faz a língua ir
+  sozinha atrás da formiga mais perto da mira, e a **Mira Ampla** (60) deixa
+  essa área 25% maior.
 - **O fim:** a região está limpa quando não sobra nenhum inseto, nem nas trilhas
   nem dentro dos ninhos.
 
@@ -166,14 +170,22 @@ o seu preço**. Você escolhe onde gastar, e os gestos novos (segurar para lambe
 lambida, cavar, escalar) também são comprados assim. Dá para redistribuir os
 pontos de graça.
 
-Cada ramo começa com uma habilidade e depois se divide em **duas linhas que não
-se excluem** (dá para seguir as duas).
+Cada ramo começa com uma habilidade e depois se divide em **linhas que não se
+excluem** (dá para seguir todas): duas em cada ramo, e três na Língua.
+
+**A árvore tem cara de constelação**, inspirada na árvore passiva de Path of
+Exile (só no visual, sem aquele tamanho todo): os 5 ramos saem do centro, onde
+ficam os pontos; cada habilidade é um círculo com ícone e preço, as aprendidas
+acendem em dourado e as que já dá para aprender pulsam. O nome e o que cada uma
+faz aparecem ao passar o mouse (ou o controle). Ela **não abre sozinha**: quando
+dá para aprender algo, um aviso no canto da tela lembra do **TAB**.
 
 | Habilidade | Linha | Níveis (preço em pontos) |
 |---|---|---|
 | **Língua** | começo | Lambida Contínua (25: segurar para lamber) |
 | | Bocado | Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40) |
 | | Destreza | Língua Comprida (70: +50% de alcance) · Saliva Grudenta (100: gruda num raio 70% maior) · Língua Turbo (150: 2x mais rápida) |
+| | Mira | Língua Certeira (30: a língua vai atrás da formiga mais perto da mira; sem ela, vai reta) · Mira Ampla (60: essa área fica 25% maior) |
 | **Garras** | começo | Cavar (35: abre as câmaras; depois as garras descansam 25 s) |
 | | Força | Garras Fortes (70: as moradoras ficam tontas ao abrir) · Tremor (110: pulo com pancada; recarga de 21 s) · Terremoto (170: pulo mais alto, tremor maior, puxa as tontas) |
 | | Rapidez | Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: descanso de 5 s e cava na metade do tempo) · Recarga do Tremor (130: Tremor em 14 s) · Recarga Relâmpago (150: Tremor em 7 s) |
@@ -210,11 +222,12 @@ Feito, seguindo as decisões:
 4. **As 3200 formigas** são divididas assim: cerca de 45% andam pelas trilhas
    (e voltam para casa), o resto mora nas câmaras. 3100 operárias + 5 rainhas × 20.
 5. **Soldados:** saíram. A **tanajura** continua.
-6. **As 5 habilidades, com 28 níveis**, cada um com seu preço (seção 3). A
-   língua começa com um clique por lambida; correndo não dá para lamber até
-   aprender Lamber Correndo. Farejar também precisa ser aprendido. O **Tremor**
-   é um pulo: a pancada vem ao cair. A **Escalada + Cauda** aparece com cadeado.
-   Dá para **redistribuir os pontos**.
+6. **As 5 habilidades, com 30 níveis**, cada um com seu preço (seção 3), numa
+   árvore com **cara de constelação** que não abre sozinha. A língua começa com
+   um clique por lambida e vai **reta** até aprender a Língua Certeira; correndo
+   não dá para lamber até aprender Lamber Correndo. Farejar também precisa ser
+   aprendido. O **Tremor** é um pulo: a pancada vem ao cair. A **Escalada +
+   Cauda** aparece com cadeado. Dá para **redistribuir os pontos**.
 7. **Progresso visível:** contador de formigueiros limpos, pontos e a próxima
    habilidade no canto da tela, avisos de câmara limpa e de habilidade nova, e
    florzinhas no formigueiro quando ele fica limpo. O Faro mostra, conforme os
@@ -235,7 +248,10 @@ Feito, seguindo as decisões:
 11. **Penhascos** em volta da clareira, que são o fim do mapa, com árvores no
    platô e pedras soltas no pé.
 12. **Começo na caverna:** o tamanduá acorda numa caverna no pé do penhasco,
-   olhando para o **cupinzeiro gigante** lá longe, e a barriga ronca.
+   olhando para o **cupinzeiro gigante** lá longe, e a barriga ronca. Uma
+   **trilha de terra**, sem capim, leva da caverna até o formigueiro mais perto
+   (o Formigueiro Leste). O cupinzeiro gigante pega a mesma névoa e a mesma luz
+   do resto do cenário.
 13. **Fim da demo:** a passagem para a área 2 fica fechada por um **tronco
    caído**. Com 100% limpo, a bússola mostra a saída; segurando **E** perto do
    tronco, as garras quebram o tronco e a demo termina.
@@ -406,8 +422,8 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
   através do capim; **tremor** que deixa as formigas tontas.
 - **Tanajura** voadora que dá o Frenesi.
-- **5 habilidades com 28 níveis**: 1 formiga = 1 ponto, cada nível com seu
-  preço, e redistribuição grátis.
+- **5 habilidades com 30 níveis**, numa árvore com cara de constelação: 1
+  formiga = 1 ponto, cada nível com seu preço, e redistribuição grátis.
 - **Salva sozinho**; dá para continuar de onde parou.
 - **Tela cheia e várias resoluções**, com opções gráficas separadas.
 
@@ -470,3 +486,6 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 02/11/2026 | Passagem para a área 2 | Em aberto | Fechada por um tronco caído; com 100% limpo, as garras quebram o tronco e a demo termina |
 | 02/11/2026 | Lagoas | Só na "outra floresta" | Uma ou duas na clareira, só de enfeite |
 | 02/11/2026 | Barriga | Ideia: roncar mais forte na direção certa | Só ronca no começo; não aponta caminho |
+| 02/11/2026 | Primeiro caminho | Nenhum | Trilha de terra sem capim da caverna até o formigueiro mais perto |
+| 02/11/2026 | Mira da língua | Ajuda de mira desde o começo | A língua vai reta; nova linha de Mira: Língua Certeira (30) e Mira Ampla (60, área 25% maior) |
+| 02/11/2026 | Árvore de habilidades | Abria sozinha nos primeiros 25 pontos; caixas em colunas | Não abre sozinha; visual de constelação, inspirado em Path of Exile |

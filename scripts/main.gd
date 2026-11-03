@@ -241,7 +241,8 @@ func _begin_playing() -> void:
 	player.bot = DevTools.autoplay
 	player.controls_enabled = not DevTools.autoplay
 	menus.show_screen("")
-	hud.visible = true
+	# Teste (capturas limpas): --nohud esconde a interface.
+	hud.visible = not DevTools.args.has("nohud")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Sfx.set_music_duck(0.35)
 

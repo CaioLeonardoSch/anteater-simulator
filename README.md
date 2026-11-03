@@ -208,7 +208,8 @@ godot --path . -- --start=play --autoplay --timescale=4 --stats
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·
-`--focus=ID` abre a árvore já com uma habilidade escolhida ·
+`--focus=ID` abre a árvore já com uma habilidade escolhida · `--nohud` esconde a
+interface (capturas limpas do cenário) ·
 `--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.

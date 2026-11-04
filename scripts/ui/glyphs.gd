@@ -158,3 +158,6 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 		"diamond":
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -0.7) * s, c + Vector2(0.7, 0) * s,
 				c + Vector2(0, 0.7) * s, c + Vector2(-0.7, 0) * s]), col)
+		"cave":
+			ci.draw_colored_polygon(_dome(c, s, 0.92, 1.0), col)
+			ci.draw_colored_polygon(_dome(c, s, 0.42, 0.62), Color(0.04, 0.028, 0.022, col.a))

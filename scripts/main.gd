@@ -7,7 +7,8 @@ const Swarm := preload("res://scripts/ants/ant_swarm.gd")
 const Colony := preload("res://scripts/ants/colony.gd")
 const Player := preload("res://scripts/player/anteater.gd")
 const Hud := preload("res://scripts/ui/hud.gd")
-const SkillTree := preload("res://scripts/ui/skill_tree.gd")
+const TabMenu := preload("res://scripts/ui/tab_menu.gd")
+const Exploration := preload("res://scripts/world/exploration.gd")
 const Menus := preload("res://scripts/ui/menus.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
@@ -35,7 +36,9 @@ var player: Player
 var menu_cam: Camera3D
 var ui: CanvasLayer
 var hud: Hud
-var tree_ui: SkillTree
+## Tela do TAB (mapa e árvore de habilidades).
+var tab_ui: TabMenu
+var exploration: Exploration
 var menus: Menus
 var fade: ColorRect
 
@@ -81,7 +84,9 @@ func _ready() -> void:
 		skip_menu = false
 		_start_play()
 		if DevTools.start_mode == "tree":
-			_open_tree()
+			_open_tree(TabMenu.SKILLS)
+		elif DevTools.start_mode == "map":
+			_open_tree(TabMenu.MAP)
 	else:
 		_enter_menu()
 	fade.modulate.a = 1.0
@@ -134,17 +139,25 @@ func _build_game() -> void:
 	ui.add_child(hud)
 	hud.setup(player, swarm, colony, world)
 	hud.visible = false
-	tree_ui = SkillTree.new()
-	ui.add_child(tree_ui)
-	tree_ui.visible = false
-	tree_ui.closed.connect(_close_tree)
+	exploration = Exploration.new()
+	exploration.name = "Exploration"
+	exploration.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(exploration)
+	exploration.setup(player)
+	tab_ui = TabMenu.new()
+	ui.add_child(tab_ui)
+	tab_ui.setup(player, world, colony, exploration)
+	tab_ui.visible = false
+	tab_ui.closed.connect(_close_tree)
+	# Foto da clareira vista de cima para o mapa (enquanto a tela ainda está escura).
+	tab_ui.map_view.take_shot()
 	ui.move_child(menus, -1)
 	menus.play_pressed.connect(_on_play_pressed)
 	menus.continue_pressed.connect(_on_continue_pressed)
 	menus.resume_pressed.connect(_resume)
 	menus.restart_pressed.connect(_restart)
 	menus.main_menu_pressed.connect(_to_main_menu)
-	menus.skill_tree_pressed.connect(_open_tree)
+	menus.skill_tree_pressed.connect(_open_tree.bind(TabMenu.SKILLS))
 	GameState.level_completed.connect(_on_complete)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	Settings.changed.connect(world.apply_graphics)
@@ -223,6 +236,7 @@ func _continue_game() -> void:
 	GameState.reset_run()
 	GameState.from_save(data.get("state", {}))
 	colony.from_save(data.get("colony", {}))
+	exploration.from_save(String(data.get("explored", "")))
 	var p: Dictionary = data.get("player", {})
 	player.place_at(Vector2(float(p.get("x", world.player_start.x)), float(p.get("z", world.player_start.y))),
 		float(p.get("yaw", world.player_start_yaw)))
@@ -257,6 +271,7 @@ func save_game() -> void:
 		"state": GameState.to_save(),
 		"colony": colony.to_save(),
 		"player": {"x": gp.x, "z": gp.z, "yaw": player.yaw, "pitch": player.pitch},
+		"explored": exploration.to_save(),
 	})
 	if hud:
 		hud.show_saved()
@@ -314,25 +329,26 @@ func _resume() -> void:
 	state = State.PLAYING
 	get_tree().paused = false
 	menus.show_screen("")
-	tree_ui.visible = false
+	tab_ui.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Sfx.set_music_duck(0.35)
 
 
-func _open_tree() -> void:
+## Abre a tela do TAB (o mapa primeiro; a árvore pelo menu de pausa).
+func _open_tree(page: int = TabMenu.MAP) -> void:
 	if state == State.COMPLETE:
 		return
 	state = State.TREE
 	get_tree().paused = true
 	menus.show_screen("")
 	Settings.learn_hint("map")
-	tree_ui.open()
+	tab_ui.open(page)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play("ui_open", -6.0)
 
 
 func _close_tree() -> void:
-	tree_ui.visible = false
+	tab_ui.visible = false
 	_resume()
 
 

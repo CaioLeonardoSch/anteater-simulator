@@ -199,9 +199,8 @@ func load_settings() -> void:
 	antialiasing = clampi(antialiasing, 0, AA_NAMES.size() - 1)
 	render_scale = clampf(render_scale, 0.5, 1.0)
 	# Versões antigas só tinham "tela cheia: sim/não".
-	var old_fullscreen = cfg.get_value("video", "fullscreen", null)
-	if old_fullscreen != null:
-		window_mode = 1 if bool(old_fullscreen) else 0
+	if cfg.has_section_key("video", "fullscreen"):
+		window_mode = 1 if bool(cfg.get_value("video", "fullscreen")) else 0
 	window_mode = clampi(int(cfg.get_value("video", "window_mode", window_mode)), 0, 2)
 	window_size = cfg.get_value("video", "window_size", window_size)
 	fullscreen_resolution = cfg.get_value("video", "fullscreen_resolution", fullscreen_resolution)

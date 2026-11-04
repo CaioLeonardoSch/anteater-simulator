@@ -72,11 +72,9 @@ func _ready() -> void:
 		_nodes[u.id] = node
 		if _first_node == null:
 			_first_node = node
-	var title := UiTheme.display_label("Árvore de Habilidades", 36, UiTheme.PALE)
-	title.position = Vector2(34, 12)
-	add_child(title)
+	# O título é a aba "Habilidades" (tela do TAB); aqui fica só quanto vale um ponto.
 	var sub := UiTheme.label("1 formiga comida = 1 ponto", 17, UiTheme.SAND)
-	sub.position = Vector2(38, 56)
+	sub.position = Vector2(38, 30)
 	add_child(sub)
 	_hint = UiTheme.label("", 19, UiTheme.SAND)
 	_hint.add_theme_font_override("font", UiTheme.semi_font())

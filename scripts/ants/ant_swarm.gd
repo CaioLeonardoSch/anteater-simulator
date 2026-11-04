@@ -189,8 +189,10 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 
 
 ## Moradora de uma câmara aberta (ou a rainha, parada no centro).
-## `from_tunnel` = acabou de sair do túnel, no meio da câmara.
-func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false) -> int:
+## `from_tunnel` = acabou de sair do túnel, no meio da câmara. Numa vala,
+## `axis` e `half_len` dão a direção e o meio comprimento dela.
+func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false,
+		axis: float = 0.0, half_len: float = 0.0) -> int:
 	var i := _take_slot()
 	if i < 0:
 		return -1
@@ -198,6 +200,9 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	mode[i] = Mode.CHAMBER
 	home[i] = home_code
 	anchor[i] = Vector3(center.x, radius, center.y)
+	# Moradoras não usam a trilha: dir e lateral guardam a forma da vala.
+	dir[i] = axis
+	lateral[i] = half_len
 	trail_id[i] = 0
 	speed[i] = CHAMBER_SPEED * randf_range(0.7, 1.3)
 	var p2 := center
@@ -205,6 +210,8 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 		var a := randf() * TAU
 		var spread := 0.22 if from_tunnel else 0.9
 		p2 += Vector2(cos(a), sin(a)) * radius * sqrt(randf()) * spread
+		if half_len > 0.0:
+			p2 += Vector2(cos(axis), sin(axis)) * half_len * randf_range(-1.0, 1.0) * (0.35 if from_tunnel else 0.9)
 		vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
@@ -403,6 +410,11 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 	else:
 		v = v.normalized() * speed[i] if v.length_squared() > 0.000001 else Vector2.RIGHT.rotated(randf() * TAU) * speed[i]
 	p2 += v * delta
+	# Na vala, o "centro" é o ponto do eixo dela mais perto da formiga.
+	var half := lateral[i]
+	if half > 0.0:
+		var ax := Vector2(cos(dir[i]), sin(dir[i]))
+		center += ax * clampf((p2 - center).dot(ax), -half, half)
 	var off := p2 - center
 	if off.length() > limit:
 		var n := off.normalized()

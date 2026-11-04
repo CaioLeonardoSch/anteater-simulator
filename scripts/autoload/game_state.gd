@@ -33,7 +33,7 @@ const SAVE_VERSION := 3
 ## "region" = só pode ser comprada ao chegar nessa região.
 const BRANCHES := [
 	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Mira"]},
-	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Rapidez"]},
+	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Rapidez", "Fundura"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Velocidade", "Agilidade"]},
 	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
 	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Floresta"},
@@ -74,10 +74,17 @@ const UPGRADES := [
 	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"],
 		"name": "Mira Ampla",
 		"desc": "A área da mira em que a língua procura formigas fica 25% maior."},
-	# Garras: Cavar abre as linhas de Força e de Rapidez (o descanso entre usos).
+	# Garras: Cavar abre as linhas de Força, de Rapidez (o descanso entre usos)
+	# e de Fundura (buracos maiores: câmaras grandes e a vala da rainha).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
-		"desc": "Segure [E] perto de uma câmara fechada para abri-la. Depois, as garras descansam 25 s."},
+		"desc": "Segure [E] perto de uma câmara pequena fechada para abri-la. Depois, as garras descansam 25 s."},
+	{"id": "garras_fundo", "branch": 1, "col": 2, "row": 1, "cost": 60, "requires": ["garras_cavar"],
+		"name": "Cavar Fundo",
+		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
+	{"id": "garras_real", "branch": 1, "col": 2, "row": 2, "cost": 120, "requires": ["garras_fundo"],
+		"name": "Escavação Real",
+		"desc": "Cava a vala da rainha, no pé dos formigueiros grandes: ela e a corte dela estão lá dentro."},
 	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 70, "requires": ["garras_cavar"],
 		"name": "Garras Fortes",
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
@@ -412,6 +419,21 @@ func lick_rate() -> float:
 
 func can_dig() -> bool:
 	return has("garras_cavar")
+
+
+## Até que tamanho de buraco as garras abrem: 0 nenhum, 1 câmaras pequenas,
+## 2 também as grandes (Cavar Fundo), 3 também a vala da rainha (Escavação Real).
+func dig_level() -> int:
+	if not has("garras_cavar"):
+		return 0
+	if has("garras_real"):
+		return 3
+	return 2 if has("garras_fundo") else 1
+
+
+## A habilidade que abre buracos deste tamanho (1, 2 ou 3).
+func dig_skill_for(size_class: int) -> String:
+	return ["garras_cavar", "garras_cavar", "garras_fundo", "garras_real"][clampi(size_class, 0, 3)]
 
 
 ## Quanto tempo segurando [E] para abrir uma câmara.

@@ -22,10 +22,10 @@ enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 static var skip_menu := false
 const AUTOSAVE_EVERY := 30.0
 ## Ordem em que o bot de teste aprende as habilidades (junta pontos para a próxima).
-const BOT_ORDER := ["lingua_segurar", "faro_farejar", "garras_cavar", "lingua_bocado_1", "patas_corrida",
+const BOT_ORDER := ["lingua_segurar", "faro_farejar", "garras_cavar", "lingua_bocado_1", "garras_fundo", "patas_corrida",
 	"garras_ageis", "faro_preciso", "lingua_bocado_2", "lingua_comprida", "garras_fortes", "faro_atento",
 	"patas_lamber", "lingua_bocado_3", "lingua_saliva", "garras_incansaveis", "garras_tremor", "faro_nitido",
-	"faro_apurado", "faro_camara", "lingua_turbo", "lingua_bocado_4", "patas_ligeiras", "garras_terremoto",
+	"garras_real", "faro_apurado", "faro_camara", "lingua_turbo", "lingua_bocado_4", "patas_ligeiras", "garras_terremoto",
 	"faro_agucado", "garras_recarga", "patas_galope", "faro_lendario", "garras_recarga_2"]
 
 var state := State.LOADING

@@ -6,7 +6,7 @@ extends RefCounted
 ## GameState.BRANCHES).
 const BRANCH_GLYPHS := [
 	["tongue", "ant", "bolt", "cross"],
-	["claws", "burst", "clock"],
+	["claws", "burst", "clock", "pit"],
 	["paw", "chevrons", "tongue"],
 	["nose", "rings", "eye"],
 	["peak"],
@@ -158,6 +158,16 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 		"diamond":
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -0.7) * s, c + Vector2(0.7, 0) * s,
 				c + Vector2(0, 0.7) * s, c + Vector2(-0.7, 0) * s]), col)
+		"pit":
+			# Buraco fundo: boca oval e uma seta para baixo.
+			var rim := PackedVector2Array()
+			for i in 17:
+				var a := TAU * i / 16.0
+				rim.append(c + Vector2(cos(a) * 0.85, 0.42 + sin(a) * 0.3) * s)
+			ci.draw_polyline(rim, col, s * 0.13, true)
+			ci.draw_line(c + Vector2(0, -0.85) * s, c + Vector2(0, 0.2) * s, col, s * 0.16, true)
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.32, -0.02) * s, c + Vector2(0.32, -0.02) * s,
+				c + Vector2(0, 0.36) * s]), col)
 		"cave":
 			ci.draw_colored_polygon(_dome(c, s, 0.92, 1.0), col)
 			ci.draw_colored_polygon(_dome(c, s, 0.42, 0.62), Color(0.04, 0.028, 0.022, col.a))

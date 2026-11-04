@@ -267,7 +267,7 @@ Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câ
 · [b]Cada 10 formigas comidas valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
 · A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
-· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 200 formigas.
+· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Cavar Fundo[/b], e a [b]rainha[/b] (vale 200 formigas) fica numa vala no pé dos formigueiros grandes, que só a [b]Escavação Real[/b] abre.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
 · Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
 · Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.

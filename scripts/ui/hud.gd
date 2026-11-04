@@ -476,11 +476,12 @@ func _locked(what: String) -> Array:
 ## O que dá para fazer aqui: tecla e poucas palavras, ou só ícone e número.
 func _context_hint() -> Array:
 	if player.dig_nest != null:
-		if not GameState.can_dig():
-			return _locked("Cavar")
+		var dc = player.dig_nest.chambers[player.dig_chamber]
+		if GameState.dig_level() < dc.size_class:
+			return _locked(GameState.get_upgrade(GameState.dig_skill_for(dc.size_class)).name)
 		if player.dig_cd > 0.0:
 			return [{"icon": "clock", "col": UiTheme.GOLD}, {"num": "%d s" % int(ceil(player.dig_cd))}]
-		return [{"key": "E"}, {"text": "Abrir câmara"}]
+		return [{"key": "E"}, {"text": "Abrir a vala" if dc.half_len > 0.0 else "Abrir câmara"}]
 	var p2 := Vector2(player.global_position.x, player.global_position.z)
 	# Tronco caído na saída para a área 2.
 	if not world.exit_open and world.near_exit(p2, 4.5):
@@ -550,15 +551,20 @@ func _learn_controls(delta: float) -> void:
 			Settings.learn_hint("run")
 
 
-## Só restam formigas dentro das câmaras e você ainda não sabe cavar: lembra
-## onde aprender (Dicas: Todas).
+## Só restam formigas dentro de buracos que as suas garras ainda não abrem:
+## lembra o que aprender (Dicas: Todas).
 func _maybe_help() -> void:
-	if GameState.can_dig() or _play_time < _help_next:
+	if _play_time < _help_next or colony.outside_total() > 0 or colony.pools_total() > 0:
 		return
-	if colony.outside_total() > 0 or colony.pools_total() > 0 or colony.closed_chambers_total() == 0:
+	var smallest := 99
+	for n in world.nests:
+		for c in n.chambers:
+			if not c.opened:
+				smallest = mini(smallest, c.size_class)
+	if smallest == 99 or GameState.dig_level() >= smallest:
 		return
 	_help_next = _play_time + 45.0
-	_flash_hint(_locked("Cavar"), 4.0)
+	_flash_hint(_locked(GameState.get_upgrade(GameState.dig_skill_for(smallest)).name), 4.0)
 
 
 func _on_lick_blocked_running() -> void:

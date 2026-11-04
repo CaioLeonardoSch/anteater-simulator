@@ -14,7 +14,7 @@ signal queen_eaten(nest)
 
 const Nest := preload("res://scripts/world/nest.gd")
 const QUEEN_VALUE := Nest.QUEEN_VALUE
-const CHAMBER_VISIBLE := 40
+const CHAMBER_VISIBLE := 12
 ## Parte de cada formigueiro que anda pelas trilhas (o resto mora nas câmaras).
 const FORAGER_SHARE := 0.45
 const ROYAL_WEIGHT := 1.7

@@ -4,7 +4,7 @@ extends Control
 ## Escalada + Cauda) saem do centro, onde ficam os pontos. Cada habilidade é um
 ## círculo com ícone, e as ligações acendem em dourado conforme você aprende.
 ## Passe o mouse (ou o controle) numa habilidade para ver o que ela faz; clique
-## para aprender. Cada formiga comida vale 1 ponto e cada habilidade tem o seu
+## para aprender. Cada 10 formigas comidas valem 1 ponto e cada habilidade tem o seu
 ## preço; as linhas de um ramo não se excluem. O que ainda não existe no jogo
 ## aparece com cadeado. Dá para redistribuir os pontos de graça.
 
@@ -73,7 +73,7 @@ func _ready() -> void:
 		if _first_node == null:
 			_first_node = node
 	# O título é a aba "Habilidades" (tela do TAB); aqui fica só quanto vale um ponto.
-	var sub := UiTheme.label("1 formiga comida = 1 ponto", 17, UiTheme.SAND)
+	var sub := UiTheme.label("10 formigas comidas = 1 ponto", 17, UiTheme.SAND)
 	sub.position = Vector2(38, 30)
 	add_child(sub)
 	_hint = UiTheme.label("", 19, UiTheme.SAND)
@@ -293,7 +293,7 @@ func _show_tip(id: String) -> void:
 				text = "Clique para aprender por %d pontos." % cost
 				col = branch.color.lightened(0.3)
 			else:
-				text = "Custa %d pontos: faltam %d formigas." % [cost, cost - pts]
+				text = "Custa %d pontos: faltam %d formigas." % [cost, GameState.ants(cost - pts)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true
@@ -322,7 +322,7 @@ func _summary_text() -> String:
 	var goal := GameState.next_goal()
 	if goal.is_empty():
 		return "Passe o mouse numa habilidade para ver o que ela faz."
-	return "Próxima: %s (%d pontos) · faltam %d formigas." % [goal.name, goal.cost, goal.cost - GameState.points_available()]
+	return "Próxima: %s (%d pontos) · faltam %d formigas." % [goal.name, goal.cost, GameState.ants(goal.cost - GameState.points_available())]
 
 
 func open() -> void:

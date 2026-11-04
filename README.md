@@ -15,8 +15,9 @@ produção, os protótipos e as decisões, num lugar só.
 
 | | |
 |---|---|
-| ![Farejando formigas na trilha: elas brilham através do capim](docs/screenshots/trilha.jpg) | ![Em cima de um formigueiro grande, com uma câmara aberta](docs/screenshots/formigueiro.jpg) |
-| ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
+| ![Estrada de formigas na trilha: grupos de 10, muitas carregando folhas](docs/screenshots/trilha.jpg) | ![A vala da rainha aberta no pé de um formigueiro grande, cheia de formigas](docs/screenshots/vala.jpg) |
+| ![HUD com cartões de conquista, o resultado do faro e as dicas de controle](docs/screenshots/hud.jpg) | ![Mapa no TAB, colorido onde você já andou](docs/screenshots/mapa.jpg) |
+| ![Árvore de habilidades, na aba ao lado do mapa](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
 > No seu PC fica igual ou melhor.

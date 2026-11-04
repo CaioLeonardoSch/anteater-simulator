@@ -17,6 +17,8 @@ signal run_reset
 
 ## Formigas da colônia do Cerrado (cada rainha conta como 20).
 const GOAL := 3200
+## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
+const FRENZY_TIME := 6.0
 const RECORD_PATH := "user://save.cfg"
 const GAME_SAVE_PATH := "user://jogo_salvo.json"
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
@@ -209,7 +211,7 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	if tanajuras > 0:
 		tanajuras_eaten += tanajuras
 		var was_active := frenzy_time > 0.0
-		frenzy_time = 6.0
+		frenzy_time = FRENZY_TIME
 		if not was_active:
 			frenzy_changed.emit(true)
 	ants_eaten_changed.emit(ants_eaten, count)

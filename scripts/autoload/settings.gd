@@ -20,6 +20,9 @@ const AA_NAMES := ["Desligado", "FXAA", "MSAA 2x", "MSAA 4x", "TAA"]
 ## Cor do faro: precisa contrastar com o cerrado (dourado e vermelho de terra).
 const SNIFF_COLOR_NAMES := ["Vermelho", "Ciano", "Magenta", "Branco"]
 const SNIFF_COLORS := [Color(1.0, 0.16, 0.12), Color(0.2, 0.95, 1.0), Color(1.0, 0.25, 0.85), Color(1.0, 1.0, 1.0)]
+## Dicas: Todas (também ensina os controles, cada um até você usar), Poucas (só
+## o que dá para fazer perto de você) e Nenhuma.
+const HINTS_NAMES := ["Todas", "Poucas", "Nenhuma"]
 
 ## Cada preset de qualidade escolhe todos os itens de "Gráficos".
 const PRESETS := [
@@ -77,6 +80,10 @@ var fov: float = 78.0
 ## Balanço da câmera ao andar e correr (0 = parada, 1 = normal).
 var camera_bob: float = 1.0
 var sniff_color_index: int = 0
+## 0 = Todas, 1 = Poucas, 2 = Nenhuma.
+var hints_level: int = 0
+## Controles que o jogador já usou (as dicas deles não aparecem mais).
+var hints_learned: Array[String] = []
 var master_volume: float = 0.85
 var music_volume: float = 0.55
 
@@ -203,6 +210,10 @@ func load_settings() -> void:
 	fov = float(cfg.get_value("video", "fov", fov))
 	camera_bob = clampf(float(cfg.get_value("video", "camera_bob", camera_bob)), 0.0, 1.0)
 	sniff_color_index = clampi(int(cfg.get_value("game", "sniff_color", sniff_color_index)), 0, SNIFF_COLORS.size() - 1)
+	hints_level = clampi(int(cfg.get_value("game", "hints", hints_level)), 0, HINTS_NAMES.size() - 1)
+	hints_learned.clear()
+	for id in cfg.get_value("game", "hints_learned", []):
+		hints_learned.append(String(id))
 	mouse_sensitivity = float(cfg.get_value("input", "mouse_sensitivity", mouse_sensitivity))
 	invert_y = bool(cfg.get_value("input", "invert_y", invert_y))
 	master_volume = float(cfg.get_value("audio", "master", master_volume))
@@ -240,6 +251,8 @@ func save_settings() -> void:
 	cfg.set_value("video", "fov", fov)
 	cfg.set_value("video", "camera_bob", camera_bob)
 	cfg.set_value("game", "sniff_color", sniff_color_index)
+	cfg.set_value("game", "hints", hints_level)
+	cfg.set_value("game", "hints_learned", hints_learned)
 	for key in GRAPHICS_KEYS:
 		cfg.set_value("graphics", key, get(key))
 	cfg.set_value("input", "mouse_sensitivity", mouse_sensitivity)
@@ -247,6 +260,19 @@ func save_settings() -> void:
 	cfg.set_value("audio", "master", master_volume)
 	cfg.set_value("audio", "music", music_volume)
 	cfg.save(SAVE_PATH)
+
+
+## O jogador já usou este controle? (a dica dele não aparece mais)
+func hint_learned(id: String) -> bool:
+	return id in hints_learned
+
+
+func learn_hint(id: String) -> void:
+	if id in hints_learned:
+		return
+	hints_learned.append(id)
+	if not DevTools.autoplay:
+		save_settings()
 
 
 ## Muda uma configuração, salva e aplica. Mexer num item de "Gráficos" deixa

@@ -28,14 +28,6 @@ const ROOT_R := 30.0
 const CENTER_R := 64.0
 const HEADER_H := 70.0
 const FOOTER_H := 128.0
-## Ícone da 1ª habilidade de cada ramo e de cada linha dele.
-const GLYPHS := [
-	["tongue", "ant", "bolt", "cross"],
-	["claws", "burst", "clock"],
-	["paw", "chevrons", "tongue"],
-	["nose", "rings", "eye"],
-	["peak"],
-]
 
 var _canvas: TreeCanvas
 var _nodes: Dictionary = {}
@@ -70,8 +62,7 @@ func _ready() -> void:
 		node.root = (u.requires as Array).is_empty()
 		node.radius = ROOT_R if node.root else NODE_R
 		node.color = GameState.BRANCHES[u.branch].color
-		var glyphs: Array = GLYPHS[u.branch]
-		node.glyph = glyphs[0] if node.root or u.col < 0 else glyphs[mini(int(u.col) + 1, glyphs.size() - 1)]
+		node.glyph = Glyphs.for_upgrade(u)
 		node.pressed.connect(_on_node_pressed.bind(u.id))
 		node.focus_entered.connect(_show_tip.bind(u.id))
 		node.focus_exited.connect(_on_focus_lost)

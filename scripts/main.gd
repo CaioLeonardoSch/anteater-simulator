@@ -325,6 +325,7 @@ func _open_tree() -> void:
 	state = State.TREE
 	get_tree().paused = true
 	menus.show_screen("")
+	Settings.learn_hint("map")
 	tree_ui.open()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play("ui_open", -6.0)
@@ -390,7 +391,7 @@ func _bot_buy() -> void:
 func _on_complete(_time: float) -> void:
 	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
 	world.exit_breakable = true
-	hud.big_note("Clareira limpa!", "Vá até o tronco caído na saída e segure E para quebrá-lo", 5.0)
+	hud.big_note("Clareira limpa!", "Quebre o tronco na saída", 5.0, "log")
 	Sfx.play("complete", 0.0)
 	save_game()
 
@@ -400,7 +401,6 @@ func _belly_growl() -> void:
 		return
 	Sfx.play("growl", 0.0)
 	player.shake = 0.35
-	hud.note("A barriga ronca... hora de achar formigas!", UiTheme.SAND, 4.0)
 
 
 ## O tronco foi quebrado: a passagem para a área 2 está aberta (fim da demo).

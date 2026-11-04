@@ -335,6 +335,7 @@ func _build_settings() -> Control:
 	_add_slider(g, "fov", "Campo de visão", 60.0, 100.0)
 	_add_slider(g, "camera_bob", "Balanço da câmera", 0.0, 1.0)
 	_add_option(g, "sniff_color_index", "Cor do faro", Settings.SNIFF_COLOR_NAMES)
+	_add_option(g, "hints_level", "Dicas", Settings.HINTS_NAMES)
 	# Áudio
 	g = _settings_page(stack)
 	_add_slider(g, "master_volume", "Volume geral", 0.0, 1.0)
@@ -375,7 +376,7 @@ func _show_settings_tab(i: int) -> void:
 	_settings_note.text = [
 		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
 		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
-		"Sem balanço, a câmera fica parada ao andar e correr. A cor do faro é a das formigas e nuvens farejadas.",
+		"Dicas \"Poucas\": só o que dá para fazer perto de você. \"Todas\": também ensina os controles, cada um até você usar.",
 		"",
 	][i]
 

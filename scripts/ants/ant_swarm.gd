@@ -200,6 +200,8 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	mode[i] = Mode.CHAMBER
 	home[i] = home_code
 	anchor[i] = Vector3(center.x, radius, center.y)
+	# Moradoras já saem do túnel em bolo (as das trilhas andam em fila).
+	form[i] = FORM_TIGHT
 	# Moradoras não usam a trilha: dir e lateral guardam a forma da vala.
 	dir[i] = axis
 	lateral[i] = half_len

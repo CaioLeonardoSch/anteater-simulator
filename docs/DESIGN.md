@@ -9,7 +9,8 @@ Este documento junta, em um lugar só, tudo o que já foi definido sobre o jogo:
   conversa em que ela foi criada;
 - as **decisões de 02/11/2026**, tomadas para resolver o que não batia;
 - as **mudanças pedidas depois do primeiro e do segundo teste** da demo (também
-  de 02/11/2026).
+  de 02/11/2026) e as rodadas seguintes (interface, mensagens, mapa, 32 000
+  formigas e a vala da rainha, de 03 e 04/11/2026).
 
 Quando algo aqui contradiz uma fonte antiga, **vale este documento**.
 
@@ -51,7 +52,7 @@ buscamos, no espírito delas:
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
 | **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
-| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 3200 formigas, 12 formigueiros e 58 câmaras (12 no meio do campo), rainhas, 5 habilidades (30 níveis), jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 32 000 formigas (em grupos de 10), 12 formigueiros e 58 câmaras (12 no meio do campo), rainhas em valas, 5 habilidades (32 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -99,9 +100,10 @@ buscamos, no espírito delas:
   ninhos**: 8 em volta e 4 no meio. Os formigueiros ficaram cerca de 45% maiores.
 - **Na área 1, os ninhos são só formigueiros**, de uma formiga que fica só no
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
-- **3200 formigas** (eram 1000). Somando o preço de todas as habilidades do
-  Cerrado dá **2575 pontos**: dá para aprender tudo e ainda sobram cerca de
-  **625 formigas** (2 ou 3 formigueiros) para jogar com tudo liberado.
+- **32 000 formigas** (eram 1000, depois 3200), em **3200 grupos de 10**: cada
+  grupo vale 1 ponto. Somando o preço de todas as habilidades do Cerrado dá
+  **2755 pontos**: dá para aprender tudo e ainda sobram cerca de **445 pontos**
+  (4450 formigas, 2 ou 3 formigueiros) para jogar com tudo liberado.
 - **Por enquanto as habilidades ficam como estão.** A pontuação e a quantidade
   de formigas e cupins para liberar tudo serão reavaliadas mais para a frente.
 
@@ -126,7 +128,7 @@ buscamos, no espírito delas:
 
 - **Tamanho:** continua com cerca de 120 m de um lado ao outro. Em volta, no
   lugar da parede invisível, ficam **penhascos de arenito** (faixas creme e
-  vermelhas), com árvores no platô lá em cima.
+  vermelhas), com muitas árvores no platô lá em cima e algumas no pé deles.
 - **Começo:** o tamanduá acorda no fundo de uma **caverna** no pé do penhasco,
   já de frente para o cupinzeiro gigante, e a **barriga ronca** uma vez. Dá para
   jogar logo; um vídeo de abertura fica para depois.
@@ -137,7 +139,9 @@ buscamos, no espírito delas:
 - **Saída para a área 2:** uma passagem estreita entre os penhascos, fechada
   por um **tronco caído**. Com a clareira 100% limpa, a bússola mostra a saída;
   perto do tronco, segure **E** e as garras quebram o tronco. Na demo, isso é o
-  fim: o caminho até o cupinzeiro fica aberto.
+  fim: o caminho até o cupinzeiro fica aberto. Depois do tronco, o chão sobe
+  numa rampa até uma **picada que entra numa mata cada vez mais fechada**,
+  mostrando que a área 2 é mais densa.
 - **Lagoas:** uma ou duas, **só de enfeite** (não têm insetos nem mudam o jogo).
 - **A barriga não aponta o caminho:** ela só ronca no começo.
 - **Ideia para a área 2:** um nível das **Garras** que deixa **escalar ou
@@ -146,17 +150,24 @@ buscamos, no espírito delas:
 
 ### Como se come: os dois jeitos juntos
 
-- **Trilhas:** formigas andam pelo mapa entre os ninhos e os arbustos, e chegam
-  em ondas. Você lambe as que estão de passagem.
+- **Trilhas:** formigas andam pelo mapa entre os ninhos e os arbustos, em
+  filas cheias; de vez em quando sai uma leva maior de um formigueiro, sem
+  aviso. Você lambe as que estão de passagem.
 - **Ninhos com câmaras:** cada ninho tem câmaras internas. Você cava com as
   Garras e esvazia uma por uma, com a satisfação de terminar de arrumar uma
   prateleira. Ao abrir, as moradoras **saem correndo** e fogem quando você chega
   perto (como as das trilhas); depois voltam para a câmara. Algumas câmaras
   ficam **sozinhas no meio do campo**, longe das trilhas: o Faro ajuda a achá-las.
 - Depois de abrir uma câmara, **as garras descansam** (25 s no começo).
-- A **língua** começa com **um clique por lambida**, e cada lambida pega um
-  inseto. A primeira habilidade (**Lambida Contínua**, 25 pontos) deixa segurar
-  o botão; a linha de **Bocado** aumenta quantas vêm de uma vez: 5, 15, 25 e 40.
+- **Buracos maiores pedem mais Cavar:** o Cavar abre as câmaras pequenas (dos
+  formigueiros pequenos e as do campo); o **Cavar Fundo** abre as câmaras
+  grandes, dos formigueiros grandes; e a **Escavação Real** abre a vala da
+  rainha.
+- **As formigas andam em grupos de 10**, e a língua pega o grupo inteiro: **10
+  formigas = 1 ponto**. A **língua** começa com **um clique por lambida** (um
+  grupo, 10 formigas). A primeira habilidade (**Lambida Contínua**, 25 pontos)
+  deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez:
+  50, 150, 250 e 400 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
   estiver perto da ponta. A **Língua Certeira** (30 pontos) faz a língua ir
   sozinha atrás da formiga mais perto da mira, e a **Mira Ampla** (60) deixa
@@ -166,45 +177,48 @@ buscamos, no espírito delas:
 
 ### Desafio extra: rainha e tanajura
 
-- **Rainha:** aparece **só nos ninhos grandes**, na câmara mais cheia, coberta
-  por outros insetos. Só dá para comê-la depois de limpar tudo em volta. Vale
-  **15 a 20 vezes** um inseto comum e tem efeito e som próprios. O Faro nível 3
-  ajuda a encontrá-la.
+- **Rainha:** aparece **só nos ninhos grandes**, numa **vala comprida no pé do
+  monte**, com a corte dela em volta; só a **Escavação Real** abre a vala. Só dá
+  para comê-la depois de comer a corte. Vale **200 formigas (20 pontos)** e tem
+  efeito e som próprios. O Faro Lendário marca as rainhas na bússola.
 - **Tanajura:** rainha voadora e rara que cruza o mapa. Comê-la deixa a língua
   mais rápida por alguns segundos.
 - **Sem insetos resistentes:** as formigas-soldado saíram da demo.
 
 ### Habilidades: as 5 do plano
 
-**Cada formiga comida vale 1 ponto** (a rainha vale 20), e **cada habilidade tem
-o seu preço**. Você escolhe onde gastar, e os gestos novos (segurar para lamber,
+**Cada grupo de 10 formigas comido vale 1 ponto** (a rainha vale 20 pontos), e
+**cada habilidade tem o seu preço**. Você escolhe onde gastar, e os gestos novos (segurar para lamber,
 lambida, cavar, escalar) também são comprados assim. Dá para redistribuir os
 pontos de graça.
 
 Cada ramo começa com uma habilidade e depois se divide em **linhas que não se
-excluem** (dá para seguir todas): duas em cada ramo, e três na Língua.
+excluem** (dá para seguir todas): duas em cada ramo, e três na Língua e nas
+Garras.
 
 **A árvore tem cara de constelação**, inspirada na árvore passiva de Path of
 Exile (só no visual, sem aquele tamanho todo): os 5 ramos saem do centro, onde
 ficam os pontos; cada habilidade é um círculo com ícone e preço, as aprendidas
 acendem em dourado e as que já dá para aprender pulsam. O nome e o que cada uma
 faz aparecem ao passar o mouse (ou o controle). Ela **não abre sozinha**: quando
-dá para aprender algo, um aviso no canto da tela lembra do **TAB**.
+dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**). O
+**TAB** abre primeiro o **mapa**; a árvore fica na aba ao lado.
 
 | Habilidade | Linha | Níveis (preço em pontos) |
 |---|---|---|
 | **Língua** | começo | Lambida Contínua (25: segurar para lamber) |
-| | Bocado | Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40) |
+| | Bocado | Lambida (40: até 50 formigas por lambida) · Lambida Larga (75: até 150) · Lambida Gulosa (115: até 250) · Lambida Voraz (170: até 400) |
 | | Destreza | Língua Comprida (70: +50% de alcance) · Saliva Grudenta (100: gruda num raio 70% maior) · Língua Turbo (150: 2x mais rápida) |
 | | Mira | Língua Certeira (30: a língua vai atrás da formiga mais perto da mira; sem ela, vai reta) · Mira Ampla (60: essa área fica 25% maior) |
-| **Garras** | começo | Cavar (35: abre as câmaras; depois as garras descansam 25 s) |
+| **Garras** | começo | Cavar (35: abre as câmaras pequenas; depois as garras descansam 25 s) |
 | | Força | Garras Fortes (70: as moradoras ficam tontas ao abrir) · Tremor (110: pulo com pancada; recarga de 21 s) · Terremoto (170: pulo mais alto, tremor maior, puxa as tontas) |
 | | Rapidez | Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: descanso de 5 s e cava na metade do tempo) · Recarga do Tremor (130: Tremor em 14 s) · Recarga Relâmpago (150: Tremor em 7 s) |
+| | Fundura | Cavar Fundo (60: abre as câmaras grandes) · Escavação Real (120: abre a vala da rainha) |
 | **Patas** | começo | Corrida (30: +25% de velocidade; correndo não dá para lamber) |
 | | Velocidade | Patas Ligeiras (80: mais 25%) · Galope Silencioso (130: correr não assusta) |
 | | Agilidade | Lamber Correndo (60) |
-| **Faro** | começo | Farejar (20: diz quantas formigas há a até 10 m e a distância da mais perto) |
-| | Alcance | Faro Atento (40: 16 m, 25 formigas) · Faro Apurado (70: 24 m, 50) · Faro Aguçado (110: 34 m, 100, e quanto falta em cada formigueiro) · Faro Lendário (160: 50 m, 200, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
+| **Faro** | começo | Farejar (20: diz quantas formigas há a até 10 m, até 100 delas, e a distância da mais perto) |
+| | Alcance | Faro Atento (40: 16 m, 250 formigas) · Faro Apurado (70: 24 m, 500) · Faro Aguçado (110: 34 m, 1000, e quanto falta em cada formigueiro) · Faro Lendário (160: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
 | | Precisão | Faro Preciso (45: nuvem borrada onde estão) · Faro Nítido (85: as formigas brilham nítidas) · Faro de Câmara (100: colunas de cheiro nas câmaras fechadas) |
 | **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400): ainda não feitas, aparecem com cadeado |
 
@@ -217,7 +231,7 @@ floresta**, onde ela é usada.
 
 ---
 
-## 4. A demo hoje (atualizada em 02/11/2026)
+## 4. A demo hoje (atualizada em 04/11/2026)
 
 Feito, seguindo as decisões:
 
@@ -225,39 +239,52 @@ Feito, seguindo as decisões:
    **12 câmaras sozinhas no meio do campo**, longe das trilhas (cada uma conta
    para o formigueiro mais perto). Segurando **E** com a habilidade Cavar, a
    câmara abre e as moradoras **saem correndo**; elas fogem quando você chega
-   perto e depois voltam para casa. Até 40 ficam à vista; as outras saem do
-   túnel conforme você come. Depois de cavar, as garras descansam.
+   perto e depois voltam para casa. Até 12 grupos (120 formigas) ficam à vista,
+   24 na vala da rainha; os outros saem do túnel conforme você come. Depois de
+   cavar, as garras descansam. As câmaras grandes pedem **Cavar Fundo**.
 2. **Dá para subir nos formigueiros** e olhar dentro das câmaras lá de cima.
-3. **Rainha** na câmara do topo dos 5 formigueiros grandes. Brilha de leve, fica
-   protegida enquanto houver formigas na câmara e **vale 20**.
-4. **As 3200 formigas** são divididas assim: cerca de 45% andam pelas trilhas
-   (e voltam para casa), o resto mora nas câmaras. 3100 operárias + 5 rainhas × 20.
+3. **Rainha** numa **vala comprida no pé** dos 5 formigueiros grandes (do lado
+   sem trilhas), com a corte dela; a vala só abre com a **Escavação Real**. A
+   rainha brilha de leve, fica protegida enquanto houver formigas na vala e
+   **vale 200 formigas (20 pontos)**.
+4. **As 32 000 formigas** andam em **3200 grupos de 10** (cada grupo vale 1
+   ponto): cerca de 45% andam pelas trilhas (e voltam para casa), o resto mora
+   nas câmaras. 31 000 operárias + 5 rainhas × 200. Na trilha, o grupo anda em
+   **fila de duas pistas** (vira uma estrada de formigas, metade carregando
+   folha); assustado, vira um **bando solto**; na câmara e na língua, um **bolo
+   apertado**. O processador simula os grupos e a placa de vídeo desenha as 10
+   formigas de cada um, com 4 níveis de detalhe conforme a distância.
 5. **Soldados:** saíram. A **tanajura** continua.
-6. **As 5 habilidades, com 30 níveis**, cada um com seu preço (seção 3), numa
+6. **As 5 habilidades, com 32 níveis**, cada um com seu preço (seção 3), numa
    árvore com **cara de constelação** que não abre sozinha. A língua começa com
    um clique por lambida e vai **reta** até aprender a Língua Certeira; correndo
    não dá para lamber até aprender Lamber Correndo. Farejar também precisa ser
    aprendido. O **Tremor** é um pulo: a pancada vem ao cair. A **Escalada +
    Cauda** aparece com cadeado. Dá para **redistribuir os pontos**.
-7. **Progresso visível:** contador de formigueiros limpos, pontos e a próxima
-   habilidade no canto da tela, avisos de câmara limpa e de habilidade nova, e
-   florzinhas no formigueiro quando ele fica limpo. O Faro mostra, conforme os
-   níveis, quantas formigas há, uma nuvem onde elas estão, as formigas brilhando
-   e as câmaras fechadas; o Faro Aguçado mostra na bússola quanto falta em cada
-   formigueiro e o Faro Lendário marca as rainhas. O aviso de **onda** fica
-   discreto no painel da direita.
+7. **Progresso visível, com pouco texto:** no canto, as formigas comidas, os
+   pontos com o ícone e o preço da próxima habilidade e um losango por
+   formigueiro limpo; **cartões** no canto direito para câmara limpa (com as
+   câmaras do formigueiro), formigueiro limpo, rainha, Frenesi (com a barra do
+   tempo) e habilidade aprendida, que se juntam (×2, ×3); e florzinhas no
+   formigueiro quando ele fica limpo. A bússola mostra só a distância e as
+   câmaras do formigueiro à frente (sem nomes). As ondas acontecem **sem aviso**,
+   e não há relógio na tela. O Faro mostra, conforme os níveis, quantas formigas
+   há (num selo em cima do botão de Farejar), uma nuvem onde elas estão, as
+   formigas brilhando e as câmaras fechadas; o Faro Aguçado mostra na bússola
+   quanto falta em cada formigueiro e o Faro Lendário marca as rainhas. Salvar
+   aparece só como um ícone girando no canto.
 8. **Jogo salvo:** salva sozinho a cada 30 s, ao pausar e ao sair. A tela
    inicial ganha **Continuar** e **Novo jogo**. Jogos salvos da versão com 1000
    formigas não são carregados (o mapa mudou).
 9. **Configurações** em abas (Tela, Gráficos, Jogo, Áudio): janela, tela cheia
    ou tela cheia exclusiva, resolução, resolução do 3D, VSync, limite de FPS,
-   sombras, capim, suavização, efeitos de luz, balanço da câmera e **cor do
-   faro** (vermelho, ciano, magenta ou branco). **F11** ou **Alt+Enter**
-   alternam a tela cheia.
+   sombras, capim, suavização, efeitos de luz, balanço da câmera, **cor do
+   faro** (vermelho, ciano, magenta ou branco) e **Dicas** (Todas, Poucas ou
+   Nenhuma). **F11** ou **Alt+Enter** alternam a tela cheia.
 10. **Pausa de verdade:** na pausa e na árvore de habilidades, as formigas e as
    ondas param.
-11. **Penhascos** em volta da clareira, que são o fim do mapa, com árvores no
-   platô e pedras soltas no pé.
+11. **Penhascos** em volta da clareira, que são o fim do mapa, com muitas
+   árvores no platô, algumas no pé e pedras soltas.
 12. **Começo na caverna:** o tamanduá acorda numa caverna no pé do penhasco,
    olhando para o **cupinzeiro gigante** lá longe, e a barriga ronca. Uma
    **trilha de terra**, sem capim, leva da caverna até o formigueiro mais perto
@@ -265,18 +292,31 @@ Feito, seguindo as decisões:
    do resto do cenário.
 13. **Fim da demo:** a passagem para a área 2 fica fechada por um **tronco
    caído**. Com 100% limpo, a bússola mostra a saída; segurando **E** perto do
-   tronco, as garras quebram o tronco e a demo termina.
+   tronco, as garras quebram o tronco e a demo termina. Pela passagem dá para
+   ver a rampa que sobe para a **mata fechada** da área 2.
 14. **Sempre o mesmo fim de tarde** (o sol não se põe mais) e **duas lagoas** de
    enfeite.
 15. **Interface nova, no estilo Constelação:** HUD, menus, pausa, configurações e
    árvore com a mesma cara (moldura dourada, Alegreya SC e Alegreya Sans), e a
    bússola em faixa com medalhão (seção 3).
+16. **Dicas curtas embaixo da mira**, com a tecla num quadradinho e poucas
+   palavras (ou só ícone e número): "E Abrir câmara", o relógio das garras,
+   o cadeado com a habilidade que falta e a aba, a coroa com quantas faltam na
+   vala. Com Dicas: Todas, os controles (andar, correr, TAB) aparecem em cima
+   das habilidades até você usar cada um.
+17. **Mapa no TAB** (abre primeiro; Q e E trocam para a árvore): a clareira
+   vista de cima, colorida onde você já andou e escura no resto; formigueiros
+   limpos, começados (com as câmaras) e não visitados; câmaras do campo que você
+   já viu ou farejou; a caverna, o tronco, o rumo do cupinzeiro gigante e você;
+   e quantos formigueiros e câmaras faltam e quanto você já explorou. O que foi
+   explorado vai no jogo salvo.
 
 Ainda a ajustar:
 
 - **Duração:** a meta é de 45 a 60 minutos, e ela vai ser medida jogando (sem
   o robô de testes). Como referência: num teste automático da segunda rodada, um
-  robô de mira perfeita terminou as 3200 formigas em cerca de 19 minutos.
+  robô de mira perfeita terminou a colônia (então com 3200 formigas, hoje os
+  3200 grupos) em cerca de 19 minutos.
 
 ---
 
@@ -431,13 +471,14 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 - **12 formigueiros** (5 com rainha) e **58 câmaras** para abrir e esvaziar (12
   delas no meio do campo); dá para subir nos montes. As formigas das câmaras
   saem correndo quando você abre.
-- Formigas andando por **trilhas** até os arbustos, em **ondas** cada vez
-  maiores. Correr assusta as formigas.
+- **32 000 formigas** em grupos de 10, andando em fila pelas **trilhas** até os
+  arbustos, com levas maiores de vez em quando. Correr assusta as formigas.
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
   através do capim; **tremor** que deixa as formigas tontas.
 - **Tanajura** voadora que dá o Frenesi.
-- **5 habilidades com 30 níveis**, numa árvore com cara de constelação: 1
-  formiga = 1 ponto, cada nível com seu preço, e redistribuição grátis.
+- **5 habilidades com 32 níveis**, numa árvore com cara de constelação: 10
+  formigas = 1 ponto, cada nível com seu preço, e redistribuição grátis.
+- **Mapa no TAB**, colorido onde você já andou.
 - **Salva sozinho**; dá para continuar de onde parou.
 - **Tela cheia e várias resoluções**, com opções gráficas separadas.
 
@@ -505,3 +546,10 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 02/11/2026 | Árvore de habilidades | Abria sozinha nos primeiros 25 pontos; caixas em colunas | Não abre sozinha; visual de constelação, inspirado em Path of Exile |
 | 03/11/2026 | Estilo da interface | Fredoka, painéis marrons arredondados | Estilo "Constelação" (o mesmo da árvore): moldura dourada dupla, Alegreya SC e Alegreya Sans |
 | 03/11/2026 | Bússola | Barra com triângulos e todas as distâncias (os números se embolavam) | Faixa com medalhão do rumo; formigueiros em montinhos; só o da frente mostra nome e distância |
+| 04/11/2026 | Mensagens na tela | Avisos de texto no alto da tela, aviso grande para várias coisas, relógio e ondas no canto | Cartões de conquista no canto direito; dicas curtas embaixo da mira; aviso grande só no fim; sem relógio e sem avisar as ondas; salvar vira um ícone |
+| 04/11/2026 | Nomes dos formigueiros | "Formigueiro Nordeste", "Sul" etc. na bússola e nos avisos | Sem nomes: a bússola mostra a distância e as câmaras |
+| 04/11/2026 | Dicas | Sempre todas | Opção Dicas: Todas, Poucas ou Nenhuma; as de controle somem depois que você usa |
+| 04/11/2026 | TAB | Abria a árvore de habilidades | Abre o mapa (colorido onde você já andou), com a árvore na aba ao lado |
+| 04/11/2026 | Quantidade de formigas | 3200, 1 formiga = 1 ponto | 32 000, em grupos de 10; 10 formigas = 1 ponto (os preços em pontos não mudaram) |
+| 04/11/2026 | Rainha | Na câmara do topo dos formigueiros grandes, aberta pelo Cavar | Numa vala no pé do monte, com a corte; nova linha de Fundura nas Garras: Cavar Fundo (60, câmaras grandes) e Escavação Real (120, a vala) |
+| 04/11/2026 | Árvores | Um anel no platô e algumas na clareira | Muito mais árvores no platô e no pé dos penhascos; depois da passagem, rampa e mata fechada (o começo da área 2) |

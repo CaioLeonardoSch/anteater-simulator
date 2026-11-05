@@ -12,11 +12,15 @@ signal main_menu_pressed
 signal skill_tree_pressed
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
+const StatsPanel := preload("res://scripts/ui/stats_panel.gd")
 
 var _screens: Dictionary = {}
 var _current := ""
 var _back_to := "title"
-var _end_stats: Label
+## Estatísticas na pausa e na tela do fim.
+var _pause_stats: StatsPanel
+var _end_stats: StatsPanel
+var _end_time: Label
 var _end_title: Label
 var _end_sub: Label
 var _restart_button: Button
@@ -54,10 +58,18 @@ func show_screen(screen_name: String) -> void:
 		_screens[k].visible = (k == screen_name)
 	_current = screen_name
 	visible = screen_name != ""
+	if screen_name == "pause":
+		_pause_stats.refresh()
 	if screen_name != "":
 		var first := _find_first_button(_screens[screen_name])
 		if first:
 			first.grab_focus.call_deferred()
+
+
+## O mundo e as formigas, para as contas das estatísticas.
+func setup_stats(world, colony) -> void:
+	_pause_stats.setup(world, colony)
+	_end_stats.setup(world, colony)
 
 
 func current() -> String:
@@ -367,8 +379,23 @@ func _goto(screen_name: String, back: String) -> void:
 
 
 func _build_pause() -> Control:
-	var s := _screen(0.55)
-	var v := _centered_column(s)
+	var s := _screen(0.6)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	s.add_child(center)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 18)
+	center.add_child(row)
+	var p := PanelContainer.new()
+	p.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(p)
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 26)
+	p.add_child(margin)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 14)
+	margin.add_child(v)
 	var t := UiTheme.display_label("Pausa", 52, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
@@ -388,6 +415,8 @@ func _build_pause() -> Control:
 		else:
 			b.pressed.connect(item[1])
 		v.add_child(b)
+	_pause_stats = StatsPanel.new()
+	row.add_child(_pause_stats)
 	return s
 
 
@@ -689,11 +718,15 @@ func _build_end() -> Control:
 	_end_title = UiTheme.display_label("Fim da demo!", 60, UiTheme.PALE)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.GOAL, 24, UiTheme.CREAM)
+	_end_sub = UiTheme.label("Você comeu os %s insetos da clareira e abriu o caminho\naté o cupinzeiro gigante." % StatsPanel._n(GameState.GOAL), 24, UiTheme.CREAM)
 	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_sub)
-	_end_stats = UiTheme.label("", 22, UiTheme.SAND)
-	_end_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_end_time = UiTheme.label("", 24, UiTheme.SAND)
+	_end_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_end_time)
+	_end_stats = StatsPanel.new()
+	_end_stats.wide = true
+	_end_stats.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(_end_stats)
 	var thanks := UiTheme.label("Obrigado por jogar a demo!", 20, UiTheme.CREAM)
 	thanks.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -726,17 +759,10 @@ func _fmt(t: float) -> String:
 
 
 func show_end(time_sec: float, new_record: bool) -> void:
-	var learned := []
-	for u in GameState.UPGRADES:
-		if GameState.has(u.id):
-			learned.append(u.name)
-	var lines := "%sTempo: %s%s\nMaior combo: %d insetos\nTanajuras comidas: %d\nHabilidades: %s" % [
-		"Contra o relógio\n" if GameState.mode == GameState.MODE_CLOCK else "",
-		_fmt(time_sec), _record_text(new_record),
-		GameState.best_combo, GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
-	_end_stats.text = lines
-	_end_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_end_stats.custom_minimum_size = Vector2(760, 0)
+	_end_time.text = "%sTempo: %s%s" % [
+		"Contra o relógio  ·  " if GameState.mode == GameState.MODE_CLOCK else "",
+		_fmt(time_sec), _record_text(new_record)]
+	_end_stats.refresh()
 	show_screen("end")
 
 

@@ -1,47 +1,27 @@
-extends Control
-## Aba de estatísticas (TAB): os números deste jogo, as parciais do modo contra
-## o relógio e os recordes de todos os jogos. As conquistas (preparadas, mas
-## escondidas na demo) aparecem aqui só com Achievements.VISIBLE ou --conquistas.
-
-signal closed
+extends HBoxContainer
+## Estatísticas: os números deste jogo, as parciais do modo contra o relógio e
+## os recordes de todos os jogos. Aparece na pausa (Esc) e na tela do fim.
+## As conquistas (preparadas, mas escondidas na demo) aparecem embaixo só com
+## Achievements.VISIBLE ou --conquistas.
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Achievements := preload("res://scripts/achievements.gd")
 
 const GREEN := Color("9fdc7c")
 const RED := Color("ef8a6a")
+## Tamanho das letras das linhas.
+const FONT := 17
 
 var world
 var colony
-var _content: VBoxContainer
-var _back: Button
+## Parciais numa coluna própria (tela do fim) em vez de embaixo de "Este jogo"
+## (pausa, onde os botões já ocupam a largura).
+var wide := false
 
 
 func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_top = 96
-	scroll.offset_bottom = -96
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
-	var center := CenterContainer.new()
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.add_child(center)
-	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", 22)
-	center.add_child(_content)
-	var footer := HBoxContainer.new()
-	footer.alignment = BoxContainer.ALIGNMENT_CENTER
-	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	footer.offset_top = -86
-	footer.offset_bottom = -26
-	add_child(footer)
-	_back = UiTheme.button("", 300)
-	_back.pressed.connect(func(): closed.emit())
-	footer.add_child(_back)
+	add_theme_constant_override("separation", 18)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func setup(w, c) -> void:
@@ -49,33 +29,28 @@ func setup(w, c) -> void:
 	colony = c
 
 
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.04, 0.029, 0.025))
-
-
-func open() -> void:
-	visible = true
-	_back.text = "Voltar ao jogo  [%s]" % Settings.key_label("skill_tree").to_upper()
-	_rebuild()
-
-
-func _rebuild() -> void:
-	for c in _content.get_children():
+## Refaz os quadros com os números de agora.
+func refresh() -> void:
+	for c in get_children():
 		c.queue_free()
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 22)
-	_content.add_child(row)
-	row.add_child(_panel("Este jogo", _run_rows()))
-	var mid := VBoxContainer.new()
-	mid.add_theme_constant_override("separation", 22)
-	row.add_child(mid)
-	mid.add_child(_panel("Ações", _action_rows()))
-	if GameState.mode == GameState.MODE_CLOCK:
-		mid.add_child(_panel("Parciais", _split_rows()))
-	row.add_child(_panel("Recordes", _record_rows()))
+	if world == null:
+		return
+	var left := VBoxContainer.new()
+	left.add_theme_constant_override("separation", 14)
+	add_child(left)
+	left.add_child(_panel("Este jogo", _run_rows()))
+	var clock := GameState.mode == GameState.MODE_CLOCK
+	if clock and not wide:
+		left.add_child(_panel("Parciais", _split_rows()))
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 14)
+	add_child(right)
+	right.add_child(_panel("Ações", _action_rows()))
+	right.add_child(_panel("Recordes", _record_rows()))
+	if clock and wide:
+		add_child(_panel("Parciais", _split_rows()))
 	if Achievements.VISIBLE or DevTools.args.has("conquistas"):
-		_content.add_child(_achievements_panel())
+		add_child(_achievements_panel())
 
 
 # ------------------------------------------------------------------ Números
@@ -162,19 +137,19 @@ func _record_rows() -> Array:
 ## uma lista de textos/[texto, cor] lado a lado.
 func _panel(title: String, rows: Array) -> PanelContainer:
 	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", UiTheme.panel_frame(24, 18))
+	p.add_theme_stylebox_override("panel", UiTheme.panel_frame(20, 14))
 	p.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 12)
+	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
-	v.add_child(UiTheme.display_label(title, 26, UiTheme.PALE))
+	v.add_child(UiTheme.display_label(title, 22, UiTheme.PALE))
 	var g := GridContainer.new()
 	g.columns = 2
-	g.add_theme_constant_override("h_separation", 28)
-	g.add_theme_constant_override("v_separation", 7)
+	g.add_theme_constant_override("h_separation", 24)
+	g.add_theme_constant_override("v_separation", 3)
 	v.add_child(g)
 	for r in rows:
-		g.add_child(UiTheme.label(r[0], 19, UiTheme.SAND))
+		g.add_child(UiTheme.label(r[0], FONT, UiTheme.SAND))
 		var cell := HBoxContainer.new()
 		cell.alignment = BoxContainer.ALIGNMENT_END
 		cell.add_theme_constant_override("separation", 10)
@@ -184,7 +159,7 @@ func _panel(title: String, rows: Array) -> PanelContainer:
 		for part in parts:
 			var text: String = part[0] if part is Array else part
 			var col: Color = part[1] if part is Array else UiTheme.CREAM
-			var l := UiTheme.label(text, 19, col, true)
+			var l := UiTheme.label(text, FONT, col, true)
 			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 			cell.add_child(l)
 	return p
@@ -198,7 +173,7 @@ func _achievements_panel() -> PanelContainer:
 	p.add_child(v)
 	v.add_child(UiTheme.display_label("Conquistas  %d/%d" % [GameState.achievements.size(), Achievements.LIST.size()], 26, UiTheme.PALE))
 	var g := GridContainer.new()
-	g.columns = 3
+	g.columns = 2
 	g.add_theme_constant_override("h_separation", 26)
 	g.add_theme_constant_override("v_separation", 8)
 	v.add_child(g)
@@ -206,7 +181,7 @@ func _achievements_panel() -> PanelContainer:
 		var got := GameState.achievements.has(a.id)
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override("separation", 0)
-		box.custom_minimum_size = Vector2(330, 0)
+		box.custom_minimum_size = Vector2(300, 0)
 		g.add_child(box)
 		box.add_child(UiTheme.label(("◆  " if got else "◇  ") + a.name, 18, UiTheme.GOLD if got else UiTheme.SAND, true))
 		var d := UiTheme.label("     " + a.desc, 15, UiTheme.CREAM if got else UiTheme.MUTED)

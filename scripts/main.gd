@@ -99,7 +99,12 @@ func _ready() -> void:
 		elif DevTools.start_mode == "map":
 			_open_tree(TabMenu.MAP)
 		elif DevTools.start_mode == "stats":
-			_open_tree(TabMenu.STATS)
+			_pause()
+		elif DevTools.start_mode == "end":
+			GameState.playing = false
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			hud.visible = false
+			menus.show_end(GameState.elapsed, false)
 	else:
 		_enter_menu()
 	fade.modulate.a = 1.0
@@ -164,6 +169,7 @@ func _build_game() -> void:
 	# Foto da clareira vista de cima para o mapa (enquanto a tela ainda está escura).
 	tab_ui.map_view.take_shot()
 	ui.move_child(menus, -1)
+	menus.setup_stats(world, colony)
 	menus.play_pressed.connect(_on_play_pressed)
 	menus.continue_pressed.connect(_on_continue_pressed)
 	menus.slot_chosen.connect(_on_slot_chosen)

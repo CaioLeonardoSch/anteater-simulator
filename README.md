@@ -18,7 +18,7 @@ produção, os protótipos e as decisões, num lugar só.
 | ![Formigas passeando em volta de uma câmara no meio do campo, muitas carregando folhas](docs/screenshots/passeio.jpg) | ![Um formigueiro grande desmanchado: o buraco com a rainha no fundo, cheio de formigas](docs/screenshots/rainha.jpg) |
 | ![HUD com cartões de conquista, o resultado do faro e as dicas de controle](docs/screenshots/hud.jpg) | ![Mapa no TAB, colorido onde você já andou](docs/screenshots/mapa.jpg) |
 | ![Árvore de habilidades, na aba ao lado do mapa](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
-| ![Mapa com os 18 formigueiros e os insetos que faltam em cada um](docs/screenshots/mapa-18-formigueiros.jpg) | ![Aba de estatísticas no TAB](docs/screenshots/estatisticas.jpg) |
+| ![Mapa com os 18 formigueiros e os insetos que faltam em cada um](docs/screenshots/mapa-18-formigueiros.jpg) | ![Estatísticas na pausa (Esc)](docs/screenshots/estatisticas-pausa.jpg) |
 | ![Modo contra o relógio: cronômetro e parcial no canto](docs/screenshots/contra-o-relogio.jpg) | ![O sol antes e depois do ajuste da névoa](docs/screenshots/sol-antes-depois.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
@@ -97,9 +97,10 @@ uma vez".
   faltam em cada formigueiro já visto**, as câmaras que você já viu, a caverna
   e você; passe o mouse num formigueiro para ver a área dele. Clique direito
   põe um **marcador**, que aparece na bússola com a distância.
-- **Estatísticas** (`Tab`, terceira aba): os números do jogo (insetos,
-  formigueiros, câmaras, rainhas, maior combo, linguadas e acerto, distância
-  andada...) e os recordes de todos os jogos.
+- **Estatísticas** (na pausa, `Esc`, e na tela do fim): os números do jogo
+  (insetos, formigueiros, câmaras, rainhas, maior combo, linguadas e acerto,
+  distância andada...), as parciais do contra o relógio e os recordes de todos
+  os jogos.
 - **Contra o relógio:** ao começar um jogo novo, escolha Normal ou Contra o
   relógio. No relógio, um cronômetro fica no canto e cada 25% dos insetos marca
   um tempo parcial, comparado com o do seu recorde (verde mais rápido, vermelho

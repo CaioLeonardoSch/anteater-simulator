@@ -1,22 +1,20 @@
 extends Control
-## Tela do TAB: três abas, o mapa (abre primeiro), a árvore de habilidades e
-## as estatísticas. Q e E (ou os botões de ombro do controle) trocam de aba.
+## Tela do TAB: duas abas, o mapa (abre primeiro) e a árvore de habilidades.
+## Q e E (ou os botões de ombro do controle) trocam de aba. As estatísticas
+## ficam na pausa (Esc).
 
 signal closed
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const MapView := preload("res://scripts/ui/map_view.gd")
 const SkillTree := preload("res://scripts/ui/skill_tree.gd")
-const StatsView := preload("res://scripts/ui/stats_view.gd")
 
 const MAP := 0
 const SKILLS := 1
-const STATS := 2
-const NAMES := ["Mapa", "Habilidades", "Estatísticas"]
+const NAMES := ["Mapa", "Habilidades"]
 
 var map_view: MapView
 var tree: SkillTree
-var stats: StatsView
 var page := MAP
 var _tabs: Array[Button] = []
 
@@ -31,15 +29,12 @@ func _ready() -> void:
 	tree = SkillTree.new()
 	add_child(tree)
 	tree.closed.connect(func(): closed.emit())
-	stats = StatsView.new()
-	add_child(stats)
-	stats.closed.connect(func(): closed.emit())
 	var bar := HBoxContainer.new()
 	bar.alignment = BoxContainer.ALIGNMENT_CENTER
 	bar.add_theme_constant_override("separation", 14)
 	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	bar.offset_left = -440
-	bar.offset_right = 440
+	bar.offset_left = -330
+	bar.offset_right = 330
 	bar.offset_top = 18
 	bar.offset_bottom = 70
 	add_child(bar)
@@ -58,7 +53,6 @@ func _ready() -> void:
 
 func setup(player, world, colony, exploration) -> void:
 	map_view.setup(player, world, colony, exploration)
-	stats.setup(world, colony)
 
 
 func _key_chip(text: String) -> PanelContainer:
@@ -92,13 +86,10 @@ func show_page(which: int) -> void:
 	page = which
 	tree.visible = false
 	map_view.visible = false
-	stats.visible = false
 	if which == MAP:
 		map_view.open()
-	elif which == SKILLS:
-		tree.open()
 	else:
-		stats.open()
+		tree.open()
 	for k in _tabs.size():
 		_tabs[k].set_pressed_no_signal(k == which)
 

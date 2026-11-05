@@ -19,7 +19,8 @@ extends Node
 ##   --start=slots                abre a tela dos jogos salvos
 ##   --slot=N                     usa o jogo salvo N (1 a 3)
 ##   --start=mode                 abre a escolha do modo (jogo novo)
-##   --start=stats                abre a aba de estatísticas do TAB
+##   --start=stats                abre a pausa (com as estatísticas)
+##   --start=end                  abre a tela do fim (com as estatísticas)
 ##   --mode=relogio               o jogo novo é contra o relógio
 ##   --conquistas                 mostra as conquistas (escondidas na demo)
 ##   --start=settings --tab=N     abre as configurações na aba N

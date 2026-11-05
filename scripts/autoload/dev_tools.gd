@@ -18,6 +18,7 @@ extends Node
 ##   --start=continue             continua o jogo salvo
 ##   --start=settings --tab=N     abre as configurações na aba N
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
+##   --hats                       chapéu de Natal em uma formiga a cada 20
 ##   --stats                      imprime FPS e estatísticas de render a cada segundo
 
 var args: Dictionary = {}

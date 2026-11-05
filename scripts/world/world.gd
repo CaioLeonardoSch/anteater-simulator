@@ -67,20 +67,21 @@ var _nest_grid_n := 0
 var _grass_quality_built := -1
 var _shadow_atlas := 0
 
-## 12 formigueiros: 8 num anel em volta do mapa e 4 no meio. Os grandes
-## ("big") têm a câmara da rainha.
+## 12 formigueiros: 8 num anel em volta do mapa e 4 no meio. Perto da
+## caverna (o começo) ficam os pequenos, sem rainha, que Cavar já abre; os
+## grandes ("big"), com a rainha, ficam do lado da saída para a área 2.
 const NEST_LAYOUT := [
-	{"name": "Formigueiro Norte", "pos": Vector2(4, -42), "big": true},
+	{"name": "Formigueiro Norte", "pos": Vector2(4, -42), "big": false},
 	{"name": "Formigueiro Nordeste", "pos": Vector2(32, -30), "big": false},
-	{"name": "Formigueiro Leste", "pos": Vector2(44, 2), "big": true},
+	{"name": "Formigueiro Leste", "pos": Vector2(44, 2), "big": false},
 	{"name": "Formigueiro Sudeste", "pos": Vector2(28, 36), "big": false},
-	{"name": "Formigueiro Sul", "pos": Vector2(-2, 46), "big": true},
-	{"name": "Formigueiro Sudoeste", "pos": Vector2(-32, 30), "big": false},
+	{"name": "Formigueiro Sul", "pos": Vector2(-2, 46), "big": false},
+	{"name": "Formigueiro Sudoeste", "pos": Vector2(-32, 30), "big": true},
 	{"name": "Formigueiro Oeste", "pos": Vector2(-45, -6), "big": true},
-	{"name": "Formigueiro Noroeste", "pos": Vector2(-26, -36), "big": false},
+	{"name": "Formigueiro Noroeste", "pos": Vector2(-26, -36), "big": true},
 	{"name": "Formigueiro Centro-Nordeste", "pos": Vector2(11, -7), "big": false},
 	{"name": "Formigueiro Centro-Sudeste", "pos": Vector2(7, 12), "big": false},
-	{"name": "Formigueiro Centro-Sudoeste", "pos": Vector2(-12, 7), "big": false},
+	{"name": "Formigueiro Centro-Sudoeste", "pos": Vector2(-12, 7), "big": true},
 	{"name": "Formigueiro Centro-Noroeste", "pos": Vector2(-7, -12), "big": true},
 ]
 ## Arbustos onde as saúvas cortam folhas.

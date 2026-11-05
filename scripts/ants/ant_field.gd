@@ -149,9 +149,14 @@ func _new_chunk(kind: int, index: int, n: int) -> Chunk:
 	return ch
 
 
+## Chance do chapéu (teste: --hats põe chapéu em uma a cada 20).
+static func hat_chance() -> float:
+	return 0.05 if DevTools.args.has("hats") else HAT_CHANCE
+
+
 static func _flags(rng: RandomNumberGenerator, leaf_chance: float) -> float:
 	var leaf := 1.0 if rng.randf() < leaf_chance else 0.0
-	var hat := 2.0 if rng.randf() < HAT_CHANCE else 0.0
+	var hat := 2.0 if rng.randf() < hat_chance() else 0.0
 	return leaf + hat
 
 

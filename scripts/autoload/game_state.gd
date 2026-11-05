@@ -58,10 +58,10 @@ const UPGRADES := [
 		"desc": "Até 400 formigas por lambida."},
 	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"],
 		"name": "Língua Comprida",
-		"desc": "Alcance da língua +50%."},
+		"desc": "Alcance da língua +50%, e ela lambe 25% mais rápido."},
 	{"id": "lingua_saliva", "branch": 0, "col": 1, "row": 2, "cost": 100, "requires": ["lingua_comprida"],
 		"name": "Saliva Grudenta",
-		"desc": "A ponta da língua gruda num raio 70% maior."},
+		"desc": "A ponta da língua gruda num raio 70% maior, e ela lambe 25% mais rápido."},
 	{"id": "lingua_turbo", "branch": 0, "col": 1, "row": 3, "cost": 150, "requires": ["lingua_saliva"],
 		"name": "Língua Turbo",
 		"desc": "A língua lambe 2x mais rápido."},
@@ -408,8 +408,13 @@ func capture_radius() -> float:
 	return r
 
 
+## Lambidas por segundo: começa devagar e acelera com a linha de Destreza.
 func lick_rate() -> float:
-	var r := 3.2
+	var r := 1.4
+	if has("lingua_comprida"):
+		r *= 1.25
+	if has("lingua_saliva"):
+		r *= 1.25
 	if has("lingua_turbo"):
 		r *= 2.0
 	if frenzy_active():

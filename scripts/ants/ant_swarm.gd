@@ -174,7 +174,7 @@ func _take_slot() -> int:
 	timer[i] = 0.0
 	highlight[i] = 0.0
 	shrink[i] = 1.0
-	carry[i] = 2 if randf() < AntField.HAT_CHANCE else 0
+	carry[i] = 2 if randf() < AntField.hat_chance() else 0
 	vel[i] = Vector2.ZERO
 	home[i] = -1
 	origin_chunk[i] = -1

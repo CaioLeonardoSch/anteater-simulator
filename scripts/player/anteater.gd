@@ -831,6 +831,11 @@ func _bot_update(delta: float) -> void:
 	_bot_lick = false
 	_bot_input = Vector2.ZERO
 	_bot_run = false
+	if _bot_side_t > 0.0 and _bot_hungry < 3.0:
+		# Acabou de desistir de um alvo: anda um pouco de lado antes de seguir.
+		_bot_side_t -= delta
+		_bot_input = Vector2(_bot_side, -0.3).normalized()
+		return
 	_bot_dig = dig_nest != null and GameState.can_dig() and dig_cd <= 0.0
 	if _bot_dig:
 		return
@@ -853,7 +858,9 @@ func _bot_update(delta: float) -> void:
 	var to_goal := goal - cam_pos
 	var dist := Vector2(to_goal.x, to_goal.z).length()
 	var reach := GameState.tongue_range()
-	var moving := to_chamber or dist > reach * 0.75
+	# Errando de longe faz tempo: chega bem perto antes de lamber de novo.
+	var near := 0.9 if _bot_hungry > 6.0 else reach * 0.75
+	var moving := to_chamber or dist > near
 	var aim := move_goal if moving else goal
 	var to := aim - cam_pos
 	var flat_d := maxf(Vector2(to.x, to.z).length(), 0.01)

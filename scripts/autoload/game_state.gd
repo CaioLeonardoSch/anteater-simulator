@@ -72,7 +72,7 @@ const UPGRADES := [
 		"name": "Mira Ampla",
 		"desc": "A área da mira em que a língua procura formigas fica 25% maior."},
 	# Garras: Cavar abre as linhas de Força, de Rapidez (o descanso entre usos)
-	# e de Fundura (buracos maiores: câmaras grandes e a vala da rainha).
+	# e de Fundura (buracos maiores: câmaras grandes e o monte da rainha).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
 		"desc": "Segure [E] perto de uma câmara pequena fechada para abri-la. Depois, as garras descansam 25 s."},
@@ -81,7 +81,7 @@ const UPGRADES := [
 		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
 	{"id": "garras_real", "branch": 1, "col": 2, "row": 2, "cost": 120, "requires": ["garras_fundo"],
 		"name": "Escavação Real",
-		"desc": "Cava a vala da rainha, no pé dos formigueiros grandes: ela e a corte dela estão lá dentro."},
+		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
 	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 70, "requires": ["garras_cavar"],
 		"name": "Garras Fortes",
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
@@ -422,7 +422,7 @@ func can_dig() -> bool:
 
 
 ## Até que tamanho de buraco as garras abrem: 0 nenhum, 1 câmaras pequenas,
-## 2 também as grandes (Cavar Fundo), 3 também a vala da rainha (Escavação Real).
+## 2 também as grandes (Cavar Fundo), 3 também o monte da rainha (Escavação Real).
 func dig_level() -> int:
 	if not has("garras_cavar"):
 		return 0

@@ -105,6 +105,16 @@ func build(w, trail_counts: Array, roams: Array, rng: RandomNumberGenerator) -> 
 		_add_roam_chunk(int(r.code), r.home, float(r.reach), int(r.count), rng)
 
 
+## O chão mudou (um monte virou buraco): refaz as alturas que a placa de
+## vídeo usa (as trilhas já foram recalculadas).
+func refresh_ground() -> void:
+	var trail_tex := _trail_texture()
+	var height_tex := _height_texture()
+	for mat in _mats + _scent_mats:
+		mat.set_shader_parameter("trail_tex", trail_tex)
+		mat.set_shader_parameter("height_tex", height_tex)
+
+
 func _trail_texture() -> ImageTexture:
 	var trails: Array = world.trails.trails
 	var width := 2

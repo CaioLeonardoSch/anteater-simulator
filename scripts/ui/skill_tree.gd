@@ -326,8 +326,14 @@ func open() -> void:
 	if focused:
 		focused.release_focus()
 	# Teste (capturas): já abre com uma habilidade escolhida, como com o controle.
-	if DevTools.args.has("focus") and _nodes.has(String(DevTools.args.focus)):
-		(_nodes[String(DevTools.args.focus)] as Control).grab_focus.call_deferred()
+	if DevTools.args.has("focus"):
+		show_skill(String(DevTools.args.focus))
+
+
+## Mostra uma habilidade (com a explicação dela), como se o cursor estivesse nela.
+func show_skill(id: String) -> void:
+	if _nodes.has(id):
+		(_nodes[id] as Control).grab_focus.call_deferred()
 
 
 # ------------------------------------------------------------------ Desenho

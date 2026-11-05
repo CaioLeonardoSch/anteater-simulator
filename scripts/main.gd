@@ -296,7 +296,12 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("skill_tree") and state in [State.PLAYING, State.TREE]:
 		if state == State.PLAYING:
-			_open_tree()
+			# Com a dica de cadeado na tela, abre direto naquela habilidade.
+			var skill := hud.locked_skill()
+			if skill.is_empty():
+				_open_tree()
+			else:
+				_open_tree(TabMenu.SKILLS, skill)
 		else:
 			_close_tree()
 		get_viewport().set_input_as_handled()
@@ -334,14 +339,14 @@ func _resume() -> void:
 
 
 ## Abre a tela do TAB (o mapa primeiro; a árvore pelo menu de pausa).
-func _open_tree(page: int = TabMenu.MAP) -> void:
+func _open_tree(page: int = TabMenu.MAP, focus_skill: String = "") -> void:
 	if state == State.COMPLETE:
 		return
 	state = State.TREE
 	get_tree().paused = true
 	menus.show_screen("")
 	Settings.learn_hint("map")
-	tab_ui.open(page)
+	tab_ui.open(page, focus_skill)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play("ui_open", -6.0)
 

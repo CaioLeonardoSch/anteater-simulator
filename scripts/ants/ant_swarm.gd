@@ -203,7 +203,7 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 
 
 ## Moradora de uma câmara aberta (ou a rainha, que anda devagar no fundo).
-## `from_tunnel` = acabou de sair do túnel, no meio da câmara. Numa vala,
+## `from_tunnel` = acabou de sair do túnel, no meio da câmara. Num buraco comprido,
 ## `axis` e `half_len` dão a direção e o meio comprimento dela.
 func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false,
 		axis: float = 0.0, half_len: float = 0.0) -> int:
@@ -214,7 +214,7 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	mode[i] = Mode.CHAMBER
 	home[i] = home_code
 	anchor[i] = Vector3(center.x, radius, center.y)
-	# Moradoras não usam a trilha: dir e lateral guardam a forma da vala.
+	# Moradoras não usam a trilha: dir e lateral guardam a forma do buraco.
 	dir[i] = axis
 	lateral[i] = half_len
 	trail_id[i] = 0
@@ -230,6 +230,21 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
 	return i
+
+
+## As moradoras de uma câmara passam a morar em outra (o monte desmanchado:
+## todas caem no buraco da rainha). Retorna quantas mudaram.
+func rehome(from_code: int, to_code: int, center: Vector2, radius: float) -> int:
+	var n := 0
+	for i in CAPACITY:
+		if alive[i] == 0 or home[i] != from_code:
+			continue
+		home[i] = to_code
+		anchor[i] = Vector3(center.x, radius, center.y)
+		dir[i] = 0.0
+		lateral[i] = 0.0
+		n += 1
+	return n
 
 
 func despawn(i: int) -> void:
@@ -518,7 +533,7 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 	else:
 		v = v.normalized() * speed[i] if v.length_squared() > 0.000001 else Vector2.RIGHT.rotated(randf() * TAU) * speed[i]
 	p2 += v * delta
-	# Na vala, o "centro" é o ponto do eixo dela mais perto da formiga.
+	# Num buraco comprido, o "centro" é o ponto do eixo dele mais perto da formiga.
 	var half := lateral[i]
 	if half > 0.0:
 		var ax := Vector2(cos(dir[i]), sin(dir[i]))

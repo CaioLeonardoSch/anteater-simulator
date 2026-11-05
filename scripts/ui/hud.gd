@@ -469,8 +469,20 @@ func _flash_hint(parts: Array, duration: float) -> void:
 	_flash_time = duration
 
 
-func _locked(what: String) -> Array:
-	return [{"icon": "lock", "col": UiTheme.MUTED}, {"text": what}, {"key": "Tab"}]
+## Dica de cadeado: falta aprender a habilidade `id` (o Tab abre ela na aba
+## de habilidades).
+func _locked(id: String) -> Array:
+	return [{"icon": "lock", "col": UiTheme.MUTED, "skill": id}, {"text": GameState.get_upgrade(id).name}, {"key": "Tab"}]
+
+
+## A habilidade da dica de cadeado na tela agora ("" se não há uma).
+func locked_skill() -> String:
+	if not _hint._want:
+		return ""
+	for p in _hint._parts:
+		if p.has("skill"):
+			return String(p.skill)
+	return ""
 
 
 ## O que dá para fazer aqui: tecla e poucas palavras, ou só ícone e número.
@@ -478,10 +490,10 @@ func _context_hint() -> Array:
 	if player.dig_nest != null:
 		var dc = player.dig_nest.chambers[player.dig_chamber]
 		if GameState.dig_level() < dc.size_class:
-			return _locked(GameState.get_upgrade(GameState.dig_skill_for(dc.size_class)).name)
+			return _locked(GameState.dig_skill_for(dc.size_class))
 		if player.dig_cd > 0.0:
 			return [{"icon": "clock", "col": UiTheme.GOLD}, {"num": "%d s" % int(ceil(player.dig_cd))}]
-		return [{"key": "E"}, {"text": "Abrir a vala" if dc.half_len > 0.0 else "Abrir câmara"}]
+		return [{"key": "E"}, {"text": "Desmanchar o monte" if dc.royal else "Abrir câmara"}]
 	var p2 := Vector2(player.global_position.x, player.global_position.z)
 	# Tronco caído na saída para a área 2.
 	if not world.exit_open and world.near_exit(p2, 4.5):
@@ -489,7 +501,7 @@ func _context_hint() -> Array:
 			return [{"icon": "lock", "col": UiTheme.MUTED}, {"num": str(colony.remaining())},
 				{"icon": "ant", "col": UiTheme.SAND}]
 		if not GameState.can_dig():
-			return _locked("Cavar")
+			return _locked("garras_cavar")
 		return [{"key": "E"}, {"text": "Quebrar o tronco"}]
 	# Câmara aberta por perto: quantas formigas faltam (e a rainha protegida).
 	for n in world.nests:
@@ -564,7 +576,7 @@ func _maybe_help() -> void:
 	if smallest == 99 or GameState.dig_level() >= smallest:
 		return
 	_help_next = _play_time + 45.0
-	_flash_hint(_locked(GameState.get_upgrade(GameState.dig_skill_for(smallest)).name), 4.0)
+	_flash_hint(_locked(GameState.dig_skill_for(smallest)), 4.0)
 
 
 func _on_lick_blocked_running() -> void:

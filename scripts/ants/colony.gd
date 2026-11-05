@@ -274,10 +274,14 @@ func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> in
 		return 0
 	nest.open_chamber(ci, instant)
 	var code: int = nest.index * 16 + ci
+	if c.royal:
+		_merge_into_pit(nest, ci)
+		if not instant:
+			refresh_ground()
 	c.shown = 0
 	_refill(nest, ci, false)
 	if c.royal and nest.queen_alive:
-		swarm.spawn_resident(swarm.QUEEN, code, c.pos2, c.radius)
+		swarm.spawn_resident(swarm.QUEEN, code, c.pos2, c.area_radius())
 	if stun > 0.0:
 		swarm.stun_home(code, stun)
 	elif not instant:
@@ -290,6 +294,30 @@ func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> in
 	return c.residents
 
 
+## O monte foi desmanchado: as moradoras das outras câmaras dele caem no
+## buraco da rainha.
+func _merge_into_pit(nest, royal_ci: int) -> void:
+	var royal = nest.chambers[royal_ci]
+	var code: int = nest.index * 16 + royal_ci
+	for ci in nest.chambers.size():
+		var c = nest.chambers[ci]
+		if ci == royal_ci or c.satellite:
+			continue
+		royal.residents += c.residents
+		royal.shown += swarm.rehome(nest.index * 16 + ci, code, royal.pos2, royal.area_radius())
+		c.residents = 0
+		c.shown = 0
+		_clean_announced[nest.index * 16 + ci] = true
+
+
+## O chão mudou (um monte virou buraco): as trilhas e as formigas de campo
+## passam a seguir o chão novo.
+func refresh_ground() -> void:
+	for t in world.trails.trails:
+		t.bake_heights(world)
+	swarm.field.refresh_ground()
+
+
 ## Põe moradoras à vista até CHAMBER_VISIBLE (as novas saem do túnel, no centro).
 func _refill(nest, ci: int, from_tunnel: bool) -> void:
 	var c = nest.chambers[ci]
@@ -298,14 +326,14 @@ func _refill(nest, ci: int, from_tunnel: bool) -> void:
 	var want: int = mini(c.residents, _visible_cap(c))
 	var code: int = nest.index * 16 + ci
 	while c.shown < want:
-		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.radius, from_tunnel, c.axis, c.half_len) < 0:
+		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.area_radius(), from_tunnel, c.axis, c.half_len) < 0:
 			break
 		c.shown += 1
 
 
-## Quantas ficam à vista numa câmara (a vala da rainha é maior).
+## Quantas ficam à vista numa câmara (o buraco da rainha é bem maior).
 func _visible_cap(c) -> int:
-	return CHAMBER_VISIBLE * 2 if c.half_len > 0.0 else CHAMBER_VISIBLE
+	return CHAMBER_VISIBLE * 3 if c.royal else CHAMBER_VISIBLE
 
 
 func _process(delta: float) -> void:
@@ -361,9 +389,12 @@ func from_save(d: Dictionary) -> void:
 			c.shown = 0
 			c.opened = false
 		var ch: Array = sd.get("chambers", [])
+		# Primeiro as contas de todas as câmaras, depois abre as abertas (o
+		# buraco da rainha junta as moradoras das outras câmaras do monte).
+		for ci in mini(ch.size(), n.chambers.size()):
+			n.chambers[ci].residents = int(ch[ci].get("residents", 0))
 		for ci in mini(ch.size(), n.chambers.size()):
 			var c = n.chambers[ci]
-			c.residents = int(ch[ci].get("residents", 0))
 			var roam_left := clampi(int(ch[ci].get("roamers", c.roamers)), 0, c.roamers)
 			var code: int = k * 16 + ci
 			if roam_left < c.roamers and field.roam_chunk.has(code):
@@ -375,4 +406,5 @@ func from_save(d: Dictionary) -> void:
 					_clean_announced[code] = true
 		if n.remaining() == 0:
 			n.set_cleaned(true)
+	refresh_ground()
 	_spawn_tanajuras()

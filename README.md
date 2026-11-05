@@ -118,18 +118,18 @@ uma vez".
   as garras descansam (25 s no começo). As câmaras grandes, de tampa mais
   escura, pedem **Cavar Fundo**.
 - **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
-- **Rainha:** mora no fundo dos formigueiros grandes. Com a **Escavação Real**,
+- **Rainha:** mora no fundo dos formigueiros grandes. Com **Fundura nível 2** (Garras),
   cave o topo do monte: ele se desmancha inteiro e fica um buraco com a rainha
   andando devagar lá embaixo, junto com as moradoras das outras câmaras dele.
   Coma a corte e ela vale **200 formigas** (20 pontos).
 - **Língua:** no começo ela é lenta (pouco mais de uma lambida por segundo) e
   vai reta até onde você mira, pegando até 10 formigas perto da ponta. A linha
-  de Destreza a deixa mais rápida. Com **Língua Certeira**, ela vai sozinha atrás da formiga mais perto
+  de Destreza a deixa mais rápida. Com **Mira nível 1**, ela vai sozinha atrás da formiga mais perto
   da mira (com um contorno verde suave); a **Mira Ampla** aumenta essa área.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
-  Correndo também não dá para lamber, até aprender **Lamber Correndo**.
+  Correndo também não dá para lamber, até aprender **Corrida nível 2**.
 - **Faro:** primeiro só diz quantas formigas há por perto e a que distância
   está a mais perto. Com Precisão, mostra uma nuvem borrada onde elas estão e
   depois as formigas brilhando através do capim; o Faro de Câmara mostra as
@@ -164,16 +164,16 @@ uma vez".
 
 | Habilidade | Níveis (preço em pontos) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · Lambida (40: até 50 formigas por lambida) · Lambida Larga (75: até 150) · Lambida Gulosa (115: até 250) · Lambida Voraz (170: até 400); **Destreza** · Língua Comprida (70: alcance +50% e lambe 25% mais rápido) · Saliva Grudenta (100: raio maior e mais 25% de rapidez) · Língua Turbo (150: 2x mais rápido); **Mira** · Língua Certeira (30: a língua vai atrás da formiga mais perto da mira) · Mira Ampla (60: essa área 25% maior) |
-| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s); **Fundura** · Cavar Fundo (60: câmaras grandes) · Escavação Real (120: desmancha o monte da rainha) |
-| **Patas** | Fôlego (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · Patas Ligeiras (70: +50% sobre andar, eram +25%) · Lamber Correndo (80) · Galope Silencioso (120: correr não assusta); **Respiro** · Respiro (25) · Respiro Fundo (50) · Segundo Fôlego (90): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · Passada Leve (25) · Passada Firme (50) · Passada Econômica (90): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · Fôlego Longo (50: 150) · Fôlego de Maratona (90: 200) |
-| **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · nível 1 (40: até 50 insetos por lambida) · nível 2 (75: até 150) · nível 3 (115: até 250) · nível 4 (170: até 400); **Destreza** · nível 1 (70: alcance +50% e lambe 25% mais rápido) · nível 2 (100: raio maior e mais 25% de rapidez) · nível 3 (150: 2x mais rápido); **Mira** · nível 1 (30: a língua vai atrás do inseto mais perto da mira) · nível 2 (60: essa área 25% maior) |
+| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (70: moradoras tontas) · nível 2 (110: libera o Tremor, recarga de 21 s) · nível 3 (170: Terremoto); **Rapidez** · nível 1 (50: descanso de 15 s) · nível 2 (95: 5 s) · nível 3 (130: Tremor em 14 s) · nível 4 (150: 7 s); **Fundura** · nível 1 (60: câmaras grandes) · nível 2 (120: desmancha o monte da rainha) |
+| **Patas** | Fôlego nível 1 (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · nível 1 (70: +50% sobre andar, eram +25%) · nível 2 (80: lamber correndo) · nível 3 (120: correr não assusta); **Respiro** · níveis 1 a 3 (25, 50, 90): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · níveis 1 a 3 (25, 50, 90): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · nível 2 (50: 150) · nível 3 (90: 200) |
+| **Faro** | Farejar (20), e depois: **Alcance** · nível 1 (40: 16 m) · nível 2 (70: 24 m) · nível 3 (110: 34 m) · nível 4 (160: 50 m); **Precisão** · nível 1 (45: nuvem) · nível 2 (85: insetos brilhando) · nível 3 (100: câmaras) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
 **Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde
 no canto de baixo, à esquerda (fica vermelho-escura quando acaba). Ela só volta
 1 s depois de parar de correr; se zerar, dá para correr de novo quando encher
-um quarto. Começa com 50, gasta 10 por segundo e volta 3 por segundo.
+15%. Começa com 50, gasta 10 por segundo e volta 3 por segundo.
 
 10 formigas comidas = 1 ponto (a rainha vale 20 pontos). As linhas de um ramo
 não se excluem. Tudo o que dá para aprender no Cerrado soma 3215 pontos (de 4 400 no jogo), e dá

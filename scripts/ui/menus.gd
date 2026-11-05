@@ -446,12 +446,12 @@ Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câ
 
 [b]Dicas[/b]
 · [b]Cada 10 insetos comidos valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
-· A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
+· A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com [b]Mira[/b] (na Língua), ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
-· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Cavar Fundo[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só a [b]Escavação Real[/b] desmancha o monte inteiro.
+· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Fundura nível 1[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só [b]Fundura nível 2[/b] desmancha o monte inteiro.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
 · Correr gasta a [b]estamina[/b] (a barra verde no canto de baixo, à esquerda). Ela volta quando você para de correr; se zerar, espere a barra encher um pouco.
-· Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
+· Correr assusta as formigas, e sem [b]Corrida nível 2[/b] não dá para lamber enquanto corre.
 · Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.
 · Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % StatsPanel._n(GameState.GOAL)
 	v.add_child(text)

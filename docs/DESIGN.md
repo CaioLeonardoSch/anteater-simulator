@@ -174,7 +174,7 @@ buscamos, no espírito delas:
   deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez:
   50, 150, 250 e 400 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
-  estiver perto da ponta. A **Língua Certeira** (30 pontos) faz a língua ir
+  estiver perto da ponta. A **Mira nível 1** (30 pontos) faz a língua ir
   sozinha atrás da formiga mais perto da mira, e a **Mira Ampla** (60) deixa
   essa área 25% maior.
 - **O fim:** a região está limpa quando não sobra nenhum inseto, nem nas trilhas
@@ -182,8 +182,8 @@ buscamos, no espírito delas:
 
 ### Desafio extra: rainha e tanajura
 
-- **Rainha:** aparece **só nos ninhos grandes** e mora **bem no fundo**: com a
-  **Escavação Real**, cavar o topo do monte o desmancha inteiro, e fica um
+- **Rainha:** aparece **só nos ninhos grandes** e mora **bem no fundo**: com
+  **Fundura nível 2** (Garras), cavar o topo do monte o desmancha inteiro, e fica um
   **buraco** com a rainha andando devagar lá embaixo, junto com a corte e as
   moradoras das outras câmaras do monte. Só dá para comê-la depois de comer a
   corte. Vale **200 formigas (20 pontos)** e tem
@@ -214,21 +214,21 @@ dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**).
 | Habilidade | Linha | Níveis (preço em pontos) |
 |---|---|---|
 | **Língua** | começo | Lambida Contínua (25: segurar para lamber) |
-| | Bocado | Lambida (40: até 50 formigas por lambida) · Lambida Larga (75: até 150) · Lambida Gulosa (115: até 250) · Lambida Voraz (170: até 400) |
-| | Destreza | Língua Comprida (70: +50% de alcance) · Saliva Grudenta (100: gruda num raio 70% maior) · Língua Turbo (150: 2x mais rápida) |
-| | Mira | Língua Certeira (30: a língua vai atrás da formiga mais perto da mira; sem ela, vai reta) · Mira Ampla (60: essa área fica 25% maior) |
+| | Bocado | nível 1 (40: até 50 insetos por lambida) · nível 2 (75: até 150) · nível 3 (115: até 250) · nível 4 (170: até 400) |
+| | Destreza | nível 1 (70: +50% de alcance) · nível 2 (100: gruda num raio 70% maior) · nível 3 (150: 2x mais rápida) |
+| | Mira | nível 1 (30: a língua vai atrás do inseto mais perto da mira; sem ela, vai reta) · nível 2 (60: essa área fica 25% maior) |
 | **Garras** | começo | Cavar (35: abre as câmaras pequenas; depois as garras descansam 25 s) |
-| | Força | Garras Fortes (70: as moradoras ficam tontas ao abrir) · Tremor (110: pulo com pancada; recarga de 21 s) · Terremoto (170: pulo mais alto, tremor maior, puxa as tontas) |
-| | Rapidez | Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: descanso de 5 s e cava na metade do tempo) · Recarga do Tremor (130: Tremor em 14 s) · Recarga Relâmpago (150: Tremor em 7 s) |
-| | Fundura | Cavar Fundo (60: abre as câmaras grandes) · Escavação Real (120: desmancha o monte da rainha) |
-| **Patas** | começo | Fôlego (20: estamina máxima de 50 para 100). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | Patas Ligeiras (70: +50% sobre andar) · Lamber Correndo (80) · Galope Silencioso (120: correr não assusta) |
-| | Respiro | Respiro (25) · Respiro Fundo (50) · Segundo Fôlego (90): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
-| | Passada | Passada Leve (25) · Passada Firme (50) · Passada Econômica (90): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
-| | Fôlego | Fôlego Longo (50: estamina máxima 150) · Fôlego de Maratona (90: 200) |
+| | Força | nível 1 (70: as moradoras ficam tontas ao abrir) · nível 2 (110: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 3 (170: Terremoto: pulo mais alto, tremor maior, puxa as tontas) |
+| | Rapidez | nível 1 (50: descanso de 15 s) · nível 2 (95: descanso de 5 s e cava na metade do tempo) · nível 3 (130: Tremor em 14 s) · nível 4 (150: Tremor em 7 s) |
+| | Fundura | nível 1 (60: abre as câmaras grandes) · nível 2 (120: desmancha o monte da rainha) |
+| **Patas** | começo | Fôlego nível 1 (20: estamina máxima de 50 para 100). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
+| | Corrida | nível 1 (70: +50% sobre andar) · nível 2 (80: lamber correndo) · nível 3 (120: correr não assusta) |
+| | Respiro | níveis 1 a 3 (25, 50, 90): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
+| | Passada | níveis 1 a 3 (25, 50, 90): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
+| | Fôlego | nível 2 (50: estamina máxima 150) · nível 3 (90: 200) |
 | **Faro** | começo | Farejar (20: diz quantas formigas há a até 10 m, até 100 delas, e a distância da mais perto) |
-| | Alcance | Faro Atento (40: 16 m, 250 formigas) · Faro Apurado (70: 24 m, 500) · Faro Aguçado (110: 34 m, 1000, e quanto falta em cada formigueiro) · Faro Lendário (160: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
-| | Precisão | Faro Preciso (45: nuvem borrada onde estão) · Faro Nítido (85: as formigas brilham nítidas) · Faro de Câmara (100: colunas de cheiro nas câmaras fechadas) |
+| | Alcance | nível 1 (40: 16 m, 250 formigas) · nível 2 (70: 24 m, 500) · nível 3 (110: 34 m, 1000, e quanto falta em cada formigueiro) · nível 4 (160: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
+| | Precisão | nível 1 (45: nuvem borrada onde estão) · nível 2 (85: as formigas brilham nítidas) · nível 3 (100: colunas de cheiro nas câmaras fechadas) |
 | **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400): ainda não feitas, aparecem com cadeado |
 
 **Habilidades por região:** a **Escalada + Cauda** aparece na árvore desde o
@@ -257,7 +257,7 @@ Feito, seguindo as decisões:
    grandes, de tampa mais escura, pedem **Cavar Fundo**.
 2. **Dá para subir nos formigueiros** e olhar dentro das câmaras lá de cima.
 3. **Rainha** no fundo dos 7 formigueiros grandes: a tampa dela fica no topo do
-   monte, e só a **Escavação Real** a abre. Aí o **monte inteiro some** e fica
+   monte, e só **Fundura nível 2** (Garras) a abre. Aí o **monte inteiro some** e fica
    um buraco escuro com a rainha andando devagar no fundo, junto com a corte e
    as moradoras das outras câmaras do monte. A rainha brilha de leve, fica
    protegida enquanto houver formigas no buraco e **vale 200 formigas (20
@@ -279,8 +279,8 @@ Feito, seguindo as decisões:
 6. **As 5 habilidades, com 40 níveis**, cada um com seu preço (seção 3), numa
    árvore com **cara de constelação** que não abre sozinha. A língua começa
    **lenta** (1,4 lambida por segundo, acelerando com a linha de Destreza), com
-   um clique por lambida, e vai **reta** até aprender a Língua Certeira; correndo
-   não dá para lamber até aprender Lamber Correndo. Farejar também precisa ser
+   um clique por lambida, e vai **reta** até aprender a Mira nível 1; correndo
+   não dá para lamber até aprender Corrida nível 2. Farejar também precisa ser
    aprendido. O **Tremor** é um pulo: a pancada vem ao cair. A **Escalada +
    Cauda** aparece com cadeado. Dá para **redistribuir os pontos**.
 7. **Progresso visível, com pouco texto:** no canto, as formigas comidas, os
@@ -633,5 +633,6 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Estatísticas (lugar) | Aba do TAB | Botão "Estatísticas" na pausa, com tela própria, e os mesmos quadros na tela do fim |
 | 05/11/2026 | Bot de teste | Comprava numa ordem fixa e só mirava nas formigas soltas | Compra em rodízio entre os ramos e anota cada compra (`--botlog`); vai atrás de todos os insetos, usa Tremor, corrida e Lamber Correndo |
 | 05/11/2026 | Quantidade de insetos | 32 000 (3 200 pontos) | 44 000 (4 400 pontos), para caber a árvore nova com estamina; jogos salvos antigos não carregam mais |
-| 05/11/2026 | Correr | Só depois da habilidade Corrida (30), sem limite | Desde o começo, com estamina (barra no canto de baixo, à esquerda): começa com 50, gasta 10/s, volta 3/s 1 s depois de parar. A habilidade Corrida saiu; Patas ganhou as linhas Respiro, Passada e Fôlego |
+| 05/11/2026 | Correr | Só depois da habilidade Corrida (30), sem limite | Desde o começo, com estamina (barra no canto de baixo, à esquerda): começa com 50, gasta 10/s, volta 3/s 1 s depois de parar. Se zerar, volta a correr com 15%. A habilidade Corrida saiu; Patas ganhou as linhas Respiro, Passada e Fôlego |
+| 05/11/2026 | Nomes das habilidades | Um nome para cada nível (Lambida Larga, Garras Ágeis, Faro Apurado...) | Linha + nível (Bocado nível 2, Rapidez nível 1, Alcance nível 2); só o começo de cada ramo tem nome (Lambida Contínua, Cavar, Fôlego nível 1, Farejar) |
 | 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

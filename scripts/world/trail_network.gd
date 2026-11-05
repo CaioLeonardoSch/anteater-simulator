@@ -11,6 +11,20 @@ class Trail extends RefCounted:
 	var length := 0.0
 	var nest := 0
 	var food := 0
+	## Altura do chão em cada ponto (para inclinar os grupos de formigas).
+	var heights := PackedFloat32Array()
+
+	func bake_heights(world) -> void:
+		heights.resize(points.size())
+		for i in points.size():
+			heights[i] = world.ground_height(points[i].x, points[i].y)
+
+	## Quanto a trilha sobe por metro (no sentido de s), medido em 1 m.
+	func slope_at(s: float) -> float:
+		if heights.size() < 5:
+			return 0.0
+		var i := clampi(int(s / STEP), 2, heights.size() - 3)
+		return (heights[i + 2] - heights[i - 2]) / (4.0 * STEP)
 
 	func point_at(s: float) -> Vector2:
 		var f := clampf(s / STEP, 0.0, points.size() - 1.001)

@@ -341,6 +341,9 @@ func _breaking_exit() -> bool:
 func _is_digging() -> bool:
 	if dig_nest == null or dig_chamber < 0 or not GameState.can_dig() or dig_cd > 0.0:
 		return false
+	# Buraco grande demais para o nível de Cavar que você tem.
+	if GameState.dig_level() < dig_nest.chambers[dig_chamber].size_class:
+		return false
 	if controls_enabled:
 		return Input.is_action_pressed("dig")
 	return bot and _bot_dig
@@ -566,7 +569,7 @@ func _update_abilities(delta: float) -> void:
 		if ci >= 0:
 			dig_nest = n
 			dig_chamber = ci
-			best_reach = p2.distance_to(n.chambers[ci].pos2) - n.chambers[ci].radius
+			best_reach = n.chambers[ci].edge_distance(p2)
 	if prev_nest != null and (prev_nest != dig_nest or prev_chamber != dig_chamber):
 		prev_nest.reset_dig(prev_chamber)
 		dig_progress = 0.0
@@ -811,7 +814,7 @@ func _bot_nearest_closed_chamber() -> Vector3:
 	var best_d := INF
 	for n in world.nests:
 		for c in n.chambers:
-			if c.opened:
+			if c.opened or GameState.dig_level() < c.size_class:
 				continue
 			var p: Vector3 = n.chamber_world_pos(c)
 			var d := p.distance_to(global_position)

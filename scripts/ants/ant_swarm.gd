@@ -1,5 +1,8 @@
 extends Node3D
 ## Enxame de formigas: simulação leve em arrays + desenho com MultiMesh.
+## Cada operária da simulação é um grupo de SQUAD formigas (vale 1 ponto): o
+## shader desenha as 10, em fila na trilha, num bando solto quando fogem e num
+## bolo apertado na câmara e na língua. Rainhas e tanajuras andam sozinhas.
 ## Modos: seguindo a trilha, fugindo, voltando (para a trilha ou para a câmara),
 ## tonta, grudada na língua e morando numa câmara aberta de um formigueiro.
 ## As moradoras de uma câmara recém-aberta saem correndo, e todas fogem quando
@@ -11,8 +14,25 @@ const AntMeshBuilder := preload("res://scripts/ants/ant_mesh_builder.gd")
 const SCENT_SHADER := preload("res://shaders/ant_scent.gdshader")
 
 const CAPACITY := 1600
-const NEAR_LOD_DIST := 15.0
+## Distâncias em que os grupos trocam de malha: detalhada (com sombra) até a
+## 1ª, depois simples, bem simples e mínima (até DRAW_DIST).
+const LOD_DISTS := [6.0, 13.0, 28.0]
 const DRAW_DIST := 75.0
+## Camadas de desenho (uma MultiMesh cada).
+const LAYER_QUEEN := 4
+const LAYER_TANAJURA := 5
+## Grupos a menos disto acompanham a inclinação do chão.
+const TILT_DIST := 30.0
+## Formigas em cada grupo de operárias.
+const SQUAD := 10
+## Formações dos grupos (o shader mistura as vizinhas na troca).
+const FORM_LINE := 1.0
+const FORM_LOOSE := 2.0
+const FORM_TIGHT := 3.0
+## Meia fila e raio do bando e do bolo, em unidades da formiga.
+const LINE_HALF := 4.6
+const LOOSE_RADIUS := 2.9
+const TIGHT_RADIUS := 1.6
 ## Moradoras de câmaras longe do tamanduá: simuladas 1 vez a cada 4 passos
 ## e não desenhadas muito longe (estão dentro do buraco, nem dá para ver).
 const CHAMBER_SIM_LOD_DIST := 20.0
@@ -51,6 +71,8 @@ var highlight := PackedFloat32Array()
 var rnd := PackedFloat32Array()
 ## Escala extra (formigas encolhem ao entrar na boca).
 var shrink := PackedFloat32Array()
+## Formação do grupo agora (vai mudando aos poucos até a da situação).
+var form := PackedFloat32Array()
 var pos := PackedVector3Array()
 var vel := PackedVector2Array()
 ## Centro da câmara (x, raio, z) para as moradoras.
@@ -69,7 +91,7 @@ var pull_target := Vector3.INF
 var _mm: Array[MultiMesh] = []
 var _mmi: Array[MultiMeshInstance3D] = []
 var _buf: Array[PackedFloat32Array] = []
-var _counts := PackedInt32Array([0, 0, 0, 0])
+var _counts := PackedInt32Array([0, 0, 0, 0, 0, 0])
 var _scent_mat: ShaderMaterial
 var _time := 0.0
 var cam_pos := Vector3.ZERO
@@ -83,7 +105,7 @@ func setup(w, col) -> void:
 	for arr in [alive, kind, mode, carry]:
 		arr.resize(CAPACITY)
 		arr.fill(0)
-	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, shrink]:
+	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, shrink, form]:
 		arr.resize(CAPACITY)
 		arr.fill(0.0)
 	trail_id.resize(CAPACITY)
@@ -95,14 +117,18 @@ func setup(w, col) -> void:
 	_free.resize(CAPACITY)
 	for i in CAPACITY:
 		_free[i] = CAPACITY - 1 - i
+	for t in trails:
+		t.bake_heights(w)
 	_scent_mat = ShaderMaterial.new()
 	_scent_mat.shader = SCENT_SHADER
-	# 0 operária perto, 1 operária longe, 2 rainha, 3 tanajura
-	var meshes: Array[Mesh] = [
-		AntMeshBuilder.build("worker", 0), AntMeshBuilder.build("worker", 1),
-		AntMeshBuilder.build("queen", 0), AntMeshBuilder.build("tanajura", 0)]
-	var caps := [CAPACITY, CAPACITY, 8, 60]
-	for k in 4:
+	# 0..3 grupos de operárias (de perto para longe), 4 rainha, 5 tanajura
+	var meshes: Array[Mesh] = []
+	for lod in 4:
+		meshes.append(AntMeshBuilder.squad(AntMeshBuilder.build("worker", lod), SQUAD))
+	meshes.append(AntMeshBuilder.build("queen", 0))
+	meshes.append(AntMeshBuilder.build("tanajura", 0))
+	var caps := [400, 800, CAPACITY, CAPACITY, 8, 60]
+	for k in 6:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_colors = true
@@ -112,9 +138,10 @@ func setup(w, col) -> void:
 		mm.visible_instance_count = 0
 		mm.custom_aabb = AABB(Vector3(-90, -20, -90), Vector3(180, 60, 180))
 		var mmi := MultiMeshInstance3D.new()
-		mmi.name = ["WorkersNear", "WorkersFar", "Queens", "Tanajuras"][k]
+		mmi.name = ["Workers0", "Workers1", "Workers2", "Workers3", "Queens", "Tanajuras"][k]
 		mmi.multimesh = mm
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if k != 1 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if k in [0, LAYER_QUEEN, LAYER_TANAJURA] \
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
 		var buf := PackedFloat32Array()
 		buf.resize(caps[k] * STRIDE)
@@ -135,6 +162,7 @@ func _take_slot() -> int:
 	timer[i] = 0.0
 	highlight[i] = 0.0
 	shrink[i] = 1.0
+	form[i] = FORM_LINE
 	carry[i] = 0
 	vel[i] = Vector2.ZERO
 	home[i] = -1
@@ -161,8 +189,10 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 
 
 ## Moradora de uma câmara aberta (ou a rainha, parada no centro).
-## `from_tunnel` = acabou de sair do túnel, no meio da câmara.
-func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false) -> int:
+## `from_tunnel` = acabou de sair do túnel, no meio da câmara. Numa vala,
+## `axis` e `half_len` dão a direção e o meio comprimento dela.
+func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false,
+		axis: float = 0.0, half_len: float = 0.0) -> int:
 	var i := _take_slot()
 	if i < 0:
 		return -1
@@ -170,6 +200,11 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	mode[i] = Mode.CHAMBER
 	home[i] = home_code
 	anchor[i] = Vector3(center.x, radius, center.y)
+	# Moradoras já saem do túnel em bolo (as das trilhas andam em fila).
+	form[i] = FORM_TIGHT
+	# Moradoras não usam a trilha: dir e lateral guardam a forma da vala.
+	dir[i] = axis
+	lateral[i] = half_len
 	trail_id[i] = 0
 	speed[i] = CHAMBER_SPEED * randf_range(0.7, 1.3)
 	var p2 := center
@@ -177,6 +212,8 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 		var a := randf() * TAU
 		var spread := 0.22 if from_tunnel else 0.9
 		p2 += Vector2(cos(a), sin(a)) * radius * sqrt(randf()) * spread
+		if half_len > 0.0:
+			p2 += Vector2(cos(axis), sin(axis)) * half_len * randf_range(-1.0, 1.0) * (0.35 if from_tunnel else 0.9)
 		vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
@@ -366,6 +403,8 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 	var radius := a.y
 	var p2 := Vector2(pos[i].x, pos[i].z)
 	var v := vel[i].rotated(randf_range(-2.5, 2.5) * delta)
+	# O bolo de formigas fica dentro da câmara.
+	var limit := maxf(radius * 0.92 - SIZE[WORKER] * TIGHT_RADIUS * 0.8, radius * 0.4)
 	var away := p2 - threat
 	var dthreat := away.length()
 	if dthreat < 1.6 and dthreat > 0.001:
@@ -373,8 +412,12 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 	else:
 		v = v.normalized() * speed[i] if v.length_squared() > 0.000001 else Vector2.RIGHT.rotated(randf() * TAU) * speed[i]
 	p2 += v * delta
+	# Na vala, o "centro" é o ponto do eixo dela mais perto da formiga.
+	var half := lateral[i]
+	if half > 0.0:
+		var ax := Vector2(cos(dir[i]), sin(dir[i]))
+		center += ax * clampf((p2 - center).dot(ax), -half, half)
 	var off := p2 - center
-	var limit := radius * 0.92
 	if off.length() > limit:
 		var n := off.normalized()
 		p2 = center + n * limit
@@ -461,6 +504,24 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	return n
 
 
+## Distância (ao quadrado) de p até a formiga i. Para um grupo, até a fila ou
+## o bando dele (a língua pega o grupo inteiro se encostar em qualquer parte).
+func _reach2(i: int, p: Vector3) -> float:
+	var c := pos[i] + Vector3(0, SIZE[kind[i]] * 0.25, 0)
+	if kind[i] != WORKER:
+		return c.distance_squared_to(p)
+	var unit: float = SIZE[WORKER]
+	var f := form[i]
+	if f < 1.5:
+		var fwd := Vector3(-sin(yaw[i]), 0.0, -cos(yaw[i]))
+		var half := LINE_HALF * unit
+		var t := clampf((p - c).dot(fwd), -half, half)
+		return (c + fwd * t).distance_squared_to(p)
+	var r := (LOOSE_RADIUS if f < 2.5 else TIGHT_RADIUS) * unit
+	var d := maxf(c.distance_to(p) - r, 0.0)
+	return d * d
+
+
 func _queen_blocked(i: int) -> bool:
 	return kind[i] == QUEEN and colony != null and colony.is_queen_protected(home[i])
 
@@ -475,9 +536,8 @@ func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
 		var k := kind[i]
-		var p := pos[i] + Vector3(0, SIZE[k] * 0.25, 0)
 		var reach2 := r2 if k != QUEEN else (radius + 0.25) * (radius + 0.25)
-		var d2 := p.distance_squared_to(tip)
+		var d2 := _reach2(i, tip)
 		if d2 > reach2:
 			continue
 		if _queen_blocked(i):
@@ -499,7 +559,7 @@ func any_near(point: Vector3, radius: float) -> bool:
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK or _queen_blocked(i):
 			continue
-		if pos[i].distance_squared_to(point) <= r2:
+		if _reach2(i, point) <= r2:
 			return true
 	return false
 
@@ -560,7 +620,7 @@ func set_scent_overlay(enabled: bool) -> void:
 func set_sniff_color(c: Color) -> void:
 	if _scent_mat:
 		_scent_mat.set_shader_parameter("tint", c)
-	for k in [0, 1, 3]:
+	for k in [0, 1, 2, 3, LAYER_TANAJURA]:
 		if k < _mmi.size():
 			_mmi[k].set_instance_shader_parameter("glow_color", c)
 
@@ -596,14 +656,29 @@ func trail_count() -> int:
 	return n
 
 
-func _process(_delta: float) -> void:
+## Chão inclinado embaixo do grupo: o "para cima" segue a normal do chão.
+func _ground_basis(p: Vector3, a: float) -> Basis:
+	var e := 0.25
+	var hx: float = world.ground_height(p.x + e, p.z) - world.ground_height(p.x - e, p.z)
+	var hz: float = world.ground_height(p.x, p.z + e) - world.ground_height(p.x, p.z - e)
+	var up := Vector3(-hx, 2.0 * e, -hz).normalized()
+	var fwd := Vector3(-sin(a), 0.0, -cos(a))
+	fwd = (fwd - up * fwd.dot(up)).normalized()
+	return Basis(fwd.cross(up), up, -fwd)
+
+
+func _process(delta: float) -> void:
 	if _mm.is_empty():
 		return
 	_counts.fill(0)
 	var cam := cam_pos
-	var near2 := NEAR_LOD_DIST * NEAR_LOD_DIST
+	var lod0 := float(LOD_DISTS[0]) * LOD_DISTS[0]
+	var lod1 := float(LOD_DISTS[1]) * LOD_DISTS[1]
+	var lod2 := float(LOD_DISTS[2]) * LOD_DISTS[2]
 	var far2 := DRAW_DIST * DRAW_DIST
+	var tilt2 := TILT_DIST * TILT_DIST
 	var chamber_far2 := CHAMBER_DRAW_DIST * CHAMBER_DRAW_DIST
+	var form_step := delta * 2.5
 	for i in CAPACITY:
 		if alive[i] == 0:
 			continue
@@ -612,7 +687,17 @@ func _process(_delta: float) -> void:
 		if d2 > far2 or (d2 > chamber_far2 and mode[i] == Mode.CHAMBER):
 			continue
 		var k := kind[i]
-		var layer := 2 if k == QUEEN else (3 if k == TANAJURA else (0 if d2 < near2 else 1))
+		var layer := 0
+		if k == QUEEN:
+			layer = LAYER_QUEEN
+		elif k == TANAJURA:
+			layer = LAYER_TANAJURA
+		elif d2 >= lod2:
+			layer = 3
+		elif d2 >= lod1:
+			layer = 2
+		elif d2 >= lod0:
+			layer = 1
 		var slot := _counts[layer]
 		if slot * STRIDE >= _buf[layer].size():
 			continue
@@ -622,6 +707,29 @@ func _process(_delta: float) -> void:
 		var state := 0.0
 		var origin := p
 		var m := mode[i]
+		var formation := 0.0
+		var clip := 999.0
+		if k == WORKER:
+			# Fila na trilha, bolo na câmara e na língua, bando solto no resto.
+			var want := FORM_LOOSE
+			if m == Mode.TRAIL:
+				want = FORM_LINE
+			elif m == Mode.CHAMBER or m == Mode.STUCK:
+				want = FORM_TIGHT
+			# Na língua o bolo se fecha depressa.
+			form[i] = move_toward(form[i], want, form_step * (3.5 if m == Mode.STUCK else 1.0))
+			formation = form[i]
+			if d2 < tilt2:
+				if m == Mode.TRAIL:
+					var t = trails[trail_id[i]]
+					basis = basis * Basis(Vector3.RIGHT, atan(t.slope_at(s[i]) * dir[i]))
+				elif m != Mode.STUCK:
+					basis = _ground_basis(p, yaw[i])
+			# Na boca do formigueiro, as do grupo que já entraram (ou ainda não
+			# saíram) ficam escondidas.
+			if m == Mode.TRAIL and s[i] < 1.2:
+				var units := s[i] / size
+				clip = units if dir[i] < 0.0 else -units
 		if k == QUEEN:
 			size *= 1.0 + sin(_time * 2.0 + rnd[i] * 6.0) * 0.03
 		if m == Mode.STUNNED:
@@ -654,11 +762,11 @@ func _process(_delta: float) -> void:
 		buf[o + 12] = tint
 		buf[o + 13] = tint
 		buf[o + 14] = tint
-		buf[o + 15] = 1.0
+		buf[o + 15] = clip
 		buf[o + 16] = gait[i]
 		buf[o + 17] = hl
-		buf[o + 18] = state
-		buf[o + 19] = float(carry[i])
-	for layer in 4:
+		buf[o + 18] = state + 4.0 * float(int(rnd[i] * 1023.0))
+		buf[o + 19] = float(carry[i]) + 2.0 * round(formation * 64.0)
+	for layer in _mm.size():
 		_mm[layer].buffer = _buf[layer]
 		_mm[layer].visible_instance_count = _counts[layer]

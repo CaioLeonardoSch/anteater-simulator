@@ -145,7 +145,7 @@ func _build_title() -> Control:
 	sub.add_theme_constant_override("outline_size", 4)
 	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada formiga comida vale 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 formigas comidas valem 1 ponto para aprender habilidades." % GameState.ants(GameState.GOAL), 22, UiTheme.CREAM)
 	tag.add_theme_font_override("font", UiTheme.semi_font())
 	tag.add_theme_constant_override("outline_size", 4)
 	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
@@ -189,7 +189,7 @@ func _update_title_buttons(cont: Button, play: Button) -> void:
 
 func _update_record(record: Label) -> void:
 	if GameState.best_time > 0.0:
-		record.text = "Seu recorde: %d formigas em %s" % [GameState.GOAL, GameState.format_time(GameState.best_time)]
+		record.text = "Seu recorde: %d formigas em %s" % [GameState.ants(GameState.GOAL), GameState.format_time(GameState.best_time)]
 	else:
 		record.text = ""
 
@@ -256,7 +256,7 @@ func _build_howto() -> Control:
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
 	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d formigas[/b]. Coma todas e deixe os [b]12 formigueiros[/b] limpos.
-Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
+Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
 
 [b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)
 [b]Clique esquerdo[/b] lamber: cada clique é uma lambida (com a [b]Lambida Contínua[/b], é só segurar)
@@ -264,14 +264,14 @@ Algumas formigas andam pelas [b]trilhas de terra[/b] e chegam em [b]ondas[/b]; a
 [b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
-· [b]Cada formiga comida vale 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
+· [b]Cada 10 formigas comidas valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
 · A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
-· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Os formigueiros grandes guardam uma [b]rainha[/b], que vale 20.
+· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Cavar Fundo[/b], e a [b]rainha[/b] (vale 200 formigas) fica numa vala no pé dos formigueiros grandes, que só a [b]Escavação Real[/b] abre.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
 · Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
 · Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.
-· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % GameState.GOAL
+· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % GameState.ants(GameState.GOAL)
 	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -335,6 +335,7 @@ func _build_settings() -> Control:
 	_add_slider(g, "fov", "Campo de visão", 60.0, 100.0)
 	_add_slider(g, "camera_bob", "Balanço da câmera", 0.0, 1.0)
 	_add_option(g, "sniff_color_index", "Cor do faro", Settings.SNIFF_COLOR_NAMES)
+	_add_option(g, "hints_level", "Dicas", Settings.HINTS_NAMES)
 	# Áudio
 	g = _settings_page(stack)
 	_add_slider(g, "master_volume", "Volume geral", 0.0, 1.0)
@@ -375,7 +376,7 @@ func _show_settings_tab(i: int) -> void:
 	_settings_note.text = [
 		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
 		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
-		"Sem balanço, a câmera fica parada ao andar e correr. A cor do faro é a das formigas e nuvens farejadas.",
+		"Dicas \"Poucas\": só o que dá para fazer perto de você. \"Todas\": também ensina os controles, cada um até você usar.",
 		"",
 	][i]
 
@@ -461,7 +462,7 @@ func _build_end() -> Control:
 	_end_title = UiTheme.display_label("Fim da demo!", 60, UiTheme.PALE)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.GOAL, 24, UiTheme.CREAM)
+	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.ants(GameState.GOAL), 24, UiTheme.CREAM)
 	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_sub)
 	_end_stats = UiTheme.label("", 22, UiTheme.SAND)
@@ -498,7 +499,7 @@ func show_end(time_sec: float, new_record: bool) -> void:
 			learned.append(u.name)
 	var lines := "Tempo: %s%s\nMaior combo: %d formigas\nTanajuras comidas: %d\nHabilidades: %s" % [
 		GameState.format_time(time_sec), _record_text(new_record),
-		GameState.best_combo, GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
+		GameState.ants(GameState.best_combo), GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
 	_end_stats.text = lines
 	_end_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_end_stats.custom_minimum_size = Vector2(760, 0)

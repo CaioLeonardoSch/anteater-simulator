@@ -4,6 +4,7 @@ extends Node3D
 ## árvores ficam mais densas perto dos penhascos. No topo dos penhascos, mais árvores.
 
 const Props := preload("res://scripts/world/props.gd")
+const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 
 ## Obstáculos circulares: Vector3(x, z, raio).
@@ -117,8 +118,139 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			tree.scale = Vector3.ONE * geo.randf_range(1.0, 1.5)
 		_no_shadows(tree)
 		_put(tree, origin, rng)
+	_build_edges(world)
 	for o in obstacles:
 		terrain.mask_paint(o.x, o.y, o.z + 0.25, 2, 1.0)
+
+
+## Mais árvores em volta dos penhascos (no pé e no alto deles) e uma mata
+## fechada depois da passagem para a área 2. Usa um gerador só seu: assim o
+## resto do mapa não muda de lugar.
+func _build_edges(world) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 90210
+	var mats = world.mats
+	var terrain = world.terrain
+	var ground := Callable(terrain, "get_height")
+	var cliffs = world.cliffs
+	# Pé dos penhascos: árvores do cerrado.
+	for _i in 22:
+		var pos := _find_spot(world, rng, 51.0, 61.5, 3.0, 4.0, 1.6)
+		if pos == Vector2.INF:
+			continue
+		var geo := _sub_rng(rng)
+		var origin := Vector3(pos.x, terrain.get_height(pos.x, pos.y) - 0.05, pos.y)
+		var tree := _ai("arvore_cerrado", Vector3(0, geo.randf_range(4.5, 6.5), 0), 0.3, 3.0)
+		if tree == null:
+			tree = Props.build_tree(geo, mats, "cerrado", 0.85, origin, ground)
+		_put(tree, origin, rng)
+		obstacles.append(Vector3(pos.x, pos.y, 0.5))
+	# Alto dos penhascos: mais um anel de árvores, bem mais cheio.
+	for _i in 96:
+		var a := rng.randf() * TAU
+		if absf(angle_difference(cliffs.EXIT_ANGLE, a)) < cliffs.EXIT_HALF * 2.4:
+			continue
+		var r: float = cliffs.radius_at(a) + rng.randf_range(3.0, 21.0)
+		var pos := Vector2(cos(a), sin(a)) * r
+		var origin := Vector3(pos.x, cliffs.top_y(a) + 0.2, pos.y)
+		var kind := "ipe" if rng.randf() < 0.1 else "background"
+		var geo := _sub_rng(rng)
+		var tree := _ai("ipe_amarelo" if kind == "ipe" else "arvore_cerrado", Vector3(0, geo.randf_range(5.0, 8.0), 0), 0.0, 0.0)
+		if tree == null:
+			tree = Props.build_tree(geo, mats, kind, 0.6, origin, ground)
+			tree.scale = Vector3.ONE * geo.randf_range(0.9, 1.5)
+		_no_shadows(tree)
+		_put(tree, origin, rng)
+	_build_forest(world, rng)
+
+
+## Depois da passagem: uma picada que entra numa mata cada vez mais fechada,
+## com árvores cada vez maiores dos dois lados (o cupinzeiro gigante aparece
+## lá no fundo, por cima da picada). O chão de mata continua o terreno além da
+## borda do mapa.
+func _build_forest(world, rng: RandomNumberGenerator) -> void:
+	var mats = world.mats
+	var terrain = world.terrain
+	var cliffs = world.cliffs
+	var e := Vector2(cos(cliffs.EXIT_ANGLE), sin(cliffs.EXIT_ANGLE))
+	var side := Vector2(-e.y, e.x)
+	var r0: float = cliffs.radius_at(cliffs.EXIT_ANGLE)
+	var start: Vector2 = e * (r0 + cliffs.CANYON_LENGTH - 2.0)
+	var half_map: float = terrain.SIZE * 0.5
+	var floor_noise := FastNoiseLite.new()
+	floor_noise.seed = 31337
+	floor_noise.frequency = 0.05
+	# Chão: igual ao terreno onde ele existe (um pouco abaixo, escondido) e,
+	# depois da borda, continuando dela com uma subida leve e ondulada.
+	var floor_y := func(p: Vector2) -> float:
+		var out := maxf(absf(p.x), absf(p.y)) - half_map
+		var h: float = terrain.get_height(p.x, p.y)
+		if out < 0.0:
+			return h - 0.3 * clampf(-out / 3.0, 0.0, 1.0)
+		return h + out * 0.04 + floor_noise.get_noise_2d(p.x, p.y) * 1.2 * smoothstep(0.0, 10.0, out)
+	var b := MeshBuilder.new()
+	var rings := 18
+	var fan := 20
+	for ri in rings + 1:
+		var along := lerpf(0.0, 75.0, float(ri) / rings)
+		var width := 7.0 + along * 0.8
+		for fi in fan + 1:
+			var lat := lerpf(-width, width, float(fi) / fan)
+			var p: Vector2 = start + e * along + side * lat
+			b.color = Color(0.95, 0.95, 0.88)
+			b.add_vertex(Vector3(p.x, floor_y.call(p), p.y), Vector3.UP)
+	for ri in rings:
+		for fi in fan:
+			var i0 := ri * (fan + 1) + fi
+			b.add_quad(i0, i0 + 1, i0 + fan + 2, i0 + fan + 1)
+	b.recompute_normals()
+	var floor_mi := MeshInstance3D.new()
+	floor_mi.name = "ChaoDaMata"
+	floor_mi.mesh = b.commit(null, mats.cliff)
+	floor_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(floor_mi)
+	# Árvores dos dois lados da picada: mais juntas e maiores lá na frente.
+	var placed: Array[Vector2] = []
+	for _attempt in 900:
+		if placed.size() >= 120:
+			break
+		var along := pow(rng.randf(), 0.75) * 66.0 + 3.0
+		var width := 5.0 + along * 0.75
+		var gap := lerpf(3.2, 2.3, clampf(along / 60.0, 0.0, 1.0))
+		var lat := rng.randf_range(gap, width) * (1.0 if rng.randf() < 0.5 else -1.0)
+		var p: Vector2 = start + e * along + side * lat
+		var spacing := lerpf(3.4, 2.0, clampf(along / 45.0, 0.0, 1.0))
+		var ok := true
+		for q in placed:
+			if q.distance_to(p) < spacing:
+				ok = false
+				break
+		if not ok:
+			continue
+		placed.append(p)
+		var origin := Vector3(p.x, floor_y.call(p) - 0.1, p.y)
+		var geo := _sub_rng(rng)
+		var near := along < 16.0
+		var kind := "cerrado" if near else ("ipe" if rng.randf() < 0.07 else "background")
+		var tree := _ai("arvore_cerrado", Vector3(0, geo.randf_range(5.5, 9.0), 0), 0.0, 0.0)
+		if tree == null:
+			tree = Props.build_tree(geo, mats, kind, 0.75 if near else 0.55, origin, Callable())
+			tree.scale = Vector3.ONE * lerpf(1.0, 1.6, clampf(along / 60.0, 0.0, 1.0)) * geo.randf_range(0.9, 1.15)
+		if not near:
+			_no_shadows(tree)
+		_put(tree, origin, rng)
+	# Arbustos entre as árvores e na beira da picada.
+	for _i in 50:
+		var along := rng.randf_range(2.0, 55.0)
+		var lat := rng.randf_range(1.8, 5.0 + along * 0.7) * (1.0 if rng.randf() < 0.5 else -1.0)
+		var p: Vector2 = start + e * along + side * lat
+		var geo := _sub_rng(rng)
+		var size := geo.randf_range(0.7, 1.4)
+		var shrub := _ai("arbusto", Vector3(0, size * 1.3, 0), 0.0, 0.0)
+		if shrub == null:
+			shrub = Props.build_shrub(geo, mats, size)
+		_no_shadows(shrub)
+		_put(shrub, Vector3(p.x, floor_y.call(p) - 0.04, p.y), rng)
 
 
 ## Gerador separado para a forma de cada objeto: assim o mapa não muda de

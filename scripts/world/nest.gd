@@ -1,8 +1,10 @@
 extends Node3D
 ## Formigueiro de saúvas: um monte de terra fofa com olheiros (por onde as
 ## formigas das trilhas entram e saem) e câmaras fechadas, onde moram as
-## outras. Cavar abre uma câmara; os formigueiros grandes guardam a rainha na
-## câmara do topo. Quando tudo é comido, o monte floresce.
+## outras. Cavar abre uma câmara; os formigueiros grandes guardam a rainha
+## numa vala comprida no pé do monte, com a corte dela. Cada buraco pede um
+## nível de Cavar (pequeno, câmara grande, vala da rainha). Quando tudo é
+## comido, o monte floresce.
 ## O tamanduá pode subir no monte (o chão acompanha a forma dele).
 ## Se existir assets/models/formigueiro.glb, ele substitui o monte feito por código.
 
@@ -11,6 +13,10 @@ const ModelLibrary := preload("res://scripts/model_library.gd")
 const Props := preload("res://scripts/world/props.gd")
 
 const QUEEN_VALUE := 20
+## Tamanho dos buracos (o nível de Cavar que cada um pede).
+const SMALL := 1
+const LARGE := 2
+const ROYAL := 3
 
 
 class Chamber extends RefCounted:
@@ -25,6 +31,20 @@ class Chamber extends RefCounted:
 	var royal := false
 	## Câmara no meio do campo, longe do monte (é deste formigueiro, mas fica sozinha).
 	var satellite := false
+	## Vala (a da rainha): comprida na direção `axis` (radianos, no plano xz),
+	## com meio comprimento `half_len`; 0 = câmara redonda.
+	var axis := 0.0
+	var half_len := 0.0
+	## Nível de Cavar que o buraco pede (SMALL, LARGE ou ROYAL).
+	var size_class := 1
+
+	## Distância de p2 até a beirada do buraco (negativa dentro dele).
+	func edge_distance(p2: Vector2) -> float:
+		if half_len <= 0.0:
+			return p2.distance_to(pos2) - radius
+		var ax := Vector2(cos(axis), sin(axis))
+		var t := clampf((p2 - pos2).dot(ax), -half_len, half_len)
+		return p2.distance_to(pos2 + ax * t) - radius
 	var cap: Node3D
 	var pit: Node3D
 
@@ -87,14 +107,19 @@ func hole_position(trail_dir: Vector2) -> Vector2:
 
 
 ## Escolhe onde ficam as câmaras, longe dos olheiros das trilhas.
-## Grandes: a câmara da rainha no topo + 4 em volta. Pequenos: 3.
+## Grandes: a vala da rainha no pé do monte + 4 câmaras grandes. Pequenos: 3.
 func plan_chambers(rng: RandomNumberGenerator) -> void:
 	chambers.clear()
 	if big:
+		# A vala fica deitada no pé do monte, do lado sem trilhas.
+		var a := _quiet_angle()
 		var royal := Chamber.new()
 		royal.royal = true
-		royal.radius = 0.74
-		royal.local = Vector2.ZERO
+		royal.size_class = ROYAL
+		royal.radius = 0.6
+		royal.half_len = 1.2
+		royal.local = Vector2(cos(a), sin(a)) * radius * 0.97
+		royal.axis = a + PI * 0.5
 		chambers.append(royal)
 	var count := 4 if big else 3
 	var dist := radius * (0.56 if big else 0.43)
@@ -115,11 +140,28 @@ func plan_chambers(rng: RandomNumberGenerator) -> void:
 			best_angles = angles
 	for a in best_angles:
 		var c := Chamber.new()
+		c.size_class = LARGE if big else SMALL
 		c.radius = rng.randf_range(0.52, 0.6) if big else rng.randf_range(0.48, 0.56)
 		c.local = Vector2(cos(a), sin(a)) * dist
 		chambers.append(c)
 	for c in chambers:
 		c.pos2 = center2 + c.local
+
+
+## Direção (radianos) mais longe de todas as trilhas que saem do monte.
+func _quiet_angle() -> float:
+	var best := 0.0
+	var best_score := -INF
+	for k in 72:
+		var a := TAU * k / 72.0
+		var d := Vector2(cos(a), sin(a))
+		var score := INF
+		for t in trail_dirs:
+			score = minf(score, 1.0 - d.dot(t))
+		if score > best_score:
+			best_score = score
+			best = a
+	return best
 
 
 func build(rng: RandomNumberGenerator, mats) -> void:
@@ -224,7 +266,7 @@ func closed_chamber_near(p2: Vector2, reach: float) -> int:
 		var c := chambers[i]
 		if c.opened:
 			continue
-		var d := p2.distance_to(c.pos2) - c.radius
+		var d := c.edge_distance(p2)
 		if d < best_d:
 			best_d = d
 			best = i
@@ -239,7 +281,7 @@ func open_chamber_near(p2: Vector2, reach: float) -> int:
 		var c := chambers[i]
 		if not c.opened or (c.residents == 0 and not (c.royal and queen_alive)):
 			continue
-		var d := p2.distance_to(c.pos2) - c.radius
+		var d := c.edge_distance(p2)
 		if d < best_d:
 			best_d = d
 			best = i
@@ -372,8 +414,53 @@ func _grow_flowers(t: float) -> void:
 
 # ------------------------------------------------------------------ Malhas
 
+## Grade de uma vala (cápsula deitada): `nu` colunas ao longo e `nv` de lado a
+## lado. Cada ponto vem com a posição local e quanto ele está para a beirada
+## (0 no eixo, 1 na beirada).
+func _trench_grid(c: Chamber, r_out: float, nu: int, nv: int) -> Array:
+	var ax := Vector2(cos(c.axis), sin(c.axis))
+	var perp := Vector2(-ax.y, ax.x)
+	var length := c.half_len + r_out
+	var pts := []
+	for iu in nu + 1:
+		var u := lerpf(-length, length, float(iu) / nu)
+		var over := maxf(absf(u) - c.half_len, 0.0)
+		var w := sqrt(maxf(r_out * r_out - over * over, 0.0))
+		for iv in nv + 1:
+			var v := lerpf(-1.0, 1.0, float(iv) / nv)
+			var lp := c.local + ax * u + perp * (v * w)
+			var t := Vector2(over, absf(v) * w).length() / r_out
+			pts.append([lp, clampf(t, 0.0, 1.0)])
+	return pts
+
+
+func _grid_quads(b: MeshBuilder, start: int, nu: int, nv: int) -> void:
+	for iu in nu:
+		for iv in nv:
+			var i0 := start + iu * (nv + 1) + iv
+			b.add_quad(i0, i0 + 1, i0 + nv + 2, i0 + nv + 1)
+
+
 func _build_pit(c: Chamber, mats) -> MeshInstance3D:
 	var b := MeshBuilder.new()
+	if c.half_len > 0.0:
+		# Vala: comprida, escura no meio.
+		var nu := 24
+		var nv := 8
+		for pt in _trench_grid(c, c.radius * 1.12, nu, nv):
+			var lp: Vector2 = pt[0]
+			var t: float = pt[1]
+			var dark := 1.0 - smoothstep(0.55, 0.98, t)
+			b.color = Color(0.85, 0.72, 0.62).lerp(Color(0.08, 0.05, 0.035), dark)
+			var rim := exp(-pow((t - 0.86) / 0.1, 2.0)) * 0.06
+			b.add_vertex(Vector3(lp.x, _surf(lp) + 0.014 + rim, lp.y), Vector3.UP)
+		_grid_quads(b, 0, nu, nv)
+		b.recompute_normals()
+		var tmi := MeshInstance3D.new()
+		tmi.name = "Vala"
+		tmi.mesh = b.commit(null, mats.nest_soil)
+		tmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		return tmi
 	var rings := 7
 	var segs := 28
 	var r_out := c.radius * 1.12
@@ -414,6 +501,12 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 	var n := FastNoiseLite.new()
 	n.seed = rng.randi()
 	n.frequency = 2.2
+	if c.half_len > 0.0:
+		_build_trench_cap(b, c, n, rng, base_y)
+		var tmi := MeshInstance3D.new()
+		tmi.mesh = b.commit(null, mats.nest_cap)
+		pivot.add_child(tmi)
+		return pivot
 	var rings := 9
 	var segs := 30
 	var r_out := c.radius * 1.12
@@ -452,6 +545,35 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 	mi.mesh = b.commit(null, mats.nest_cap)
 	pivot.add_child(mi)
 	return pivot
+
+
+## Tampa da vala: um cordão comprido de terra fofa no pé do monte, com torrões.
+func _build_trench_cap(b: MeshBuilder, c: Chamber, n: FastNoiseLite, rng: RandomNumberGenerator, base_y: float) -> void:
+	var nu := 26
+	var nv := 9
+	var bump := 0.26
+	var r_out := c.radius * 1.12
+	for pt in _trench_grid(c, r_out, nu, nv):
+		var lp: Vector2 = pt[0]
+		var t: float = pt[1]
+		var off := lp - c.local
+		var h := bump * pow(1.0 - t * t, 1.4) + n.get_noise_2d(off.x * 9.0, off.y * 9.0) * 0.025 * (1.0 - t)
+		var edge := smoothstep(0.72, 1.0, t)
+		b.color = Color.WHITE.lerp(Color(0.42, 0.32, 0.26), edge * 0.85)
+		b.add_vertex(Vector3(off.x, _surf(lp) - base_y + h - 0.012 * edge, off.y), Vector3.UP)
+	_grid_quads(b, 0, nu, nv)
+	b.recompute_normals()
+	var ax := Vector2(cos(c.axis), sin(c.axis))
+	var perp := Vector2(-ax.y, ax.x)
+	for _k in 16:
+		var u := rng.randf_range(-c.half_len, c.half_len)
+		var v := rng.randf_range(-0.6, 0.6) * r_out
+		var off := ax * u + perp * v
+		var t := absf(v) / r_out
+		var h := bump * pow(1.0 - t * t, 1.4)
+		b.color = Color(0.8, 0.74, 0.68).lerp(Color.WHITE, rng.randf())
+		var y := _surf(c.local + off) - base_y + h
+		b.add_blob(Vector3(off.x, y + 0.015, off.y), Vector3.ONE * rng.randf_range(0.035, 0.065), n, 0.2, 1)
 
 
 ## Altura do chão neste ponto, medida a partir da base do formigueiro.
@@ -557,6 +679,6 @@ func _near_hole(p2: Vector2, holes: Array[Vector2], dist: float) -> bool:
 
 func _in_chamber(p2: Vector2, margin: float) -> bool:
 	for c in chambers:
-		if p2.distance_to(c.local) < c.radius * 1.2 + margin:
+		if c.edge_distance(center2 + p2) < c.radius * 0.2 + margin:
 			return true
 	return false

@@ -4,7 +4,7 @@ extends Control
 ## Escalada + Cauda) saem do centro, onde ficam os pontos. Cada habilidade é um
 ## círculo com ícone, e as ligações acendem em dourado conforme você aprende.
 ## Passe o mouse (ou o controle) numa habilidade para ver o que ela faz; clique
-## para aprender. Cada formiga comida vale 1 ponto e cada habilidade tem o seu
+## para aprender. Cada 10 formigas comidas valem 1 ponto e cada habilidade tem o seu
 ## preço; as linhas de um ramo não se excluem. O que ainda não existe no jogo
 ## aparece com cadeado. Dá para redistribuir os pontos de graça.
 
@@ -28,14 +28,6 @@ const ROOT_R := 30.0
 const CENTER_R := 64.0
 const HEADER_H := 70.0
 const FOOTER_H := 128.0
-## Ícone da 1ª habilidade de cada ramo e de cada linha dele.
-const GLYPHS := [
-	["tongue", "ant", "bolt", "cross"],
-	["claws", "burst", "clock"],
-	["paw", "chevrons", "tongue"],
-	["nose", "rings", "eye"],
-	["peak"],
-]
 
 var _canvas: TreeCanvas
 var _nodes: Dictionary = {}
@@ -70,8 +62,7 @@ func _ready() -> void:
 		node.root = (u.requires as Array).is_empty()
 		node.radius = ROOT_R if node.root else NODE_R
 		node.color = GameState.BRANCHES[u.branch].color
-		var glyphs: Array = GLYPHS[u.branch]
-		node.glyph = glyphs[0] if node.root or u.col < 0 else glyphs[mini(int(u.col) + 1, glyphs.size() - 1)]
+		node.glyph = Glyphs.for_upgrade(u)
 		node.pressed.connect(_on_node_pressed.bind(u.id))
 		node.focus_entered.connect(_show_tip.bind(u.id))
 		node.focus_exited.connect(_on_focus_lost)
@@ -81,11 +72,9 @@ func _ready() -> void:
 		_nodes[u.id] = node
 		if _first_node == null:
 			_first_node = node
-	var title := UiTheme.display_label("Árvore de Habilidades", 36, UiTheme.PALE)
-	title.position = Vector2(34, 12)
-	add_child(title)
-	var sub := UiTheme.label("1 formiga comida = 1 ponto", 17, UiTheme.SAND)
-	sub.position = Vector2(38, 56)
+	# O título é a aba "Habilidades" (tela do TAB); aqui fica só quanto vale um ponto.
+	var sub := UiTheme.label("10 formigas comidas = 1 ponto", 17, UiTheme.SAND)
+	sub.position = Vector2(38, 30)
 	add_child(sub)
 	_hint = UiTheme.label("", 19, UiTheme.SAND)
 	_hint.add_theme_font_override("font", UiTheme.semi_font())
@@ -304,7 +293,7 @@ func _show_tip(id: String) -> void:
 				text = "Clique para aprender por %d pontos." % cost
 				col = branch.color.lightened(0.3)
 			else:
-				text = "Custa %d pontos: faltam %d formigas." % [cost, cost - pts]
+				text = "Custa %d pontos: faltam %d formigas." % [cost, GameState.ants(cost - pts)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true
@@ -333,7 +322,7 @@ func _summary_text() -> String:
 	var goal := GameState.next_goal()
 	if goal.is_empty():
 		return "Passe o mouse numa habilidade para ver o que ela faz."
-	return "Próxima: %s (%d pontos) · faltam %d formigas." % [goal.name, goal.cost, goal.cost - GameState.points_available()]
+	return "Próxima: %s (%d pontos) · faltam %d formigas." % [goal.name, goal.cost, GameState.ants(goal.cost - GameState.points_available())]
 
 
 func open() -> void:

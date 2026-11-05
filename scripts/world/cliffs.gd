@@ -57,14 +57,21 @@ func plan(t) -> void:
 	for k in 4:
 		var c := cave_dir * (r_cave - 1.0 + k * 2.6)
 		terrain.add_flat_zone(c.x, c.y, 6.5, floor_y)
-	# Chão da passagem: plano no começo e subindo devagar depois.
+	# Chão da passagem: plano no começo (onde fica o tronco) e depois uma rampa
+	# que sobe até o chão da mata, lá fora.
 	var exit_dir := Vector2(cos(EXIT_ANGLE), sin(EXIT_ANGLE))
 	var r_exit := radius_at(EXIT_ANGLE)
 	var inside := exit_dir * (r_exit - 4.0)
 	var exit_y: float = terrain.natural_height(inside.x, inside.y)
-	for k in 3:
+	for k in 2:
 		var c := exit_dir * (r_exit - 1.0 + k * 4.5)
 		terrain.add_flat_zone(c.x, c.y, 6.0, exit_y + k * 0.35)
+	var out := exit_dir * (r_exit + CANYON_LENGTH + 4.0)
+	var out_y: float = terrain.natural_height(out.x, out.y)
+	for k in 8:
+		var ramp := float(k) / 7.0
+		var c := exit_dir * (r_exit + 6.0 + k * 2.0)
+		terrain.add_flat_zone(c.x, c.y, 4.6, lerpf(exit_y + 0.5, out_y, smoothstep(0.0, 1.0, ramp)))
 
 
 func _index(angle: float) -> float:

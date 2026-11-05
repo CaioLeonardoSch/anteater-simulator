@@ -14,7 +14,7 @@ signal queen_eaten(nest)
 
 const Nest := preload("res://scripts/world/nest.gd")
 const QUEEN_VALUE := Nest.QUEEN_VALUE
-const CHAMBER_VISIBLE := 40
+const CHAMBER_VISIBLE := 12
 ## Parte de cada formigueiro que anda pelas trilhas (o resto mora nas câmaras).
 const FORAGER_SHARE := 0.45
 const ROYAL_WEIGHT := 1.7
@@ -235,12 +235,17 @@ func _refill(nest, ci: int, from_tunnel: bool) -> void:
 	var c = nest.chambers[ci]
 	if not c.opened:
 		return
-	var want: int = mini(c.residents, CHAMBER_VISIBLE)
+	var want: int = mini(c.residents, _visible_cap(c))
 	var code: int = nest.index * 16 + ci
 	while c.shown < want:
-		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.radius, from_tunnel) < 0:
+		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.radius, from_tunnel, c.axis, c.half_len) < 0:
 			break
 		c.shown += 1
+
+
+## Quantos grupos ficam à vista numa câmara (a vala da rainha é maior).
+func _visible_cap(c) -> int:
+	return CHAMBER_VISIBLE * 2 if c.half_len > 0.0 else CHAMBER_VISIBLE
 
 
 func _process(delta: float) -> void:
@@ -253,7 +258,7 @@ func _process(delta: float) -> void:
 		for nest in world.nests:
 			for ci in nest.chambers.size():
 				var c = nest.chambers[ci]
-				if c.opened and c.shown < mini(c.residents, CHAMBER_VISIBLE):
+				if c.opened and c.shown < mini(c.residents, _visible_cap(c)):
 					_refill(nest, ci, true)
 	var trails: Array = world.trails.trails
 	var outside := outside_total()

@@ -1,11 +1,22 @@
 extends Control
 ## HUD da partida, no estilo Constelação: medalhão com as formigas comidas,
-## painel de pontos e formigueiros, bússola numa faixa com moldura dourada (só o
-## formigueiro para onde você olha mostra nome e distância), relógio e ondas,
-## mira, habilidades em círculos (como na árvore) e avisos.
+## painel de pontos (próxima habilidade e formigueiros limpos), bússola numa
+## faixa dourada, mira, habilidades em círculos (como na árvore), cartões de
+## conquista no canto direito e dicas curtas embaixo da mira. Pouco texto: o
+## que dá para mostrar com ícone e número vira ícone e número.
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Glyphs := preload("res://scripts/ui/glyphs.gd")
+const NestScript := preload("res://scripts/world/nest.gd")
+
+## Cor do Frenesi (asas de tanajura).
+const FRENZY := Color("f0a65a")
+## Fundo dos ícones dos cartões.
+const BG_GREEN := Color("24301a")
+const BG_GOLD := Color("3a2a10")
+const BG_FRENZY := Color("3a2410")
+## Cor do tronco nos avisos.
+const LOG_COLOR := Color("a8703f")
 
 var player
 var swarm
@@ -14,36 +25,39 @@ var world
 
 var _medallion: Medallion
 var _points_value: Label
+var _next_row: HBoxContainer
 var _next_bar: GoldBar
-var _next_label: Label
-var _nests_value: Label
-var _saved_label: Label
-var _queen_note_next := 0.0
-var _help_next := 0.0
-var _points_badge: PanelContainer
-var _points_label: Label
-var _timer_label: Label
-var _wave_label: Label
-## Aviso de onda no painel da direita (em vez de no meio da tela).
-var _wave_note := ""
-var _wave_note_time := 0.0
-## 0 = estado da onda (caixa alta), 1 = aviso de onda (texto normal).
-var _wave_mode := -1
+var _next_icon: GlyphIcon
+var _next_cost: Label
+var _nest_pips: Pips
+var _badge: PanelContainer
+var _badge_count: Label
 var _compass: Compass
 var _crosshair: Crosshair
-var _notes: VBoxContainer
+var _cards: CardStack
+var _hint: HintRow
+var _tutorial: HintRow
+var _sniff: SniffChip
+var _save: SaveIcon
 var _big_box: VBoxContainer
 var _big_note: Label
+var _big_icon: GlyphIcon
 var _big_sub: Label
 var _big_time := 0.0
-var _hint: Label
-var _controls_hint: Label
-var _controls_time := 14.0
 var _abilities: Array = []
 var _vignette: ColorRect
 var _vignette_mat: ShaderMaterial
 var _popups: Control
 var _shown_count := 0.0
+## Dica passageira: tem prioridade sobre a dica do lugar.
+var _flash: Array = []
+var _flash_time := 0.0
+var _queen_bump_next := 0.0
+var _help_next := 0.0
+## Tempo andando e correndo (a dica de um controle some depois que você usa).
+var _moved := 0.0
+var _ran := 0.0
+var _play_time := 0.0
 
 const VIGNETTE_SHADER := """
 shader_type canvas_item;
@@ -69,21 +83,17 @@ func setup(p, sw, col, w) -> void:
 	_crosshair.player = p
 	_crosshair.swarm = sw
 	player.ate.connect(_on_ate)
-	player.dug.connect(_on_dug)
-	player.tremor_used.connect(func(n): note("Tremor! %d formigas ficaram tontas" % n, UiTheme.SAND))
 	player.sniffed.connect(_on_sniffed)
 	player.queen_blocked.connect(_on_queen_blocked)
 	player.lick_blocked_running.connect(_on_lick_blocked_running)
-	colony.wave_announced.connect(_on_wave)
-	colony.final_wave.connect(func(_n): big_note("Reta final das trilhas", "As últimas forrageiras saíram de casa. O resto está nas câmaras!"))
 	colony.chamber_cleaned.connect(_on_chamber_cleaned)
 	colony.nest_cleaned.connect(_on_nest_cleaned)
-	colony.queen_eaten.connect(func(_nest): big_note("Rainha!", "Ela valeu 20 formigas", 4.0))
+	colony.queen_eaten.connect(_on_queen_eaten)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	GameState.upgrade_affordable.connect(_on_affordable)
 	GameState.skills_reset.connect(_refresh_points)
-	GameState.frenzy_changed.connect(func(on): if on: big_note("Frenesi!", "Você comeu uma tanajura: língua turbinada por 6 s"))
-	GameState.upgrade_purchased.connect(func(_id): _refresh_points())
+	GameState.frenzy_changed.connect(_on_frenzy)
+	GameState.upgrade_purchased.connect(_on_purchased)
 	_on_eaten_changed(GameState.ants_eaten, 0)
 	_refresh_points()
 
@@ -102,34 +112,26 @@ func _ready() -> void:
 	_vignette.material = _vignette_mat
 	add_child(_vignette)
 	_build_counter()
-	_build_top_right()
 	_compass = Compass.new()
 	add_child(_compass)
 	_place(_compass, Control.PRESET_CENTER_TOP, Vector2(-350, 10), Vector2(700, 104))
 	_crosshair = Crosshair.new()
 	add_child(_crosshair)
 	_place(_crosshair, Control.PRESET_CENTER, Vector2(-40, -40), Vector2(80, 80))
-	_notes = VBoxContainer.new()
-	_notes.alignment = BoxContainer.ALIGNMENT_BEGIN
-	_notes.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_notes)
-	_place(_notes, Control.PRESET_CENTER_TOP, Vector2(-450, 126), Vector2(900, 140))
+	_cards = CardStack.new()
+	add_child(_cards)
+	_place(_cards, Control.PRESET_TOP_RIGHT, Vector2(-310, 24), Vector2(286, 230))
 	_build_big_note()
-	_hint = UiTheme.label("", 22, UiTheme.CREAM)
-	_hint.add_theme_font_override("font", UiTheme.semi_font())
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_soft_shadow(_hint)
+	_hint = HintRow.new()
 	add_child(_hint)
-	_place(_hint, Control.PRESET_CENTER, Vector2(-500, 72), Vector2(1000, 40))
+	_place(_hint, Control.PRESET_CENTER, Vector2(-450, 34), Vector2(900, 28))
 	_build_abilities()
-	_controls_hint = UiTheme.label(
-		"WASD andar  ·  Mouse olhar  ·  Clique: lamber  ·  Q ou botão direito: farejar  ·  TAB: habilidades",
-		19, UiTheme.CREAM)
-	_controls_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_controls_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_soft_shadow(_controls_hint)
-	add_child(_controls_hint)
-	_place(_controls_hint, Control.PRESET_CENTER_BOTTOM, Vector2(-640, -182), Vector2(1280, 56))
+	_tutorial = HintRow.new()
+	add_child(_tutorial)
+	_place(_tutorial, Control.PRESET_CENTER_BOTTOM, Vector2(-450, -212), Vector2(900, 28))
+	_save = SaveIcon.new()
+	add_child(_save)
+	_place(_save, Control.PRESET_BOTTOM_RIGHT, Vector2(-50, -48), Vector2(28, 28))
 	_popups = Control.new()
 	_popups.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -152,25 +154,26 @@ func _place(c: Control, preset: int, offset: Vector2, box_size: Vector2) -> void
 	c.offset_bottom = offset.y + box_size.y
 
 
-## Medalhão com as formigas comidas, painel de pontos e o aviso de [TAB].
+## Medalhão com as formigas comidas, painel (pontos, próxima habilidade e
+## formigueiros limpos) e o selo de habilidades para aprender.
 func _build_counter() -> void:
 	_medallion = Medallion.new()
 	_medallion.position = Vector2(24, 18)
 	_medallion.size = Vector2(116, 116)
-	_medallion.sub = "de %d" % GameState.GOAL
+	_medallion.sub = "de %d" % GameState.ants(GameState.GOAL)
 	add_child(_medallion)
 	var col := VBoxContainer.new()
 	col.position = Vector2(152, 24)
-	col.add_theme_constant_override("separation", 10)
+	col.add_theme_constant_override("separation", 12)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(col)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_frame())
-	panel.custom_minimum_size = Vector2(262, 0)
+	panel.add_theme_stylebox_override("panel", UiTheme.panel_frame(15, 11))
+	panel.custom_minimum_size = Vector2(232, 0)
 	panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	col.add_child(panel)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 6)
+	v.add_theme_constant_override("separation", 7)
 	panel.add_child(v)
 	var row := HBoxContainer.new()
 	v.add_child(row)
@@ -180,41 +183,44 @@ func _build_counter() -> void:
 	row.add_child(pts_label)
 	_points_value = UiTheme.display_label("0", 23, UiTheme.GOLD)
 	row.add_child(_points_value)
+	# Barra até a próxima habilidade, com o ícone e o custo dela.
+	_next_row = HBoxContainer.new()
+	_next_row.add_theme_constant_override("separation", 9)
+	v.add_child(_next_row)
 	_next_bar = GoldBar.new()
 	_next_bar.custom_minimum_size = Vector2(0, 12)
-	v.add_child(_next_bar)
-	_next_label = UiTheme.label("", 16, UiTheme.SAND)
-	v.add_child(_next_label)
-	var line := ColorRect.new()
-	line.color = Color(UiTheme.GOLD, 0.22)
-	line.custom_minimum_size = Vector2(0, 1)
-	v.add_child(line)
-	var row2 := HBoxContainer.new()
-	v.add_child(row2)
-	var nests_label := UiTheme.caps_label("Formigueiros limpos", 11)
-	nests_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	nests_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row2.add_child(nests_label)
-	_nests_value = UiTheme.display_label("0/12", 19, UiTheme.LEAF)
-	row2.add_child(_nests_value)
-	# Aviso de habilidade para aprender.
-	_points_badge = PanelContainer.new()
-	var badge := UiTheme.frame(Color(0.05, 0.035, 0.028, 0.92), Color(0.03, 0.022, 0.018, 0.92), UiTheme.GOLD,
-		Color(0, 0, 0, 0), 12, 5)
+	_next_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_next_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_next_row.add_child(_next_bar)
+	_next_icon = GlyphIcon.new()
+	_next_icon.custom_minimum_size = Vector2(20, 20)
+	_next_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_next_row.add_child(_next_icon)
+	_next_cost = UiTheme.display_label("", 17, UiTheme.SAND)
+	_next_cost.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_next_row.add_child(_next_cost)
+	# Formigueiros limpos: um losango por formigueiro.
+	_nest_pips = Pips.new()
+	_nest_pips.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	v.add_child(_nest_pips)
+	# Habilidades para aprender: ◆ 2 [Tab]
+	_badge = PanelContainer.new()
+	var badge := UiTheme.frame(Color(0.04, 0.028, 0.024, 0.92), Color(0.03, 0.022, 0.018, 0.92), UiTheme.GOLD,
+		Color(0, 0, 0, 0), 11, 5)
 	badge.glow = 0.7
-	_points_badge.add_theme_stylebox_override("panel", badge)
-	_points_badge.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	col.add_child(_points_badge)
+	_badge.add_theme_stylebox_override("panel", badge)
+	_badge.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	col.add_child(_badge)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 9)
-	_points_badge.add_child(h)
+	_badge.add_child(h)
 	var dia := Diamond.new()
 	dia.custom_minimum_size = Vector2(10, 10)
 	dia.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(dia)
-	_points_label = UiTheme.caps_label("", 13, UiTheme.PALE)
-	_points_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	h.add_child(_points_label)
+	_badge_count = UiTheme.display_label("", 18, UiTheme.PALE)
+	_badge_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(_badge_count)
 	h.add_child(_key_chip("Tab"))
 
 
@@ -237,30 +243,12 @@ func _key_chip(text: String) -> PanelContainer:
 	return chip
 
 
-func _build_top_right() -> void:
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UiTheme.panel_frame(16, 9))
-	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	add_child(panel)
-	_place(panel, Control.PRESET_TOP_RIGHT, Vector2(-238, 24), Vector2(214, 0))
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 1)
-	panel.add_child(v)
-	_timer_label = UiTheme.display_label("0:00", 30, UiTheme.PALE)
-	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	v.add_child(_timer_label)
-	_wave_label = UiTheme.caps_label("", 12)
-	_wave_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_wave_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_wave_label.custom_minimum_size = Vector2(180, 0)
-	v.add_child(_wave_label)
-
-
-## Aviso grande no meio da tela: título em Alegreya SC entre dois enfeites dourados.
+## Aviso grande no meio da tela (só no fim da clareira): título em Alegreya SC
+## entre dois enfeites dourados e uma linha curta embaixo.
 func _build_big_note() -> void:
 	_big_box = VBoxContainer.new()
 	_big_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	_big_box.add_theme_constant_override("separation", 2)
+	_big_box.add_theme_constant_override("separation", 4)
 	_big_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_big_box)
 	_place(_big_box, Control.PRESET_CENTER, Vector2(-700, -178), Vector2(1400, 130))
@@ -285,11 +273,20 @@ func _build_big_note() -> void:
 	right.custom_minimum_size = Vector2(150, 20)
 	right.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(right)
-	_big_sub = UiTheme.label("", 25, UiTheme.CREAM)
+	var sub_row := HBoxContainer.new()
+	sub_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	sub_row.add_theme_constant_override("separation", 10)
+	sub_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_big_box.add_child(sub_row)
+	_big_icon = GlyphIcon.new()
+	_big_icon.custom_minimum_size = Vector2(34, 22)
+	_big_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_big_icon.color = LOG_COLOR
+	sub_row.add_child(_big_icon)
+	_big_sub = UiTheme.label("", 22, UiTheme.CREAM)
 	_big_sub.add_theme_font_override("font", UiTheme.semi_font())
-	_big_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_soft_shadow(_big_sub)
-	_big_box.add_child(_big_sub)
+	sub_row.add_child(_big_sub)
 	_big_box.modulate.a = 0.0
 
 
@@ -318,38 +315,25 @@ func _build_abilities() -> void:
 		a.custom_minimum_size = Vector2(104, 112)
 		row.add_child(a)
 		_abilities.append(a)
+		if d.kind == "sniff":
+			# O resultado do faro aparece em cima do botão de Farejar.
+			_sniff = SniffChip.new()
+			a.add_child(_sniff)
+			_sniff.position = Vector2(52.0 - 130.0, -40.0)
+			_sniff.size = Vector2(260, 26)
 
 
 func _process(delta: float) -> void:
 	if player == null:
 		return
-	_shown_count = move_toward(_shown_count, GameState.ants_eaten, maxf(delta * 60.0, absf(GameState.ants_eaten - _shown_count) * delta * 8.0))
+	_play_time += delta
+	var eaten := GameState.ants(GameState.ants_eaten)
+	_shown_count = move_toward(_shown_count, eaten, maxf(delta * 300.0, absf(eaten - _shown_count) * delta * 8.0))
 	var shown := str(int(round(_shown_count)))
 	if _medallion.value != shown:
 		_medallion.value = shown
 		_medallion.queue_redraw()
-	_timer_label.text = GameState.format_time(GameState.elapsed)
-	var wave_active: bool = colony._wave.size() > 0
-	_nests_value.text = "%d/%d" % [colony.nests_cleaned(), world.nests.size()]
-	_wave_note_time = maxf(_wave_note_time - delta, 0.0)
-	if _wave_note_time > 0.0:
-		# Aviso de onda: texto normal, dourado (é mais longo).
-		_set_wave_mode(1)
-		_wave_label.text = _wave_note
-	else:
-		_set_wave_mode(0)
-		var text := ""
-		if colony.final_released:
-			if colony.outside_total() == 0:
-				text = "FALTAM %d NAS CÂMARAS" % colony.remaining()
-			else:
-				text = "RETA FINAL: %d RESTANTES" % colony.remaining()
-		elif wave_active:
-			text = "ONDA %d CHEGANDO!" % colony.wave_number
-		else:
-			text = "PRÓXIMA ONDA EM %d s" % int(ceil(colony.wave_timer))
-		_wave_label.text = text
-		_wave_label.add_theme_color_override("font_color", UiTheme.PALE if wave_active else UiTheme.MUTED)
+	_nest_pips.set_counts(colony.nests_cleaned(), world.nests.size())
 	# Habilidades.
 	for a in _abilities:
 		match a.kind:
@@ -370,12 +354,7 @@ func _process(delta: float) -> void:
 				a.seconds = player.tremor_cd
 				a.cooldown = player.tremor_cd / GameState.tremor_cooldown() if player.tremor_cd > 0.0 else 0.0
 		a.queue_redraw()
-	# Dica de contexto.
-	_hint.text = _context_hint()
-	_maybe_help()
-	if _controls_time > 0.0:
-		_controls_time -= delta
-		_controls_hint.modulate.a = clampf(_controls_time / 2.0, 0.0, 1.0)
+	_update_hints(delta)
 	if _big_time > 0.0:
 		_big_time -= delta
 		_big_box.modulate.a = clampf(_big_time / 0.6, 0.0, 1.0)
@@ -391,100 +370,148 @@ func _process(delta: float) -> void:
 	_crosshair.queue_redraw()
 
 
-func _set_wave_mode(mode: int) -> void:
-	if mode == _wave_mode:
-		return
-	_wave_mode = mode
-	if mode == 1:
-		_wave_label.add_theme_font_override("font", UiTheme.semi_font())
-		_wave_label.add_theme_font_size_override("font_size", 15)
-		_wave_label.add_theme_color_override("font_color", UiTheme.GOLD)
-	else:
-		_wave_label.add_theme_font_override("font", UiTheme.caps_font())
-		_wave_label.add_theme_font_size_override("font_size", 12)
-
-
 func _on_eaten_changed(_total: int, _delta: int) -> void:
 	_refresh_points()
 
 
-## Pontos para gastar, barra até a próxima habilidade e o aviso de [TAB].
+## Pontos para gastar, barra até a próxima habilidade (ícone e custo dela) e o
+## selo de habilidades para aprender.
 func _refresh_points() -> void:
 	var pts := GameState.points_available()
 	var goal := GameState.next_goal()
+	var n := GameState.affordable_count()
 	_points_value.text = str(pts)
 	if goal.is_empty():
-		_next_bar.value = 1.0 if GameState.affordable_count() > 0 or pts > 0 else 0.0
-		if GameState.affordable_count() > 0:
-			_next_label.text = "Gaste os pontos na árvore [TAB]"
-		else:
-			_next_label.text = "Tudo aprendido por aqui"
+		# Nada mais longe para juntar: ou dá para aprender agora (selo), ou acabou.
+		_next_row.visible = n > 0
+		_next_bar.value = 1.0
+		_next_icon.visible = false
+		_next_cost.visible = false
 	else:
+		_next_row.visible = true
 		_next_bar.value = clampf(float(pts) / float(goal.cost), 0.0, 1.0)
-		_next_label.text = "Próxima: %s · %d" % [goal.name, goal.cost]
+		_next_icon.kind = Glyphs.for_upgrade(goal)
+		_next_icon.color = GameState.BRANCHES[goal.branch].color
+		_next_icon.visible = true
+		_next_icon.queue_redraw()
+		_next_cost.text = str(goal.cost)
+		_next_cost.visible = true
 	_next_bar.queue_redraw()
-	var n := GameState.affordable_count()
-	_points_badge.visible = n > 0
-	if n == 1:
-		for u in GameState.UPGRADES:
-			if GameState.can_buy(u.id):
-				_points_label.text = ("Dá para aprender: %s" % u.name).to_upper()
-				break
-	else:
-		_points_label.text = ("%d habilidades para aprender" % n).to_upper()
+	_badge.visible = n > 0
+	_badge_count.text = str(n)
 
 
-func _on_affordable(id: String) -> void:
+func _on_affordable(_id: String) -> void:
 	_refresh_points()
-	var u := GameState.get_upgrade(id)
 	Sfx.play("point", -2.0)
-	note("Já dá para aprender %s (%d pontos)  [TAB]" % [u.name, u.cost], UiTheme.GOLD, 3.5)
+	_badge.modulate = Color(1.8, 1.5, 1.0)
+	var tw := create_tween()
+	tw.tween_property(_badge, "modulate", Color.WHITE, 0.7)
 
 
-func _on_lick_blocked_running() -> void:
-	note("Correndo não dá para lamber: solte o Shift (ou aprenda Lamber Correndo)", UiTheme.SAND, 3.0)
+func _on_purchased(id: String) -> void:
+	_refresh_points()
+	if not GameState.playing:
+		return
+	var u := GameState.get_upgrade(id)
+	if u.is_empty():
+		return
+	var bc: Color = GameState.BRANCHES[u.branch].color
+	_cards.push("learned:" + id, {"title": u.name, "sub": "Aprendida", "icon": Glyphs.for_upgrade(u),
+		"icon_col": bc.lightened(0.35), "icon_bg": bc.darkened(0.72), "ring": UiTheme.GOLD,
+		"value_col": UiTheme.GOLD})
 
 
-func _context_hint() -> String:
+func _on_chamber_cleaned(nest, _ci: int) -> void:
+	Sfx.play("chamber", -3.0)
+	_cards.push("chamber", {"title": "Câmara limpa", "icon": "mound", "icon_col": UiTheme.LEAF,
+		"icon_bg": BG_GREEN, "ring": UiTheme.LEAF, "value_col": UiTheme.LEAF, "pip": 7.0,
+		"pips_on": nest.clean_chambers(), "pips_total": nest.chambers.size()}, true)
+
+
+func _on_nest_cleaned(_nest) -> void:
+	Sfx.play("nest_clean", -1.0)
+	_cards.push("nest", {"title": "Formigueiro limpo", "icon": "bloom", "icon_col": Color("8fb86a"),
+		"icon_bg": BG_GREEN, "ring": UiTheme.LEAF, "value_col": UiTheme.LEAF, "pip": 6.0,
+		"pips_on": colony.nests_cleaned(), "pips_total": world.nests.size()})
+
+
+func _on_queen_eaten(_nest) -> void:
+	_cards.push("queen", {"title": "Rainha", "icon": "crown", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD,
+		"ring": UiTheme.GOLD, "value": "+%d" % GameState.ants(NestScript.QUEEN_VALUE), "value_col": UiTheme.GOLD})
+
+
+func _on_frenzy(on: bool) -> void:
+	if on:
+		_cards.push("frenzy", {"title": "Frenesi", "icon": "wings", "icon_col": FRENZY, "icon_bg": BG_FRENZY,
+			"ring": FRENZY, "value_col": FRENZY, "bar": 1.0, "frenzy": true})
+
+
+# ------------------------------------------------------------------ Dicas
+
+## Dica do lugar embaixo da mira (Dicas: Todas ou Poucas), a dica passageira
+## e as dicas de controle (só Todas) em cima das habilidades.
+func _update_hints(delta: float) -> void:
+	var level: int = Settings.hints_level
+	_flash_time = maxf(_flash_time - delta, 0.0)
+	var parts: Array = []
+	if level < 2:
+		parts = _flash if _flash_time > 0.0 else _context_hint()
+	_hint.set_parts(parts)
+	_learn_controls(delta)
+	if level == 0:
+		_maybe_help()
+	_tutorial.set_parts(_tutorial_hint() if level == 0 and _play_time > 1.5 else [])
+
+
+func _flash_hint(parts: Array, duration: float) -> void:
+	_flash = parts
+	_flash_time = duration
+
+
+func _locked(what: String) -> Array:
+	return [{"icon": "lock", "col": UiTheme.MUTED}, {"text": what}, {"key": "Tab"}]
+
+
+## O que dá para fazer aqui: tecla e poucas palavras, ou só ícone e número.
+func _context_hint() -> Array:
 	if player.dig_nest != null:
-		if not GameState.can_dig():
-			return "Câmara fechada: aprenda Cavar (Garras) na árvore [TAB]"
+		var dc = player.dig_nest.chambers[player.dig_chamber]
+		if GameState.dig_level() < dc.size_class:
+			return _locked(GameState.get_upgrade(GameState.dig_skill_for(dc.size_class)).name)
 		if player.dig_cd > 0.0:
-			return "As garras estão descansando: %d s" % int(ceil(player.dig_cd))
-		var c = player.dig_nest.chambers[player.dig_chamber]
-		if c.royal:
-			return "Segure E para abrir a câmara da rainha"
-		return "Segure E para abrir esta câmara do campo" if c.satellite else "Segure E para abrir a câmara"
-	# Câmara aberta por perto (no monte ou no campo).
+			return [{"icon": "clock", "col": UiTheme.GOLD}, {"num": "%d s" % int(ceil(player.dig_cd))}]
+		return [{"key": "E"}, {"text": "Abrir a vala" if dc.half_len > 0.0 else "Abrir câmara"}]
 	var p2 := Vector2(player.global_position.x, player.global_position.z)
 	# Tronco caído na saída para a área 2.
 	if not world.exit_open and world.near_exit(p2, 4.5):
 		if not world.exit_breakable:
-			return "Um tronco caído fecha a passagem. Limpe a clareira primeiro (faltam %d formigas)" % colony.remaining()
+			return [{"icon": "lock", "col": UiTheme.MUTED}, {"num": str(GameState.ants(colony.remaining()))},
+				{"icon": "ant", "col": UiTheme.SAND}]
 		if not GameState.can_dig():
-			return "Aprenda Cavar (Garras) na árvore [TAB] para quebrar o tronco"
-		return "Segure E para quebrar o tronco com as garras"
+			return _locked("Cavar")
+		return [{"key": "E"}, {"text": "Quebrar o tronco"}]
+	# Câmara aberta por perto: quantas formigas faltam (e a rainha protegida).
 	for n in world.nests:
 		var ci: int = n.open_chamber_near(p2, 3.0)
 		if ci < 0:
 			continue
 		var c = n.chambers[ci]
-		if c.royal and n.queen_alive and c.residents > 0:
-			return "Rainha protegida: faltam %d formigas nesta câmara" % c.residents
 		if c.royal and n.queen_alive:
-			return "A rainha está sozinha: lamba!"
-		return "Câmara aberta: %d formigas" % c.residents
+			if c.residents > 0:
+				return [{"icon": "crown", "col": UiTheme.GOLD}, {"num": str(GameState.ants(c.residents))},
+					{"icon": "ant", "col": UiTheme.SAND}]
+			return []
+		return [{"num": str(GameState.ants(c.residents))}, {"icon": "ant", "col": UiTheme.SAND}]
+	# No monte, só faltam as câmaras do campo.
 	var nest = player.near_nest
-	if nest == null:
-		return ""
-	if nest.cleaned:
-		return "%s limpo!" % nest.display_name
-	if nest.closed_chambers() > 0:
-		var field: int = nest.closed_chambers() - _closed_on_mound(nest)
-		if field > 0 and _closed_on_mound(nest) == 0:
-			return "%s: faltam %d câmaras no campo (fareje!)" % [nest.display_name, field]
-		return "%s: %d câmaras fechadas" % [nest.display_name, nest.closed_chambers()]
-	return nest.display_name
+	if nest != null and not nest.cleaned and _closed_on_mound(nest) == 0 and nest.closed_chambers() > 0:
+		var parts: Array = [{"icon": "diamond", "col": Settings.sniff_color()}, {"num": str(nest.closed_chambers())},
+			{"text": "no campo"}]
+		if GameState.can_sniff():
+			parts.append({"key": "Q"})
+		return parts
+	return []
 
 
 func _closed_on_mound(nest) -> int:
@@ -495,76 +522,79 @@ func _closed_on_mound(nest) -> int:
 	return n
 
 
-## Ajuda quando só restam formigas dentro das câmaras.
+## Dicas de controle (só com Dicas: Todas), cada uma até você usar.
+func _tutorial_hint() -> Array:
+	var parts: Array = []
+	if not Settings.hint_learned("move"):
+		parts += [{"key": "WASD"}, {"text": "Andar"}, {"gap": 16.0}]
+	if GameState.can_run() and not Settings.hint_learned("run"):
+		parts += [{"key": "Shift"}, {"text": "Correr"}, {"gap": 16.0}]
+	if not Settings.hint_learned("map"):
+		parts += [{"key": "Tab"}, {"text": "Mapa e habilidades"}, {"gap": 16.0}]
+	if not parts.is_empty():
+		parts.pop_back()
+	return parts
+
+
+func _learn_controls(delta: float) -> void:
+	if not player.controls_enabled:
+		return
+	var mv := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if mv.length() < 0.2:
+		return
+	_moved += delta
+	if _moved > 0.6:
+		Settings.learn_hint("move")
+	if GameState.can_run() and Input.is_action_pressed("run"):
+		_ran += delta
+		if _ran > 0.6:
+			Settings.learn_hint("run")
+
+
+## Só restam formigas dentro de buracos que as suas garras ainda não abrem:
+## lembra o que aprender (Dicas: Todas).
 func _maybe_help() -> void:
-	var now := Time.get_ticks_msec() / 1000.0
-	if now < _help_next or colony.outside_total() > 0 or colony.pools_total() > 0:
+	if _play_time < _help_next or colony.outside_total() > 0 or colony.pools_total() > 0:
 		return
-	if colony.closed_chambers_total() == 0:
+	var smallest := 99
+	for n in world.nests:
+		for c in n.chambers:
+			if not c.opened:
+				smallest = mini(smallest, c.size_class)
+	if smallest == 99 or GameState.dig_level() >= smallest:
 		return
-	_help_next = now + 45.0
-	if GameState.can_dig():
-		note("As formigas que faltam estão dentro dos formigueiros: cave as câmaras fechadas", UiTheme.SAND, 4.5)
-	elif GameState.can_buy("garras_cavar"):
-		note("Aprenda Cavar (Garras) na árvore [TAB] para abrir as câmaras", UiTheme.SAND, 4.5)
-	else:
-		note("Para abrir as câmaras, redistribua seus pontos na árvore [TAB] e aprenda Cavar", UiTheme.SAND, 5.0)
+	_help_next = _play_time + 45.0
+	_flash_hint(_locked(GameState.get_upgrade(GameState.dig_skill_for(smallest)).name), 4.0)
 
 
-func _on_dug(nest, ci: int, released: int) -> void:
-	var c = nest.chambers[ci]
-	if c.royal and nest.queen_alive:
-		note("Câmara da rainha aberta: coma as %d formigas em volta dela!" % released, UiTheme.GOLD, 3.5)
-	else:
-		note("Câmara aberta: %d formigas lá dentro!" % released, UiTheme.GOLD)
+func _on_lick_blocked_running() -> void:
+	if Settings.hints_level < 2:
+		_flash_hint([{"key": "Shift", "col": UiTheme.TERRACOTTA}, {"text": "Solte para lamber"}], 2.5)
 
 
-func _on_chamber_cleaned(nest, _ci: int) -> void:
-	Sfx.play("chamber", -3.0)
-	note("Câmara limpa! (%d de %d no %s)" % [nest.clean_chambers(), nest.chambers.size(), nest.display_name], UiTheme.LEAF, 3.0)
-
-
-func _on_nest_cleaned(nest) -> void:
-	Sfx.play("nest_clean", -1.0)
-	big_note("Formigueiro limpo!", "%s · %d de %d" % [nest.display_name, colony.nests_cleaned(), world.nests.size()], 4.0)
-
-
+## A rainha ainda está protegida: a dica com a coroa pisca.
 func _on_queen_blocked() -> void:
-	var now := Time.get_ticks_msec() / 1000.0
-	if now < _queen_note_next:
+	if _play_time < _queen_bump_next:
 		return
-	_queen_note_next = now + 6.0
-	note("A rainha está protegida: coma primeiro as formigas da câmara", UiTheme.TERRACOTTA, 2.6)
+	_queen_bump_next = _play_time + 1.5
+	_hint.bump(UiTheme.TERRACOTTA)
 
 
 func _on_ate(count: int, _taj: int, _queens: int) -> void:
-	var l := UiTheme.display_label("+%d" % count, 30 + mini(count, 10) * 2, UiTheme.GOLD)
-	l.add_theme_constant_override("outline_size", 6)
-	l.add_theme_color_override("font_outline_color", Color(0.06, 0.035, 0.02, 0.9))
-	var vs := get_viewport_rect().size
-	l.position = vs * 0.5 + Vector2(randf_range(20, 60), randf_range(-60, -20))
+	var l := UiTheme.display_label("+%d" % GameState.ants(count), 24 + mini(count, 10), UiTheme.GOLD)
+	_soft_shadow(l)
+	l.position = size * 0.5 + Vector2(randf_range(24, 44), randf_range(-64, -46))
 	_popups.add_child(l)
 	var tw := create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(l, "position:y", l.position.y - 70, 0.9).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, "position:y", l.position.y - 54, 0.9).set_ease(Tween.EASE_OUT)
 	tw.tween_property(l, "modulate:a", 0.0, 0.9).set_delay(0.25)
 	tw.chain().tween_callback(l.queue_free)
-	if GameState.combo >= 10 and GameState.combo % 10 < count:
-		note("Combo x%d!" % GameState.combo, UiTheme.PINK, 1.6)
 
 
 func _on_sniffed(n: int, capped: bool, nearest: float, chambers: int) -> void:
-	var radius := int(GameState.sniff_radius())
-	if n == 0:
-		note("Nenhuma formiga a até %d m... siga as trilhas de terra" % radius, UiTheme.SAND)
-	else:
-		var how_many := ("%d+" % n) if capped else str(n)
-		note("Faro: %s formigas a até %d m · a mais perto a uns %d m" % [how_many, radius, int(round(nearest))], UiTheme.SAND, 2.5)
-	if GameState.sniff_chambers():
-		if chambers > 0:
-			note("Faro: %d %s por perto" % [chambers, "câmara fechada" if chambers == 1 else "câmaras fechadas"], Settings.sniff_color().lightened(0.3), 2.5)
-		else:
-			note("Nenhuma câmara fechada por perto", UiTheme.SAND, 2.0)
+	_sniff.show_result(n, capped, nearest, chambers if GameState.sniff_chambers() else -1,
+		GameState.sniff_duration() + 3.0)
 	var now := Time.get_ticks_msec() / 1000.0
 	_compass.sniff_target = player.sniff_target
 	_compass.sniff_until = now + GameState.sniff_duration() + 3.0
@@ -573,60 +603,19 @@ func _on_sniffed(n: int, capped: bool, nearest: float, chambers: int) -> void:
 	_compass.queens_until = now + 12.0 if GameState.sniff_queens() else 0.0
 
 
-## Onda: aviso discreto no painel da direita (a bússola marca o formigueiro).
-func _on_wave(wave: int, nest_name: String, count: int, nest_index: int) -> void:
-	_wave_note = "Onda %d: %d formigas saindo do %s" % [wave, count, nest_name]
-	_wave_note_time = 7.0
-	Sfx.play("wave", -6.0)
-	_compass.wave_nest = world.nests[nest_index]
-	_compass.wave_until = Time.get_ticks_msec() / 1000.0 + 25.0
-
-
-## Aviso discreto de "Jogo salvo" no canto da tela.
+## Jogo salvo: só um ícone girando no canto.
 func show_saved() -> void:
-	if _saved_label == null:
-		_saved_label = UiTheme.caps_label("Jogo salvo", 12, UiTheme.SAND)
-		_saved_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		add_child(_saved_label)
-		_place(_saved_label, Control.PRESET_BOTTOM_RIGHT, Vector2(-220, -40), Vector2(200, 24))
-	_saved_label.modulate.a = 1.0
-	var tw := create_tween()
-	tw.tween_interval(1.5)
-	tw.tween_property(_saved_label, "modulate:a", 0.0, 0.8)
+	_save.show_saved()
 
 
-## Aviso no alto da tela, entre dois losangos.
-func note(text: String, color: Color = UiTheme.CREAM, duration: float = 3.2) -> void:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 12)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	for k in 3:
-		if k == 1:
-			var l := UiTheme.label(text, 23, color)
-			l.add_theme_font_override("font", UiTheme.semi_font())
-			_soft_shadow(l)
-			row.add_child(l)
-		else:
-			var d := Diamond.new()
-			d.color = Color(UiTheme.GOLD, 0.9)
-			d.custom_minimum_size = Vector2(8, 8)
-			d.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			row.add_child(d)
-	_notes.add_child(row)
-	while _notes.get_child_count() > 4:
-		var old := _notes.get_child(0)
-		_notes.remove_child(old)
-		old.queue_free()
-	var tw := create_tween()
-	tw.tween_interval(duration)
-	tw.tween_property(row, "modulate:a", 0.0, 0.6)
-	tw.tween_callback(row.queue_free)
-
-
-func big_note(title: String, sub: String = "", duration: float = 3.5) -> void:
+## Aviso grande (só no fim da clareira). `icon` é um ícone de Glyphs antes do
+## texto de baixo (por exemplo, "log").
+func big_note(title: String, sub: String = "", duration: float = 3.5, icon: String = "") -> void:
 	_big_note.text = title
 	_big_sub.text = sub
+	_big_icon.kind = icon
+	_big_icon.visible = icon != ""
+	_big_icon.queue_redraw()
 	_big_time = duration
 	_big_box.modulate.a = 1.0
 	_big_box.pivot_offset = _big_box.size * 0.5
@@ -648,6 +637,52 @@ class Diamond extends Control:
 		var c := size * 0.5
 		var r := minf(size.x, size.y) * 0.5
 		draw_colored_polygon(PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)]), color)
+
+
+## Um ícone de Glyphs num controle.
+class GlyphIcon extends Control:
+	const Glyphs := preload("res://scripts/ui/glyphs.gd")
+	var kind := ""
+	var color := Color.WHITE
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		if kind != "":
+			Glyphs.paint(self, kind, size * 0.5, minf(size.x, size.y) * 0.45, color)
+
+
+## Losangos em fila: cheios = feitos, só contorno = falta.
+class Pips extends Control:
+	var on := 0
+	var total := 0
+	var pip := 8.0
+	var gap := 6.0
+	var color := Color("b9d99a")
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func set_counts(done: int, all: int) -> void:
+		if done == on and all == total:
+			return
+		on = done
+		total = all
+		custom_minimum_size = Vector2(maxf(total * (pip + gap) - gap + 4.0, 0.0), pip * 1.6)
+		queue_redraw()
+
+	func _draw() -> void:
+		var r := pip * 0.72
+		var cy := size.y * 0.5
+		for i in total:
+			var p := Vector2(2.0 + pip * 0.5 + i * (pip + gap), cy)
+			var poly := PackedVector2Array([p + Vector2(0, -r), p + Vector2(r, 0), p + Vector2(0, r), p + Vector2(-r, 0)])
+			if i < on:
+				draw_colored_polygon(poly, color)
+			else:
+				poly.append(poly[0])
+				draw_polyline(poly, Color(color, 0.5), 1.5, true)
 
 
 ## Enfeite dos avisos grandes: um traço que some na ponta e um losango.
@@ -690,7 +725,7 @@ class Medallion extends Control:
 			draw_circle(c, r * (1.0 - t * 0.7), Color("0d0907").lerp(Color("21150f"), t))
 		draw_arc(c, r, 0, TAU, 72, gold, 3.0, true)
 		var f: Font = UT.display_font()
-		var fs := 34 if value.length() <= 3 else 29
+		var fs := 34 if value.length() <= 3 else (29 if value.length() == 4 else 25)
 		var w := f.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		draw_string(f, c + Vector2(-w * 0.5, 7), value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UT.PALE)
 		var cf: Font = UT.caps_font()
@@ -719,15 +754,346 @@ class GoldBar extends Control:
 			Color("f6e3b4"))
 
 
+## Cartão de conquista (canto direito): ícone num círculo, título e um detalhe
+## (losangos, barra, número ou uma palavra).
+class Card extends Control:
+	const UT := preload("res://scripts/ui/ui_theme.gd")
+	const Glyphs := preload("res://scripts/ui/glyphs.gd")
+	const W := 286.0
+	const H := 62.0
+	var key := ""
+	var title := ""
+	## Linha pequena em caixa alta embaixo do título.
+	var sub := ""
+	var icon := ""
+	var icon_col := Color.WHITE
+	var icon_bg := Color("3a2a10")
+	var ring := Color("e8b44f")
+	## Texto à direita (+20, ×3, 4 s).
+	var value := ""
+	var value_col := Color("e8b44f")
+	var pips_on := 0
+	var pips_total := 0
+	var pip := 7.0
+	## Barra (0..1) embaixo do título; < 0 = sem barra.
+	var bar := -1.0
+	## O cartão do Frenesi acompanha o tempo que falta.
+	var frenzy := false
+	var count := 1
+	var life := 4.5
+	var glow := 0.0
+	var appear := 0.0
+	var rank_alpha := 1.0
+	var leaving := false
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		size = Vector2(W, H)
+
+	func apply(d: Dictionary) -> void:
+		for k in d:
+			set(k, d[k])
+		queue_redraw()
+
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, Vector2(W, H))
+		var gold := UT.GOLD
+		if glow > 0.01:
+			for k in 4:
+				draw_rect(r.grow(2.0 + k * 3.0), Color(gold, 0.06 * glow * float(4 - k) / 4.0))
+		draw_polygon(PackedVector2Array([r.position, Vector2(W, 0), Vector2(W, H), Vector2(0, H)]),
+			PackedColorArray([Color(0.063, 0.043, 0.035, 0.93), Color(0.063, 0.043, 0.035, 0.93),
+				Color(0.031, 0.024, 0.02, 0.93), Color(0.031, 0.024, 0.02, 0.93)]))
+		draw_rect(r.grow(-0.5), Color(gold, 0.85), false, 1.0)
+		draw_rect(r.grow(-4.5), Color(gold, 0.25), false, 1.0)
+		# Ícone num círculo.
+		var ic := Vector2(31.0, H * 0.5)
+		for k in 6:
+			var t := float(k) / 5.0
+			draw_circle(ic, 21.0 * (1.0 - t * 0.75), Color("0d0907").lerp(icon_bg, t))
+		draw_arc(ic, 20.0, 0, TAU, 40, ring, 2.0, true)
+		Glyphs.paint(self, icon, ic, 12.5, icon_col)
+		# Título e detalhe.
+		var x0 := 64.0
+		var right := W - 14.0
+		var vf: Font = UT.display_font()
+		var vw := 0.0
+		if value != "":
+			vw = vf.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, 21).x
+			draw_string(vf, Vector2(right - vw, H * 0.5 + 7.5), value, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, value_col)
+		var avail := right - x0 - (vw + 10.0 if vw > 0.0 else 0.0)
+		var ts := 19
+		while ts > 14 and vf.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, ts).x > avail:
+			ts -= 1
+		var second := pips_total > 0 or bar >= 0.0 or sub != ""
+		var ty := 28.0 if second else H * 0.5 + 6.5
+		draw_string(vf, Vector2(x0, ty), title, HORIZONTAL_ALIGNMENT_LEFT, avail, ts, UT.PALE)
+		if pips_total > 0:
+			var step := pip + (5.0 if pip >= 7.0 else 4.0)
+			var pr := pip * 0.72
+			for i in pips_total:
+				var p := Vector2(x0 + pr + i * step, 42.5)
+				var poly := PackedVector2Array([p + Vector2(0, -pr), p + Vector2(pr, 0), p + Vector2(0, pr), p + Vector2(-pr, 0)])
+				if i < pips_on:
+					draw_colored_polygon(poly, UT.LEAF)
+				else:
+					poly.append(poly[0])
+					draw_polyline(poly, Color(UT.LEAF, 0.55), 1.5, true)
+		elif bar >= 0.0:
+			var br := Rect2(Vector2(x0, 40.0), Vector2(150.0, 4.0))
+			draw_rect(br, Color(value_col, 0.2))
+			draw_rect(Rect2(br.position, Vector2(br.size.x * clampf(bar, 0.0, 1.0), br.size.y)), value_col)
+		elif sub != "":
+			draw_string(UT.caps_font(), Vector2(x0, 46.0), sub.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, value_col)
+
+
+## Pilha de cartões no canto direito: o mais novo em cima; os mais antigos
+## descem e vão ficando transparentes. Cartões iguais se juntam (×2, ×3).
+class CardStack extends Control:
+	const MAX := 3
+	const GAP := 10.0
+	const RANK_ALPHA := [1.0, 0.88, 0.6]
+	var cards: Array = []
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func push(key: String, d: Dictionary, group: bool = false) -> void:
+		var card: Card = null
+		for c in cards:
+			if c.key == key and not c.leaving and c.life > 0.5:
+				card = c
+				break
+		if card == null:
+			card = Card.new()
+			card.key = key
+			add_child(card)
+		else:
+			cards.erase(card)
+			if group:
+				card.count += 1
+				d["value"] = "×%d" % card.count
+		card.apply(d)
+		card.life = 4.5
+		card.glow = 1.0
+		cards.push_front(card)
+		var shown := 0
+		for c in cards:
+			if c.leaving:
+				continue
+			shown += 1
+			if shown > MAX:
+				c.leaving = true
+				c.life = minf(c.life, 0.35)
+
+	func _process(delta: float) -> void:
+		for i in range(cards.size() - 1, -1, -1):
+			var c: Card = cards[i]
+			if c.frenzy and not c.leaving and GameState.frenzy_time > 0.0:
+				c.life = GameState.frenzy_time + 0.6
+				c.bar = GameState.frenzy_time / GameState.FRENZY_TIME
+				c.value = "%d s" % int(ceil(GameState.frenzy_time))
+			c.life -= delta
+			if c.life <= 0.0:
+				cards.remove_at(i)
+				c.queue_free()
+		var rank := 0
+		for c in cards:
+			c.appear = minf(c.appear + delta * 4.0, 1.0)
+			c.glow = maxf(c.glow - delta * 0.9, 0.0)
+			var e := 1.0 - pow(1.0 - c.appear, 3.0)
+			if not c.leaving:
+				var ty := rank * (Card.H + GAP)
+				c.position.y = ty if c.appear < 0.05 else lerpf(c.position.y, ty, minf(delta * 12.0, 1.0))
+				c.position.x = (1.0 - e) * 60.0
+				c.rank_alpha = RANK_ALPHA[mini(rank, RANK_ALPHA.size() - 1)]
+				rank += 1
+			c.modulate.a = e * c.rank_alpha * clampf(c.life / 0.5, 0.0, 1.0)
+			c.queue_redraw()
+
+
+## Dica curta: teclas em quadradinhos, poucas palavras, ícones e números, numa
+## linha centralizada. Partes: {"key"}, {"text"}, {"num"}, {"icon", "col"}, {"gap"}.
+class HintRow extends Control:
+	const UT := preload("res://scripts/ui/ui_theme.gd")
+	const Glyphs := preload("res://scripts/ui/glyphs.gd")
+	const SPACE := 8.0
+	var _parts: Array = []
+	var _alpha := 0.0
+	var _want := false
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		modulate.a = 0.0
+
+	func set_parts(parts: Array) -> void:
+		_want = not parts.is_empty()
+		if _want and parts != _parts:
+			_parts = parts.duplicate(true)
+			queue_redraw()
+
+	## Pisca numa cor (quando você tenta algo que ainda não dá).
+	func bump(col: Color) -> void:
+		self_modulate = col.lightened(0.3)
+		var tw := create_tween()
+		tw.tween_property(self, "self_modulate", Color.WHITE, 0.6)
+
+	func _process(delta: float) -> void:
+		_alpha = move_toward(_alpha, 1.0 if _want else 0.0, delta * (6.0 if _want else 4.0))
+		modulate.a = _alpha
+		if _alpha <= 0.0 and not _want and not _parts.is_empty():
+			_parts = []
+			queue_redraw()
+
+	func _measure(p: Dictionary) -> float:
+		if p.has("key"):
+			return UT.display_bold_font().get_string_size(p.key, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 12.0
+		if p.has("text"):
+			return UT.semi_font().get_string_size(p.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x
+		if p.has("num"):
+			return UT.display_font().get_string_size(p.num, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x
+		if p.has("icon"):
+			return 20.0
+		return float(p.get("gap", 0.0))
+
+	func _baseline(f: Font, fs: int, cy: float) -> float:
+		return cy + (f.get_ascent(fs) - f.get_descent(fs)) * 0.5
+
+	func _shadowed(f: Font, pos: Vector2, text: String, fs: int, col: Color) -> void:
+		draw_string_outline(f, pos + Vector2(0, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 6, Color(0, 0, 0, 0.4))
+		draw_string(f, pos + Vector2(0, 1.5), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0, 0, 0, 0.85))
+		draw_string(f, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
+
+	func _draw() -> void:
+		if _parts.is_empty():
+			return
+		var total := 0.0
+		for p in _parts:
+			total += _measure(p) + SPACE
+		total -= SPACE
+		var x := (size.x - total) * 0.5
+		var cy := size.y * 0.5
+		for p in _parts:
+			var w := _measure(p)
+			if p.has("key"):
+				var col: Color = p.get("col", UT.GOLD)
+				var f: Font = UT.display_bold_font()
+				var r := Rect2(Vector2(x, cy - 10.5), Vector2(w, 21.0))
+				draw_rect(r, Color(0.04, 0.028, 0.024, 0.82))
+				draw_rect(r.grow(-0.5), Color(col, 0.85), false, 1.0)
+				draw_string(f, Vector2(x + 6.0, _baseline(f, 14, cy)), p.key, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, col)
+			elif p.has("text"):
+				var f: Font = UT.semi_font()
+				_shadowed(f, Vector2(x, _baseline(f, 17, cy)), p.text, 17, p.get("col", UT.CREAM))
+			elif p.has("num"):
+				var f: Font = UT.display_font()
+				_shadowed(f, Vector2(x, _baseline(f, 17, cy)), p.num, 17, p.get("col", UT.PALE))
+			elif p.has("icon"):
+				var c := Vector2(x + 10.0, cy)
+				Glyphs.paint(self, p.icon, c + Vector2(0, 1.5), 9.0, Color(0, 0, 0, 0.7))
+				Glyphs.paint(self, p.icon, c, 9.0, p.get("col", UT.GOLD))
+			x += w + SPACE
+
+
+## Resultado do Faro, em cima do botão de Farejar: quantas formigas e a que
+## distância está a mais perto (e as câmaras fechadas, com o Faro de Câmara).
+class SniffChip extends Control:
+	const UT := preload("res://scripts/ui/ui_theme.gd")
+	const Glyphs := preload("res://scripts/ui/glyphs.gd")
+	var count := ""
+	var dist := ""
+	var chambers := -1
+	var time := 0.0
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func show_result(n: int, capped: bool, nearest: float, ch: int, duration: float) -> void:
+		count = ("%d+" % GameState.ants(n)) if capped else str(GameState.ants(n))
+		dist = ("· %d m" % int(round(nearest))) if n > 0 else ""
+		chambers = ch
+		time = duration
+		modulate.a = 1.0
+		queue_redraw()
+
+	func _process(delta: float) -> void:
+		if time <= 0.0:
+			return
+		time -= delta
+		modulate.a = clampf(time / 0.6, 0.0, 1.0)
+		if time <= 0.0:
+			queue_redraw()
+
+	func _draw() -> void:
+		if time <= 0.0:
+			return
+		var scent: Color = Settings.sniff_color()
+		var nf: Font = UT.display_font()
+		var df: Font = UT.semi_font()
+		var cw := nf.get_string_size(count, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+		var dw := df.get_string_size(dist, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x if dist != "" else 0.0
+		var chs := str(chambers)
+		var chw := nf.get_string_size(chs, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+		var w := 10.0 + 18.0 + 7.0 + cw + (6.0 + dw if dist != "" else 0.0) + (14.0 + 12.0 + 6.0 + chw if chambers >= 0 else 0.0) + 10.0
+		var r := Rect2(Vector2((size.x - w) * 0.5, 0.0), Vector2(w, size.y))
+		draw_rect(r, Color(0.04, 0.028, 0.024, 0.86))
+		draw_rect(r.grow(-0.5), Color(scent, 0.6), false, 1.0)
+		var cy := size.y * 0.5
+		var base := cy + (nf.get_ascent(16) - nf.get_descent(16)) * 0.5
+		var x := r.position.x + 10.0
+		Glyphs.paint(self, "nose", Vector2(x + 10.0, cy), 8.5, scent.lightened(0.3))
+		x += 18.0 + 7.0
+		draw_string(nf, Vector2(x, base), count, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UT.CREAM)
+		x += cw
+		if dist != "":
+			x += 6.0
+			draw_string(df, Vector2(x, base), dist, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, UT.MUTED)
+			x += dw
+		if chambers >= 0:
+			x += 14.0
+			Glyphs.paint(self, "diamond", Vector2(x + 6.0, cy), 7.5, scent)
+			x += 12.0 + 6.0
+			draw_string(nf, Vector2(x, base), chs, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UT.CREAM)
+
+
+## Jogo salvo: um anel dourado girando no canto, sem texto.
+class SaveIcon extends Control:
+	const SHOW := 2.2
+	var time := 0.0
+	var _spin := 0.0
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		modulate.a = 0.0
+
+	func show_saved() -> void:
+		time = SHOW
+
+	func _process(delta: float) -> void:
+		if time <= 0.0:
+			return
+		time = maxf(time - delta, 0.0)
+		_spin += delta * 5.0
+		modulate.a = clampf(time / 0.6, 0.0, 1.0) * clampf((SHOW - time) / 0.25, 0.0, 1.0)
+		queue_redraw()
+
+	func _draw() -> void:
+		var gold := Color("e8b44f")
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.5 - 2.0
+		draw_arc(c, r, 0, TAU, 40, Color(gold, 0.3), 2.0, true)
+		draw_arc(c, r, _spin, _spin + PI * 0.75, 20, gold, 2.0, true)
+		draw_colored_polygon(PackedVector2Array([c + Vector2(0, -4), c + Vector2(4, 0), c + Vector2(0, 4), c + Vector2(-4, 0)]), gold)
+
+
 ## Bússola: faixa com moldura dourada, risquinhos a cada 15° (os de 45° maiores),
 ## direções e um medalhão no meio com o rumo. Os formigueiros são montinhos em
-## cima da faixa; só o que está à sua frente mostra nome e distância embaixo.
+## cima da faixa; o que está à sua frente mostra a distância e as câmaras dele
+## (verdes = limpas) numa plaquinha embaixo.
 class Compass extends Control:
 	const UT := preload("res://scripts/ui/ui_theme.gd")
 	var player
 	var world
-	var wave_nest = null
-	var wave_until := 0.0
 	var sniff_target := Vector3.INF
 	var sniff_until := 0.0
 	var nests_until := 0.0
@@ -775,6 +1141,10 @@ class Compass extends Control:
 	func _diamond(p: Vector2, r: float, col: Color) -> void:
 		draw_colored_polygon(PackedVector2Array([p + Vector2(0, -r), p + Vector2(r, 0), p + Vector2(0, r), p + Vector2(-r, 0)]), col)
 
+	func _diamond_outline(p: Vector2, r: float, col: Color) -> void:
+		draw_polyline(PackedVector2Array([p + Vector2(0, -r), p + Vector2(r, 0), p + Vector2(0, r), p + Vector2(-r, 0),
+			p + Vector2(0, -r)]), col, 1.5, true)
+
 	func _text_centered(font: Font, x: float, baseline: float, text: String, fsize: int, col: Color) -> void:
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
 		draw_string(font, Vector2(x - w * 0.5, baseline), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, col)
@@ -795,15 +1165,30 @@ class Compass extends Control:
 		draw_colored_polygon(PackedVector2Array([p + Vector2(-5, 3) * s, p + Vector2(-5, -2) * s, p + Vector2(-2.5, 0.5) * s,
 			p + Vector2(0, -3) * s, p + Vector2(2.5, 0.5) * s, p + Vector2(5, -2) * s, p + Vector2(5, 3) * s]), col)
 
-	## Plaquinha escura com borda dourada (nome e distância).
-	func _plate(top_center: Vector2, text: String, col: Color) -> void:
-		var f: Font = UT.bold_font()
-		var w := f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
-		var r := Rect2(Vector2(top_center.x - w * 0.5 - 10.0, top_center.y), Vector2(w + 20.0, 22.0))
+	## Plaquinha embaixo da faixa: distância e as câmaras do formigueiro
+	## (cheias = limpas, só contorno = ainda com formigas).
+	func _plate(top_center: Vector2, nest) -> void:
+		var f: Font = UT.display_font()
+		var dist: float = nest.global_position.distance_to(player.global_position)
+		var text := "%d m" % int(dist)
+		var tw := f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+		var total: int = nest.chambers.size()
+		var done: int = nest.clean_chambers()
+		var pw := total * 10.0 - 4.0 if total > 0 else 0.0
+		var w := 10.0 + tw + (9.0 + pw if total > 0 else 0.0) + 10.0
+		var r := Rect2(Vector2(top_center.x - w * 0.5, top_center.y), Vector2(w, 22.0))
 		r.position.x = clampf(r.position.x, 0.0, size.x - r.size.x)
 		draw_rect(r, Color(0.04, 0.028, 0.024, 0.92))
 		draw_rect(r.grow(-0.5), Color(UT.GOLD, 0.75), false, 1.0)
-		draw_string(f, Vector2(r.position.x + 10.0, r.end.y - 6.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, col)
+		draw_string(f, Vector2(r.position.x + 10.0, r.end.y - 6.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, UT.PALE)
+		var x := r.position.x + 10.0 + tw + 9.0 + 3.0
+		var cy := r.get_center().y
+		for i in total:
+			if i < done:
+				_diamond(Vector2(x, cy), 4.2, UT.LEAF)
+			else:
+				_diamond_outline(Vector2(x, cy), 3.8, UT.GOLD)
+			x += 10.0
 
 	func _draw() -> void:
 		if player == null:
@@ -854,12 +1239,9 @@ class Compass extends Control:
 			var x := _x_for(_yaw_to(n.global_position))
 			if not _inside(x):
 				continue
-			var is_wave: bool = wave_nest == n and now < wave_until
 			var col := Color(gold, 0.8 * _fade(x))
 			if n.cleaned:
 				col = Color(UT.LEAF, 0.65 * _fade(x))
-			if is_wave:
-				col = Color(1.0, 0.5, 0.32).lerp(UT.PALE, 0.5 + 0.5 * sin(now * 8.0))
 			var base := Vector2(x, b.position.y - 2.0)
 			if n == faced:
 				draw_circle(base + Vector2(0, -7), 15.0, Color(UT.PALE, 0.16))
@@ -873,16 +1255,10 @@ class Compass extends Control:
 			if now < queens_until and n.queen_alive:
 				_crown(Vector2(x, tag_y), gold)
 				tag_y -= 12.0
-			if is_wave:
-				_text_centered(UT.caps_font(), x, tag_y, "ONDA", 11, Color(1.0, 0.6, 0.42))
-			elif now < nests_until and not n.cleaned:
-				_text_centered(UT.display_bold_font(), x, tag_y, str(n.remaining()), 14, UT.PALE)
+			if now < nests_until and not n.cleaned:
+				_text_centered(UT.display_bold_font(), x, tag_y, str(GameState.ants(n.remaining())), 14, UT.PALE)
 		if faced != null:
-			var dist: float = faced.global_position.distance_to(player.global_position)
-			var txt := "%s · %d m" % [faced.display_name, int(dist)]
-			if now < nests_until:
-				txt += " · faltam %d" % faced.remaining()
-			_plate(Vector2(_x_for(_yaw_to(faced.global_position)), b.end.y + 6.0), txt, UT.PALE)
+			_plate(Vector2(_x_for(_yaw_to(faced.global_position)), b.end.y + 6.0), faced)
 		# Saída para a área 2 (quando a clareira fica limpa).
 		if world.exit_breakable and not world.exit_open:
 			var ep: Vector2 = world.cliffs.exit_center(1.6)

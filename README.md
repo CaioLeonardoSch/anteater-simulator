@@ -15,8 +15,9 @@ produção, os protótipos e as decisões, num lugar só.
 
 | | |
 |---|---|
-| ![Farejando formigas na trilha: elas brilham através do capim](docs/screenshots/trilha.jpg) | ![Em cima de um formigueiro grande, com uma câmara aberta](docs/screenshots/formigueiro.jpg) |
-| ![Árvore de habilidades da demo](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
+| ![Estrada de formigas na trilha: grupos de 10, muitas carregando folhas](docs/screenshots/trilha.jpg) | ![A vala da rainha aberta no pé de um formigueiro grande, cheia de formigas](docs/screenshots/vala.jpg) |
+| ![HUD com cartões de conquista, o resultado do faro e as dicas de controle](docs/screenshots/hud.jpg) | ![Mapa no TAB, colorido onde você já andou](docs/screenshots/mapa.jpg) |
+| ![Árvore de habilidades, na aba ao lado do mapa](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
 > No seu PC fica igual ou melhor.
@@ -27,13 +28,13 @@ produção, os protótipos e as decisões, num lugar só.
 
 Uma **clareira do cerrado no fim da tarde**, cercada por penhascos. O tamanduá
 acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
-ronca: hora de comer. A colônia tem **3200 formigas** e **12 formigueiros**.
-Parte das formigas anda pelas trilhas de terra e chega em **ondas**; o resto
-mora nas **câmaras** dos formigueiros (e em algumas câmaras no meio do campo),
-que você abre cavando. Os 5 formigueiros grandes guardam uma **rainha**. **Cada
-formiga comida vale 1 ponto** e cada habilidade tem o seu preço. Com a clareira
-**100% limpa**, as garras quebram o **tronco caído** que fecha a saída, e a demo
-termina.
+ronca: hora de comer. A colônia tem **32 000 formigas** (em grupos de 10) e
+**12 formigueiros**. Parte das formigas anda em fila pelas trilhas de terra; o
+resto mora nas **câmaras** dos formigueiros (e em algumas câmaras no meio do
+campo), que você abre cavando. Os 5 formigueiros grandes guardam uma **rainha**
+numa vala no pé do monte. **Cada 10 formigas comidas valem 1 ponto** e cada
+habilidade tem o seu preço. Com a clareira **100% limpa**, as garras quebram o
+**tronco caído** que fecha a saída, e a demo termina.
 
 A demo é a **primeira área** de um mapa maior, todo cercado por penhascos, que
 leva até o cupinzeiro gigante; o plano está em
@@ -64,7 +65,7 @@ tela, a resolução e a qualidade gráfica.
 | Farejar* | `Q` ou clique direito | `LT` |
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
 | Tremor* (pulo) | `Espaço` | `A` |
-| Árvore de habilidades | `Tab` | `Back` |
+| Mapa e árvore de habilidades | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
 | Pausa | `Esc` | `Start` |
 | Tela cheia | `F11` ou `Alt+Enter` | |
 
@@ -74,22 +75,34 @@ tela, a resolução e a qualidade gráfica.
 
 - **Interface no estilo "Constelação"** (o mesmo da árvore de habilidades):
   painéis com moldura dourada, as formigas comidas num medalhão e as habilidades
-  em círculos. A bússola é uma faixa com o rumo no meio; só o formigueiro à sua
-  frente mostra o nome e a distância.
+  em círculos. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
+  frente mostra a distância e as câmaras dele (as verdes já estão limpas).
+- **Pouco texto na tela:** conquistas viram **cartões** no canto direito (câmara
+  limpa, formigueiro limpo, rainha, Frenesi, habilidade aprendida); as **dicas**
+  são curtas, embaixo da mira, com a tecla num quadradinho ("E Abrir câmara");
+  salvar é só um ícone girando. Em Configurações → Jogo, **Dicas** pode ser
+  Todas, Poucas ou Nenhuma.
+- **Mapa** (`Tab`): a clareira vista de cima, colorida onde você já andou, com os
+  formigueiros (limpos, começados ou não visitados), as câmaras que você já viu,
+  a caverna, o tronco e você.
+- **32 000 formigas:** cada formiga da simulação é um grupo de 10, que anda em
+  fila na trilha (uma estrada de formigas carregando folhas), se espalha quando
+  se assusta e vira um bolo na câmara e na língua.
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
   fechadas, e 12 delas ficam sozinhas no meio do campo. Com **Cavar** (Garras),
   segure `E` perto de uma para abri-la: as moradoras **saem correndo**, fogem
-  quando você chega perto e depois voltam para casa. Até 40 ficam à vista; as
+  quando você chega perto e depois voltam para casa. Até 120 ficam à vista; as
   outras saem do túnel conforme você come. Depois de cavar, as garras descansam
-  (25 s no começo).
+  (25 s no começo). As câmaras grandes pedem **Cavar Fundo**.
 - **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
-- **Rainha:** fica na câmara do topo dos formigueiros grandes, protegida pelas
-  outras formigas. Coma todas em volta e ela vale **20**.
+- **Rainha:** fica numa **vala no pé** dos formigueiros grandes, com a corte
+  dela; só a **Escavação Real** abre a vala. Coma a corte e ela vale **200
+  formigas** (20 pontos).
 - **Língua:** no começo ela vai reta até onde você mira e pega a formiga perto
   da ponta. Com **Língua Certeira**, ela vai sozinha atrás da formiga mais perto
   da mira (marcada com um anel verde); a **Mira Ampla** aumenta essa área.
-- **Trilhas e ondas:** quem volta para o formigueiro sai de novo mais tarde; só
-  as que você come somem de vez.
+- **Trilhas:** quem volta para o formigueiro sai de novo mais tarde; só as que
+  você come somem de vez. De vez em quando sai uma leva maior, sem aviso.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
   Correndo também não dá para lamber, até aprender **Lamber Correndo**.
 - **Faro:** primeiro só diz quantas formigas há por perto e a que distância
@@ -101,16 +114,18 @@ tela, a resolução e a qualidade gráfica.
 - **Tremor:** um pulo; ao cair, as formigas em volta ficam tontas.
 - **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
   mais longa por 6 s.
-- **Progresso:** formigueiro limpo ganha flores, e o contador mostra quantos
-  faltam.
+- **Progresso:** formigueiro limpo ganha flores, e um losango por formigueiro
+  no canto da tela mostra quantos faltam.
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
   do mapa). Você começa numa caverna no pé deles, e uma trilha de terra leva até
   o formigueiro mais perto. O cupinzeiro gigante aparece lá longe, por cima dos
-  penhascos. É sempre o mesmo fim de tarde, e há duas lagoas de enfeite.
-- **Árvore de habilidades** (`Tab`): uma constelação, com os ramos saindo do
-  centro. Passe o mouse numa habilidade para ver o que ela faz e clique para
-  aprender; as aprendidas acendem em dourado. Ela não abre sozinha: um aviso
-  lembra quando já dá para aprender algo.
+  penhascos. É sempre o mesmo fim de tarde, e há duas lagoas de enfeite. O alto
+  dos penhascos é cheio de árvores, e depois da passagem para a próxima área
+  uma rampa sobe para uma mata fechada.
+- **Árvore de habilidades** (`Tab`, aba ao lado do mapa): uma constelação, com
+  os ramos saindo do centro. Passe o mouse numa habilidade para ver o que ela
+  faz e clique para aprender; as aprendidas acendem em dourado. Ela não abre
+  sozinha: um selo no canto (◆ 2 Tab) mostra quando já dá para aprender algo.
 - **Fim da demo:** um tronco caído fecha a passagem para a próxima área. Com
   todas as formigas comidas, a bússola mostra a saída: segure `E` perto do
   tronco e as garras quebram o tronco.
@@ -121,15 +136,15 @@ tela, a resolução e a qualidade gráfica.
 
 | Habilidade | Níveis (preço em pontos) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · Lambida (40: até 5 por lambida) · Lambida Larga (75: até 15) · Lambida Gulosa (115: até 25) · Lambida Voraz (170: até 40); **Destreza** · Língua Comprida (70) · Saliva Grudenta (100) · Língua Turbo (150); **Mira** · Língua Certeira (30: a língua vai atrás da formiga mais perto da mira) · Mira Ampla (60: essa área 25% maior) |
-| **Garras** | Cavar (35: depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s) |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · Lambida (40: até 50 formigas por lambida) · Lambida Larga (75: até 150) · Lambida Gulosa (115: até 250) · Lambida Voraz (170: até 400); **Destreza** · Língua Comprida (70) · Saliva Grudenta (100) · Língua Turbo (150); **Mira** · Língua Certeira (30: a língua vai atrás da formiga mais perto da mira) · Mira Ampla (60: essa área 25% maior) |
+| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s); **Fundura** · Cavar Fundo (60: câmaras grandes) · Escavação Real (120: a vala da rainha) |
 | **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (80: mais 25%) · Galope Silencioso (130); **Agilidade** · Lamber Correndo (60) |
 | **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
-1 formiga comida = 1 ponto (a rainha vale 20). As linhas de um ramo não se
-excluem. Tudo o que dá para aprender no Cerrado soma 2575 pontos, e dá para
-redistribuir os pontos de graça na árvore.
+10 formigas comidas = 1 ponto (a rainha vale 20 pontos). As linhas de um ramo
+não se excluem. Tudo o que dá para aprender no Cerrado soma 2755 pontos, e dá
+para redistribuir os pontos de graça na árvore.
 
 ### Tela e gráficos
 
@@ -141,8 +156,8 @@ Em **Configurações**:
 - **Gráficos:** um preset ajusta tudo de uma vez, ou ajuste item por item:
   sombras, capim, suavização (FXAA, MSAA ou TAA), sombra de contato (SSAO), luz
   rebatida (SSIL), neblina volumétrica e brilho do sol.
-- **Jogo:** sensibilidade do mouse, inverter eixo Y, campo de visão e balanço
-  da câmera.
+- **Jogo:** sensibilidade do mouse, inverter eixo Y, campo de visão, balanço
+  da câmera, cor do faro e dicas (Todas, Poucas ou Nenhuma).
 
 | Preset | O que muda |
 |---|---|
@@ -208,7 +223,8 @@ Opções de teste (depois de `--` na linha de comando do Godot):
 godot --path . -- --start=play --autoplay --timescale=4 --stats
 ```
 
-`--start=play|tree|settings|howto` pula o menu · `--autoplay` um bot joga sozinho ·
+`--start=play|map|tree|settings|howto` pula o menu (`map` e `tree` já abrem a
+tela do TAB) · `--autoplay` um bot joga sozinho ·
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·

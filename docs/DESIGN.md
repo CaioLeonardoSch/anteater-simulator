@@ -366,9 +366,12 @@ Ainda a ajustar:
 - **Desempenho:** as 32 000 formigas foram testadas só num servidor sem placa
   de vídeo; falta medir num PC de verdade.
 - **Economia das habilidades:** a pesquisa de 05/11/2026
-  ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) sugere medir o tempo
-  de cada compra antes de mexer nos preços, e antecipar Tremor e a rainha para
-  o meio do jogo.
+  ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
+  tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
+  uma hora de ritmo parado e uma explosão nos últimos 15 minutos. A proposta
+  de reformulação (seção 6, ainda não feita) traz estamina desde o começo,
+  trava por insetos comidos em cada nível (1 000, 3 000, 8 000 e 21 000),
+  Tremor e rainha mais cedo, pontas mais caras e 1 ponto a cada 8 insetos.
 
 ---
 
@@ -623,4 +626,6 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Mapa | Sem números | Insetos que faltam em cada formigueiro e um marcador (que aparece na bússola) |
 | 05/11/2026 | Textos | "formigas" | "insetos" onde vale para formigas e cupins |
 | 05/11/2026 | Sol | Névoa branca do lado do sol | Névoa mais quente e com menos brilho; halo do sol menor (o longe fica colorido, como em Firewatch) |
+| 05/11/2026 | Estatísticas (lugar) | Aba do TAB | Botão "Estatísticas" na pausa, com tela própria, e os mesmos quadros na tela do fim |
+| 05/11/2026 | Bot de teste | Comprava numa ordem fixa e só mirava nas formigas soltas | Compra em rodízio entre os ramos e anota cada compra (`--botlog`); vai atrás de todos os insetos, usa Tremor, corrida e Lamber Correndo |
 | 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

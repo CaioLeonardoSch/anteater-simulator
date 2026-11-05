@@ -2,8 +2,9 @@
 
 05/11/2026. Pesquisa pedida na revisão de qualidade de vida (ponto 5). Junta o
 que outros jogos e autores de game design dizem com as contas da demo como ela
-está hoje. As recomendações estão no fim, em ordem de impacto. Nada daqui foi
-implementado: é material para decidir.
+está hoje. As recomendações estão na seção 4, em ordem de impacto. As seções 5 e 6
+trazem a simulação com o bot e a proposta de reformulação da economia. Nada
+daqui foi implementado: é material para decidir.
 
 ## 1. Como a demo funciona hoje (os números)
 
@@ -198,6 +199,186 @@ de comprar. O que segura essa fase é:
 6. **Não mudar o fim de 14% sem compras.** Está coerente com jogos de
    completar, e agora tem estatísticas, contra o relógio e conquistas para
    segurar essa fase.
+
+## 5. Simulação com o bot (05/11/2026)
+
+Pedido: o bot compra **todas** as habilidades, uma de cada ramo por vez
+(Língua, Garras, Patas, Faro, em rodízio; dentro do ramo, a de menor nível e,
+empatando, a mais barata), e anota o tempo de cada compra. Se ainda não dá
+para pagar a da vez, ele espera juntar os pontos.
+
+Como foi feito: `--autoplay --botlog=arquivo.csv`, acelerado 8 vezes com a
+física no passo normal (`--timescale=8 --physics-scale`). Duas partidas
+completas, A e B. Os registros estão em `docs/dados/bot-partida-a.csv` e
+`bot-partida-b.csv` (compras, formigueiros limpos e o progresso a cada 30 s).
+
+O bot anda até o inseto mais perto, lambe, abre as câmaras que o Cavar dele
+alcança, usa o Tremor quando tem 12 ou mais insetos em volta, corre (até perto
+do alvo com o Galope Silencioso) e lambe correndo com Lamber Correndo. Ele
+**não usa o Faro**, porque já sabe onde está cada inseto. E é pior que uma
+pessoa em outras coisas: não planeja o caminho e não procura as câmaras
+cheias de propósito. Os tempos servem para ver o **formato** da curva, não o
+tempo exato de um jogador.
+
+### Quando cada habilidade foi comprada
+
+| Nº | Habilidade | Preço | Partida A | Partida B | Insetos (média) | % do jogo |
+|---:|---|---:|---:|---:|---:|---:|
+| 1 | Lambida Contínua | 25 | 2:27 | 2:41 | 250 | 1% |
+| 2 | Cavar | 35 | 4:53 | 4:57 | 600 | 2% |
+| 3 | Corrida | 30 | 8:04 | 7:25 | 900 | 3% |
+| 4 | Farejar | 20 | 9:38 | 9:46 | 1 100 | 3% |
+| 5 | Língua Certeira | 30 | 11:47 | 11:34 | 1 400 | 4% |
+| 6 | Garras Ágeis | 50 | 14:48 | 15:11 | 1 900 | 6% |
+| 7 | Lamber Correndo | 60 | 18:38 | 16:53 | 2 500 | 8% |
+| 8 | Faro Atento | 40 | 20:40 | 19:05 | 2 900 | 9% |
+| 9 | Lambida | 40 | 22:10 | 21:25 | 3 300 | 10% |
+| 10 | Cavar Fundo | 60 | 25:49 | 23:21 | 3 900 | 12% |
+| 11 | Patas Ligeiras | 80 | 29:20 | 26:27 | 4 710 | 15% |
+| 12 | Faro Preciso | 45 | 31:12 | 28:48 | 5 160 | 16% |
+| 13 | Língua Comprida | 70 | 34:38 | 32:15 | 5 850 | 18% |
+| 14 | Garras Fortes | 70 | 37:17 | 35:13 | 6 550 | 20% |
+| 15 | Galope Silencioso | 130 | 42:16 | 40:15 | 7 850 | 25% |
+| 16 | Faro Apurado | 70 | 45:22 | 41:30 | 8 550 | 27% |
+| 17 | Mira Ampla | 60 | 48:00 | 44:30 | 9 170 | 29% |
+| 18 | Garras Incansáveis | 95 | 51:37 | 48:36 | 10 120 | 32% |
+| 19 | Faro Nítido | 85 | 55:05 | 52:52 | 10 950 | 34% |
+| 20 | Lambida Larga | 75 | 57:42 | 55:57 | 11 700 | 37% |
+| 21 | Tremor | 110 | 62:05 | 60:15 | 12 800 | 40% |
+| 22 | Faro de Câmara | 100 | 64:41 | 61:56 | 13 800 | 43% |
+| 23 | Saliva Grudenta | 100 | 66:54 | 64:51 | 14 810 | 46% |
+| 24 | Escavação Real | 120 | 68:47 | 67:02 | 16 010 | 50% |
+| 25 | Faro Aguçado | 110 | 70:44 | 68:21 | 17 110 | 53% |
+| 26 | Lambida Gulosa | 115 | 72:17 | 69:45 | 18 260 | 57% |
+| 27 | Recarga do Tremor | 130 | 73:26 | 71:28 | 19 550 | 61% |
+| 28 | Faro Lendário | 160 | 75:49 | 73:09 | 21 170 | 66% |
+| 29 | Língua Turbo | 150 | 77:59 | 75:09 | 22 670 | 71% |
+| 30 | Terremoto | 170 | 79:15 | 76:09 | 24 430 | 76% |
+| 31 | Lambida Voraz | 170 | 79:48 | 77:03 | 26 090 | 82% |
+| 32 | Recarga Relâmpago | 150 | 80:25 | 77:50 | 27 570 | 86% |
+
+Fim: partida A 83:40, partida B 81:18.
+Primeiro formigueiro limpo: A 66:46 (46%), B 69:04 (56%).
+
+### O que os números mostram
+
+1. **As duas partidas quase iguais** (81 e 84 minutos). O formato é confiável.
+2. **Uma hora de "moagem" e depois uma explosão.** Insetos comidos a cada 10
+   minutos (partida A): 1 100, 1 560, 2 070, 2 650, 2 380, 2 430, **4 240,
+   9 700**, 5 880. De 30 a 60 minutos o ritmo fica parado (uns 240 por
+   minuto), mesmo comprando 12 habilidades nesse meio. Depois dos 65 minutos
+   ele passa de 1 000 por minuto.
+3. **Metade do jogo leva 67 minutos; a outra metade, 14.** O bot chega a 50%
+   dos insetos aos 67–69 minutos e termina aos 81–84.
+4. **As compras do meio não aceleram o jogo.** Faro, Garras Ágeis,
+   Incansáveis, Patas Ligeiras: nada disso muda quantos insetos entram por
+   minuto (para o bot). O que acelera é o que chega depois dos 60 minutos:
+   Tremor, Escavação Real, Lambida Gulosa e os bolos de insetos das câmaras.
+5. **Os verbos grandes chegam tarde.** Tremor aos 60–62 minutos (40% dos
+   insetos), Escavação Real aos 67–69 (50%). A pesquisa já tinha apontado isso
+   pelas contas; o bot confirmou.
+6. **O fim é corrido.** As últimas 8 compras saem em 8 minutos, e as últimas
+   3, em menos de 2. Depois da última (86%), sobram uns 4 minutos sem nada
+   para comprar.
+7. **Formigueiro limpo só depois da metade.** O primeiro sai aos 67–69
+   minutos (46–56% dos insetos); os outros 17 saem nos últimos 15 minutos.
+8. **A corrida sem limite pesa.** Depois de Corrida e Lamber Correndo (aos 17
+   minutos), o bot corre quase o tempo todo. Isso levou à proposta de
+   estamina (seção 6).
+
+## 6. Proposta de reformulação
+
+Nada desta seção foi implementado. É para decidirmos juntos.
+
+### Travar habilidades pelo progresso (avaliação)
+
+A ideia: cada nível de cada linha só abre depois de um tanto de progresso
+(formigueiros limpos ou insetos comidos), numa curva como a de Fibonacci.
+
+- **Por formigueiros limpos: não recomendo agora.** No bot, o primeiro
+  formigueiro só fica limpo depois da metade do jogo. Limpar um formigueiro
+  pede comer até o último inseto, inclusive os que passeiam longe e a rainha
+  (que precisa da Escavação Real). Uma trava assim deixaria o jogador uma
+  hora sem nada novo. Só faria sentido se o jogo empurrasse a limpar um
+  formigueiro de cada vez (por exemplo, com o mapa e o Faro mostrando "faltam
+  12 aqui").
+- **Por insetos comidos: recomendo, com um papel bem definido.** Uma trava
+  por insetos funciona como um "preço que não se gasta". Para quem compra
+  equilibrado (como o bot), ela quase nunca segura: refiz as contas com a
+  trava e as compras saíram nos mesmos minutos. O que ela faz é **impedir a
+  corrida por uma linha só**: sem trava, quem gasta tudo numa linha chega na
+  ponta (Lambida Voraz) com uns 17% do jogo; com a trava, só com 66%.
+- **A curva:** um número de Fibonacci sim, outro não, em milhares de insetos:
+  **nível 1 com 1 000, nível 2 com 3 000, nível 3 com 8 000, nível 4 com
+  21 000** (3%, 9%, 25% e 66% do jogo). Na curva do bot, isso cai perto dos
+  10, 19, 42 e 74 minutos. A árvore mostraria no cadeado "abre com 8 000
+  insetos".
+
+### O que realmente muda o ritmo: preços e a ordem dos verbos
+
+A trava não resolve a "hora parada" do meio nem a explosão do fim. Isso vem do
+**que** cada compra faz e de **quando** ela chega:
+
+- **Puxar os verbos grandes para o meio.** Tremor a 100 pontos (hoje 110) e
+  Escavação Real a 110 (hoje 120), no nível 2 das linhas. Com os preços abaixo,
+  pela curva do bot, o Tremor chegaria perto dos 39 minutos (hoje 61) e a
+  rainha perto dos 50 (hoje 68). Isso deve acelerar o meio de verdade, porque
+  são justamente o que fez o bot acelerar.
+- **Pontas bem mais caras.** As do nível 3 e 4 passam de 110–170 para
+  180–260 pontos, para as compras do fim ficarem mais espaçadas.
+- **Mais insetos e preços maiores?** Aumentar os dois na mesma proporção não
+  muda o ritmo, só os números. O que muda é a relação entre eles. Para caber a
+  árvore nova (mais cara), há dois caminhos:
+  - **1 ponto a cada 8 insetos** (hoje 10). Dá 4 000 pontos, sem pesar no
+    computador. Recomendo este.
+  - **40 000 insetos** (hoje 32 000). Mesmo efeito nos pontos, mas o jogo
+    fica uns 25% mais longo e mais pesado de desenhar.
+
+### Estamina (aprovada para depois do teste)
+
+- Correr existe desde o começo; a habilidade Corrida sai.
+- Barra no canto inferior esquerdo, sem número: verde cheia, vai para um
+  vermelho-escuro conforme esvazia.
+- **Só recarrega sem correr, 1 segundo depois de parar.** Assim nunca dá
+  para correr para sempre: no longo prazo, ele corre no máximo pouco mais da
+  metade do tempo.
+- Três linhas no ramo Patas, com três melhorias cada:
+
+| Linha | Começo | Nível 1 | Nível 2 | Nível 3 |
+|---|---|---|---|---|
+| Estamina máxima | 50 | 100 | 150 | 200 |
+| Gasto correndo (por segundo) | 10 | 8 | 6,5 | 5 |
+| Recuperação (por segundo, sem correr) | 3 | 4,5 | 6 | 7 |
+
+| Momento | Corre sem parar | Recarrega do zero | Tempo correndo | Velocidade média |
+|---|---|---|---|---|
+| Começo | 5 s (21 m) | 17 s | 23% | +6% sobre andar |
+| 1 nível de cada | 12 s (52 m) | 22 s | 36% | +9% |
+| 2 de cada + Patas Ligeiras | 23 s (114 m) | 25 s | 48% | +24% |
+| Tudo comprado | 40 s (quase 200 m) | 29 s | 58% | +29% |
+| Hoje, depois da Corrida | sem limite | — | 100% | +25% a +50% |
+
+### Árvore proposta (40 habilidades, 3 850 pontos = 96% dos pontos)
+
+| Nível | Língua | Garras | Patas | Faro |
+|---|---|---|---|---|
+| 0 (abre já) | Lambida Contínua 25 | Cavar 30 | Estamina 20 · Fôlego 25 · Recuperação 25 | Farejar 20 |
+| 1 (1 000 insetos) | Certeira 40 · Lambida 50 · Comprida 70 | Ágeis 50 · Fundo 60 · Fortes 70 | Estamina II 50 · Fôlego II 50 · Recuperação II 50 · Lamber Correndo 60 · Ligeiras 70 | Atento 40 · Preciso 45 |
+| 2 (3 000) | Mira Ampla 100 · Larga 100 · Saliva 120 | **Tremor 100** · **Escavação Real 110** · Incansáveis 110 | Estamina III 90 · Fôlego III 90 · Recuperação III 90 · Galope 120 | Apurado 80 · Nítido 90 |
+| 3 (8 000) | Gulosa 180 · Turbo 200 | Recarga do Tremor 180 · Terremoto 210 | — | Faro de Câmara 140 · Aguçado 150 |
+| 4 (21 000) | Voraz 260 | Recarga Relâmpago 250 | — | Lendário 230 |
+
+("Fôlego" é a linha de gastar menos estamina correndo.)
+
+Pelas contas com a curva do bot, com 1 ponto a cada 8 insetos e a trava: 9
+compras nos primeiros 20 minutos, 9 dos 20 aos 40, 6 dos 40 aos 60, e as
+outras 16 até o fim; a última com 97% dos insetos. Tremor perto dos 39
+minutos e a rainha perto dos 50.
+
+Cuidado com essa conta: ela usa a curva de hoje, com a explosão do fim, então
+as últimas compras ainda saem juntas. Na árvore nova o Tremor e a rainha
+chegam antes, e isso deve acelerar o meio e suavizar o fim; só medindo para
+saber. **Depois de implementar, rodo o bot de novo** com a árvore nova.
 
 ## Fontes
 

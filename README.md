@@ -42,8 +42,8 @@ ponto** e cada habilidade tem o seu preço. Com a clareira **100% limpa**, as ga
 A demo é a **primeira área** de um mapa maior, todo cercado por penhascos, que
 leva até o cupinzeiro gigante; o plano está em
 [`docs/DESIGN.md`](docs/DESIGN.md). A pesquisa sobre o ciclo das habilidades e a
-economia da compra está em
-[`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md).
+economia da compra, com a simulação do bot e a proposta de reformulação, está
+em [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md).
 
 ### Como rodar
 

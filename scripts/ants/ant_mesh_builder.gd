@@ -70,6 +70,8 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 			c_meso = Color(0.50, 0.26, 0.10)
 			c_gaster = Color(0.66, 0.34, 0.11)
 			c_leg = Color(0.40, 0.2, 0.08)
+	if lod >= 4:
+		return _build_nano(b, kind, c_head, c_meso, c_gaster, c_leg, gaster_s, head_s)
 	if lod >= 3:
 		return _build_micro(b, kind, c_head, c_meso, c_gaster, c_leg, gaster_s, head_s)
 	# --- Corpo
@@ -193,6 +195,30 @@ static func _build_micro(b: MeshBuilder, kind: String, c_head: Color, c_meso: Co
 		_tag(b, Part.LEAF, grip)
 		b.color = Color(0.36, 0.72, 0.18)
 		_add_leaf(b, grip, 5)
+	return b.commit(null, body_material)
+
+
+## Bem longe (a formiga tem 2 ou 3 pixels): só o corpo em 3 gomos, um par de
+## pernas e a folha (o ponto verde que mostra a fila de longe).
+static func _build_nano(b: MeshBuilder, kind: String, c_head: Color, c_meso: Color, c_gaster: Color, c_leg: Color,
+		gaster_s: float, head_s: float) -> ArrayMesh:
+	_tag(b, Part.BODY)
+	b.color = c_gaster
+	b.add_ellipsoid(Vector3(0, 0.21, 0.3 + (gaster_s - 1.0) * 0.16), Vector3(0.15, 0.13, 0.2) * gaster_s, 2, 4)
+	b.color = c_meso
+	b.add_ellipsoid(Vector3(0, 0.2, -0.07), Vector3(0.08, 0.08, 0.14), 2, 4)
+	b.color = c_head
+	b.add_ellipsoid(Vector3(0, 0.235, -0.29), Vector3(0.15, 0.1, 0.12) * head_s, 2, 4)
+	b.color = c_leg
+	# Pernas paradas (de longe não dá para ver o passo).
+	var hip := Vector3(-0.06, 0.17, -0.05)
+	b.add_tube(PackedVector3Array([hip + Vector3(-0.34, -0.16, 0.02), hip, hip + Vector3(0.46, -0.16, 0.02)]),
+		PackedFloat32Array([0.03, 0.05, 0.03]), 3, false, true)
+	if kind == "worker":
+		var grip := Vector3(0, 0.17, -0.49)
+		_tag(b, Part.LEAF, grip)
+		b.color = Color(0.36, 0.72, 0.18)
+		_add_leaf(b, grip, 4)
 	return b.commit(null, body_material)
 
 

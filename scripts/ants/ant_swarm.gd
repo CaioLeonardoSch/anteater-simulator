@@ -17,7 +17,7 @@ const SCENT_SHADER := preload("res://shaders/ant_scent.gdshader")
 const CAPACITY := 4096
 ## Distâncias em que as formigas trocam de malha: detalhada (com sombra) até a
 ## 1ª, depois simples, bem simples e mínima (até DRAW_DIST).
-const LOD_DISTS := [4.5, 11.0, 24.0]
+const LOD_DISTS := [4.0, 9.5, 22.0]
 const DRAW_DIST := 80.0
 ## Camadas de desenho (uma MultiMesh cada).
 const LAYER_QUEEN := 4

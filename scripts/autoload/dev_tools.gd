@@ -18,6 +18,7 @@ extends Node
 ##   --start=continue             continua o jogo salvo
 ##   --start=settings --tab=N     abre as configurações na aba N
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
+##   --hats                       chapéu de Natal em uma formiga a cada 20
 ##   --stats                      imprime FPS e estatísticas de render a cada segundo
 
 var args: Dictionary = {}
@@ -80,7 +81,7 @@ func _process(delta: float) -> void:
 			var prims := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)
 			var draws := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
 			var swarm := get_tree().root.find_child("Swarm", true, false)
-			var alive: int = swarm.alive_count if swarm else 0
+			var alive: int = (swarm.alive_count + swarm.field.alive_total()) if swarm else 0
 			print("[stats] t=%.1f fps=%d frames=%d prims=%d draws=%d eaten=%d vivas=%d proc=%.2fms fisica=%.2fms" % [
 				_time, Engine.get_frames_per_second(), _frames, prims, draws, GameState.ants_eaten, alive,
 				Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,

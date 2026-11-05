@@ -10,7 +10,7 @@ uniform vec3 tint : source_color = vec3(1.0, 0.16, 0.12);
 varying float v_highlight;
 
 void vertex() {
-	ant_animate(VERTEX, NORMAL, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, COLOR.a, TIME);
+	ant_animate(VERTEX, NORMAL, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, TIME);
 	// Halo maior que a formiga, pulsando, para ser visto de longe.
 	VERTEX += NORMAL * (0.07 + 0.03 * sin(TIME * 6.0 + float(INSTANCE_ID)));
 	VERTEX = (VERTEX - vec3(0.0, 0.2, 0.0)) * 1.35 + vec3(0.0, 0.2, 0.0);

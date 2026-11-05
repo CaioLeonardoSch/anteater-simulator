@@ -2,11 +2,9 @@ extends Node
 ## Estado da partida: formigas comidas, pontos, habilidades compradas,
 ## atributos do tamanduá, recorde e o jogo salvo.
 ##
-## Economia: as formigas andam em grupos de 10, e cada grupo comido (10
-## formigas) vale 1 ponto; a rainha vale 20 pontos (200 formigas). Cada
-## habilidade tem o seu preço. `ants_eaten` conta pontos: na tela, as
-## formigas são `ants(ants_eaten)`. Os pontos gastos podem ser devolvidos de graça
-## ("Redistribuir pontos").
+## Economia: cada formiga comida conta 1 e cada 10 formigas valem 1 ponto; a
+## rainha vale 200 formigas (20 pontos). Cada habilidade tem o seu preço. Os
+## pontos gastos podem ser devolvidos de graça ("Redistribuir pontos").
 
 signal ants_eaten_changed(total: int, delta: int)
 ## Uma habilidade que ainda não dava para comprar agora cabe nos pontos.
@@ -17,17 +15,16 @@ signal level_completed(time_sec: float)
 signal frenzy_changed(active: bool)
 signal run_reset
 
-## Pontos da colônia do Cerrado: 3200 grupos de 10 (32 000 formigas; cada
-## rainha conta como 20 pontos).
-const GOAL := 3200
-## Formigas em cada ponto (um grupo de formigas).
+## Formigas da colônia do Cerrado (cada rainha conta como 200).
+const GOAL := 32000
+## Formigas comidas para ganhar 1 ponto.
 const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
 const FRENZY_TIME := 6.0
 const RECORD_PATH := "user://save.cfg"
 const GAME_SAVE_PATH := "user://jogo_salvo.json"
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 
 ## As 5 habilidades. "lines" = nomes das duas linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.
@@ -46,10 +43,10 @@ const UPGRADES := [
 	# Destreza e Mira (a língua ir atrás da formiga).
 	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "cost": 25, "requires": [],
 		"name": "Lambida Contínua",
-		"desc": "Segure o botão para lamber sem parar. Sem ela, cada clique é uma lambida."},
+		"desc": "Segure o botão para lamber sem parar."},
 	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"],
 		"name": "Lambida",
-		"desc": "Cada lambida pega até 50 formigas perto da ponta da língua (antes, 10)."},
+		"desc": "Cada lambida pega até 50 formigas perto da ponta da língua."},
 	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 75, "requires": ["lingua_bocado_1"],
 		"name": "Lambida Larga",
 		"desc": "Até 150 formigas por lambida, e a ponta gruda num raio um pouco maior."},
@@ -58,24 +55,24 @@ const UPGRADES := [
 		"desc": "Até 250 formigas por lambida."},
 	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 170, "requires": ["lingua_bocado_3"],
 		"name": "Lambida Voraz",
-		"desc": "Até 400 formigas por lambida: uma câmara inteira de uma vez."},
+		"desc": "Até 400 formigas por lambida."},
 	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"],
 		"name": "Língua Comprida",
-		"desc": "Alcance da língua +50%."},
+		"desc": "Alcance da língua +50%, e ela lambe 25% mais rápido."},
 	{"id": "lingua_saliva", "branch": 0, "col": 1, "row": 2, "cost": 100, "requires": ["lingua_comprida"],
 		"name": "Saliva Grudenta",
-		"desc": "A ponta da língua gruda num raio 70% maior."},
+		"desc": "A ponta da língua gruda num raio 70% maior, e ela lambe 25% mais rápido."},
 	{"id": "lingua_turbo", "branch": 0, "col": 1, "row": 3, "cost": 150, "requires": ["lingua_saliva"],
 		"name": "Língua Turbo",
 		"desc": "A língua lambe 2x mais rápido."},
 	{"id": "lingua_certeira", "branch": 0, "col": 2, "row": 1, "cost": 30, "requires": ["lingua_segurar"],
 		"name": "Língua Certeira",
-		"desc": "A língua vai sozinha atrás da formiga mais perto da mira. Sem ela, a língua vai reta até onde você mira."},
+		"desc": "A língua vai sozinha atrás da formiga mais perto da mira."},
 	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"],
 		"name": "Mira Ampla",
 		"desc": "A área da mira em que a língua procura formigas fica 25% maior."},
 	# Garras: Cavar abre as linhas de Força, de Rapidez (o descanso entre usos)
-	# e de Fundura (buracos maiores: câmaras grandes e a vala da rainha).
+	# e de Fundura (buracos maiores: câmaras grandes e o monte da rainha).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
 		"desc": "Segure [E] perto de uma câmara pequena fechada para abri-la. Depois, as garras descansam 25 s."},
@@ -84,7 +81,7 @@ const UPGRADES := [
 		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
 	{"id": "garras_real", "branch": 1, "col": 2, "row": 2, "cost": 120, "requires": ["garras_fundo"],
 		"name": "Escavação Real",
-		"desc": "Cava a vala da rainha, no pé dos formigueiros grandes: ela e a corte dela estão lá dentro."},
+		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
 	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 70, "requires": ["garras_cavar"],
 		"name": "Garras Fortes",
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
@@ -96,13 +93,13 @@ const UPGRADES := [
 		"desc": "Pulo mais alto e tremor quase 2x maior; as formigas tontas são puxadas para a sua boca."},
 	{"id": "garras_ageis", "branch": 1, "col": 1, "row": 1, "cost": 50, "requires": ["garras_cavar"],
 		"name": "Garras Ágeis",
-		"desc": "As garras descansam menos depois de cavar: 25 s vira 15 s."},
+		"desc": "As garras descansam só 15 s depois de cavar."},
 	{"id": "garras_incansaveis", "branch": 1, "col": 1, "row": 2, "cost": 95, "requires": ["garras_ageis"],
 		"name": "Garras Incansáveis",
 		"desc": "Descanso de só 5 s, e a câmara abre na metade do tempo."},
 	{"id": "garras_recarga", "branch": 1, "col": 1, "row": 3, "cost": 130, "requires": ["garras_incansaveis"],
 		"name": "Recarga do Tremor",
-		"desc": "O Tremor (e o Terremoto) recarrega em 14 s em vez de 21 s."},
+		"desc": "O Tremor (e o Terremoto) recarrega em 14 s."},
 	{"id": "garras_recarga_2", "branch": 1, "col": 1, "row": 4, "cost": 150, "requires": ["garras_recarga"],
 		"name": "Recarga Relâmpago",
 		"desc": "O Tremor (e o Terremoto) recarrega em só 7 s."},
@@ -112,7 +109,7 @@ const UPGRADES := [
 		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e as formigas fogem mais cedo."},
 	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 80, "requires": ["patas_corrida"],
 		"name": "Patas Ligeiras",
-		"desc": "Corre mais 25%: o dobro do bônus (+50%)."},
+		"desc": "Corre mais 25%."},
 	{"id": "patas_galope", "branch": 2, "col": 0, "row": 2, "cost": 130, "requires": ["patas_ligeiras"],
 		"name": "Galope Silencioso",
 		"desc": "Correndo, você não assusta mais as formigas."},
@@ -210,7 +207,7 @@ func _process(delta: float) -> void:
 			frenzy_changed.emit(false)
 
 
-## Soma formigas comidas. `count` já vem com o valor da rainha (20) incluído.
+## Soma formigas comidas. `count` já vem com o valor da rainha (200) incluído.
 func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	if count <= 0 or completed:
 		return
@@ -236,14 +233,17 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 		level_completed.emit(elapsed)
 
 
-## Formigas que cabem em `points` pontos (para mostrar na tela).
-func ants(points: int) -> int:
-	return points * ANTS_PER_POINT
-
-
-## Pontos para gastar: 1 por grupo de 10 formigas comido, menos o que já foi gasto.
+## Pontos para gastar: 1 a cada 10 formigas comidas, menos o que já foi gasto.
 func points_available() -> int:
-	return ants_eaten - points_spent
+	return ants_eaten / ANTS_PER_POINT - points_spent
+
+
+## Quantas formigas ainda faltam comer para ter `points` pontos para gastar.
+func ants_needed(points: int) -> int:
+	var missing := points - points_available()
+	if missing <= 0:
+		return 0
+	return (ants_eaten / ANTS_PER_POINT + missing) * ANTS_PER_POINT - ants_eaten
 
 
 func has(id: String) -> bool:
@@ -376,9 +376,9 @@ func bocado_level() -> int:
 	return 0
 
 
-## Quantos grupos de formigas (de 10) uma lambida pega de uma vez.
+## Quantas formigas uma lambida pega de uma vez.
 func lick_capacity() -> int:
-	return [1, 5, 15, 25, 40][bocado_level()]
+	return [10, 50, 150, 250, 400][bocado_level()]
 
 
 func tongue_range() -> float:
@@ -408,8 +408,13 @@ func capture_radius() -> float:
 	return r
 
 
+## Lambidas por segundo: começa devagar e acelera com a linha de Destreza.
 func lick_rate() -> float:
-	var r := 3.2
+	var r := 1.4
+	if has("lingua_comprida"):
+		r *= 1.25
+	if has("lingua_saliva"):
+		r *= 1.25
 	if has("lingua_turbo"):
 		r *= 2.0
 	if frenzy_active():
@@ -422,7 +427,7 @@ func can_dig() -> bool:
 
 
 ## Até que tamanho de buraco as garras abrem: 0 nenhum, 1 câmaras pequenas,
-## 2 também as grandes (Cavar Fundo), 3 também a vala da rainha (Escavação Real).
+## 2 também as grandes (Cavar Fundo), 3 também o monte da rainha (Escavação Real).
 func dig_level() -> int:
 	if not has("garras_cavar"):
 		return 0
@@ -518,9 +523,9 @@ func sniff_radius() -> float:
 	return [10.0, 16.0, 24.0, 34.0, 50.0][faro_level()]
 
 
-## Quantos grupos de formigas o faro consegue sentir de uma vez (os mais perto).
+## Quantas formigas o faro consegue sentir de uma vez (as mais perto).
 func sniff_max_ants() -> int:
-	return [10, 25, 50, 100, 200][faro_level()]
+	return [100, 250, 500, 1000, 2000][faro_level()]
 
 
 func sniff_duration() -> float:

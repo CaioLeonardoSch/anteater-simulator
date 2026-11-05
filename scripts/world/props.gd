@@ -40,10 +40,14 @@ static func _shade_by_normal(b: MeshBuilder, from: int, lo: float, hi: float, sw
 
 
 static func _add_canopy(core: MeshBuilder, cards: MeshBuilder, rng: RandomNumberGenerator,
-		center: Vector3, radius: Vector3, card_count: int, card_size: float, subdiv: int = 2) -> void:
-	var start := core.verts.size()
-	core.add_blob(center, radius * 0.7, noise, 0.32, subdiv, 1.4)
-	_shade_by_normal(core, start, 0.05, 0.75, 0.35)
+		center: Vector3, radius: Vector3, card_count: int, card_size: float, subdiv: int = 2,
+		solid: bool = true) -> void:
+	# As árvores não têm miolo sólido: de longe ele aparecia como um bloco
+	# escuro preso no galho (parecia um ninho). A copa delas é só de folhas.
+	if solid:
+		var start := core.verts.size()
+		core.add_blob(center, radius * 0.7, noise, 0.32, subdiv, 1.4)
+		_shade_by_normal(core, start, 0.05, 0.75, 0.35)
 	for _i in card_count:
 		var d := _rand_unit(rng)
 		d.y = absf(d.y) * 0.9 + 0.1 if rng.randf() < 0.75 else d.y
@@ -83,7 +87,7 @@ static func _grow(bark: MeshBuilder, core: MeshBuilder, cards: MeshBuilder, rng:
 		var csize: float = p.get("canopy", 1.2) * rng.randf_range(0.8, 1.2)
 		var ccenter := cur + d * csize * 0.35 + Vector3.UP * csize * 0.2
 		_add_canopy(core, cards, rng, ccenter, Vector3(csize, csize * float(p.get("canopy_flat", 0.72)), csize),
-			int(p.get("cards", 55)), float(p.get("card_size", 0.75)), int(p.get("subdiv", 2)))
+			int(p.get("cards", 55)), float(p.get("card_size", 0.75)), int(p.get("subdiv", 2)), false)
 		if leafless and rng.randf() < 0.5:
 			# Galhos finos extras aparecendo entre as flores.
 			pass
@@ -133,7 +137,8 @@ static func build_tree(rng: RandomNumberGenerator, mats, kind: String = "cerrado
 		core_mat = mats.ipe_roxo_core
 		cards_mat = mats.ipe_roxo_cards
 	var mesh := bark.commit(null, mats.bark)
-	core.commit(mesh, core_mat)
+	if not core.verts.is_empty():
+		core.commit(mesh, core_mat)
 	cards.commit(mesh, cards_mat)
 	var root := Node3D.new()
 	var mi := MeshInstance3D.new()

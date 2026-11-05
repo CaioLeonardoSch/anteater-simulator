@@ -110,7 +110,6 @@ func _build_game() -> void:
 	add_child(colony)
 	swarm.setup(world, colony)
 	colony.setup(world, swarm)
-	colony.populate(220)
 	colony.active = true
 	player = Player.new()
 	player.name = "Anteater"
@@ -208,7 +207,7 @@ func _start_play() -> void:
 	if DevTools.start_mode == "" or DevTools.args.has("growl"):
 		get_tree().create_timer(1.4).timeout.connect(_belly_growl)
 	if DevTools.give > 0:
-		GameState.add_eaten(DevTools.give)
+		GameState.add_eaten(DevTools.give * GameState.ANTS_PER_POINT)
 		GameState.combo = 0
 		GameState.best_combo = 0
 	for id in DevTools.buy:
@@ -297,7 +296,12 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("skill_tree") and state in [State.PLAYING, State.TREE]:
 		if state == State.PLAYING:
-			_open_tree()
+			# Com a dica de cadeado na tela, abre direto naquela habilidade.
+			var skill := hud.locked_skill()
+			if skill.is_empty():
+				_open_tree()
+			else:
+				_open_tree(TabMenu.SKILLS, skill)
 		else:
 			_close_tree()
 		get_viewport().set_input_as_handled()
@@ -335,14 +339,14 @@ func _resume() -> void:
 
 
 ## Abre a tela do TAB (o mapa primeiro; a árvore pelo menu de pausa).
-func _open_tree(page: int = TabMenu.MAP) -> void:
+func _open_tree(page: int = TabMenu.MAP, focus_skill: String = "") -> void:
 	if state == State.COMPLETE:
 		return
 	state = State.TREE
 	get_tree().paused = true
 	menus.show_screen("")
 	Settings.learn_hint("map")
-	tab_ui.open(page)
+	tab_ui.open(page, focus_skill)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Sfx.play("ui_open", -6.0)
 

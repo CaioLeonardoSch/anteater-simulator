@@ -4,11 +4,12 @@ extends Node3D
 
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const LANDMARK_SHADER := preload("res://shaders/landmark.gdshader")
+const WorldMap := preload("res://scripts/world/world_map.gd")
 
-## Direção (radianos, ~165°) e distância do centro da clareira.
-const ANGLE := 2.88
-const DISTANCE := 215.0
+## Altura do modelo (antes da escala) e a escala: ele fica no meio da área 4,
+## lá longe (quase 900 m), e por isso é bem grande.
 const HEIGHT := 75.0
+const SCALE := 4.0
 
 var _mat: ShaderMaterial
 
@@ -48,12 +49,15 @@ func build(mats, haze_color: Color) -> void:
 	_mat.shader = LANDMARK_SHADER
 	_mat.set_shader_parameter("noise_tex", mats.noise_tex)
 	_mat.set_shader_parameter("fog_color", haze_color)
+	_mat.set_shader_parameter("world_scale", SCALE)
 	var mi := MeshInstance3D.new()
 	mi.name = "CupinzeiroGigante"
 	mi.mesh = b.commit(null, _mat)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
-	position = Vector3(cos(ANGLE) * DISTANCE, -3.0, sin(ANGLE) * DISTANCE)
+	var at := WorldMap.mound_world()
+	position = Vector3(at.x, -3.0 * SCALE, at.y)
+	scale = Vector3.ONE * SCALE
 
 
 ## Copia a luz do cenário (céu, névoa e sol) para o cupinzeiro ficar na mesma

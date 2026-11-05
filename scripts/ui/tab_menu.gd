@@ -70,9 +70,12 @@ func _key_chip(text: String) -> PanelContainer:
 	return chip
 
 
-func open(which: int = MAP) -> void:
+## `focus_skill`: abre a aba de habilidades já mostrando essa.
+func open(which: int = MAP, focus_skill: String = "") -> void:
 	visible = true
 	show_page(which)
+	if which == SKILLS and not focus_skill.is_empty():
+		tree.show_skill(focus_skill)
 
 
 func show_page(which: int) -> void:

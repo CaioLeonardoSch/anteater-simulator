@@ -12,7 +12,7 @@ const ModelLibrary := preload("res://scripts/model_library.gd")
 const ANT_SHADER := preload("res://shaders/ant.gdshader")
 const WING_SHADER := preload("res://shaders/ant_wing.gdshader")
 
-enum Part { BODY, LEG, ANTENNA, LEAF, WING, MANDIBLE }
+enum Part { BODY, LEG, ANTENNA, LEAF, WING, MANDIBLE, HAT }
 
 const KIND_MODEL := {"worker": "formiga_operaria", "queen": "formiga_rainha", "tanajura": "formiga_tanajura"}
 
@@ -153,6 +153,7 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 		_tag(b, Part.LEAF, Vector3(0, 0.17, head_front - 0.09))
 		b.color = Color(0.36, 0.72, 0.18)
 		_add_leaf(b, Vector3(0, 0.17, head_front - 0.09), 6 if tiny else 14)
+		_add_hat(b, tiny)
 	var mesh := b.commit(null, body_material)
 	# --- Asas (superfície translúcida separada)
 	if kind == "tanajura":
@@ -193,6 +194,20 @@ static func _build_micro(b: MeshBuilder, kind: String, c_head: Color, c_meso: Co
 		b.color = Color(0.36, 0.72, 0.18)
 		_add_leaf(b, grip, 5)
 	return b.commit(null, body_material)
+
+
+## Chapéu de Natal (só aparece numa formiga sorteada a cada 16 000; o shader
+## esconde nas outras): cone vermelho caído para trás, aba e pompom brancos.
+static func _add_hat(b: MeshBuilder, tiny: bool) -> void:
+	var base := Vector3(0, 0.33, -0.27)
+	_tag(b, Part.HAT, base)
+	var sides := 5 if tiny else 10
+	b.color = Color(0.86, 0.08, 0.06)
+	var pts := PackedVector3Array([base, base + Vector3(0, 0.08, 0.02), base + Vector3(0, 0.15, 0.07), base + Vector3(0, 0.18, 0.15)])
+	b.add_tube(pts, PackedFloat32Array([0.085, 0.062, 0.035, 0.012]), sides, false, true)
+	b.color = Color(0.96, 0.95, 0.92)
+	b.add_ellipsoid(base + Vector3(0, 0.005, 0), Vector3(0.1, 0.026, 0.1), 4 if tiny else 6, sides)
+	b.add_ellipsoid(pts[3] + Vector3(0, -0.005, 0.01), Vector3.ONE * 0.03, 3 if tiny else 5, sides)
 
 
 static func _add_leaf(b: MeshBuilder, grip: Vector3, count: int = 14) -> void:

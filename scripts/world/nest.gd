@@ -1,9 +1,10 @@
 extends Node3D
 ## Formigueiro de saúvas: um monte de terra fofa com olheiros (por onde as
 ## formigas das trilhas entram e saem) e câmaras fechadas, onde moram as
-## outras. Cavar abre uma câmara; os formigueiros grandes guardam a rainha
-## numa vala comprida no pé do monte, com a corte dela. Cada buraco pede um
-## nível de Cavar (pequeno, câmara grande, vala da rainha). Quando tudo é
+## outras. Cavar abre uma câmara. Nos formigueiros grandes, a rainha mora bem
+## no fundo: cavar o topo do monte (Escavação Real) desmancha o monte inteiro e
+## fica um buraco com a rainha e a corte dela lá embaixo. Cada buraco pede um
+## nível de Cavar (pequeno, câmara grande, o monte da rainha). Quando tudo é
 ## comido, o monte floresce.
 ## O tamanduá pode subir no monte (o chão acompanha a forma dele).
 ## Se existir assets/models/formigueiro.glb, ele substitui o monte feito por código.
@@ -12,11 +13,20 @@ const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const Props := preload("res://scripts/world/props.gd")
 
-const QUEEN_VALUE := 20
+const QUEEN_VALUE := 200
 ## Tamanho dos buracos (o nível de Cavar que cada um pede).
 const SMALL := 1
 const LARGE := 2
 const ROYAL := 3
+## Cor da tampa de cada tamanho: as mais fundas são mais escuras, entre a
+## terra fofa das pequenas e a cor do monte.
+const CAP_TINT := [Color.WHITE, Color.WHITE, Color(0.84, 0.75, 0.69), Color(0.76, 0.65, 0.58)]
+## Buraco do monte desmanchado: raio da borda (parte do raio do monte), altura
+## da borda (parte da altura do monte) e o fundo (m; um pouco acima do chão,
+## para o chão do campo não cobrir o fundo escuro).
+const CRATER_RIM := 0.8
+const CRATER_RIM_HEIGHT := 0.36
+const CRATER_FLOOR := 0.03
 
 
 class Chamber extends RefCounted:
@@ -27,16 +37,27 @@ class Chamber extends RefCounted:
 	var residents := 0
 	## Moradoras que estão à vista agora (o resto sai do túnel aos poucos).
 	var shown := 0
+	## Câmara do campo: formigas que saem dela, passeiam e voltam (as que
+	## ainda não foram comidas) e até onde elas vão (m).
+	var roamers := 0
+	var roam_reach := 0.0
 	var opened := false
 	var royal := false
+	## Câmara da rainha: até onde as formigas andam depois que o monte é
+	## desmanchado (o buraco é bem maior que a tampa).
+	var pit_radius := 0.0
 	## Câmara no meio do campo, longe do monte (é deste formigueiro, mas fica sozinha).
 	var satellite := false
-	## Vala (a da rainha): comprida na direção `axis` (radianos, no plano xz),
-	## com meio comprimento `half_len`; 0 = câmara redonda.
+	## Buraco comprido na direção `axis` (radianos, no plano xz), com meio
+	## comprimento `half_len`; 0 = câmara redonda (todas, por enquanto).
 	var axis := 0.0
 	var half_len := 0.0
 	## Nível de Cavar que o buraco pede (SMALL, LARGE ou ROYAL).
 	var size_class := 1
+
+	## Até onde as moradoras andam dentro do buraco aberto.
+	func area_radius() -> float:
+		return pit_radius if pit_radius > 0.0 else radius
 
 	## Distância de p2 até a beirada do buraco (negativa dentro dele).
 	func edge_distance(p2: Vector2) -> float:
@@ -61,12 +82,12 @@ var trail_ids: Array[int] = []
 var hole_distance := 0.0
 
 var chambers: Array[Chamber] = []
-## Forrageiras guardadas no formigueiro (saem pelas trilhas e voltam).
+## Forrageiras das trilhas deste formigueiro que ainda não foram comidas.
 var pool := 0
-## Forrageiras deste formigueiro andando no mapa agora.
-var outside := 0
 var queen_alive := false
 var cleaned := false
+## O monte foi desmanchado (sobrou o buraco da rainha).
+var dug_out := false
 var used_ai_model := false
 
 ## Altura do chão (terreno + montes), dada pelo mundo: as câmaras do campo
@@ -77,6 +98,8 @@ var _mats
 var _flowers: MultiMeshInstance3D
 var _flower_bases: Array[Transform3D] = []
 var _dig_shake := 0.0
+var _mound: Node3D
+var _collision: StaticBody3D
 
 
 func setup(i: int, nest_name: String, pos2: Vector2, r: float, h: float, is_big: bool) -> void:
@@ -99,7 +122,19 @@ func dome_height(x: float, z: float) -> float:
 	var r2 := radius * radius
 	if d2 >= r2:
 		return 0.0
+	if dug_out:
+		# Borda irregular, como terra revirada.
+		return crater_height(sqrt(d2 / r2)) * (1.0 + _noise.get_noise_2d(dx * 1.4, dz * 1.4) * 0.5)
 	return height * pow(1.0 - d2 / r2, 1.3)
+
+
+## Buraco do monte desmanchado: fundo raso no meio e uma borda de terra em
+## volta. `d` = distância do centro / raio do monte.
+func crater_height(d: float) -> float:
+	var rim := height * CRATER_RIM_HEIGHT
+	if d < CRATER_RIM:
+		return lerpf(CRATER_FLOOR, rim, smoothstep(0.4, CRATER_RIM, d))
+	return rim * (1.0 - smoothstep(CRATER_RIM, 1.0, d))
 
 
 func hole_position(trail_dir: Vector2) -> Vector2:
@@ -107,19 +142,17 @@ func hole_position(trail_dir: Vector2) -> Vector2:
 
 
 ## Escolhe onde ficam as câmaras, longe dos olheiros das trilhas.
-## Grandes: a vala da rainha no pé do monte + 4 câmaras grandes. Pequenos: 3.
+## Grandes: a rainha no topo do monte + 4 câmaras grandes. Pequenos: 3.
 func plan_chambers(rng: RandomNumberGenerator) -> void:
 	chambers.clear()
 	if big:
-		# A vala fica deitada no pé do monte, do lado sem trilhas.
-		var a := _quiet_angle()
+		# A tampa da rainha fica no topo; aberta, o monte inteiro vira buraco.
 		var royal := Chamber.new()
 		royal.royal = true
 		royal.size_class = ROYAL
-		royal.radius = 0.6
-		royal.half_len = 1.2
-		royal.local = Vector2(cos(a), sin(a)) * radius * 0.97
-		royal.axis = a + PI * 0.5
+		royal.radius = 0.85
+		royal.pit_radius = radius * 0.62
+		royal.local = Vector2.ZERO
 		chambers.append(royal)
 	var count := 4 if big else 3
 	var dist := radius * (0.56 if big else 0.43)
@@ -148,37 +181,24 @@ func plan_chambers(rng: RandomNumberGenerator) -> void:
 		c.pos2 = center2 + c.local
 
 
-## Direção (radianos) mais longe de todas as trilhas que saem do monte.
-func _quiet_angle() -> float:
-	var best := 0.0
-	var best_score := -INF
-	for k in 72:
-		var a := TAU * k / 72.0
-		var d := Vector2(cos(a), sin(a))
-		var score := INF
-		for t in trail_dirs:
-			score = minf(score, 1.0 - d.dot(t))
-		if score > best_score:
-			best_score = score
-			best = a
-	return best
-
-
 func build(rng: RandomNumberGenerator, mats) -> void:
 	_mats = mats
 	var model := ModelLibrary.instantiate("formigueiro", Vector3(radius * 2.1, 0.0, radius * 2.1))
 	if model:
 		used_ai_model = true
-		add_child(model)
+		_mound = model
 	else:
-		add_child(_build_procedural(rng, mats))
+		_mound = _build_procedural(rng, mats)
+	add_child(_mound)
 	for c in chambers:
-		c.pit = _build_pit(c, mats)
+		# O buraco da rainha só é montado quando o monte é desmanchado.
+		c.pit = Node3D.new() if c.royal else _build_pit(c, mats)
 		c.pit.visible = false
 		add_child(c.pit)
 		c.cap = _build_cap(c, rng, mats)
 		add_child(c.cap)
-	add_child(_build_collision())
+	_collision = _build_collision()
+	add_child(_collision)
 
 
 ## Chão do monte: uma malha que segue a forma do domo, para dar para subir nele.
@@ -232,7 +252,15 @@ func residents_left() -> int:
 
 ## Quanto ainda falta comer aqui (a rainha vale QUEEN_VALUE formigas).
 func remaining() -> int:
-	return pool + outside + residents_left() + (QUEEN_VALUE if queen_alive else 0)
+	return pool + roamers_left() + residents_left() + (QUEEN_VALUE if queen_alive else 0)
+
+
+## Formigas passeando em volta das câmaras do campo deste formigueiro.
+func roamers_left() -> int:
+	var n := 0
+	for c in chambers:
+		n += c.roamers
+	return n
 
 
 func closed_chambers() -> int:
@@ -322,10 +350,14 @@ func reset_dig(ci: int) -> void:
 		chambers[ci].cap.rotation = Vector3.ZERO
 
 
-## Abre a câmara: a tampa de terra some e o buraco aparece.
+## Abre a câmara: a tampa de terra some e o buraco aparece. A da rainha
+## desmancha o monte inteiro.
 func open_chamber(ci: int, instant: bool = false) -> void:
 	var c := chambers[ci]
 	c.opened = true
+	if c.royal:
+		_dig_out(c, instant)
+		return
 	c.pit.visible = true
 	if instant:
 		c.cap.visible = false
@@ -334,6 +366,37 @@ func open_chamber(ci: int, instant: bool = false) -> void:
 	tw.tween_property(c.cap, "scale", Vector3(1.25, 0.05, 1.25), 0.18).set_ease(Tween.EASE_IN)
 	tw.tween_callback(func(): c.cap.visible = false)
 	_dirt_burst(chamber_world_pos(c), c.radius)
+
+
+## O monte some: as tampas e os buracos que estavam nele também, e fica o
+## buraco grande com a rainha no fundo.
+func _dig_out(royal: Chamber, instant: bool) -> void:
+	dug_out = true
+	for c in chambers:
+		if c.satellite or c == royal:
+			continue
+		c.opened = true
+		c.cap.visible = false
+		c.pit.visible = false
+	royal.cap.visible = false
+	royal.pit.queue_free()
+	royal.pit = _build_crater()
+	add_child(royal.pit)
+	_collision.queue_free()
+	_collision = _build_collision()
+	add_child(_collision)
+	if instant:
+		_mound.visible = false
+		return
+	# O monte afunda depressa, numa nuvem de terra.
+	var tw := create_tween()
+	tw.tween_property(_mound, "scale", Vector3(1.08, 0.02, 1.08), 0.35).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func(): _mound.visible = false)
+	for k in 6:
+		var a := TAU * k / 6.0
+		var lp := Vector2(cos(a), sin(a)) * radius * 0.55
+		_dirt_burst(global_position + Vector3(lp.x, _surf(lp), lp.y), radius * 0.4)
+	_dirt_burst(chamber_world_pos(royal), radius * 0.5)
 
 
 func _dirt_burst(at: Vector3, r: float) -> void:
@@ -414,53 +477,8 @@ func _grow_flowers(t: float) -> void:
 
 # ------------------------------------------------------------------ Malhas
 
-## Grade de uma vala (cápsula deitada): `nu` colunas ao longo e `nv` de lado a
-## lado. Cada ponto vem com a posição local e quanto ele está para a beirada
-## (0 no eixo, 1 na beirada).
-func _trench_grid(c: Chamber, r_out: float, nu: int, nv: int) -> Array:
-	var ax := Vector2(cos(c.axis), sin(c.axis))
-	var perp := Vector2(-ax.y, ax.x)
-	var length := c.half_len + r_out
-	var pts := []
-	for iu in nu + 1:
-		var u := lerpf(-length, length, float(iu) / nu)
-		var over := maxf(absf(u) - c.half_len, 0.0)
-		var w := sqrt(maxf(r_out * r_out - over * over, 0.0))
-		for iv in nv + 1:
-			var v := lerpf(-1.0, 1.0, float(iv) / nv)
-			var lp := c.local + ax * u + perp * (v * w)
-			var t := Vector2(over, absf(v) * w).length() / r_out
-			pts.append([lp, clampf(t, 0.0, 1.0)])
-	return pts
-
-
-func _grid_quads(b: MeshBuilder, start: int, nu: int, nv: int) -> void:
-	for iu in nu:
-		for iv in nv:
-			var i0 := start + iu * (nv + 1) + iv
-			b.add_quad(i0, i0 + 1, i0 + nv + 2, i0 + nv + 1)
-
-
 func _build_pit(c: Chamber, mats) -> MeshInstance3D:
 	var b := MeshBuilder.new()
-	if c.half_len > 0.0:
-		# Vala: comprida, escura no meio.
-		var nu := 24
-		var nv := 8
-		for pt in _trench_grid(c, c.radius * 1.12, nu, nv):
-			var lp: Vector2 = pt[0]
-			var t: float = pt[1]
-			var dark := 1.0 - smoothstep(0.55, 0.98, t)
-			b.color = Color(0.85, 0.72, 0.62).lerp(Color(0.08, 0.05, 0.035), dark)
-			var rim := exp(-pow((t - 0.86) / 0.1, 2.0)) * 0.06
-			b.add_vertex(Vector3(lp.x, _surf(lp) + 0.014 + rim, lp.y), Vector3.UP)
-		_grid_quads(b, 0, nu, nv)
-		b.recompute_normals()
-		var tmi := MeshInstance3D.new()
-		tmi.name = "Vala"
-		tmi.mesh = b.commit(null, mats.nest_soil)
-		tmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		return tmi
 	var rings := 7
 	var segs := 28
 	var r_out := c.radius * 1.12
@@ -501,17 +519,12 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 	var n := FastNoiseLite.new()
 	n.seed = rng.randi()
 	n.frequency = 2.2
-	if c.half_len > 0.0:
-		_build_trench_cap(b, c, n, rng, base_y)
-		var tmi := MeshInstance3D.new()
-		tmi.mesh = b.commit(null, mats.nest_cap)
-		pivot.add_child(tmi)
-		return pivot
 	var rings := 9
 	var segs := 30
 	var r_out := c.radius * 1.12
-	var bump := 0.22 if not c.royal else 0.32
-	b.color = Color.WHITE
+	var bump := 0.22 if not c.royal else 0.3
+	var tint: Color = CAP_TINT[c.size_class]
+	b.color = tint
 	b.add_vertex(Vector3(0, bump + 0.01, 0), Vector3.UP)
 	for i in range(1, rings + 1):
 		var t := float(i) / rings
@@ -521,7 +534,7 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 			var lp := c.local + off
 			var h := bump * pow(1.0 - t * t, 1.4) + n.get_noise_2d(off.x * 9.0, off.y * 9.0) * 0.02 * (1.0 - t)
 			var edge := smoothstep(0.72, 1.0, t)
-			b.color = Color.WHITE.lerp(Color(0.42, 0.32, 0.26), edge * 0.85)
+			b.color = tint.lerp(Color(0.42, 0.32, 0.26), edge * 0.85)
 			b.add_vertex(Vector3(off.x, _surf(lp) - base_y + h - 0.012 * edge, off.y), Vector3.UP)
 	for j in segs:
 		b.add_tri(0, 1 + (j + 1) % segs, 1 + j)
@@ -538,7 +551,7 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 		var d := sqrt(rng.randf()) * r_out * 0.75
 		var off := Vector2(cos(a), sin(a)) * d
 		var h := bump * pow(1.0 - pow(d / r_out, 2.0), 1.4)
-		b.color = Color(0.8, 0.74, 0.68).lerp(Color.WHITE, rng.randf())
+		b.color = Color(0.8, 0.74, 0.68).lerp(Color.WHITE, rng.randf()) * tint
 		var y := _surf(c.local + off) - base_y + h
 		b.add_blob(Vector3(off.x, y + 0.015, off.y), Vector3.ONE * rng.randf_range(0.03, 0.055), n, 0.2, 1)
 	var mi := MeshInstance3D.new()
@@ -547,40 +560,46 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 	return pivot
 
 
-## Tampa da vala: um cordão comprido de terra fofa no pé do monte, com torrões.
-func _build_trench_cap(b: MeshBuilder, c: Chamber, n: FastNoiseLite, rng: RandomNumberGenerator, base_y: float) -> void:
-	var nu := 26
-	var nv := 9
-	var bump := 0.26
-	var r_out := c.radius * 1.12
-	for pt in _trench_grid(c, r_out, nu, nv):
-		var lp: Vector2 = pt[0]
-		var t: float = pt[1]
-		var off := lp - c.local
-		var h := bump * pow(1.0 - t * t, 1.4) + n.get_noise_2d(off.x * 9.0, off.y * 9.0) * 0.025 * (1.0 - t)
-		var edge := smoothstep(0.72, 1.0, t)
-		b.color = Color.WHITE.lerp(Color(0.42, 0.32, 0.26), edge * 0.85)
-		b.add_vertex(Vector3(off.x, _surf(lp) - base_y + h - 0.012 * edge, off.y), Vector3.UP)
-	_grid_quads(b, 0, nu, nv)
-	b.recompute_normals()
-	var ax := Vector2(cos(c.axis), sin(c.axis))
-	var perp := Vector2(-ax.y, ax.x)
-	for _k in 16:
-		var u := rng.randf_range(-c.half_len, c.half_len)
-		var v := rng.randf_range(-0.6, 0.6) * r_out
-		var off := ax * u + perp * v
-		var t := absf(v) / r_out
-		var h := bump * pow(1.0 - t * t, 1.4)
-		b.color = Color(0.8, 0.74, 0.68).lerp(Color.WHITE, rng.randf())
-		var y := _surf(c.local + off) - base_y + h
-		b.add_blob(Vector3(off.x, y + 0.015, off.y), Vector3.ONE * rng.randf_range(0.035, 0.065), n, 0.2, 1)
-
-
 ## Altura do chão neste ponto, medida a partir da base do formigueiro.
 func _surf(local: Vector2) -> float:
 	if ground.is_valid():
 		return float(ground.call(center2.x + local.x, center2.y + local.y)) - position.y
 	return dome_height(center2.x + local.x, center2.y + local.y)
+
+
+## O buraco que fica quando o monte é desmanchado: escuro no fundo, com a
+## terra revirada em volta.
+func _build_crater() -> MeshInstance3D:
+	var b := MeshBuilder.new()
+	var rings := 20
+	var segs := 56
+	var outer := radius * 1.02
+	b.color = Color(0.07, 0.045, 0.03)
+	b.add_vertex(Vector3(0, _surf(Vector2.ZERO) + 0.01, 0), Vector3.UP)
+	for i in range(1, rings + 1):
+		var t := float(i) / rings
+		for j in segs:
+			var a := TAU * j / segs
+			var lp := Vector2(cos(a), sin(a)) * outer * t
+			var d := lp.length() / radius
+			var n := _noise.get_noise_2d(lp.x * 2.5, lp.y * 2.5)
+			# Fundo quase preto, parede escura e a borda com a terra do monte.
+			var deep := 1.0 - smoothstep(0.55, CRATER_RIM + 0.12, d + n * 0.06)
+			b.color = Color(0.9, 0.78, 0.68).lerp(Color(0.07, 0.045, 0.03), deep)
+			b.add_vertex(Vector3(lp.x, _surf(lp) + 0.01 + n * 0.03 * (1.0 - deep), lp.y), Vector3.UP)
+	for j in segs:
+		b.add_tri(0, 1 + (j + 1) % segs, 1 + j)
+	for i in range(1, rings):
+		var r0 := 1 + (i - 1) * segs
+		var r1 := 1 + i * segs
+		for j in segs:
+			var j1 := (j + 1) % segs
+			b.add_quad(r0 + j, r0 + j1, r1 + j1, r1 + j)
+	b.recompute_normals()
+	var mi := MeshInstance3D.new()
+	mi.name = "BuracoDaRainha"
+	mi.mesh = b.commit(null, _mats.nest_soil)
+	return mi
 
 
 func _build_procedural(rng: RandomNumberGenerator, mats) -> MeshInstance3D:

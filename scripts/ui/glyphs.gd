@@ -7,7 +7,7 @@ extends RefCounted
 const BRANCH_GLYPHS := [
 	["tongue", "ant", "bolt", "cross"],
 	["claws", "burst", "clock", "pit"],
-	["paw", "chevrons", "tongue"],
+	["paw", "chevrons", "wind", "steps", "heart"],
 	["nose", "rings", "eye"],
 	["peak"],
 ]
@@ -103,6 +103,30 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 			for x0 in [-0.62, -0.02]:
 				ci.draw_polyline(PackedVector2Array([c + Vector2(x0, -0.55) * s, c + Vector2(x0 + 0.5, 0) * s,
 					c + Vector2(x0, 0.55) * s]), col, s * 0.17, true)
+		"wind":
+			for k in 3:
+				var y := (k - 1) * 0.42
+				var x1 := 0.55 - absf(k - 1) * 0.25
+				var pts := PackedVector2Array()
+				for i in 9:
+					var t := i / 8.0
+					pts.append(c + Vector2(lerpf(-0.8, x1, t), y + sin(t * TAU) * 0.08) * s)
+				ci.draw_polyline(pts, col, s * 0.13, true)
+				ci.draw_arc(c + Vector2(x1, y - 0.14) * s, s * 0.14, -PI * 0.5, PI * 0.9, 8, col, s * 0.12, true)
+		"steps":
+			for k in 2:
+				var f := c + Vector2(-0.4 + k * 0.8, 0.28 - k * 0.56) * s
+				_ellipse(ci, f + Vector2(0, 0.2) * s, 0.3 * s, 0.4 * s, 0.0, col)
+				for t in 3:
+					ci.draw_circle(f + Vector2((t - 1) * 0.24, -0.38) * s, s * 0.13, col)
+		"heart":
+			var poly := PackedVector2Array()
+			for i in 32:
+				var t := TAU * i / 32.0
+				var x := 16.0 * pow(sin(t), 3)
+				var y := 13.0 * cos(t) - 5.0 * cos(2.0 * t) - 2.0 * cos(3.0 * t) - cos(4.0 * t)
+				poly.append(c + Vector2(x, -y - 2.0) / 17.0 * 0.85 * s)
+			ci.draw_colored_polygon(poly, col)
 		"nose":
 			var o := c + Vector2(-0.5, 0) * s
 			ci.draw_circle(o, s * 0.2, col)

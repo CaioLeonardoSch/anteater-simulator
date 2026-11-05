@@ -338,7 +338,7 @@ A trava não resolve a "hora parada" do meio nem a explosão do fim. Isso vem do
 1 ponto a cada 10: são 4 400 pontos. A árvore acima (3 850) custaria 88%
 deles; os preços finais saem quando a árvore nova for feita.
 
-### Estamina (aprovada para depois do teste)
+### Estamina (feita em 05/11/2026)
 
 - Correr existe desde o começo; a habilidade Corrida sai.
 - Barra no canto inferior esquerdo, sem número: verde cheia, vai para um

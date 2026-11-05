@@ -48,7 +48,7 @@ const SPLITS := [0.25, 0.5, 0.75, 1.0]
 const BRANCHES := [
 	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Mira"]},
 	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Rapidez", "Fundura"]},
-	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Velocidade", "Agilidade"]},
+	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Corrida", "Respiro", "Passada", "Fôlego"]},
 	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
 	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Floresta"},
 ]
@@ -121,18 +121,46 @@ const UPGRADES := [
 		"name": "Recarga Relâmpago",
 		"desc": "O Tremor (e o Terremoto) recarrega em só 7 s."},
 	# Patas
-	{"id": "patas_corrida", "branch": 2, "col": -1, "row": 0, "cost": 30, "requires": [],
-		"name": "Corrida",
-		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e os insetos fogem mais cedo."},
-	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 80, "requires": ["patas_corrida"],
+	# Patas: correr existe desde o começo, gastando estamina. Fôlego abre as
+	# linhas de Fôlego (estamina máxima), Passada (gastar menos correndo),
+	# Respiro (recuperar mais rápido) e Corrida (velocidade e o que dá para
+	# fazer correndo).
+	{"id": "patas_folego", "branch": 2, "col": -1, "row": 0, "cost": 20, "requires": [],
+		"name": "Fôlego",
+		"desc": "Estamina máxima de 50 para 100."},
+	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 1, "cost": 50, "requires": ["patas_folego"],
+		"name": "Fôlego Longo",
+		"desc": "Estamina máxima de 100 para 150."},
+	{"id": "patas_folego_3", "branch": 2, "col": 3, "row": 2, "cost": 90, "requires": ["patas_folego_2"],
+		"name": "Fôlego de Maratona",
+		"desc": "Estamina máxima de 150 para 200."},
+	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "cost": 25, "requires": ["patas_folego"],
+		"name": "Passada Leve",
+		"desc": "Correndo, gasta menos estamina."},
+	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "cost": 50, "requires": ["patas_passada_1"],
+		"name": "Passada Firme",
+		"desc": "Correndo, gasta ainda menos estamina."},
+	{"id": "patas_passada_3", "branch": 2, "col": 2, "row": 3, "cost": 90, "requires": ["patas_passada_2"],
+		"name": "Passada Econômica",
+		"desc": "Correndo, gasta metade da estamina do começo."},
+	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "cost": 25, "requires": ["patas_folego"],
+		"name": "Respiro",
+		"desc": "A estamina volta mais rápido."},
+	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "cost": 50, "requires": ["patas_respiro_1"],
+		"name": "Respiro Fundo",
+		"desc": "A estamina volta ainda mais rápido."},
+	{"id": "patas_respiro_3", "branch": 2, "col": 1, "row": 3, "cost": 90, "requires": ["patas_respiro_2"],
+		"name": "Segundo Fôlego",
+		"desc": "A estamina volta mais que o dobro do começo."},
+	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 70, "requires": ["patas_folego"],
 		"name": "Patas Ligeiras",
-		"desc": "Corre mais 25%."},
-	{"id": "patas_galope", "branch": 2, "col": 0, "row": 2, "cost": 130, "requires": ["patas_ligeiras"],
-		"name": "Galope Silencioso",
-		"desc": "Correndo, você não assusta mais os insetos."},
-	{"id": "patas_lamber", "branch": 2, "col": 1, "row": 1, "cost": 60, "requires": ["patas_corrida"],
+		"desc": "Corre mais rápido: +50% sobre andar (eram +25%)."},
+	{"id": "patas_lamber", "branch": 2, "col": 0, "row": 2, "cost": 80, "requires": ["patas_ligeiras"],
 		"name": "Lamber Correndo",
 		"desc": "Dá para lamber enquanto corre."},
+	{"id": "patas_galope", "branch": 2, "col": 0, "row": 3, "cost": 120, "requires": ["patas_lamber"],
+		"name": "Galope Silencioso",
+		"desc": "Correndo, você não assusta mais os insetos."},
 	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "cost": 20, "requires": [],
 		"name": "Farejar",
@@ -603,15 +631,49 @@ func tremor_jump_speed() -> float:
 	return 7.4 if has("garras_terremoto") else 6.0
 
 
+## Correr existe desde o começo; o limite é a estamina.
 func can_run() -> bool:
-	return has("patas_corrida")
+	return true
+
+
+## Estamina: correr gasta, e ela só volta sem correr (STAMINA_DELAY segundos
+## depois de parar). Gastar e recuperar são por segundo.
+const STAMINA_DELAY := 1.0
+## Zerou: só volta a correr quando a estamina encher esta fração.
+const STAMINA_RESUME := 0.25
+const STAMINA_DRAIN := [10.0, 8.0, 6.5, 5.0]
+const STAMINA_REGEN := [3.0, 4.5, 6.0, 7.0]
+
+
+func stamina_max() -> float:
+	var n := 0
+	for id in ["patas_folego", "patas_folego_2", "patas_folego_3"]:
+		if has(id):
+			n += 1
+	return 50.0 + 50.0 * n
+
+
+func stamina_drain() -> float:
+	return STAMINA_DRAIN[_level(["patas_passada_1", "patas_passada_2", "patas_passada_3"])]
+
+
+func stamina_regen() -> float:
+	return STAMINA_REGEN[_level(["patas_respiro_1", "patas_respiro_2", "patas_respiro_3"])]
+
+
+func _level(ids: Array) -> int:
+	var n := 0
+	for id in ids:
+		if has(id):
+			n += 1
+	return n
 
 
 func walk_speed() -> float:
 	return 3.3
 
 
-## Correr: +25% com Corrida e mais 25% com Patas Ligeiras.
+## Correr: +25% sobre andar desde o começo, +50% com Patas Ligeiras.
 func run_speed() -> float:
 	return walk_speed() * (1.5 if has("patas_ligeiras") else 1.25)
 
@@ -714,6 +776,9 @@ func _stat_snapshot() -> Array:
 		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
 		["Área da mira", _num(aim_cone_deg(), 1) + "°"],
 		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
+		["Estamina máxima", _num(stamina_max(), 0)],
+		["Gasto correndo", _num(stamina_drain(), 1) + " por segundo"],
+		["Recuperação", _num(stamina_regen(), 1) + " por segundo"],
 		["Tempo para cavar", _num(dig_time(), 1) + " s" if dig else ""],
 		["Descanso das garras", _num(dig_cooldown(), 0) + " s" if dig else ""],
 		["Raio do Tremor", _num(tremor_radius(), 0) + " m" if trem else ""],

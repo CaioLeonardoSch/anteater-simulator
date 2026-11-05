@@ -65,7 +65,7 @@ tela, a resolução e a qualidade gráfica.
 |---|---|---|
 | Andar | `W` `A` `S` `D` | analógico esquerdo |
 | Olhar | mouse | analógico direito |
-| Correr* | `Shift` | clicar o analógico esquerdo |
+| Correr (gasta estamina) | `Shift` | clicar o analógico esquerdo |
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar* | `Q` ou clique direito | `LT` |
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
@@ -166,12 +166,17 @@ uma vez".
 |---|---|
 | **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · Lambida (40: até 50 formigas por lambida) · Lambida Larga (75: até 150) · Lambida Gulosa (115: até 250) · Lambida Voraz (170: até 400); **Destreza** · Língua Comprida (70: alcance +50% e lambe 25% mais rápido) · Saliva Grudenta (100: raio maior e mais 25% de rapidez) · Língua Turbo (150: 2x mais rápido); **Mira** · Língua Certeira (30: a língua vai atrás da formiga mais perto da mira) · Mira Ampla (60: essa área 25% maior) |
 | **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s); **Fundura** · Cavar Fundo (60: câmaras grandes) · Escavação Real (120: desmancha o monte da rainha) |
-| **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (80: mais 25%) · Galope Silencioso (130); **Agilidade** · Lamber Correndo (60) |
+| **Patas** | Fôlego (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · Patas Ligeiras (70: +50% sobre andar, eram +25%) · Lamber Correndo (80) · Galope Silencioso (120: correr não assusta); **Respiro** · Respiro (25) · Respiro Fundo (50) · Segundo Fôlego (90): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · Passada Leve (25) · Passada Firme (50) · Passada Econômica (90): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · Fôlego Longo (50: 150) · Fôlego de Maratona (90: 200) |
 | **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
+**Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde
+no canto de baixo, à esquerda (fica vermelho-escura quando acaba). Ela só volta
+1 s depois de parar de correr; se zerar, dá para correr de novo quando encher
+um quarto. Começa com 50, gasta 10 por segundo e volta 3 por segundo.
+
 10 formigas comidas = 1 ponto (a rainha vale 20 pontos). As linhas de um ramo
-não se excluem. Tudo o que dá para aprender no Cerrado soma 2755 pontos, e dá
+não se excluem. Tudo o que dá para aprender no Cerrado soma 3215 pontos (de 4 400 no jogo), e dá
 para redistribuir os pontos de graça na árvore.
 
 ### Tela e gráficos

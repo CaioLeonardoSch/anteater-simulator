@@ -52,7 +52,7 @@ buscamos, no espírito delas:
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
 | **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
-| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 44 000 insetos (cada um sozinho, um quarto passeando pelo campo), 18 formigueiros e 116 câmaras (48 no meio do campo), rainhas no fundo dos montes grandes, 5 habilidades (32 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 44 000 insetos (cada um sozinho, um quarto passeando pelo campo), 18 formigueiros e 116 câmaras (48 no meio do campo), rainhas no fundo dos montes grandes, 5 habilidades (40 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -102,10 +102,9 @@ buscamos, no espírito delas:
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
 - **44 000 insetos** (eram 1000, depois 3200, depois 32 000), cada um andando
   sozinho: **10 insetos comidos = 1 ponto**, 4 400 pontos no jogo inteiro. A
-  árvore de hoje custa **2755 pontos** (63%); a árvore nova da reformulação
-  (estamina e preços maiores, em
-  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 6) vai usar
-  quase todos.
+  árvore de hoje (já com a estamina) custa **3215 pontos** (73%); os preços
+  novos da reformulação ([`pesquisa-habilidades.md`](pesquisa-habilidades.md),
+  seção 6) vão usar quase todos.
 - **Por enquanto as habilidades ficam como estão.** A pontuação e a quantidade
   de formigas e cupins para liberar tudo serão reavaliadas mais para a frente.
 
@@ -222,9 +221,11 @@ dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**).
 | | Força | Garras Fortes (70: as moradoras ficam tontas ao abrir) · Tremor (110: pulo com pancada; recarga de 21 s) · Terremoto (170: pulo mais alto, tremor maior, puxa as tontas) |
 | | Rapidez | Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: descanso de 5 s e cava na metade do tempo) · Recarga do Tremor (130: Tremor em 14 s) · Recarga Relâmpago (150: Tremor em 7 s) |
 | | Fundura | Cavar Fundo (60: abre as câmaras grandes) · Escavação Real (120: desmancha o monte da rainha) |
-| **Patas** | começo | Corrida (30: +25% de velocidade; correndo não dá para lamber) |
-| | Velocidade | Patas Ligeiras (80: mais 25%) · Galope Silencioso (130: correr não assusta) |
-| | Agilidade | Lamber Correndo (60) |
+| **Patas** | começo | Fôlego (20: estamina máxima de 50 para 100). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
+| | Corrida | Patas Ligeiras (70: +50% sobre andar) · Lamber Correndo (80) · Galope Silencioso (120: correr não assusta) |
+| | Respiro | Respiro (25) · Respiro Fundo (50) · Segundo Fôlego (90): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
+| | Passada | Passada Leve (25) · Passada Firme (50) · Passada Econômica (90): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
+| | Fôlego | Fôlego Longo (50: estamina máxima 150) · Fôlego de Maratona (90: 200) |
 | **Faro** | começo | Farejar (20: diz quantas formigas há a até 10 m, até 100 delas, e a distância da mais perto) |
 | | Alcance | Faro Atento (40: 16 m, 250 formigas) · Faro Apurado (70: 24 m, 500) · Faro Aguçado (110: 34 m, 1000, e quanto falta em cada formigueiro) · Faro Lendário (160: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
 | | Precisão | Faro Preciso (45: nuvem borrada onde estão) · Faro Nítido (85: as formigas brilham nítidas) · Faro de Câmara (100: colunas de cheiro nas câmaras fechadas) |
@@ -275,7 +276,7 @@ Feito, seguindo as decisões:
    cuidar dela, e depois ela volta para o caminho dela. Uma formiga em cada
    16 000 usa um **chapéu de Natal**.
 5. **Soldados:** saíram. A **tanajura** continua.
-6. **As 5 habilidades, com 32 níveis**, cada um com seu preço (seção 3), numa
+6. **As 5 habilidades, com 40 níveis**, cada um com seu preço (seção 3), numa
    árvore com **cara de constelação** que não abre sozinha. A língua começa
    **lenta** (1,4 lambida por segundo, acelerando com a linha de Destreza), com
    um clique por lambida, e vai **reta** até aprender a Língua Certeira; correndo
@@ -371,9 +372,10 @@ Ainda a ajustar:
   ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
   tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
   uma hora de ritmo parado e uma explosão nos últimos 15 minutos. A proposta
-  de reformulação (seção 6, ainda não feita) traz estamina desde o começo,
+  de reformulação (seção 6) trouxe a estamina (já feita); falta a
   trava por insetos comidos em cada nível (1 000, 3 000, 8 000 e 21 000),
-  Tremor e rainha mais cedo, pontas mais caras e 1 ponto a cada 8 insetos.
+  Tremor e rainha mais cedo e pontas mais caras (em vez de 1 ponto a cada 8
+  insetos, a clareira passou para 44 000).
 
 ---
 
@@ -534,7 +536,7 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
   através do capim; **tremor** que deixa as formigas tontas.
 - **Tanajura** voadora que dá o Frenesi.
-- **5 habilidades com 32 níveis**, numa árvore com cara de constelação: 10
+- **5 habilidades com 40 níveis**, numa árvore com cara de constelação: 10
   formigas = 1 ponto, cada nível com seu preço, e redistribuição grátis.
 - **Mapa no TAB**, colorido onde você já andou.
 - **Salva sozinho**; dá para continuar de onde parou.
@@ -631,4 +633,5 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Estatísticas (lugar) | Aba do TAB | Botão "Estatísticas" na pausa, com tela própria, e os mesmos quadros na tela do fim |
 | 05/11/2026 | Bot de teste | Comprava numa ordem fixa e só mirava nas formigas soltas | Compra em rodízio entre os ramos e anota cada compra (`--botlog`); vai atrás de todos os insetos, usa Tremor, corrida e Lamber Correndo |
 | 05/11/2026 | Quantidade de insetos | 32 000 (3 200 pontos) | 44 000 (4 400 pontos), para caber a árvore nova com estamina; jogos salvos antigos não carregam mais |
+| 05/11/2026 | Correr | Só depois da habilidade Corrida (30), sem limite | Desde o começo, com estamina (barra no canto de baixo, à esquerda): começa com 50, gasta 10/s, volta 3/s 1 s depois de parar. A habilidade Corrida saiu; Patas ganhou as linhas Respiro, Passada e Fôlego |
 | 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

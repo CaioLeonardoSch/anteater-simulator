@@ -59,6 +59,7 @@ var _moved := 0.0
 var _ran := 0.0
 var _play_time := 0.0
 ## Modo contra o relógio: cronômetro no canto direito e a última parcial.
+var _stamina: StaminaBar
 var _clock: PanelContainer
 var _clock_time: Label
 var _clock_split: Label
@@ -140,6 +141,9 @@ func _ready() -> void:
 	_tutorial = HintRow.new()
 	add_child(_tutorial)
 	_place(_tutorial, Control.PRESET_CENTER_BOTTOM, Vector2(-450, -212), Vector2(900, 28))
+	_stamina = StaminaBar.new()
+	add_child(_stamina)
+	_place(_stamina, Control.PRESET_BOTTOM_LEFT, Vector2(28, -44), Vector2(StaminaBar.MAX_W + 8.0, 20))
 	_save = SaveIcon.new()
 	add_child(_save)
 	_place(_save, Control.PRESET_BOTTOM_RIGHT, Vector2(-50, -48), Vector2(28, 28))
@@ -392,6 +396,11 @@ func _process(delta: float) -> void:
 	_compass.queue_redraw()
 	_crosshair.queue_redraw()
 	_update_clock(delta)
+	var top := GameState.stamina_max()
+	_stamina.fill = clampf(player.stamina / top, 0.0, 1.0) if player.stamina >= 0.0 else 1.0
+	_stamina.top = top
+	_stamina.exhausted = player.exhausted
+	_stamina.queue_redraw()
 
 
 ## Cronômetro do modo contra o relógio (canto de cima, à direita); os cartões
@@ -832,6 +841,42 @@ class Medallion extends Control:
 
 
 ## Barra fina dourada com um losango na ponta.
+## Estamina (canto de baixo, à esquerda): sem número, só a barra. Cheia é
+## verde e vai para um vermelho-escuro conforme esvazia. Fica mais comprida
+## com a estamina máxima; zerada, mostra a marca até onde precisa encher.
+class StaminaBar extends Control:
+	const MIN_W := 120.0
+	const MAX_W := 260.0
+	const H := 10.0
+	const FULL := Color("7cc25a")
+	const MID := Color("c9a33e")
+	const EMPTY := Color("6e1a12")
+	var fill := 1.0
+	var top := 50.0
+	var exhausted := false
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var w := lerpf(MIN_W, MAX_W, clampf((top - 50.0) / 150.0, 0.0, 1.0))
+		var y := (size.y - H) * 0.5
+		var frame := Rect2(0, y - 3.0, w + 6.0, H + 6.0)
+		draw_rect(frame, Color(0.03, 0.02, 0.018, 0.75))
+		draw_rect(frame, Color("e8b44f", 0.45), false, 1.0)
+		var inner := Rect2(3.0, y, w, H)
+		draw_rect(inner, Color(0.1, 0.07, 0.05, 0.9))
+		var col := MID.lerp(FULL, (fill - 0.5) * 2.0) if fill >= 0.5 else EMPTY.lerp(MID, fill * 2.0)
+		if exhausted:
+			col = EMPTY
+		if fill > 0.0:
+			draw_rect(Rect2(3.0, y, w * fill, H), col)
+			draw_rect(Rect2(3.0, y, w * fill, 3.0), Color(1, 1, 1, 0.12))
+		if exhausted:
+			var x := 3.0 + w * GameState.STAMINA_RESUME
+			draw_line(Vector2(x, y - 2.0), Vector2(x, y + H + 2.0), Color("f6e3b4", 0.8), 1.5)
+
+
 class GoldBar extends Control:
 	var value := 0.0
 

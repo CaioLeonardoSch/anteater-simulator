@@ -101,6 +101,8 @@ var _bot_target := -1
 var _bot_field := Vector2i(-1, -1)
 ## Tempo desde a última formiga comida: se passar muito, o bot muda de alvo.
 var _bot_hungry := 0.0
+## Alvos que o bot desistiu de pegar (índice -> quando tentar de novo).
+var _bot_skip := {}
 var _bot_eaten := 0
 var _bot_think := 0.0
 var _bot_lick := false
@@ -805,9 +807,13 @@ func _bot_update(delta: float) -> void:
 	var lost: bool = _bot_target >= 0 and (swarm.alive[_bot_target] == 0 or swarm.mode[_bot_target] == swarm.Mode.STUCK)
 	if _bot_hungry > 20.0:
 		# Muito tempo sem comer: larga o alvo e dá uns passos para o lado.
-		print("[bot] sem comer: pos=%s alvo=%d campo=%s alvo_pos=%s dig=%d nest=%s" % [global_position.snapped(Vector3.ONE * 0.1),
-			_bot_target, _bot_field, (swarm.pos[_bot_target] if _bot_target >= 0 else field_pos).snapped(Vector3.ONE * 0.1),
-			GameState.dig_level(), dig_nest.display_name if dig_nest else "-"])
+		print("[bot] sem comer: pos=%s alvo=%d (tipo %d, modo %d) campo=%s alvo_pos=%s" % [global_position.snapped(Vector3.ONE * 0.1),
+			_bot_target, swarm.kind[_bot_target] if _bot_target >= 0 else -1, swarm.mode[_bot_target] if _bot_target >= 0 else -1,
+			_bot_field, (swarm.pos[_bot_target] if _bot_target >= 0 else field_pos).snapped(Vector3.ONE * 0.1)])
+		if _bot_target >= 0:
+			_bot_skip[_bot_target] = GameState.elapsed + 60.0
+		elif _bot_field.x >= 0:
+			_bot_skip[Vector2i(_bot_field)] = GameState.elapsed + 60.0
 		_bot_hungry = 0.0
 		lost = true
 		_bot_side = -1.0 if randf() < 0.5 else 1.0
@@ -869,11 +875,19 @@ func _bot_update(delta: float) -> void:
 func _bot_pick_target(field) -> void:
 	_bot_target = -1
 	_bot_field = Vector2i(-1, -1)
+	for k in _bot_skip.keys():
+		if GameState.elapsed >= _bot_skip[k]:
+			_bot_skip.erase(k)
 	var best := INF
+	var reach2 := GameState.tongue_range() * GameState.tongue_range()
 	for i in swarm.CAPACITY:
-		if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i):
+		if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i) or _bot_skip.has(i):
 			continue
 		var d: float = swarm.pos[i].distance_squared_to(global_position)
+		# Tanajura voando foge mais rápido que o tamanduá andando: só vale
+		# mirar nela quando ela passa perto.
+		if swarm.kind[i] == swarm.TANAJURA and d > reach2:
+			continue
 		if d < best:
 			best = d
 			_bot_target = i
@@ -901,7 +915,7 @@ func _bot_pick_target(field) -> void:
 	var fbest := INF
 	for i in ch.count:
 		var p: Vector2 = field.ant_xz(ch, i)
-		if p == Vector2.INF:
+		if p == Vector2.INF or _bot_skip.has(Vector2i(best_ci, i)):
 			continue
 		var d := p.distance_squared_to(me)
 		if d < fbest:

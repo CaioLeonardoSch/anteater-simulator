@@ -256,7 +256,10 @@ godot --path . -- --start=play --autoplay --timescale=4 --stats
 ```
 
 `--start=play|map|tree|settings|howto` pula o menu (`map` e `tree` já abrem a
-tela do TAB) · `--autoplay` um bot joga sozinho ·
+tela do TAB) · `--autoplay` um bot joga sozinho e compra as habilidades em
+rodízio entre os ramos · `--botlog=arquivo.csv` o bot anota cada compra, cada
+formigueiro limpo e o progresso a cada 30 s, e fecha no fim · `--physics-scale`
+com `--timescale`, mantém o passo da física igual ao do jogo normal ·
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·

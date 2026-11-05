@@ -22,11 +22,9 @@ enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 static var skip_menu := false
 const AUTOSAVE_EVERY := 30.0
 ## Ordem em que o bot de teste aprende as habilidades (junta pontos para a próxima).
-const BOT_ORDER := ["lingua_segurar", "faro_farejar", "garras_cavar", "lingua_bocado_1", "garras_fundo", "patas_corrida",
-	"garras_ageis", "faro_preciso", "lingua_bocado_2", "lingua_comprida", "garras_fortes", "faro_atento",
-	"patas_lamber", "lingua_bocado_3", "lingua_saliva", "garras_incansaveis", "garras_tremor", "faro_nitido",
-	"garras_real", "faro_apurado", "faro_camara", "lingua_turbo", "lingua_bocado_4", "patas_ligeiras", "garras_terremoto",
-	"faro_agucado", "garras_recarga", "patas_galope", "faro_lendario", "garras_recarga_2"]
+## Bot de teste: compra uma habilidade de cada ramo por vez, nesta ordem, para
+## as linhas crescerem juntas (ver _bot_buy).
+const BOT_BRANCHES := [0, 1, 2, 3]
 
 var state := State.LOADING
 var world: World
@@ -49,6 +47,11 @@ var _base_time_scale := 1.0
 var _new_record := false
 var _reloading := false
 var _autosave := AUTOSAVE_EVERY
+## Bot: de qual ramo é a vez de comprar, o arquivo do registro (--botlog) e o
+## tempo até a próxima linha de progresso.
+var _bot_turn := 0
+var _bot_log: FileAccess
+var _bot_log_t := 0.0
 
 
 func _ready() -> void:
@@ -181,6 +184,10 @@ func _build_game() -> void:
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
+	if DevTools.autoplay and DevTools.args.has("botlog"):
+		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
+		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;evento;detalhe")
+		colony.nest_cleaned.connect(func(n): _bot_write.call_deferred("formigueiro", "%s (%s)" % [n.display_name, "grande" if n.big else "pequeno"]))
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
 	_apply_sniff_color()
@@ -443,19 +450,61 @@ func _on_eaten_changed(_total: int, _delta: int) -> void:
 		_bot_buy()
 
 
-## Bot de teste: aprende as habilidades na ordem de BOT_ORDER.
+## Bot de teste: compra em rodízio, uma habilidade de cada ramo por vez (Língua,
+## Garras, Patas, Faro). No ramo da vez, pega a de menor nível (a mais perto da
+## raiz) e, empatando, a mais barata; assim as linhas de dentro do ramo também
+## crescem juntas. Se ainda não dá para pagar, espera juntar os pontos (não
+## pula para outro ramo). Ramo terminado (ou trancado) sai do rodízio.
 func _bot_buy() -> void:
-	for id in BOT_ORDER:
-		if GameState.has(id):
+	for _i in BOT_BRANCHES.size() * 2:
+		var id := _bot_next(BOT_BRANCHES[_bot_turn % BOT_BRANCHES.size()])
+		if id.is_empty():
+			_bot_turn += 1
 			continue
 		if not GameState.can_buy(id):
 			return
 		GameState.buy(id)
+		_bot_turn += 1
+		var u := GameState.get_upgrade(id)
 		print("[bot] comprou %s com %d formigas comidas" % [id, GameState.ants_eaten])
+		_bot_write("compra", "%s;%s;%d" % [id, u.name, GameState.cost_of(id)])
+
+
+## A próxima habilidade do ramo para o bot: requisitos prontos, sem área trancada,
+## a de menor nível e, empatando, a mais barata. Vazio se não há nenhuma.
+func _bot_next(branch: int) -> String:
+	var best := ""
+	var best_key := Vector2(INF, INF)
+	for u in GameState.UPGRADES:
+		if u.branch != branch or GameState.has(u.id) or GameState.upgrade_state(u.id) != 1:
+			continue
+		var key := Vector2(_bot_depth(u.id), GameState.cost_of(u.id))
+		if key.x < best_key.x or (key.x == best_key.x and key.y < best_key.y):
+			best_key = key
+			best = u.id
+	return best
+
+
+func _bot_depth(id: String) -> int:
+	var req: Array = GameState.get_upgrade(id).requires
+	return 0 if req.is_empty() else 1 + _bot_depth(req[0])
+
+
+## Registro do bot (--botlog=arquivo.csv): tempo de jogo, insetos comidos,
+## formigueiros limpos, pontos sobrando, o que aconteceu e detalhes.
+func _bot_write(what: String, detail: String = "") -> void:
+	if _bot_log == null:
+		return
+	_bot_log.store_line("%.1f;%d;%d;%d;%d;%s;%s" % [GameState.elapsed, GameState.ants_eaten,
+		colony.nests_cleaned(), GameState.points_available(), GameState.purchased.size(), what, detail])
+	_bot_log.flush()
 
 
 ## Clareira 100% limpa: o tronco da saída já pode ser quebrado com as garras.
 func _on_complete(_time: float) -> void:
+	if _bot_log:
+		_bot_write("fim")
+		get_tree().quit()
 	_new_record = is_equal_approx(GameState.mode_best_time(), GameState.elapsed)
 	world.exit_breakable = true
 	hud.big_note("Clareira limpa!", "Quebre o tronco na saída", 5.0, "log")
@@ -488,6 +537,11 @@ func _process(delta: float) -> void:
 		if _autosave <= 0.0:
 			_autosave = AUTOSAVE_EVERY
 			save_game()
+		if _bot_log:
+			_bot_log_t -= delta
+			if _bot_log_t <= 0.0:
+				_bot_log_t = 30.0
+				_bot_write("progresso")
 	if state == State.MENU and menu_cam:
 		_menu_t += delta
 		var a := _menu_t * 0.06 + 2.2

@@ -1,6 +1,7 @@
 extends HBoxContainer
 ## Estatísticas: os números deste jogo, as parciais do modo contra o relógio e
-## os recordes de todos os jogos. Aparece na pausa (Esc) e na tela do fim.
+## os recordes de todos os jogos. Aparece na tela de estatísticas (pela pausa)
+## e na tela do fim.
 ## As conquistas (preparadas, mas escondidas na demo) aparecem embaixo só com
 ## Achievements.VISIBLE ou --conquistas.
 
@@ -12,11 +13,11 @@ const RED := Color("ef8a6a")
 ## Tamanho das letras das linhas.
 const FONT := 17
 
+## Largura de cada coluna de quadros (as duas iguais, para alinhar).
+const COLUMN_WIDTH := 340.0
+
 var world
 var colony
-## Parciais numa coluna própria (tela do fim) em vez de embaixo de "Este jogo"
-## (pausa, onde os botões já ocupam a largura).
-var wide := false
 
 
 func _ready() -> void:
@@ -29,28 +30,33 @@ func setup(w, c) -> void:
 	colony = c
 
 
-## Refaz os quadros com os números de agora.
+## Refaz os quadros com os números de agora. Duas colunas da mesma largura:
+## "Este jogo" (e as parciais, no contra o relógio) e "Ações" com "Recordes".
+## O último quadro de cada coluna estica até embaixo, para as bordas baterem.
 func refresh() -> void:
 	for c in get_children():
 		c.queue_free()
 	if world == null:
 		return
-	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 14)
-	add_child(left)
+	var left := _column()
 	left.add_child(_panel("Este jogo", _run_rows()))
-	var clock := GameState.mode == GameState.MODE_CLOCK
-	if clock and not wide:
+	if GameState.mode == GameState.MODE_CLOCK:
 		left.add_child(_panel("Parciais", _split_rows()))
-	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 14)
-	add_child(right)
+	var right := _column()
 	right.add_child(_panel("Ações", _action_rows()))
 	right.add_child(_panel("Recordes", _record_rows()))
-	if clock and wide:
-		add_child(_panel("Parciais", _split_rows()))
+	for col in [left, right]:
+		col.get_child(col.get_child_count() - 1).size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if Achievements.VISIBLE or DevTools.args.has("conquistas"):
 		add_child(_achievements_panel())
+
+
+func _column() -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 14)
+	v.custom_minimum_size = Vector2(COLUMN_WIDTH, 0)
+	add_child(v)
+	return v
 
 
 # ------------------------------------------------------------------ Números

@@ -413,7 +413,6 @@ func _build_stats() -> Control:
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	_pause_stats = StatsPanel.new()
-	_pause_stats.wide = true
 	_pause_stats.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(_pause_stats)
 	var back := UiTheme.button("Voltar", 260)
@@ -728,7 +727,6 @@ func _build_end() -> Control:
 	_end_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_time)
 	_end_stats = StatsPanel.new()
-	_end_stats.wide = true
 	_end_stats.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(_end_stats)
 	var thanks := UiTheme.label("Obrigado por jogar a demo!", 20, UiTheme.CREAM)

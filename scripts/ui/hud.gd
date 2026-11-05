@@ -58,6 +58,11 @@ var _help_next := 0.0
 var _moved := 0.0
 var _ran := 0.0
 var _play_time := 0.0
+## Modo contra o relógio: cronômetro no canto direito e a última parcial.
+var _clock: PanelContainer
+var _clock_time: Label
+var _clock_split: Label
+var _clock_split_time := 0.0
 
 const VIGNETTE_SHADER := """
 shader_type canvas_item;
@@ -94,6 +99,7 @@ func setup(p, sw, col, w) -> void:
 	GameState.skills_reset.connect(_refresh_points)
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
+	GameState.split_reached.connect(_on_split)
 	Settings.changed.connect(_refresh_keys)
 	_on_eaten_changed(GameState.ants_eaten, 0)
 	_refresh_points()
@@ -125,6 +131,7 @@ func _ready() -> void:
 	_cards = CardStack.new()
 	add_child(_cards)
 	_place(_cards, Control.PRESET_TOP_RIGHT, Vector2(-310, 24), Vector2(286, 230))
+	_build_clock()
 	_build_big_note()
 	_hint = HintRow.new()
 	add_child(_hint)
@@ -384,6 +391,68 @@ func _process(delta: float) -> void:
 	_vignette_mat.set_shader_parameter("amount", vig)
 	_compass.queue_redraw()
 	_crosshair.queue_redraw()
+	_update_clock(delta)
+
+
+## Cronômetro do modo contra o relógio (canto de cima, à direita); os cartões
+## de aviso descem para baixo dele.
+func _build_clock() -> void:
+	_clock = PanelContainer.new()
+	_clock.add_theme_stylebox_override("panel", UiTheme.panel_frame(16, 8))
+	_clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_clock)
+	_place(_clock, Control.PRESET_TOP_RIGHT, Vector2(-310, 22), Vector2(286, 0))
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	_clock.add_child(v)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	v.add_child(top)
+	var cap := UiTheme.caps_label("Tempo", 12)
+	cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(cap)
+	_clock_time = UiTheme.display_label("0:00.0", 28, UiTheme.PALE)
+	_clock_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_clock_time.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(_clock_time)
+	_clock_split = UiTheme.label("", 17, UiTheme.SAND)
+	_clock_split.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_clock_split.visible = false
+	v.add_child(_clock_split)
+	_clock.visible = false
+
+
+func _update_clock(delta: float) -> void:
+	var on := GameState.mode == GameState.MODE_CLOCK
+	if _clock.visible != on:
+		_clock.visible = on
+		_cards.offset_top = 112.0 if on else 24.0
+		_cards.offset_bottom = _cards.offset_top + 230.0
+	if not on:
+		return
+	_clock_time.text = GameState.format_clock(GameState.elapsed)
+	_clock_time.add_theme_color_override("font_color", UiTheme.GOLD if GameState.completed else UiTheme.PALE)
+	if _clock_split_time > 0.0:
+		_clock_split_time -= delta
+		if _clock_split_time <= 0.0:
+			_clock_split.visible = false
+
+
+## Chegou numa parcial: mostra a porcentagem e a diferença para o recorde
+## (verde = mais rápido, vermelho = mais lento).
+func _on_split(index: int, time_sec: float, diff: float) -> void:
+	if GameState.mode != GameState.MODE_CLOCK:
+		return
+	var pct := int(round(GameState.SPLITS[index] * 100.0))
+	var text := "%d%%  ·  %s" % [pct, GameState.format_clock(time_sec)]
+	var col := UiTheme.SAND
+	if diff != INF:
+		text += "  " + GameState.format_diff(diff)
+		col = Color("9fdc7c") if diff < 0.0 else Color("ef8a6a")
+	_clock_split.text = text
+	_clock_split.add_theme_color_override("font_color", col)
+	_clock_split.visible = true
+	_clock_split_time = 8.0
 
 
 func _on_eaten_changed(_total: int, _delta: int) -> void:

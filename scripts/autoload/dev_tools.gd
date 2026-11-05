@@ -18,6 +18,10 @@ extends Node
 ##   --start=continue             continua o jogo salvo
 ##   --start=slots                abre a tela dos jogos salvos
 ##   --slot=N                     usa o jogo salvo N (1 a 3)
+##   --start=mode                 abre a escolha do modo (jogo novo)
+##   --start=stats                abre a aba de estatísticas do TAB
+##   --mode=relogio               o jogo novo é contra o relógio
+##   --conquistas                 mostra as conquistas (escondidas na demo)
 ##   --start=settings --tab=N     abre as configurações na aba N
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
 ##   --hats                       chapéu de Natal em uma formiga a cada 20

@@ -27,6 +27,9 @@ var _settings_note: Label
 ## Botões das teclas (ação -> botão) e a ação esperando uma tecla nova.
 var _key_buttons: Dictionary = {}
 var _rebinding := ""
+## Jogo salvo (vazio) onde vai começar o jogo novo e a tela de onde veio.
+var _new_slot := 1
+var _mode_back := "title"
 
 
 func _ready() -> void:
@@ -38,6 +41,7 @@ func _ready() -> void:
 	_screens.settings = _build_settings()
 	_screens.howto = _build_howto()
 	_screens.slots = _build_slots()
+	_screens.mode = _build_mode()
 	_screens.end = _build_end()
 	_screens.loading = _build_loading()
 	for k in _screens:
@@ -171,7 +175,7 @@ func _build_title() -> Control:
 		if GameState.any_saved_game():
 			_goto("slots", "title")
 		else:
-			slot_chosen.emit(1))
+			_choose_mode(1, "title"))
 	v.add_child(play)
 	var how := UiTheme.button("Como jogar")
 	how.pressed.connect(_goto.bind("howto", "title"))
@@ -201,10 +205,12 @@ func _update_title_buttons(cont: Button, play: Button) -> void:
 
 
 func _update_record(record: Label) -> void:
+	var parts: Array[String] = []
 	if GameState.best_time > 0.0:
-		record.text = "Seu recorde: %d formigas em %s" % [GameState.GOAL, GameState.format_time(GameState.best_time)]
-	else:
-		record.text = ""
+		parts.append("Seu recorde: %s" % GameState.format_time(GameState.best_time))
+	if GameState.best_time_clock > 0.0:
+		parts.append("Contra o relógio: %s" % GameState.format_clock(GameState.best_time_clock))
+	record.text = "   ·   ".join(parts)
 
 
 ## Recomeçar apaga o jogo salvo: pede um segundo clique para confirmar.
@@ -242,7 +248,11 @@ func _build_slots() -> Control:
 		var b := UiTheme.button("", 560)
 		b.custom_minimum_size = Vector2(560, 74)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		b.pressed.connect(func(): slot_chosen.emit(slot))
+		b.pressed.connect(func():
+			if GameState.has_saved_game(slot):
+				slot_chosen.emit(slot)
+			else:
+				_choose_mode(slot, "slots"))
 		h.add_child(b)
 		var del := UiTheme.button("Apagar", 170)
 		del.custom_minimum_size = Vector2(170, 74)
@@ -255,6 +265,57 @@ func _build_slots() -> Control:
 	v.add_child(back)
 	s.visibility_changed.connect(_update_slots.bind(rows))
 	return s
+
+
+# ------------------------------------------------------------------ Modo do jogo novo
+
+## Jogo novo: normal (no seu ritmo) ou contra o relógio (speedrun).
+func _build_mode() -> Control:
+	var s := _screen(0.6)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Jogo novo", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	_mode_option(v, "Normal", "No seu ritmo, sem cronômetro na tela.", GameState.MODE_NORMAL)
+	var clock_desc := _mode_option(v, "Contra o relógio", "", GameState.MODE_CLOCK)
+	var note := UiTheme.label("O relógio só corre com o jogo rodando: pausa, mapa e habilidades param o tempo.", 17, UiTheme.MUTED)
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(note)
+	var back := UiTheme.button("Voltar", 260)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func(): show_screen(_mode_back))
+	v.add_child(back)
+	s.visibility_changed.connect(func():
+		var best := GameState.best_time_clock
+		clock_desc.text = "Cronômetro na tela e tempos parciais a cada 25% dos insetos." + (
+			"\nSeu recorde: " + GameState.format_clock(best) if best > 0.0 else ""))
+	return s
+
+
+## Um modo: o botão e, embaixo, o que ele muda. Retorna o texto de baixo.
+func _mode_option(v: VBoxContainer, title: String, desc: String, which: String) -> Label:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	v.add_child(box)
+	var b := UiTheme.button(title, 460)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.pressed.connect(_start_new.bind(which))
+	box.add_child(b)
+	var l := UiTheme.label(desc, 19, UiTheme.SAND)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(l)
+	return l
+
+
+func _choose_mode(slot: int, back: String) -> void:
+	_new_slot = slot
+	_mode_back = back
+	show_screen("mode")
+
+
+func _start_new(which: String) -> void:
+	GameState.next_mode = which
+	slot_chosen.emit(_new_slot)
 
 
 func _update_slots(rows: Array) -> void:
@@ -270,9 +331,11 @@ func _update_slots(rows: Array) -> void:
 			b.text = "  Jogo %d  ·  vazio: começar um jogo novo" % slot
 		else:
 			var when := Time.get_datetime_dict_from_unix_time(int(info.saved_at) + _utc_offset())
-			b.text = "  Jogo %d  ·  %d de %d insetos  ·  %s\n  Salvo em %02d/%02d às %02d:%02d" % [
-				slot, info.eaten, GameState.GOAL, GameState.format_time(info.elapsed),
-				when.day, when.month, when.hour, when.minute]
+			var clock: bool = info.mode == GameState.MODE_CLOCK
+			b.text = "  Jogo %d  ·  %d de %d insetos  ·  %s\n  %sSalvo em %02d/%02d às %02d:%02d" % [
+				slot, info.eaten, GameState.GOAL,
+				GameState.format_clock(info.elapsed) if clock else GameState.format_time(info.elapsed),
+				"Contra o relógio  ·  " if clock else "", when.day, when.month, when.hour, when.minute]
 
 
 static func _utc_offset() -> int:
@@ -651,9 +714,15 @@ func _build_end() -> Control:
 func _record_text(new_record: bool) -> String:
 	if new_record:
 		return "  (novo recorde!)"
-	if GameState.best_time > 0.0:
-		return "  (recorde: %s)" % GameState.format_time(GameState.best_time)
+	var best := GameState.mode_best_time()
+	if best > 0.0:
+		return "  (recorde: %s)" % _fmt(best)
 	return ""
+
+
+## No modo contra o relógio os tempos aparecem com décimos.
+func _fmt(t: float) -> String:
+	return GameState.format_clock(t) if GameState.mode == GameState.MODE_CLOCK else GameState.format_time(t)
 
 
 func show_end(time_sec: float, new_record: bool) -> void:
@@ -661,8 +730,9 @@ func show_end(time_sec: float, new_record: bool) -> void:
 	for u in GameState.UPGRADES:
 		if GameState.has(u.id):
 			learned.append(u.name)
-	var lines := "Tempo: %s%s\nMaior combo: %d insetos\nTanajuras comidas: %d\nHabilidades: %s" % [
-		GameState.format_time(time_sec), _record_text(new_record),
+	var lines := "%sTempo: %s%s\nMaior combo: %d insetos\nTanajuras comidas: %d\nHabilidades: %s" % [
+		"Contra o relógio\n" if GameState.mode == GameState.MODE_CLOCK else "",
+		_fmt(time_sec), _record_text(new_record),
 		GameState.best_combo, GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
 	_end_stats.text = lines
 	_end_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

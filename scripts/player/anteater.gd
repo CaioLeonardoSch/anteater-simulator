@@ -283,6 +283,11 @@ func _physics_process(delta: float) -> void:
 	head.rotation.x = pitch
 	var spd := hv.length()
 	running = want_run and spd > GameState.walk_speed() * 1.1
+	if controls_enabled:
+		var rv := get_real_velocity()
+		GameState.count("distance", Vector2(rv.x, rv.z).length() * delta)
+		if running:
+			GameState.count("run_time", delta)
 	swarm.threat_pos = global_position
 	swarm.flee_radius = (1.0 + clampf(spd / maxf(GameState.walk_speed(), 0.1), 0.0, 2.0) * 0.9) \
 		* GameState.flee_multiplier(running)
@@ -451,6 +456,7 @@ func _start_flick() -> void:
 	t_target = target
 	t_state = Tongue.OUT
 	t_time = 0.0
+	GameState.count("licks")
 	Sfx.play("tongue", -7.0, 1.0, 0.12)
 
 
@@ -506,6 +512,7 @@ func _capture() -> void:
 		queen_blocked.emit()
 		Sfx.play("deny", -8.0)
 	if t_stuck.size() > 0:
+		GameState.count("licks_hit")
 		Sfx.play("slurp", -4.0, 1.0, 0.1)
 
 
@@ -689,6 +696,7 @@ func do_sniff() -> void:
 				if not c.opened and here.distance_to(c.pos2) <= reach:
 					sniff_chambers.append(n.chamber_world_pos(c))
 		world.scent_marks.show_pillars(sniff_chambers)
+	GameState.count("sniffs")
 	Sfx.play("sniff", -3.0)
 	sniffed.emit(res.count, res.capped, res.nearest, sniff_chambers.size())
 
@@ -698,6 +706,7 @@ func do_tremor() -> void:
 	tremor_cd = GameState.tremor_cooldown()
 	_jump_request = true
 	_stomp_pending = true
+	GameState.count("tremors")
 	Sfx.play("step", -4.0, 0.7)
 
 

@@ -75,6 +75,8 @@ func _ready() -> void:
 	_build_game()
 	if DevTools.args.has("slot"):
 		GameState.slot = clampi(int(DevTools.args.slot), 1, GameState.SLOTS)
+	if DevTools.args.get("mode", "") == GameState.MODE_CLOCK:
+		GameState.next_mode = GameState.MODE_CLOCK
 	if DevTools.start_mode == "continue":
 		_continue_game()
 	elif DevTools.start_mode == "settings":
@@ -86,6 +88,9 @@ func _ready() -> void:
 	elif DevTools.start_mode == "slots":
 		_enter_menu()
 		menus._goto("slots", "title")
+	elif DevTools.start_mode == "mode":
+		_enter_menu()
+		menus._choose_mode(1, "title")
 	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()
@@ -93,6 +98,8 @@ func _ready() -> void:
 			_open_tree(TabMenu.SKILLS)
 		elif DevTools.start_mode == "map":
 			_open_tree(TabMenu.MAP)
+		elif DevTools.start_mode == "stats":
+			_open_tree(TabMenu.STATS)
 	else:
 		_enter_menu()
 	fade.modulate.a = 1.0
@@ -166,6 +173,8 @@ func _build_game() -> void:
 	menus.skill_tree_pressed.connect(_open_tree.bind(TabMenu.SKILLS))
 	GameState.level_completed.connect(_on_complete)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
+	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
+	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
 	_apply_sniff_color()
@@ -222,6 +231,7 @@ func _on_continue_pressed() -> void:
 ## Jogo novo.
 func _start_play() -> void:
 	GameState.reset_run()
+	GameState.mode = GameState.next_mode
 	player.place_at(world.player_start, world.player_start_yaw)
 	_begin_playing()
 	save_game()
@@ -387,6 +397,8 @@ func _close_tree() -> void:
 
 func _restart() -> void:
 	GameState.delete_saved_game()
+	# Recomeçar mantém o modo (normal ou contra o relógio).
+	GameState.next_mode = GameState.mode
 	skip_menu = true
 	_reload()
 
@@ -438,7 +450,7 @@ func _bot_buy() -> void:
 
 ## Clareira 100% limpa: o tronco da saída já pode ser quebrado com as garras.
 func _on_complete(_time: float) -> void:
-	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
+	_new_record = is_equal_approx(GameState.mode_best_time(), GameState.elapsed)
 	world.exit_breakable = true
 	hud.big_note("Clareira limpa!", "Quebre o tronco na saída", 5.0, "log")
 	Sfx.play("complete", 0.0)
@@ -454,6 +466,7 @@ func _belly_growl() -> void:
 
 ## O tronco foi quebrado: a passagem para a área 2 está aberta (fim da demo).
 func _on_exit_broken() -> void:
+	GameState.count("exit_broken")
 	state = State.COMPLETE
 	GameState.delete_saved_game()
 	player.controls_enabled = false

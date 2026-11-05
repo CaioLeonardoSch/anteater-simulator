@@ -17,7 +17,7 @@ const StatsPanel := preload("res://scripts/ui/stats_panel.gd")
 var _screens: Dictionary = {}
 var _current := ""
 var _back_to := "title"
-## Estatísticas na pausa e na tela do fim.
+## Estatísticas (tela aberta pela pausa) e na tela do fim.
 var _pause_stats: StatsPanel
 var _end_stats: StatsPanel
 var _end_time: Label
@@ -42,6 +42,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_screens.title = _build_title()
 	_screens.pause = _build_pause()
+	_screens.stats = _build_stats()
 	_screens.settings = _build_settings()
 	_screens.howto = _build_howto()
 	_screens.slots = _build_slots()
@@ -58,7 +59,7 @@ func show_screen(screen_name: String) -> void:
 		_screens[k].visible = (k == screen_name)
 	_current = screen_name
 	visible = screen_name != ""
-	if screen_name == "pause":
+	if screen_name == "stats":
 		_pause_stats.refresh()
 	if screen_name != "":
 		var first := _find_first_button(_screens[screen_name])
@@ -379,29 +380,15 @@ func _goto(screen_name: String, back: String) -> void:
 
 
 func _build_pause() -> Control:
-	var s := _screen(0.6)
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	s.add_child(center)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
-	center.add_child(row)
-	var p := PanelContainer.new()
-	p.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	row.add_child(p)
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 26)
-	p.add_child(margin)
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 14)
-	margin.add_child(v)
+	var s := _screen(0.55)
+	var v := _centered_column(s)
 	var t := UiTheme.display_label("Pausa", 52, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	var buttons := [
 		["Continuar", func(): resume_pressed.emit()],
 		["Árvore de habilidades", func(): skill_tree_pressed.emit()],
+		["Estatísticas", _goto.bind("stats", "pause")],
 		["Como jogar", _goto.bind("howto", "pause")],
 		["Configurações", _goto.bind("settings", "pause")],
 		["Recomeçar do zero", _confirm_restart],
@@ -415,8 +402,24 @@ func _build_pause() -> Control:
 		else:
 			b.pressed.connect(item[1])
 		v.add_child(b)
+	return s
+
+
+## Estatísticas (pela pausa): os quadros e um botão para voltar.
+func _build_stats() -> Control:
+	var s := _screen(0.7)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Estatísticas", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
 	_pause_stats = StatsPanel.new()
-	row.add_child(_pause_stats)
+	_pause_stats.wide = true
+	_pause_stats.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(_pause_stats)
+	var back := UiTheme.button("Voltar", 260)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func(): show_screen(_back_to))
+	v.add_child(back)
 	return s
 
 

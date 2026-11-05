@@ -342,7 +342,7 @@ Feito, seguindo as decisões:
    Fechada, Insetos, Marcador). Cada formigueiro já visto mostra quantos
    insetos faltam nele. Clique direito (ou Y no controle) põe um marcador, que
    aparece na bússola. O que foi explorado e o marcador vão no jogo salvo.
-18. **Estatísticas** (na pausa, ao lado dos botões, e na tela do fim): os números deste jogo, as ações
+18. **Estatísticas** (um botão na pausa abre a tela delas; também aparecem na tela do fim): os números deste jogo, as ações
    (linguadas e acerto, faro, tremores, distância, tempo correndo), as parciais
    do contra o relógio e os recordes de todos os jogos.
 19. **Contra o relógio:** escolhido ao começar um jogo novo. Cronômetro com
@@ -618,7 +618,7 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Lagoas | Duas, redondas | Quatro, de formas irregulares e tamanhos diferentes, sem simetria |
 | 05/11/2026 | Jogos salvos | Um | Até 3, com Continuar (o mais recente) e a tela de Jogos salvos |
 | 05/11/2026 | Modo de jogo | Só um | Normal ou Contra o relógio (cronômetro, parciais a cada 25%, recorde próprio) |
-| 05/11/2026 | Estatísticas e conquistas | Nenhuma | Estatísticas na pausa (Esc) e na tela do fim (primeiro foram uma aba do TAB); 21 conquistas preparadas, escondidas na demo |
+| 05/11/2026 | Estatísticas e conquistas | Nenhuma | Estatísticas num botão da pausa (Esc) e na tela do fim (primeiro foram uma aba do TAB); 21 conquistas preparadas, escondidas na demo |
 | 05/11/2026 | Controles e acessibilidade | Teclas fixas | Teclas trocáveis; Correr e Cavar segurar ou apertar; esconder o HUD; volumes de efeitos e ambiente; sensibilidade do controle |
 | 05/11/2026 | Mapa | Sem números | Insetos que faltam em cada formigueiro e um marcador (que aparece na bússola) |
 | 05/11/2026 | Textos | "formigas" | "insetos" onde vale para formigas e cupins |

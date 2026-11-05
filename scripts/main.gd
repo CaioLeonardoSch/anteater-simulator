@@ -101,8 +101,11 @@ func _ready() -> void:
 			_open_tree(TabMenu.SKILLS)
 		elif DevTools.start_mode == "map":
 			_open_tree(TabMenu.MAP)
+		elif DevTools.start_mode == "pause":
+			_pause()
 		elif DevTools.start_mode == "stats":
 			_pause()
+			menus._goto("stats", "pause")
 		elif DevTools.start_mode == "end":
 			GameState.playing = false
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

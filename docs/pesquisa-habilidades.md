@@ -334,6 +334,10 @@ A trava não resolve a "hora parada" do meio nem a explosão do fim. Isso vem do
   - **40 000 insetos** (hoje 32 000). Mesmo efeito nos pontos, mas o jogo
     fica uns 25% mais longo e mais pesado de desenhar.
 
+**Decisão (05/11/2026):** a clareira passou para **44 000 insetos**, mantendo
+1 ponto a cada 10: são 4 400 pontos. A árvore acima (3 850) custaria 88%
+deles; os preços finais saem quando a árvore nova for feita.
+
 ### Estamina (aprovada para depois do teste)
 
 - Correr existe desde o começo; a habilidade Corrida sai.

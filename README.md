@@ -30,7 +30,7 @@ produção, os protótipos e as decisões, num lugar só.
 
 Uma **clareira do cerrado no fim da tarde**, cercada por penhascos. O tamanduá
 acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
-ronca: hora de comer. A colônia tem **32 000 insetos**, cada um andando
+ronca: hora de comer. A colônia tem **44 000 insetos**, cada um andando
 sozinho, e **18 formigueiros** espalhados pelo mapa inteiro. Um quarto anda em
 fila pelas trilhas de terra, um quarto passeia pelo campo em volta das câmaras
 espalhadas pelo mapa, e a metade mora nas **câmaras**, que você abre cavando.
@@ -105,7 +105,7 @@ uma vez".
   relógio. No relógio, um cronômetro fica no canto e cada 25% dos insetos marca
   um tempo parcial, comparado com o do seu recorde (verde mais rápido, vermelho
   mais lento). Pausa, mapa e habilidades param o relógio.
-- **32 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
+- **44 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
   entram de novo. Cada uma foge sozinha quando você chega perto, e cada
   formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal.

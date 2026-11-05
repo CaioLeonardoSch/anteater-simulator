@@ -23,7 +23,7 @@ signal achievement_unlocked(id: String)
 const Achievements := preload("res://scripts/achievements.gd")
 
 ## Formigas da colônia do Cerrado (cada rainha conta como 200).
-const GOAL := 32000
+const GOAL := 44000
 ## Formigas comidas para ganhar 1 ponto.
 const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
@@ -34,7 +34,7 @@ const OLD_SAVE_PATH := "user://jogo_salvo.json"
 ## Quantos jogos salvos dá para ter.
 const SLOTS := 3
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 ## Modos de jogo. Contra o relógio é o speedrun: cronômetro na tela, tempos
 ## parciais e um recorde só dele. O tempo só corre com o jogo rodando (pausa,
 ## mapa e habilidades param o relógio), então dá para comparar jogos.

@@ -18,7 +18,7 @@ const LIST := [
 	{"id": "dez_mil_insetos", "name": "Banquete", "desc": "Coma 10 000 insetos.",
 		"stat": "eaten", "goal": 10000},
 	{"id": "clareira_limpa", "name": "Clareira limpa", "desc": "Coma todos os insetos do cerrado.",
-		"stat": "eaten", "goal": 32000},
+		"stat": "eaten", "goal": 44000},
 	{"id": "cem_mil_total", "name": "Apetite sem fim", "desc": "Coma 100 000 insetos somando todos os jogos.",
 		"stat": "eaten_total", "goal": 100000},
 	{"id": "primeiro_formigueiro", "name": "Despejo", "desc": "Limpe um formigueiro inteiro.",

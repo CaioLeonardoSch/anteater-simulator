@@ -52,7 +52,7 @@ buscamos, no espírito delas:
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
 | **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
-| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 32 000 insetos (cada um sozinho, um quarto passeando pelo campo), 18 formigueiros e 116 câmaras (48 no meio do campo), rainhas no fundo dos montes grandes, 5 habilidades (32 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 44 000 insetos (cada um sozinho, um quarto passeando pelo campo), 18 formigueiros e 116 câmaras (48 no meio do campo), rainhas no fundo dos montes grandes, 5 habilidades (32 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -100,10 +100,12 @@ buscamos, no espírito delas:
   ninhos**: 8 em volta e 4 no meio. Os formigueiros ficaram cerca de 45% maiores.
 - **Na área 1, os ninhos são só formigueiros**, de uma formiga que fica só no
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
-- **32 000 formigas** (eram 1000, depois 3200), cada uma andando sozinha:
-  **10 formigas comidas = 1 ponto**. Somando o preço de todas as habilidades do Cerrado dá
-  **2755 pontos**: dá para aprender tudo e ainda sobram cerca de **445 pontos**
-  (4450 formigas, 2 ou 3 formigueiros) para jogar com tudo liberado.
+- **44 000 insetos** (eram 1000, depois 3200, depois 32 000), cada um andando
+  sozinho: **10 insetos comidos = 1 ponto**, 4 400 pontos no jogo inteiro. A
+  árvore de hoje custa **2755 pontos** (63%); a árvore nova da reformulação
+  (estamina e preços maiores, em
+  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 6) vai usar
+  quase todos.
 - **Por enquanto as habilidades ficam como estão.** A pontuação e a quantidade
   de formigas e cupins para liberar tudo serão reavaliadas mais para a frente.
 
@@ -259,7 +261,7 @@ Feito, seguindo as decisões:
    as moradoras das outras câmaras do monte. A rainha brilha de leve, fica
    protegida enquanto houver formigas no buraco e **vale 200 formigas (20
    pontos)**.
-4. **Os 32 000 insetos andam um a um** (30 600 operárias + 7 rainhas × 200),
+4. **Os 44 000 insetos andam um a um** (42 600 operárias + 7 rainhas × 200),
    e cada inseto comido conta 1: 25% vão e voltam pelas trilhas, 25%
    passeiam em volta das câmaras do campo (saem, dão uma volta de até 5 m e
    entram de novo) e a metade mora nas câmaras. Para caber tanta formiga, a
@@ -363,7 +365,7 @@ Ainda a ajustar:
   o robô de testes). Como referência: num teste automático da segunda rodada, um
   robô de mira perfeita terminou a colônia (então com 3200 formigas) em cerca
   de 19 minutos.
-- **Desempenho:** as 32 000 formigas foram testadas só num servidor sem placa
+- **Desempenho:** os 44 000 insetos foram testados só num servidor sem placa
   de vídeo; falta medir num PC de verdade.
 - **Economia das habilidades:** a pesquisa de 05/11/2026
   ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
@@ -526,7 +528,7 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 - **18 formigueiros** (7 com rainha) e **116 câmaras** para abrir e esvaziar (48
   delas no meio do campo); dá para subir nos montes. As formigas das câmaras
   saem correndo quando você abre.
-- **32 000 insetos**, cada um sozinho, andando pelas **trilhas** até os
+- **44 000 insetos**, cada um sozinho, andando pelas **trilhas** até os
   arbustos e passeando em volta das câmaras do campo. Correr assusta as
   formigas.
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
@@ -628,4 +630,5 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Sol | Névoa branca do lado do sol | Névoa mais quente e com menos brilho; halo do sol menor (o longe fica colorido, como em Firewatch) |
 | 05/11/2026 | Estatísticas (lugar) | Aba do TAB | Botão "Estatísticas" na pausa, com tela própria, e os mesmos quadros na tela do fim |
 | 05/11/2026 | Bot de teste | Comprava numa ordem fixa e só mirava nas formigas soltas | Compra em rodízio entre os ramos e anota cada compra (`--botlog`); vai atrás de todos os insetos, usa Tremor, corrida e Lamber Correndo |
+| 05/11/2026 | Quantidade de insetos | 32 000 (3 200 pontos) | 44 000 (4 400 pontos), para caber a árvore nova com estamina; jogos salvos antigos não carregam mais |
 | 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

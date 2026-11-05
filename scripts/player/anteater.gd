@@ -97,6 +97,11 @@ var running := false
 
 # Bot (teste automático)
 var _bot_target := -1
+## Alvo do bot entre as formigas do campo (trilhas e passeios): grupo e índice.
+var _bot_field := Vector2i(-1, -1)
+## Tempo desde a última formiga comida: se passar muito, o bot muda de alvo.
+var _bot_hungry := 0.0
+var _bot_eaten := 0
 var _bot_think := 0.0
 var _bot_lick := false
 var _bot_run := false
@@ -786,18 +791,34 @@ func _update_arms(delta: float) -> void:
 
 func _bot_update(delta: float) -> void:
 	_bot_think -= delta
-	if _bot_think <= 0.0 or _bot_target < 0 or swarm.alive[_bot_target] == 0 \
-			or swarm.mode[_bot_target] == swarm.Mode.STUCK:
+	if GameState.ants_eaten != _bot_eaten:
+		_bot_eaten = GameState.ants_eaten
+		_bot_hungry = 0.0
+	else:
+		_bot_hungry += delta
+	var field = swarm.field
+	var field_pos := Vector3.INF
+	if _bot_field.x >= 0:
+		var st: Vector4 = field.ant_state(field.chunks[_bot_field.x], _bot_field.y)
+		if st.w != INF:
+			field_pos = Vector3(st.x, st.y, st.z)
+	var lost: bool = _bot_target >= 0 and (swarm.alive[_bot_target] == 0 or swarm.mode[_bot_target] == swarm.Mode.STUCK)
+	if _bot_hungry > 20.0:
+		# Muito tempo sem comer: larga o alvo e dá uns passos para o lado.
+		_bot_hungry = 0.0
+		lost = true
+		_bot_side = -1.0 if randf() < 0.5 else 1.0
+		_bot_side_t = 2.5
+	# Alvo do campo sumiu (entrou no buraco): escolhe outro logo, mas sem
+	# refazer a busca toda a cada quadro.
+	var gone: bool = _bot_target < 0 and field_pos == Vector3.INF and _bot_think < 0.45
+	if _bot_think <= 0.0 or lost or gone:
 		_bot_think = 0.6
-		_bot_target = -1
-		var best := INF
-		for i in swarm.CAPACITY:
-			if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i):
-				continue
-			var d: float = swarm.pos[i].distance_squared_to(global_position)
-			if d < best:
-				best = d
-				_bot_target = i
+		_bot_pick_target(field)
+		field_pos = Vector3.INF
+		if _bot_field.x >= 0:
+			var st: Vector4 = field.ant_state(field.chunks[_bot_field.x], _bot_field.y)
+			field_pos = Vector3(st.x, st.y, st.z)
 	_bot_lick = false
 	_bot_input = Vector2.ZERO
 	_bot_run = false
@@ -808,6 +829,8 @@ func _bot_update(delta: float) -> void:
 	var to_chamber := false
 	if _bot_target >= 0:
 		goal = swarm.pos[_bot_target]
+	elif field_pos != Vector3.INF:
+		goal = field_pos + Vector3(0, 0.04, 0)
 	if GameState.can_dig() and dig_cd <= 0.0:
 		var ch := _bot_nearest_closed_chamber()
 		if ch != Vector3.INF and (goal == Vector3.INF or ch.distance_to(global_position) + 10.0 < goal.distance_to(global_position)):
@@ -836,6 +859,55 @@ func _bot_update(delta: float) -> void:
 			_bot_unstuck(delta)
 	else:
 		_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
+
+
+## Escolhe a formiga mais perto: entre as soltas (fugindo, das câmaras,
+## rainhas, tanajuras) e as do campo (trilhas e passeios).
+func _bot_pick_target(field) -> void:
+	_bot_target = -1
+	_bot_field = Vector2i(-1, -1)
+	var best := INF
+	for i in swarm.CAPACITY:
+		if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i):
+			continue
+		var d: float = swarm.pos[i].distance_squared_to(global_position)
+		if d < best:
+			best = d
+			_bot_target = i
+	# Campo: primeiro o grupo mais perto (pela trilha ou pela câmara do passeio),
+	# depois a formiga mais perto dentro dele.
+	var me := Vector2(global_position.x, global_position.z)
+	var best_ci := -1
+	var best_cd := INF
+	for ci in field.chunks.size():
+		var ch = field.chunks[ci]
+		if ch.alive <= 0:
+			continue
+		var cd := INF
+		if ch.kind == field.TRAIL:
+			for p in ch.trail.points:
+				cd = minf(cd, p.distance_squared_to(me))
+		else:
+			cd = ch.home.distance_squared_to(me)
+		if cd < best_cd:
+			best_cd = cd
+			best_ci = ci
+	if best_ci < 0 or best_cd > best:
+		return
+	var ch = field.chunks[best_ci]
+	var fbest := INF
+	for i in ch.count:
+		var p: Vector2 = field.ant_xz(ch, i)
+		if p == Vector2.INF:
+			continue
+		var d := p.distance_squared_to(me)
+		if d < fbest:
+			fbest = d
+			_bot_field = Vector2i(best_ci, i)
+	if _bot_field.x >= 0 and fbest < best:
+		_bot_target = -1
+	else:
+		_bot_field = Vector2i(-1, -1)
 
 
 ## Se ficar preso numa árvore ou pedra, dá um passo de lado por um tempo.

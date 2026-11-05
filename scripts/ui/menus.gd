@@ -4,6 +4,8 @@ extends Control
 
 signal play_pressed
 signal continue_pressed
+## Escolheu um dos jogos salvos (vazio = jogo novo nele).
+signal slot_chosen(slot: int)
 signal resume_pressed
 signal restart_pressed
 signal main_menu_pressed
@@ -35,6 +37,7 @@ func _ready() -> void:
 	_screens.pause = _build_pause()
 	_screens.settings = _build_settings()
 	_screens.howto = _build_howto()
+	_screens.slots = _build_slots()
 	_screens.end = _build_end()
 	_screens.loading = _build_loading()
 	for k in _screens:
@@ -158,11 +161,17 @@ func _build_title() -> Control:
 	v.add_child(gap)
 	var cont := UiTheme.button("Continuar")
 	cont.name = "Continue"
-	cont.pressed.connect(func(): continue_pressed.emit())
+	cont.pressed.connect(func():
+		GameState.slot = GameState.latest_slot()
+		continue_pressed.emit())
 	v.add_child(cont)
 	var play := UiTheme.button("Jogar")
 	play.name = "Play"
-	play.pressed.connect(func(): play_pressed.emit())
+	play.pressed.connect(func():
+		if GameState.any_saved_game():
+			_goto("slots", "title")
+		else:
+			slot_chosen.emit(1))
 	v.add_child(play)
 	var how := UiTheme.button("Como jogar")
 	how.pressed.connect(_goto.bind("howto", "title"))
@@ -183,11 +192,12 @@ func _build_title() -> Control:
 	return s
 
 
-## Com jogo salvo: "Continuar" aparece e "Jogar" vira "Novo jogo".
+## Com jogo salvo: "Continuar" (o mais recente) aparece e "Jogar" vira
+## "Jogos salvos", que abre a escolha entre os 3.
 func _update_title_buttons(cont: Button, play: Button) -> void:
-	var saved := GameState.has_saved_game()
+	var saved := GameState.any_saved_game()
 	cont.visible = saved
-	play.text = "Novo jogo" if saved else "Jogar"
+	play.text = "Jogos salvos" if saved else "Jogar"
 
 
 func _update_record(record: Label) -> void:
@@ -212,6 +222,80 @@ func _disarm_restart(b: Button) -> void:
 	if is_instance_valid(b):
 		b.set_meta("armed", false)
 		b.text = "Recomeçar do zero"
+
+
+# ------------------------------------------------------------------ Jogos salvos
+
+## Os 3 jogos salvos: cada um mostra quanto já foi comido e o tempo de jogo;
+## um vazio começa um jogo novo. Apagar pede um segundo clique.
+func _build_slots() -> Control:
+	var s := _screen(0.6)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Jogos salvos", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	var rows: Array = []
+	for slot in range(1, GameState.SLOTS + 1):
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 12)
+		v.add_child(h)
+		var b := UiTheme.button("", 560)
+		b.custom_minimum_size = Vector2(560, 74)
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.pressed.connect(func(): slot_chosen.emit(slot))
+		h.add_child(b)
+		var del := UiTheme.button("Apagar", 170)
+		del.custom_minimum_size = Vector2(170, 74)
+		del.pressed.connect(_confirm_delete.bind(del, slot))
+		h.add_child(del)
+		rows.append([b, del, slot])
+	var back := UiTheme.button("Voltar", 260)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func(): show_screen(_back_to))
+	v.add_child(back)
+	s.visibility_changed.connect(_update_slots.bind(rows))
+	return s
+
+
+func _update_slots(rows: Array) -> void:
+	for r in rows:
+		var b: Button = r[0]
+		var del: Button = r[1]
+		var slot: int = r[2]
+		var info := GameState.slot_summary(slot)
+		del.set_meta("armed", false)
+		del.text = "Apagar"
+		del.visible = not info.is_empty()
+		if info.is_empty():
+			b.text = "  Jogo %d  ·  vazio: começar um jogo novo" % slot
+		else:
+			var when := Time.get_datetime_dict_from_unix_time(int(info.saved_at) + _utc_offset())
+			b.text = "  Jogo %d  ·  %d de %d formigas  ·  %s\n  Salvo em %02d/%02d às %02d:%02d" % [
+				slot, info.eaten, GameState.GOAL, GameState.format_time(info.elapsed),
+				when.day, when.month, when.hour, when.minute]
+
+
+static func _utc_offset() -> int:
+	return int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+
+
+func _confirm_delete(b: Button, slot: int) -> void:
+	if b.get_meta("armed", false):
+		GameState.delete_saved_game(slot)
+		_update_slots_now()
+		return
+	b.set_meta("armed", true)
+	b.text = "Certeza?"
+	get_tree().create_timer(3.0, true).timeout.connect(func():
+		if is_instance_valid(b) and b.get_meta("armed", false):
+			b.set_meta("armed", false)
+			b.text = "Apagar")
+
+
+func _update_slots_now() -> void:
+	var s: Control = _screens.slots
+	s.visible = false
+	s.visible = true
 
 
 func _goto(screen_name: String, back: String) -> void:

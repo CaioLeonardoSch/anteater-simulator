@@ -73,6 +73,8 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_build_game()
+	if DevTools.args.has("slot"):
+		GameState.slot = clampi(int(DevTools.args.slot), 1, GameState.SLOTS)
 	if DevTools.start_mode == "continue":
 		_continue_game()
 	elif DevTools.start_mode == "settings":
@@ -81,6 +83,9 @@ func _ready() -> void:
 	elif DevTools.start_mode == "howto":
 		_enter_menu()
 		menus.show_screen("howto")
+	elif DevTools.start_mode == "slots":
+		_enter_menu()
+		menus._goto("slots", "title")
 	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()
@@ -154,6 +159,7 @@ func _build_game() -> void:
 	ui.move_child(menus, -1)
 	menus.play_pressed.connect(_on_play_pressed)
 	menus.continue_pressed.connect(_on_continue_pressed)
+	menus.slot_chosen.connect(_on_slot_chosen)
 	menus.resume_pressed.connect(_resume)
 	menus.restart_pressed.connect(_restart)
 	menus.main_menu_pressed.connect(_to_main_menu)
@@ -195,6 +201,15 @@ func _on_play_pressed() -> void:
 	tw.tween_property(fade, "modulate:a", 1.0, 0.35)
 	tw.tween_callback(_start_play)
 	tw.tween_property(fade, "modulate:a", 0.0, 0.6)
+
+
+## Escolheu um jogo salvo: continua ele, ou começa um jogo novo se estiver vazio.
+func _on_slot_chosen(slot: int) -> void:
+	GameState.slot = slot
+	if GameState.has_saved_game():
+		_on_continue_pressed()
+	else:
+		_on_play_pressed()
 
 
 func _on_continue_pressed() -> void:

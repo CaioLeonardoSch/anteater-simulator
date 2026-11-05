@@ -22,7 +22,10 @@ const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
 const FRENZY_TIME := 6.0
 const RECORD_PATH := "user://save.cfg"
-const GAME_SAVE_PATH := "user://jogo_salvo.json"
+## Versões antigas tinham um jogo salvo só: ele vira o jogo 1.
+const OLD_SAVE_PATH := "user://jogo_salvo.json"
+## Quantos jogos salvos dá para ter.
+const SLOTS := 3
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
 const SAVE_VERSION := 4
 
@@ -165,6 +168,8 @@ var combo_timer: float = 0.0
 var frenzy_time: float = 0.0
 var best_time: float = 0.0
 var tanajuras_eaten: int = 0
+## O jogo salvo em uso (1 a SLOTS).
+var slot: int = 1
 var queens_eaten: int = 0
 ## Habilidades que já cabiam nos pontos (para avisar só das novas).
 var _affordable: Dictionary = {}
@@ -173,6 +178,7 @@ var _affordable: Dictionary = {}
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	_load_record()
+	_migrate_old_save()
 
 
 func reset_run() -> void:
@@ -662,32 +668,71 @@ func from_save(d: Dictionary) -> void:
 	ants_eaten_changed.emit(ants_eaten, 0)
 
 
+func save_path(s: int = -1) -> String:
+	return "user://jogo_salvo_%d.json" % (slot if s < 0 else s)
+
+
+func _migrate_old_save() -> void:
+	if FileAccess.file_exists(OLD_SAVE_PATH) and not FileAccess.file_exists(save_path(1)):
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(OLD_SAVE_PATH),
+			ProjectSettings.globalize_path(save_path(1)))
+
+
 ## Só conta como jogo salvo se for da versão atual do mapa.
-func has_saved_game() -> bool:
-	return not read_saved_game().is_empty()
+func has_saved_game(s: int = -1) -> bool:
+	return not read_saved_game(s).is_empty()
+
+
+func any_saved_game() -> bool:
+	return latest_slot() > 0
+
+
+## O jogo salvo mais recente (0 se não houver nenhum).
+func latest_slot() -> int:
+	var best := 0
+	var best_at := -1.0
+	for s in range(1, SLOTS + 1):
+		var d := read_saved_game(s)
+		if not d.is_empty() and float(d.get("saved_at", 0.0)) > best_at:
+			best_at = float(d.get("saved_at", 0.0))
+			best = s
+	return best
+
+
+## Resumo de um jogo salvo para a tela de escolha ({} se estiver vazio).
+func slot_summary(s: int) -> Dictionary:
+	var d := read_saved_game(s)
+	if d.is_empty():
+		return {}
+	var st: Dictionary = d.get("state", {})
+	return {"eaten": int(st.get("ants_eaten", 0)), "elapsed": float(st.get("elapsed", 0.0)),
+		"saved_at": float(d.get("saved_at", 0.0)), "completed": bool(st.get("completed", false))}
 
 
 func write_saved_game(data: Dictionary) -> void:
 	if DevTools.autoplay and not DevTools.args.has("allow-save"):
 		return
-	var f := FileAccess.open(GAME_SAVE_PATH, FileAccess.WRITE)
+	data["saved_at"] = Time.get_unix_time_from_system()
+	var f := FileAccess.open(save_path(), FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data, "\t"))
 
 
-func read_saved_game() -> Dictionary:
-	if not FileAccess.file_exists(GAME_SAVE_PATH):
+func read_saved_game(s: int = -1) -> Dictionary:
+	var path := save_path(s)
+	if not FileAccess.file_exists(path):
 		return {}
-	var txt := FileAccess.get_file_as_string(GAME_SAVE_PATH)
+	var txt := FileAccess.get_file_as_string(path)
 	var parsed = JSON.parse_string(txt)
 	if not parsed is Dictionary or int(parsed.get("version", 0)) != SAVE_VERSION:
 		return {}
 	return parsed
 
 
-func delete_saved_game() -> void:
-	if FileAccess.file_exists(GAME_SAVE_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(GAME_SAVE_PATH))
+func delete_saved_game(s: int = -1) -> void:
+	var path := save_path(s)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 static func format_time(t: float) -> String:

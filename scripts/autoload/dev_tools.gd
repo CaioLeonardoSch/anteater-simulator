@@ -16,6 +16,8 @@ extends Node
 ##   --open=N|all                 abre as câmaras do formigueiro N (ou de todos)
 ##   --allow-save                 deixa o bot salvar o jogo (teste)
 ##   --start=continue             continua o jogo salvo
+##   --start=slots                abre a tela dos jogos salvos
+##   --slot=N                     usa o jogo salvo N (1 a 3)
 ##   --start=settings --tab=N     abre as configurações na aba N
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
 ##   --hats                       chapéu de Natal em uma formiga a cada 20

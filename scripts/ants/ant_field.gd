@@ -7,8 +7,12 @@ extends Node3D
 ## (lamber, fugir, farejar, tremor).
 ##
 ## As formigas ficam em grupos ("chunks"): um por trilha e um por câmara do
-## campo. Cada grupo tem 4 camadas de desenho (de perto a longe), e cada camada
-## só desenha as formigas na sua faixa de distância.
+## campo. Cada grupo tem 5 camadas de desenho (de perto a longe), e cada camada
+## só desenha as formigas na sua faixa de distância. As 3 camadas de longe
+## (malhas simples) recebem o grupo inteiro; as 2 de perto (malhas detalhadas)
+## recebem só as formigas que estão perto da faixa delas, separadas aqui
+## algumas vezes por segundo (assim a placa de vídeo não monta a malha
+## detalhada de centenas de formigas que estão longe).
 ## Quando uma formiga precisa de atenção (fugir, ficar tonta, ir para a língua),
 ## o enxame (ant_swarm.gd) a assume: aqui ela some até voltar para o lugar.
 
@@ -20,7 +24,8 @@ const FIELD_SCENT_SHADER := preload("res://shaders/ant_field_scent.gdshader")
 const TRAIL := 0
 const ROAM := 1
 ## Faixas de distância de cada camada (malha detalhada perto, mínima longe).
-const LOD_BANDS := [Vector2(0.0, 4.5), Vector2(4.5, 11.0), Vector2(11.0, 24.0), Vector2(24.0, 100000.0)]
+const LOD_BANDS := [Vector2(0.0, 4.0), Vector2(4.0, 9.5), Vector2(9.5, 22.0), Vector2(22.0, 40.0),
+	Vector2(40.0, 100000.0)]
 const DRAW_DIST := 95.0
 ## Números por formiga no buffer da MultiMesh (12 da transformação, 4 da cor, 4 extras).
 const STRIDE := 20
@@ -35,6 +40,19 @@ const HAT_CHANCE := 0.0000625
 ## Some no buraco (trilha: perto do olheiro; passeio: perto da câmara).
 const TRAIL_HIDE_S := 0.2
 const ROAM_HIDE_RHO := 0.15
+## Separação das camadas de perto: folga (m) em volta de cada faixa, e de
+## quanto em quanto tempo (s) ou quanto a câmera anda (m) até separar de novo.
+## A folga cobre o que a formiga e a câmera andam entre uma separação e outra.
+const SORT_MARGIN := 1.5
+const SORT_EVERY := 0.25
+const SORT_MOVE := 1.0
+## Malha da sombra das formigas de perto.
+const SHADOW_LOD := 2
+## Quantas camadas (as de perto) são separadas.
+const NEAR_LODS := 3
+## Diferença máxima de altura entre a câmera e as formigas (a faixa é medida
+## em 3D, a separação no chão).
+const SORT_DY := 2.5
 
 
 class Chunk extends RefCounted:
@@ -54,6 +72,14 @@ class Chunk extends RefCounted:
 	var reach := 0.0
 	## Para achar depressa as formigas da trilha perto de um ponto.
 	var near := PackedByteArray()
+	## Camadas de perto: quando e de onde foram separadas (-1 = vazias).
+	var sorted_at := -INF
+	var sorted_cam := Vector3.INF
+	var near_on := false
+	## Sombra das formigas de perto, feita com uma malha simples (a sombra é
+	## pequena; a malha detalhada só aparece na imagem).
+	var shadow_mm: MultiMesh
+	var shadow_mmi: MultiMeshInstance3D
 
 
 var world
@@ -68,14 +94,23 @@ var _scent_mats: Array[ShaderMaterial] = []
 var _meshes: Array[Mesh] = []
 var _scent_on := false
 var _glow := Color(1.0, 0.75, 0.3)
+## Faixa (no chão, ao quadrado) de cada camada de perto, já com a folga.
+var _sort_lo2 := PackedFloat32Array()
+var _sort_hi2 := PackedFloat32Array()
 
 
 ## Monta tudo. `trail_counts[k]` = formigas na trilha k; `roams` = lista de
 ## {code, home: Vector2, reach: float, count: int}.
 func build(w, trail_counts: Array, roams: Array, rng: RandomNumberGenerator) -> void:
 	world = w
-	for lod in 4:
+	for lod in LOD_BANDS.size():
 		_meshes.append(AntMeshBuilder.build("worker", lod))
+	# A distância de verdade (3D) fica entre a do chão (h) e raiz(h² + dy²).
+	for lod in NEAR_LODS:
+		var band: Vector2 = LOD_BANDS[lod]
+		var lo := maxf(band.x - SORT_MARGIN, 0.0)
+		_sort_lo2.append(maxf(lo * lo - SORT_DY * SORT_DY, 0.0))
+		_sort_hi2.append(pow(band.y + SORT_MARGIN, 2.0))
 	var trail_tex := _trail_texture()
 	var height_tex := _height_texture()
 	for kind in 2:
@@ -229,26 +264,42 @@ func _add_roam_chunk(code: int, home: Vector2, reach: float, n: int, rng: Random
 func _finish_chunk(ch: Chunk, box: AABB) -> void:
 	ch.center = box.get_center()
 	ch.radius = box.size.length() * 0.5
-	for lod in 4:
+	for lod in LOD_BANDS.size():
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_colors = true
 		mm.use_custom_data = true
 		mm.mesh = _meshes[lod]
-		mm.instance_count = ch.count
 		mm.custom_aabb = box
-		mm.buffer = ch.buf
+		# As camadas de perto começam vazias (veja _sort_near).
+		if lod >= NEAR_LODS:
+			mm.instance_count = ch.count
+			mm.buffer = ch.buf
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		mmi.material_override = _mats[ch.kind]
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if lod == 0 \
-			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mmi.set_instance_shader_parameter("lod_band", LOD_BANDS[lod])
 		mmi.set_instance_shader_parameter("glow_color", _glow)
 		mmi.visible = false
 		add_child(mmi)
 		ch.mms.append(mm)
 		ch.mmis.append(mmi)
+	var smm := MultiMesh.new()
+	smm.transform_format = MultiMesh.TRANSFORM_3D
+	smm.use_colors = true
+	smm.use_custom_data = true
+	smm.mesh = _meshes[SHADOW_LOD]
+	smm.custom_aabb = box
+	var smmi := MultiMeshInstance3D.new()
+	smmi.multimesh = smm
+	smmi.material_override = _mats[ch.kind]
+	smmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	smmi.set_instance_shader_parameter("lod_band", LOD_BANDS[0])
+	smmi.visible = false
+	add_child(smmi)
+	ch.shadow_mm = smm
+	ch.shadow_mmi = smmi
 	chunks.append(ch)
 
 
@@ -262,17 +313,74 @@ func _process(delta: float) -> void:
 			m.set_shader_parameter("ant_time", time)
 			m.set_shader_parameter("ant_cam", cam)
 	for ch in chunks:
+		var changed := ch.dirty
 		if ch.dirty:
 			ch.dirty = false
-			for mm in ch.mms:
-				mm.buffer = ch.buf
+			for lod in range(NEAR_LODS, LOD_BANDS.size()):
+				ch.mms[lod].buffer = ch.buf
 		var d := ch.center.distance_to(cam)
 		var dmin := maxf(d - ch.radius, 0.0)
 		var dmax := d + ch.radius
 		var show := ch.alive > 0 and dmin < DRAW_DIST
-		for lod in 4:
+		for lod in range(NEAR_LODS, LOD_BANDS.size()):
 			var band: Vector2 = LOD_BANDS[lod]
 			ch.mmis[lod].visible = show and band.x < dmax and band.y > dmin
+		var near: bool = show and dmin < float(LOD_BANDS[NEAR_LODS - 1].y) + SORT_MARGIN
+		if near:
+			if changed or not ch.near_on or time - ch.sorted_at > SORT_EVERY \
+					or cam.distance_squared_to(ch.sorted_cam) > SORT_MOVE * SORT_MOVE:
+				_sort_near(ch)
+		elif ch.near_on:
+			_clear_near(ch)
+
+
+## Separa as formigas do grupo nas camadas de perto: cada camada recebe as
+## que estão (ou podem chegar até a próxima separação) na faixa dela.
+func _sort_near(ch: Chunk) -> void:
+	ch.near_on = true
+	ch.sorted_at = time
+	ch.sorted_cam = cam
+	var c2 := Vector2(cam.x, cam.z)
+	var lists: Array[PackedInt32Array] = []
+	for lod in NEAR_LODS:
+		lists.append(PackedInt32Array())
+	var b := ch.buf
+	for i in ch.count:
+		var o := i * STRIDE
+		if b[o + 8] < 0.5:
+			continue
+		var p := ant_xz(ch, i)
+		if p == Vector2.INF:
+			# Dentro do buraco: vale a boca dele (pode sair a qualquer hora).
+			p = ch.trail.point_at(0.0) if ch.kind == TRAIL else ch.home
+		var h2 := p.distance_squared_to(c2)
+		for lod in NEAR_LODS:
+			if h2 < _sort_hi2[lod] and h2 >= _sort_lo2[lod]:
+				lists[lod].append(i)
+	for lod in NEAR_LODS:
+		var idx := lists[lod]
+		var mm := ch.mms[lod]
+		var nb := PackedFloat32Array()
+		for i in idx:
+			nb.append_array(b.slice(i * STRIDE, (i + 1) * STRIDE))
+		mm.instance_count = idx.size()
+		if idx.size() > 0:
+			mm.buffer = nb
+		ch.mmis[lod].visible = idx.size() > 0
+		if lod == 0:
+			ch.shadow_mm.instance_count = idx.size()
+			if idx.size() > 0:
+				ch.shadow_mm.buffer = nb
+			ch.shadow_mmi.visible = idx.size() > 0
+
+
+func _clear_near(ch: Chunk) -> void:
+	ch.near_on = false
+	for lod in NEAR_LODS:
+		ch.mms[lod].instance_count = 0
+		ch.mmis[lod].visible = false
+	ch.shadow_mm.instance_count = 0
+	ch.shadow_mmi.visible = false
 
 
 # ------------------------------------------------------------------ A conta

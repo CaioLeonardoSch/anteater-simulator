@@ -38,6 +38,7 @@ var _tip_title: Label
 var _tip_where: Label
 var _tip_desc: Label
 var _tip_state: Label
+var _tip_stats: GridContainer
 var _respec: Button
 var _first_node: Control
 var _shown_id := ""
@@ -81,7 +82,7 @@ func _ready() -> void:
 	_respec = UiTheme.button("Redistribuir pontos", 280)
 	_respec.pressed.connect(_on_respec)
 	footer.add_child(_respec)
-	var back := UiTheme.button("Voltar ao jogo  [TAB]", 300)
+	var back := UiTheme.button("Voltar ao jogo  [%s]" % Settings.key_label("skill_tree").to_upper(), 300)
 	back.pressed.connect(func(): closed.emit())
 	footer.add_child(back)
 	_build_tip()
@@ -173,6 +174,13 @@ func _build_tip() -> void:
 	_tip_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tip_desc.custom_minimum_size = Vector2(340, 0)
 	v.add_child(_tip_desc)
+	# Antes → depois, em números.
+	_tip_stats = GridContainer.new()
+	_tip_stats.columns = 2
+	_tip_stats.add_theme_constant_override("h_separation", 16)
+	_tip_stats.add_theme_constant_override("v_separation", 1)
+	_tip_stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(_tip_stats)
 	_tip_state = UiTheme.label("", 17, UiTheme.SAND, true)
 	_tip_state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tip_state.custom_minimum_size = Vector2(340, 0)
@@ -266,6 +274,17 @@ func _show_tip(id: String) -> void:
 		where += " · linha de %s" % branch.lines[u.col]
 	_tip_where.text = where
 	_tip_desc.text = u.desc
+	for c in _tip_stats.get_children():
+		_tip_stats.remove_child(c)
+		c.queue_free()
+	var changes := GameState.stat_changes(id)
+	_tip_stats.visible = not changes.is_empty()
+	for ch in changes:
+		var l := UiTheme.label(ch.label, 16, UiTheme.SAND)
+		_tip_stats.add_child(l)
+		var val := UiTheme.label("%s  →  %s" % [ch.before, ch.after], 16, branch.color.lightened(0.35))
+		val.add_theme_font_override("font", UiTheme.display_bold_font())
+		_tip_stats.add_child(val)
 	var pts := GameState.points_available()
 	var cost: int = u.cost
 	var col := UiTheme.SAND
@@ -283,7 +302,7 @@ func _show_tip(id: String) -> void:
 				text = "Custa %d pontos · clique para aprender." % cost
 				col = branch.color.lightened(0.3)
 			else:
-				text = "Custa %d pontos · faltam %d formigas." % [cost, GameState.ants_needed(cost)]
+				text = "Custa %d pontos · faltam %d insetos." % [cost, GameState.ants_needed(cost)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true

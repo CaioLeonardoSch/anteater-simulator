@@ -18,6 +18,8 @@ produção, os protótipos e as decisões, num lugar só.
 | ![Formigas passeando em volta de uma câmara no meio do campo, muitas carregando folhas](docs/screenshots/passeio.jpg) | ![Um formigueiro grande desmanchado: o buraco com a rainha no fundo, cheio de formigas](docs/screenshots/rainha.jpg) |
 | ![HUD com cartões de conquista, o resultado do faro e as dicas de controle](docs/screenshots/hud.jpg) | ![Mapa no TAB, colorido onde você já andou](docs/screenshots/mapa.jpg) |
 | ![Árvore de habilidades, na aba ao lado do mapa](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
+| ![Mapa com os 18 formigueiros e os insetos que faltam em cada um](docs/screenshots/mapa-18-formigueiros.jpg) | ![Estatísticas, abertas pelo botão da pausa (Esc)](docs/screenshots/estatisticas-pausa.jpg) |
+| ![Modo contra o relógio: cronômetro e parcial no canto](docs/screenshots/contra-o-relogio.jpg) | ![O sol antes e depois do ajuste da névoa](docs/screenshots/sol-antes-depois.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
 > No seu PC fica igual ou melhor.
@@ -28,18 +30,20 @@ produção, os protótipos e as decisões, num lugar só.
 
 Uma **clareira do cerrado no fim da tarde**, cercada por penhascos. O tamanduá
 acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
-ronca: hora de comer. A colônia tem **32 000 formigas**, cada uma andando
-sozinha, e **12 formigueiros**. Um terço anda em fila pelas trilhas de terra,
-mais de um terço passeia pelo campo em volta das câmaras espalhadas pelo mapa,
-e o resto mora nas **câmaras**, que você abre cavando. Perto da caverna ficam os
-formigueiros pequenos; os 5 grandes, do lado da saída, guardam uma **rainha**
-bem no fundo. **Cada 10 formigas comidas valem 1 ponto** e cada
-habilidade tem o seu preço. Com a clareira **100% limpa**, as garras quebram o
+ronca: hora de comer. A colônia tem **32 000 insetos**, cada um andando
+sozinho, e **18 formigueiros** espalhados pelo mapa inteiro. Um quarto anda em
+fila pelas trilhas de terra, um quarto passeia pelo campo em volta das câmaras
+espalhadas pelo mapa, e a metade mora nas **câmaras**, que você abre cavando.
+Perto da caverna ficam os formigueiros pequenos; os 7 grandes, do lado da
+saída, guardam uma **rainha** bem no fundo. **Cada 10 insetos comidos valem 1
+ponto** e cada habilidade tem o seu preço. Com a clareira **100% limpa**, as garras quebram o
 **tronco caído** que fecha a saída, e a demo termina.
 
 A demo é a **primeira área** de um mapa maior, todo cercado por penhascos, que
 leva até o cupinzeiro gigante; o plano está em
-[`docs/DESIGN.md`](docs/DESIGN.md).
+[`docs/DESIGN.md`](docs/DESIGN.md). A pesquisa sobre o ciclo das habilidades e a
+economia da compra, com a simulação do bot e a proposta de reformulação, está
+em [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md).
 
 ### Como rodar
 
@@ -66,11 +70,14 @@ tela, a resolução e a qualidade gráfica.
 | Farejar* | `Q` ou clique direito | `LT` |
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
 | Tremor* (pulo) | `Espaço` | `A` |
-| Mapa e árvore de habilidades | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Mapa, habilidades e estatísticas | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
 | Pausa | `Esc` | `Start` |
 | Tela cheia | `F11` ou `Alt+Enter` | |
 
-\* liberados pela árvore de habilidades.
+\* liberados pela árvore de habilidades. Todas as teclas podem ser trocadas em
+Configurações → Controles, e Correr e Cavar podem ser "segurar" ou "apertar
+uma vez".
 
 ### O que tem na demo hoje
 
@@ -86,14 +93,24 @@ tela, a resolução e a qualidade gráfica.
 - **Mapa** (`Tab`): o mapa inteiro visto de cima, com a saída para cima e para
   a direita. A clareira fica colorida onde você já andou; as áreas 2, 3 e 4
   aparecem pretas, com cadeado. A roda do mouse aproxima e arrastar move. Mostra
-  os formigueiros (limpos, começados ou não visitados), as câmaras que você já
-  viu, a caverna e você; passe o mouse num formigueiro para ver a área dele.
-- **32 000 formigas, uma a uma:** nas trilhas elas vão e voltam do arbusto
+  os formigueiros (limpos, começados ou não visitados), **quantos insetos
+  faltam em cada formigueiro já visto**, as câmaras que você já viu, a caverna
+  e você; passe o mouse num formigueiro para ver a área dele. Clique direito
+  põe um **marcador**, que aparece na bússola com a distância.
+- **Estatísticas** (botão na pausa, `Esc`, e na tela do fim): os números do jogo
+  (insetos, formigueiros, câmaras, rainhas, maior combo, linguadas e acerto,
+  distância andada...), as parciais do contra o relógio e os recordes de todos
+  os jogos.
+- **Contra o relógio:** ao começar um jogo novo, escolha Normal ou Contra o
+  relógio. No relógio, um cronômetro fica no canto e cada 25% dos insetos marca
+  um tempo parcial, comparado com o do seu recorde (verde mais rápido, vermelho
+  mais lento). Pausa, mapa e habilidades param o relógio.
+- **32 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
   entram de novo. Cada uma foge sozinha quando você chega perto, e cada
   formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal.
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
-  fechadas, e 36 delas ficam sozinhas no meio do campo (as formigas que
+  fechadas, e 48 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
   passeiam em volta contam para o formigueiro dono da câmara). Com **Cavar**
   (Garras), segure `E` perto de uma para abri-la: as moradoras **saem
   correndo**, fogem quando você chega perto e depois voltam para casa. Até 40
@@ -108,7 +125,7 @@ tela, a resolução e a qualidade gráfica.
 - **Língua:** no começo ela é lenta (pouco mais de uma lambida por segundo) e
   vai reta até onde você mira, pegando até 10 formigas perto da ponta. A linha
   de Destreza a deixa mais rápida. Com **Língua Certeira**, ela vai sozinha atrás da formiga mais perto
-  da mira (marcada com um anel verde); a **Mira Ampla** aumenta essa área.
+  da mira (com um contorno verde suave); a **Mira Ampla** aumenta essa área.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
@@ -120,25 +137,28 @@ tela, a resolução e a qualidade gráfica.
   formigueiro e onde estão as rainhas. A cor do faro (vermelha) pode ser trocada
   em Configurações → Jogo.
 - **Tremor:** um pulo; ao cair, as formigas em volta ficam tontas.
-- **Tanajuras** (douradas, voando) ativam o **Frenesi**: língua mais rápida e
-  mais longa por 6 s.
+- **Tanajuras** (douradas, voando, com um zumbido baixinho quando estão perto)
+  ativam o **Frenesi**: língua mais rápida e mais longa por 6 s.
 - **Progresso:** formigueiro limpo ganha flores, e um losango por formigueiro
   no canto da tela mostra quantos faltam.
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
   do mapa). Você começa numa caverna no pé deles, e uma trilha de terra leva até
   o formigueiro mais perto. O cupinzeiro gigante aparece lá longe, por cima dos
-  penhascos. É sempre o mesmo fim de tarde, e há duas lagoas de enfeite. O alto
+  penhascos. É sempre o mesmo fim de tarde, e há quatro lagoas de enfeite, de
+  formas irregulares. O alto
   dos penhascos é cheio de árvores, e depois da passagem para a próxima área
   uma rampa sobe para uma mata fechada.
 - **Árvore de habilidades** (`Tab`, aba ao lado do mapa): uma constelação, com
   os ramos saindo do centro. Passe o mouse numa habilidade para ver o que ela
-  faz e clique para aprender; as aprendidas acendem em dourado. Ela não abre
+  faz (com os números de antes → depois) e clique para aprender; as aprendidas
+  acendem em dourado. Ela não abre
   sozinha: um selo no canto (◆ 2 Tab) mostra quando já dá para aprender algo.
 - **Fim da demo:** um tronco caído fecha a passagem para a próxima área. Com
   todas as formigas comidas, a bússola mostra a saída: segure `E` perto do
   tronco e as garras quebram o tronco.
-- **Sem derrota.** O jogo **salva sozinho**; na tela inicial aparecem
-  **Continuar** e **Novo jogo**.
+- **Sem derrota.** O jogo **salva sozinho**, em até **3 jogos salvos**; na tela
+  inicial, **Continuar** abre o mais recente e **Jogos salvos** mostra os três
+  (dá para apagar um).
 
 ### Habilidades
 
@@ -164,8 +184,12 @@ Em **Configurações**:
 - **Gráficos:** um preset ajusta tudo de uma vez, ou ajuste item por item:
   sombras, capim, suavização (FXAA, MSAA ou TAA), sombra de contato (SSAO), luz
   rebatida (SSIL), neblina volumétrica e brilho do sol.
-- **Jogo:** sensibilidade do mouse, inverter eixo Y, campo de visão, balanço
-  da câmera, cor do faro e dicas (Todas, Poucas ou Nenhuma).
+- **Jogo:** sensibilidade do mouse e do controle, inverter eixo Y, campo de
+  visão, balanço da câmera, cor do faro, dicas (Todas, Poucas ou Nenhuma) e
+  mostrar ou esconder a interface (HUD).
+- **Controles:** trocar qualquer tecla; Correr e Cavar como "segurar" ou
+  "apertar uma vez".
+- **Áudio:** volume geral, música, efeitos e ambiente.
 
 | Preset | O que muda |
 |---|---|
@@ -232,7 +256,10 @@ godot --path . -- --start=play --autoplay --timescale=4 --stats
 ```
 
 `--start=play|map|tree|settings|howto` pula o menu (`map` e `tree` já abrem a
-tela do TAB) · `--autoplay` um bot joga sozinho ·
+tela do TAB) · `--autoplay` um bot joga sozinho e compra as habilidades em
+rodízio entre os ramos · `--botlog=arquivo.csv` o bot anota cada compra, cada
+formigueiro limpo e o progresso a cada 30 s, e fecha no fim · `--physics-scale`
+com `--timescale`, mantém o passo da física igual ao do jogo normal ·
 `--give=N` começa com N formigas · `--buy=lingua_segurar,garras_cavar` aprende
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·

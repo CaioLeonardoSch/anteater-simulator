@@ -78,6 +78,8 @@ var _stomp_pending := false
 var _air_time := 0.0
 var pull_time := 0.0
 var dig_progress := 0.0
+var _run_latch := false
+var _dig_latch := false
 var near_nest = null
 ## Câmara fechada ao alcance das garras (formigueiro + índice).
 var dig_nest = null
@@ -95,6 +97,15 @@ var running := false
 
 # Bot (teste automático)
 var _bot_target := -1
+## Alvo do bot entre as formigas do campo (trilhas e passeios): grupo e índice.
+var _bot_field := Vector2i(-1, -1)
+## Tempo desde a última formiga comida: se passar muito, o bot muda de alvo.
+var _bot_hungry := 0.0
+## Alvos que o bot desistiu de pegar (índice -> quando tentar de novo).
+var _bot_skip := {}
+## Quantos insetos estão no raio do Tremor (contado junto com a escolha do alvo).
+var _bot_crowd := 0
+var _bot_eaten := 0
 var _bot_think := 0.0
 var _bot_lick := false
 var _bot_run := false
@@ -226,10 +237,13 @@ func _physics_process(delta: float) -> void:
 	var want_run := false
 	if controls_enabled:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		want_run = Input.is_action_pressed("run") and GameState.can_run()
+		want_run = _run_held(input) and GameState.can_run()
+		_update_dig_latch()
 		var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
-		yaw -= look.x * delta * 2.6
-		pitch = clampf(pitch - look.y * delta * 2.0, deg_to_rad(-75.0), deg_to_rad(40.0))
+		var gs := Settings.gamepad_sensitivity
+		yaw -= look.x * delta * 2.6 * gs
+		var inv := -1.0 if Settings.invert_y else 1.0
+		pitch = clampf(pitch - look.y * delta * 2.0 * gs * inv, deg_to_rad(-75.0), deg_to_rad(40.0))
 	elif bot:
 		_bot_update(delta)
 		input = _bot_input
@@ -278,6 +292,11 @@ func _physics_process(delta: float) -> void:
 	head.rotation.x = pitch
 	var spd := hv.length()
 	running = want_run and spd > GameState.walk_speed() * 1.1
+	if controls_enabled:
+		var rv := get_real_velocity()
+		GameState.count("distance", Vector2(rv.x, rv.z).length() * delta)
+		if running:
+			GameState.count("run_time", delta)
 	swarm.threat_pos = global_position
 	swarm.flee_radius = (1.0 + clampf(spd / maxf(GameState.walk_speed(), 0.1), 0.0, 2.0) * 0.9) \
 		* GameState.flee_multiplier(running)
@@ -329,12 +348,41 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set("player_pos", global_position)
 
 
+## Correr: segurando a tecla ou, com "Correr: Apertar" nas configurações,
+## apertando uma vez (desliga ao apertar de novo ou ao parar de andar).
+func _run_held(input: Vector2) -> bool:
+	if not Settings.run_toggle:
+		_run_latch = false
+		return Input.is_action_pressed("run")
+	if Input.is_action_just_pressed("run"):
+		_run_latch = not _run_latch
+	if input.length() < 0.1:
+		_run_latch = false
+	return _run_latch
+
+
+## Cavar com "Cavar: Apertar": um toque começa e as garras seguem até abrir
+## (ou até você se afastar, ou apertar de novo).
+func _update_dig_latch() -> void:
+	if not Settings.dig_toggle:
+		_dig_latch = false
+		return
+	if Input.is_action_just_pressed("dig"):
+		_dig_latch = not _dig_latch
+	if dig_nest == null and not near_exit:
+		_dig_latch = false
+
+
+func _dig_held() -> bool:
+	return _dig_latch if Settings.dig_toggle else Input.is_action_pressed("dig")
+
+
 ## Quebrando o tronco da saída com as garras (só com a clareira 100% limpa).
 func _breaking_exit() -> bool:
 	if not near_exit or not GameState.can_dig():
 		return false
 	if controls_enabled:
-		return Input.is_action_pressed("dig")
+		return _dig_held()
 	return false
 
 
@@ -345,7 +393,7 @@ func _is_digging() -> bool:
 	if GameState.dig_level() < dig_nest.chambers[dig_chamber].size_class:
 		return false
 	if controls_enabled:
-		return Input.is_action_pressed("dig")
+		return _dig_held()
 	return bot and _bot_dig
 
 
@@ -417,6 +465,7 @@ func _start_flick() -> void:
 	t_target = target
 	t_state = Tongue.OUT
 	t_time = 0.0
+	GameState.count("licks")
 	Sfx.play("tongue", -7.0, 1.0, 0.12)
 
 
@@ -455,6 +504,7 @@ func _tracked_ant() -> int:
 ## Para a mira da tela: a formiga que a língua vai buscar e se a lambida pega alguma.
 func _update_aim() -> void:
 	aim_ant = _tracked_ant()
+	swarm.aim_target = aim_ant
 	if aim_ant >= 0:
 		aim_hits = true
 	else:
@@ -471,6 +521,7 @@ func _capture() -> void:
 		queen_blocked.emit()
 		Sfx.play("deny", -8.0)
 	if t_stuck.size() > 0:
+		GameState.count("licks_hit")
 		Sfx.play("slurp", -4.0, 1.0, 0.1)
 
 
@@ -587,6 +638,7 @@ func _update_abilities(delta: float) -> void:
 			var opened_chamber := dig_chamber
 			var released: int = colony.open_chamber(opened_nest, opened_chamber, false, GameState.dig_stun_time())
 			dig_cd = GameState.dig_cooldown()
+			_dig_latch = false
 			shake = 0.5
 			Sfx.play("burst", -2.0)
 			dug.emit(opened_nest, opened_chamber, released)
@@ -614,8 +666,15 @@ func _update_abilities(delta: float) -> void:
 	else:
 		exit_progress = maxf(exit_progress - delta * 2.0, 0.0)
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
-	if bot and GameState.can_tremor() and tremor_cd <= 0.0 and _bot_target >= 0:
-		want_tremor = swarm.alive[_bot_target] == 1 and swarm.pos[_bot_target].distance_to(global_position) < 4.0
+	if bot and GameState.can_tremor() and tremor_cd <= 0.0:
+		# Tremor quando vale a pena: um bolo de insetos em volta, ou o alvo
+		# fugindo perto.
+		var fleeing: bool = _bot_target >= 0 and swarm.alive[_bot_target] == 1 \
+			and swarm.mode[_bot_target] == swarm.Mode.FLEE \
+			and swarm.pos[_bot_target].distance_to(global_position) < GameState.tremor_radius() * 0.7
+		want_tremor = _bot_crowd >= BOT_TREMOR_CROWD or fleeing
+		if want_tremor:
+			_bot_crowd = 0
 	if want_tremor and GameState.can_tremor() and tremor_cd <= 0.0 and is_on_floor():
 		do_tremor()
 	if pull_time > 0.0:
@@ -653,6 +712,7 @@ func do_sniff() -> void:
 				if not c.opened and here.distance_to(c.pos2) <= reach:
 					sniff_chambers.append(n.chamber_world_pos(c))
 		world.scent_marks.show_pillars(sniff_chambers)
+	GameState.count("sniffs")
 	Sfx.play("sniff", -3.0)
 	sniffed.emit(res.count, res.capped, res.nearest, sniff_chambers.size())
 
@@ -662,6 +722,7 @@ func do_tremor() -> void:
 	tremor_cd = GameState.tremor_cooldown()
 	_jump_request = true
 	_stomp_pending = true
+	GameState.count("tremors")
 	Sfx.play("step", -4.0, 0.7)
 
 
@@ -739,23 +800,55 @@ func _update_arms(delta: float) -> void:
 
 # ------------------------------------------------------------- Bot de teste
 
+## O bot usa o Tremor quando tem pelo menos isso de insetos no raio dele.
+const BOT_TREMOR_CROWD := 12
+
+
 func _bot_update(delta: float) -> void:
 	_bot_think -= delta
-	if _bot_think <= 0.0 or _bot_target < 0 or swarm.alive[_bot_target] == 0 \
-			or swarm.mode[_bot_target] == swarm.Mode.STUCK:
+	if GameState.ants_eaten != _bot_eaten:
+		_bot_eaten = GameState.ants_eaten
+		_bot_hungry = 0.0
+	else:
+		_bot_hungry += delta
+	var field = swarm.field
+	var field_pos := Vector3.INF
+	if _bot_field.x >= 0:
+		var st: Vector4 = field.ant_state(field.chunks[_bot_field.x], _bot_field.y)
+		if st.w != INF:
+			field_pos = Vector3(st.x, st.y, st.z)
+	var lost: bool = _bot_target >= 0 and (swarm.alive[_bot_target] == 0 or swarm.mode[_bot_target] == swarm.Mode.STUCK)
+	if _bot_hungry > 20.0:
+		# Muito tempo sem comer: larga o alvo e dá uns passos para o lado.
+		print("[bot] sem comer: pos=%s alvo=%d (tipo %d, modo %d) campo=%s alvo_pos=%s" % [global_position.snapped(Vector3.ONE * 0.1),
+			_bot_target, swarm.kind[_bot_target] if _bot_target >= 0 else -1, swarm.mode[_bot_target] if _bot_target >= 0 else -1,
+			_bot_field, (swarm.pos[_bot_target] if _bot_target >= 0 else field_pos).snapped(Vector3.ONE * 0.1)])
+		if _bot_target >= 0:
+			_bot_skip[_bot_target] = GameState.elapsed + 60.0
+		elif _bot_field.x >= 0:
+			_bot_skip[Vector2i(_bot_field)] = GameState.elapsed + 60.0
+		_bot_hungry = 0.0
+		lost = true
+		_bot_side = -1.0 if randf() < 0.5 else 1.0
+		_bot_side_t = 2.5
+	# Alvo do campo sumiu (entrou no buraco): escolhe outro logo, mas sem
+	# refazer a busca toda a cada quadro.
+	var gone: bool = _bot_target < 0 and field_pos == Vector3.INF and _bot_think < 0.45
+	if _bot_think <= 0.0 or lost or gone:
 		_bot_think = 0.6
-		_bot_target = -1
-		var best := INF
-		for i in swarm.CAPACITY:
-			if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i):
-				continue
-			var d: float = swarm.pos[i].distance_squared_to(global_position)
-			if d < best:
-				best = d
-				_bot_target = i
+		_bot_pick_target(field)
+		field_pos = Vector3.INF
+		if _bot_field.x >= 0:
+			var st: Vector4 = field.ant_state(field.chunks[_bot_field.x], _bot_field.y)
+			field_pos = Vector3(st.x, st.y, st.z)
 	_bot_lick = false
 	_bot_input = Vector2.ZERO
 	_bot_run = false
+	if _bot_side_t > 0.0 and _bot_hungry < 3.0:
+		# Acabou de desistir de um alvo: anda um pouco de lado antes de seguir.
+		_bot_side_t -= delta
+		_bot_input = Vector2(_bot_side, -0.3).normalized()
+		return
 	_bot_dig = dig_nest != null and GameState.can_dig() and dig_cd <= 0.0
 	if _bot_dig:
 		return
@@ -763,6 +856,8 @@ func _bot_update(delta: float) -> void:
 	var to_chamber := false
 	if _bot_target >= 0:
 		goal = swarm.pos[_bot_target]
+	elif field_pos != Vector3.INF:
+		goal = field_pos + Vector3(0, 0.04, 0)
 	if GameState.can_dig() and dig_cd <= 0.0:
 		var ch := _bot_nearest_closed_chamber()
 		if ch != Vector3.INF and (goal == Vector3.INF or ch.distance_to(global_position) + 10.0 < goal.distance_to(global_position)):
@@ -776,7 +871,9 @@ func _bot_update(delta: float) -> void:
 	var to_goal := goal - cam_pos
 	var dist := Vector2(to_goal.x, to_goal.z).length()
 	var reach := GameState.tongue_range()
-	var moving := to_chamber or dist > reach * 0.75
+	# Errando de longe faz tempo: chega bem perto antes de lamber de novo.
+	var near := 0.9 if _bot_hungry > 6.0 else reach * 0.75
+	var moving := to_chamber or dist > near
 	var aim := move_goal if moving else goal
 	var to := aim - cam_pos
 	var flat_d := maxf(Vector2(to.x, to.z).length(), 0.01)
@@ -787,10 +884,76 @@ func _bot_update(delta: float) -> void:
 	if moving:
 		if Vector2(move_goal.x - global_position.x, move_goal.z - global_position.z).length() > 0.25:
 			_bot_input = Vector2(0, -1)
-			_bot_run = dist > 9.0
+			# Correr assusta os insetos (menos com o Galope Silencioso): sem ele,
+			# só corre para longe; com ele, corre até perto do alvo.
+			_bot_run = dist > (3.0 if GameState.has("patas_galope") else 9.0)
 			_bot_unstuck(delta)
+		# Já ao alcance da língua: lambe andando (ou correndo, com Lamber Correndo).
+		if not to_chamber and dist <= reach and (not _bot_run or GameState.can_lick_running()):
+			_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
 	else:
 		_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
+
+
+## Escolhe a formiga mais perto: entre as soltas (fugindo, das câmaras,
+## rainhas, tanajuras) e as do campo (trilhas e passeios).
+func _bot_pick_target(field) -> void:
+	_bot_target = -1
+	_bot_field = Vector2i(-1, -1)
+	if GameState.can_tremor() and tremor_cd <= 0.0:
+		var found: Array[Vector4] = []
+		field.gather(global_position, GameState.tremor_radius() * 0.8, found)
+		_bot_crowd = found.size()
+	for k in _bot_skip.keys():
+		if GameState.elapsed >= _bot_skip[k]:
+			_bot_skip.erase(k)
+	var best := INF
+	var reach2 := GameState.tongue_range() * GameState.tongue_range()
+	for i in swarm.CAPACITY:
+		if swarm.alive[i] == 0 or swarm.mode[i] == swarm.Mode.STUCK or swarm._queen_blocked(i) or _bot_skip.has(i):
+			continue
+		var d: float = swarm.pos[i].distance_squared_to(global_position)
+		# Tanajura voando foge mais rápido que o tamanduá andando: só vale
+		# mirar nela quando ela passa perto.
+		if swarm.kind[i] == swarm.TANAJURA and d > reach2:
+			continue
+		if d < best:
+			best = d
+			_bot_target = i
+	# Campo: primeiro o grupo mais perto (pela trilha ou pela câmara do passeio),
+	# depois a formiga mais perto dentro dele.
+	var me := Vector2(global_position.x, global_position.z)
+	var best_ci := -1
+	var best_cd := INF
+	for ci in field.chunks.size():
+		var ch = field.chunks[ci]
+		if ch.alive <= 0:
+			continue
+		var cd := INF
+		if ch.kind == field.TRAIL:
+			for p in ch.trail.points:
+				cd = minf(cd, p.distance_squared_to(me))
+		else:
+			cd = ch.home.distance_squared_to(me)
+		if cd < best_cd:
+			best_cd = cd
+			best_ci = ci
+	if best_ci < 0 or best_cd > best:
+		return
+	var ch = field.chunks[best_ci]
+	var fbest := INF
+	for i in ch.count:
+		var p: Vector2 = field.ant_xz(ch, i)
+		if p == Vector2.INF or _bot_skip.has(Vector2i(best_ci, i)):
+			continue
+		var d := p.distance_squared_to(me)
+		if d < fbest:
+			fbest = d
+			_bot_field = Vector2i(best_ci, i)
+	if _bot_field.x >= 0 and fbest < best:
+		_bot_target = -1
+	else:
+		_bot_field = Vector2i(-1, -1)
 
 
 ## Se ficar preso numa árvore ou pedra, dá um passo de lado por um tempo.

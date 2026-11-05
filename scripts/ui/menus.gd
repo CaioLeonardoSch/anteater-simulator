@@ -4,17 +4,23 @@ extends Control
 
 signal play_pressed
 signal continue_pressed
+## Escolheu um dos jogos salvos (vazio = jogo novo nele).
+signal slot_chosen(slot: int)
 signal resume_pressed
 signal restart_pressed
 signal main_menu_pressed
 signal skill_tree_pressed
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
+const StatsPanel := preload("res://scripts/ui/stats_panel.gd")
 
 var _screens: Dictionary = {}
 var _current := ""
 var _back_to := "title"
-var _end_stats: Label
+## Estatísticas (tela aberta pela pausa) e na tela do fim.
+var _pause_stats: StatsPanel
+var _end_stats: StatsPanel
+var _end_time: Label
 var _end_title: Label
 var _end_sub: Label
 var _restart_button: Button
@@ -22,6 +28,12 @@ var _settings_controls: Dictionary = {}
 var _settings_pages: Array[Control] = []
 var _settings_tab_buttons: Array[Button] = []
 var _settings_note: Label
+## Botões das teclas (ação -> botão) e a ação esperando uma tecla nova.
+var _key_buttons: Dictionary = {}
+var _rebinding := ""
+## Jogo salvo (vazio) onde vai começar o jogo novo e a tela de onde veio.
+var _new_slot := 1
+var _mode_back := "title"
 
 
 func _ready() -> void:
@@ -30,8 +42,11 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_screens.title = _build_title()
 	_screens.pause = _build_pause()
+	_screens.stats = _build_stats()
 	_screens.settings = _build_settings()
 	_screens.howto = _build_howto()
+	_screens.slots = _build_slots()
+	_screens.mode = _build_mode()
 	_screens.end = _build_end()
 	_screens.loading = _build_loading()
 	for k in _screens:
@@ -44,10 +59,18 @@ func show_screen(screen_name: String) -> void:
 		_screens[k].visible = (k == screen_name)
 	_current = screen_name
 	visible = screen_name != ""
+	if screen_name == "stats":
+		_pause_stats.refresh()
 	if screen_name != "":
 		var first := _find_first_button(_screens[screen_name])
 		if first:
 			first.grab_focus.call_deferred()
+
+
+## O mundo e as formigas, para as contas das estatísticas.
+func setup_stats(world, colony) -> void:
+	_pause_stats.setup(world, colony)
+	_end_stats.setup(world, colony)
 
 
 func current() -> String:
@@ -145,7 +168,7 @@ func _build_title() -> Control:
 	sub.add_theme_constant_override("outline_size", 4)
 	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 formigas comidas valem 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 insetos comidos valem 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
 	tag.add_theme_font_override("font", UiTheme.semi_font())
 	tag.add_theme_constant_override("outline_size", 4)
 	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
@@ -155,11 +178,17 @@ func _build_title() -> Control:
 	v.add_child(gap)
 	var cont := UiTheme.button("Continuar")
 	cont.name = "Continue"
-	cont.pressed.connect(func(): continue_pressed.emit())
+	cont.pressed.connect(func():
+		GameState.slot = GameState.latest_slot()
+		continue_pressed.emit())
 	v.add_child(cont)
 	var play := UiTheme.button("Jogar")
 	play.name = "Play"
-	play.pressed.connect(func(): play_pressed.emit())
+	play.pressed.connect(func():
+		if GameState.any_saved_game():
+			_goto("slots", "title")
+		else:
+			_choose_mode(1, "title"))
 	v.add_child(play)
 	var how := UiTheme.button("Como jogar")
 	how.pressed.connect(_goto.bind("howto", "title"))
@@ -180,18 +209,21 @@ func _build_title() -> Control:
 	return s
 
 
-## Com jogo salvo: "Continuar" aparece e "Jogar" vira "Novo jogo".
+## Com jogo salvo: "Continuar" (o mais recente) aparece e "Jogar" vira
+## "Jogos salvos", que abre a escolha entre os 3.
 func _update_title_buttons(cont: Button, play: Button) -> void:
-	var saved := GameState.has_saved_game()
+	var saved := GameState.any_saved_game()
 	cont.visible = saved
-	play.text = "Novo jogo" if saved else "Jogar"
+	play.text = "Jogos salvos" if saved else "Jogar"
 
 
 func _update_record(record: Label) -> void:
+	var parts: Array[String] = []
 	if GameState.best_time > 0.0:
-		record.text = "Seu recorde: %d formigas em %s" % [GameState.GOAL, GameState.format_time(GameState.best_time)]
-	else:
-		record.text = ""
+		parts.append("Seu recorde: %s" % GameState.format_time(GameState.best_time))
+	if GameState.best_time_clock > 0.0:
+		parts.append("Contra o relógio: %s" % GameState.format_clock(GameState.best_time_clock))
+	record.text = "   ·   ".join(parts)
 
 
 ## Recomeçar apaga o jogo salvo: pede um segundo clique para confirmar.
@@ -211,6 +243,137 @@ func _disarm_restart(b: Button) -> void:
 		b.text = "Recomeçar do zero"
 
 
+# ------------------------------------------------------------------ Jogos salvos
+
+## Os 3 jogos salvos: cada um mostra quanto já foi comido e o tempo de jogo;
+## um vazio começa um jogo novo. Apagar pede um segundo clique.
+func _build_slots() -> Control:
+	var s := _screen(0.6)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Jogos salvos", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	var rows: Array = []
+	for slot in range(1, GameState.SLOTS + 1):
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 12)
+		v.add_child(h)
+		var b := UiTheme.button("", 560)
+		b.custom_minimum_size = Vector2(560, 74)
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.pressed.connect(func():
+			if GameState.has_saved_game(slot):
+				slot_chosen.emit(slot)
+			else:
+				_choose_mode(slot, "slots"))
+		h.add_child(b)
+		var del := UiTheme.button("Apagar", 170)
+		del.custom_minimum_size = Vector2(170, 74)
+		del.pressed.connect(_confirm_delete.bind(del, slot))
+		h.add_child(del)
+		rows.append([b, del, slot])
+	var back := UiTheme.button("Voltar", 260)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func(): show_screen(_back_to))
+	v.add_child(back)
+	s.visibility_changed.connect(_update_slots.bind(rows))
+	return s
+
+
+# ------------------------------------------------------------------ Modo do jogo novo
+
+## Jogo novo: normal (no seu ritmo) ou contra o relógio (speedrun).
+func _build_mode() -> Control:
+	var s := _screen(0.6)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Jogo novo", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	_mode_option(v, "Normal", "No seu ritmo, sem cronômetro na tela.", GameState.MODE_NORMAL)
+	var clock_desc := _mode_option(v, "Contra o relógio", "", GameState.MODE_CLOCK)
+	var note := UiTheme.label("O relógio só corre com o jogo rodando: pausa, mapa e habilidades param o tempo.", 17, UiTheme.MUTED)
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(note)
+	var back := UiTheme.button("Voltar", 260)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func(): show_screen(_mode_back))
+	v.add_child(back)
+	s.visibility_changed.connect(func():
+		var best := GameState.best_time_clock
+		clock_desc.text = "Cronômetro na tela e tempos parciais a cada 25% dos insetos." + (
+			"\nSeu recorde: " + GameState.format_clock(best) if best > 0.0 else ""))
+	return s
+
+
+## Um modo: o botão e, embaixo, o que ele muda. Retorna o texto de baixo.
+func _mode_option(v: VBoxContainer, title: String, desc: String, which: String) -> Label:
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 6)
+	v.add_child(box)
+	var b := UiTheme.button(title, 460)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.pressed.connect(_start_new.bind(which))
+	box.add_child(b)
+	var l := UiTheme.label(desc, 19, UiTheme.SAND)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(l)
+	return l
+
+
+func _choose_mode(slot: int, back: String) -> void:
+	_new_slot = slot
+	_mode_back = back
+	show_screen("mode")
+
+
+func _start_new(which: String) -> void:
+	GameState.next_mode = which
+	slot_chosen.emit(_new_slot)
+
+
+func _update_slots(rows: Array) -> void:
+	for r in rows:
+		var b: Button = r[0]
+		var del: Button = r[1]
+		var slot: int = r[2]
+		var info := GameState.slot_summary(slot)
+		del.set_meta("armed", false)
+		del.text = "Apagar"
+		del.visible = not info.is_empty()
+		if info.is_empty():
+			b.text = "  Jogo %d  ·  vazio: começar um jogo novo" % slot
+		else:
+			var when := Time.get_datetime_dict_from_unix_time(int(info.saved_at) + _utc_offset())
+			var clock: bool = info.mode == GameState.MODE_CLOCK
+			b.text = "  Jogo %d  ·  %d de %d insetos  ·  %s\n  %sSalvo em %02d/%02d às %02d:%02d" % [
+				slot, info.eaten, GameState.GOAL,
+				GameState.format_clock(info.elapsed) if clock else GameState.format_time(info.elapsed),
+				"Contra o relógio  ·  " if clock else "", when.day, when.month, when.hour, when.minute]
+
+
+static func _utc_offset() -> int:
+	return int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+
+
+func _confirm_delete(b: Button, slot: int) -> void:
+	if b.get_meta("armed", false):
+		GameState.delete_saved_game(slot)
+		_update_slots_now()
+		return
+	b.set_meta("armed", true)
+	b.text = "Certeza?"
+	get_tree().create_timer(3.0, true).timeout.connect(func():
+		if is_instance_valid(b) and b.get_meta("armed", false):
+			b.set_meta("armed", false)
+			b.text = "Apagar")
+
+
+func _update_slots_now() -> void:
+	var s: Control = _screens.slots
+	s.visible = false
+	s.visible = true
+
+
 func _goto(screen_name: String, back: String) -> void:
 	_back_to = back
 	show_screen(screen_name)
@@ -225,6 +388,7 @@ func _build_pause() -> Control:
 	var buttons := [
 		["Continuar", func(): resume_pressed.emit()],
 		["Árvore de habilidades", func(): skill_tree_pressed.emit()],
+		["Estatísticas", _goto.bind("stats", "pause")],
 		["Como jogar", _goto.bind("howto", "pause")],
 		["Configurações", _goto.bind("settings", "pause")],
 		["Recomeçar do zero", _confirm_restart],
@@ -238,6 +402,23 @@ func _build_pause() -> Control:
 		else:
 			b.pressed.connect(item[1])
 		v.add_child(b)
+	return s
+
+
+## Estatísticas (pela pausa): os quadros e um botão para voltar.
+func _build_stats() -> Control:
+	var s := _screen(0.7)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Estatísticas", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	_pause_stats = StatsPanel.new()
+	_pause_stats.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(_pause_stats)
+	var back := UiTheme.button("Voltar", 260)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func(): show_screen(_back_to))
+	v.add_child(back)
 	return s
 
 
@@ -255,7 +436,7 @@ func _build_howto() -> Control:
 	text.add_theme_font_override("bold_font", UiTheme.bold_font())
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
-	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d formigas[/b]. Coma todas e deixe os [b]12 formigueiros[/b] limpos.
+	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d insetos[/b]. Coma todos e deixe os [b]18 formigueiros[/b] limpos.
 Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
 
 [b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)
@@ -264,7 +445,7 @@ Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câ
 [b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
-· [b]Cada 10 formigas comidas valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
+· [b]Cada 10 insetos comidos valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
 · A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
 · Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Cavar Fundo[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só a [b]Escavação Real[/b] desmancha o monte inteiro.
@@ -293,9 +474,9 @@ func _build_settings() -> Control:
 	var stack := MarginContainer.new()
 	stack.custom_minimum_size = Vector2(800, 446)
 	v.add_child(stack)
-	var tab_names := ["Tela", "Gráficos", "Jogo", "Áudio"]
+	var tab_names := ["Tela", "Gráficos", "Jogo", "Controles", "Áudio"]
 	for i in tab_names.size():
-		var b := UiTheme.button(tab_names[i], 176)
+		var b := UiTheme.button(tab_names[i], 150)
 		b.toggle_mode = true
 		b.pressed.connect(_show_settings_tab.bind(i))
 		tabs.add_child(b)
@@ -331,15 +512,21 @@ func _build_settings() -> Control:
 	# Jogo
 	g = _settings_page(stack)
 	_add_slider(g, "mouse_sensitivity", "Sensibilidade do mouse", 0.05, 0.6)
+	_add_slider(g, "gamepad_sensitivity", "Sensibilidade do controle", 0.3, 2.5)
 	_add_check(g, "invert_y", "Inverter eixo Y")
 	_add_slider(g, "fov", "Campo de visão", 60.0, 100.0)
 	_add_slider(g, "camera_bob", "Balanço da câmera", 0.0, 1.0)
 	_add_option(g, "sniff_color_index", "Cor do faro", Settings.SNIFF_COLOR_NAMES)
 	_add_option(g, "hints_level", "Dicas", Settings.HINTS_NAMES)
+	_add_check(g, "show_hud", "Mostrar a interface (HUD)")
+	# Controles
+	_build_controls_page(stack)
 	# Áudio
 	g = _settings_page(stack)
 	_add_slider(g, "master_volume", "Volume geral", 0.0, 1.0)
-	_add_slider(g, "music_volume", "Volume da música", 0.0, 1.0)
+	_add_slider(g, "music_volume", "Música", 0.0, 1.0)
+	_add_slider(g, "sfx_volume", "Efeitos", 0.0, 1.0)
+	_add_slider(g, "ambience_volume", "Ambiente (vento, bichos)", 0.0, 1.0)
 	_settings_note = UiTheme.label("", 16, UiTheme.SAND)
 	_settings_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_settings_note)
@@ -348,6 +535,7 @@ func _build_settings() -> Control:
 	back.pressed.connect(func(): show_screen(_back_to))
 	v.add_child(back)
 	Settings.changed.connect(_sync_settings)
+	Settings.changed.connect(_sync_keys)
 	s.visibility_changed.connect(_sync_settings)
 	_show_settings_tab(0)
 	return s
@@ -358,6 +546,75 @@ func open_settings(tab: int = 0) -> void:
 	_goto("settings", "title")
 	_show_settings_tab(clampi(tab, 0, _settings_pages.size() - 1))
 
+
+## Aba Controles: segurar ou apertar (Correr e Cavar) e as teclas de cada ação.
+func _build_controls_page(stack: Control) -> void:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 12)
+	stack.add_child(page)
+	_settings_pages.append(page)
+	var top := GridContainer.new()
+	top.columns = 2
+	top.add_theme_constant_override("h_separation", 26)
+	top.add_theme_constant_override("v_separation", 8)
+	page.add_child(top)
+	_add_option(top, "run_toggle", "Correr", ["Segurar a tecla", "Apertar para ligar e desligar"], [false, true])
+	_add_option(top, "dig_toggle", "Cavar", ["Segurar a tecla", "Apertar uma vez"], [false, true])
+	var keys := GridContainer.new()
+	keys.columns = 4
+	keys.add_theme_constant_override("h_separation", 18)
+	keys.add_theme_constant_override("v_separation", 6)
+	page.add_child(keys)
+	for pair in Settings.REBINDABLE:
+		var l := UiTheme.label(pair[1], 18)
+		l.add_theme_font_override("font", UiTheme.semi_font())
+		l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		l.custom_minimum_size.x = 220
+		keys.add_child(l)
+		var b := UiTheme.button("", 150)
+		b.custom_minimum_size = Vector2(150, 40)
+		b.pressed.connect(_start_rebind.bind(pair[0]))
+		keys.add_child(b)
+		_key_buttons[pair[0]] = b
+	var reset := UiTheme.button("Restaurar as teclas", 300)
+	reset.custom_minimum_size.y = 44
+	reset.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	reset.pressed.connect(func():
+		_rebinding = ""
+		Settings.reset_bindings())
+	page.add_child(reset)
+	_sync_keys()
+
+
+func _sync_keys() -> void:
+	for action in _key_buttons:
+		var b: Button = _key_buttons[action]
+		b.text = "Aperte uma tecla..." if action == _rebinding else Settings.key_label(action)
+
+
+func _start_rebind(action: String) -> void:
+	_rebinding = action
+	_sync_keys()
+
+
+## Esperando uma tecla nova: a próxima tecla ou botão do mouse vira a tecla da ação.
+func _input(event: InputEvent) -> void:
+	if _rebinding == "" or not visible:
+		return
+	var pressed: bool = (event is InputEventKey and event.pressed and not event.echo) \
+		or (event is InputEventMouseButton and event.pressed
+			and event.button_index not in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN,
+				MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT])
+	if not pressed:
+		return
+	get_viewport().set_input_as_handled()
+	var action := _rebinding
+	_rebinding = ""
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
+		_sync_keys()
+		return
+	Settings.rebind(action, event)
+	_sync_keys()
 
 func _settings_page(stack: Control) -> GridContainer:
 	var grid := GridContainer.new()
@@ -377,6 +634,7 @@ func _show_settings_tab(i: int) -> void:
 		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
 		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
 		"Dicas \"Poucas\": só o que dá para fazer perto de você. \"Todas\": também ensina os controles, cada um até você usar.",
+		"Clique numa tecla e aperte a nova (Esc cancela). No controle, os botões ficam como estão.",
 		"",
 	][i]
 
@@ -462,11 +720,14 @@ func _build_end() -> Control:
 	_end_title = UiTheme.display_label("Fim da demo!", 60, UiTheme.PALE)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.GOAL, 24, UiTheme.CREAM)
+	_end_sub = UiTheme.label("Você comeu os %s insetos da clareira e abriu o caminho\naté o cupinzeiro gigante." % StatsPanel._n(GameState.GOAL), 24, UiTheme.CREAM)
 	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_sub)
-	_end_stats = UiTheme.label("", 22, UiTheme.SAND)
-	_end_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_end_time = UiTheme.label("", 24, UiTheme.SAND)
+	_end_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(_end_time)
+	_end_stats = StatsPanel.new()
+	_end_stats.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(_end_stats)
 	var thanks := UiTheme.label("Obrigado por jogar a demo!", 20, UiTheme.CREAM)
 	thanks.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -487,22 +748,22 @@ func _build_end() -> Control:
 func _record_text(new_record: bool) -> String:
 	if new_record:
 		return "  (novo recorde!)"
-	if GameState.best_time > 0.0:
-		return "  (recorde: %s)" % GameState.format_time(GameState.best_time)
+	var best := GameState.mode_best_time()
+	if best > 0.0:
+		return "  (recorde: %s)" % _fmt(best)
 	return ""
 
 
+## No modo contra o relógio os tempos aparecem com décimos.
+func _fmt(t: float) -> String:
+	return GameState.format_clock(t) if GameState.mode == GameState.MODE_CLOCK else GameState.format_time(t)
+
+
 func show_end(time_sec: float, new_record: bool) -> void:
-	var learned := []
-	for u in GameState.UPGRADES:
-		if GameState.has(u.id):
-			learned.append(u.name)
-	var lines := "Tempo: %s%s\nMaior combo: %d formigas\nTanajuras comidas: %d\nHabilidades: %s" % [
-		GameState.format_time(time_sec), _record_text(new_record),
-		GameState.best_combo, GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
-	_end_stats.text = lines
-	_end_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_end_stats.custom_minimum_size = Vector2(760, 0)
+	_end_time.text = "%sTempo: %s%s" % [
+		"Contra o relógio  ·  " if GameState.mode == GameState.MODE_CLOCK else "",
+		_fmt(time_sec), _record_text(new_record)]
+	_end_stats.refresh()
 	show_screen("end")
 
 

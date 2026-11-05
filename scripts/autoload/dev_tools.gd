@@ -8,7 +8,12 @@ extends Node
 ##   --captures=SEG:arquivo.png,... salva capturas de tela nesses instantes
 ##   --quit                       fecha depois da última captura
 ##   --quit-after=SEG             fecha depois de SEG segundos
-##   --autoplay                   um "bot" controla o tamanduá (teste de fumaça)
+##   --autoplay                   um "bot" controla o tamanduá e compra as habilidades
+##                                em rodízio entre os ramos
+##   --botlog=arquivo.csv         o bot anota cada compra, formigueiro limpo e o
+##                                progresso a cada 30 s de jogo; fecha no fim
+##   --physics-scale              com --timescale, roda a física mais vezes por
+##                                segundo (o mesmo passo de 1/60 s do jogo normal)
 ##   --give=N                     começa com N formigas comidas
 ##   --buy=id1,id2                compra upgrades no início
 ##   --timescale=K                acelera o tempo do jogo
@@ -16,6 +21,14 @@ extends Node
 ##   --open=N|all                 abre as câmaras do formigueiro N (ou de todos)
 ##   --allow-save                 deixa o bot salvar o jogo (teste)
 ##   --start=continue             continua o jogo salvo
+##   --start=slots                abre a tela dos jogos salvos
+##   --slot=N                     usa o jogo salvo N (1 a 3)
+##   --start=mode                 abre a escolha do modo (jogo novo)
+##   --start=pause                abre a pausa
+##   --start=stats                abre as estatísticas (pela pausa)
+##   --start=end                  abre a tela do fim (com as estatísticas)
+##   --mode=relogio               o jogo novo é contra o relógio
+##   --conquistas                 mostra as conquistas (escondidas na demo)
 ##   --start=settings --tab=N     abre as configurações na aba N
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
 ##   --hats                       chapéu de Natal em uma formiga a cada 20
@@ -60,6 +73,9 @@ func _ready() -> void:
 			pose.append(float(p))
 	if args.has("timescale"):
 		Engine.time_scale = float(args.timescale)
+		if args.has("physics-scale"):
+			Engine.physics_ticks_per_second = int(60.0 * Engine.time_scale)
+			Engine.max_physics_steps_per_frame = 64
 	if args.has("captures"):
 		for item in String(args.captures).split(","):
 			var parts := item.split(":")

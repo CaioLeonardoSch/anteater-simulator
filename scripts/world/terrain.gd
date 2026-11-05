@@ -65,12 +65,14 @@ func height_fn(x: float, z: float) -> float:
 		var d := Vector2(x - f.x, z - f.y).length()
 		if d < f.z:
 			h = lerpf(h, f.w, 1.0 - smoothstep(f.z * 0.55, f.z, d))
+	# Lobos da mesma lagoa se sobrepõem: vale o mais fundo (não somam).
+	var dip := 0.0
 	for dp in dips:
 		var d := Vector2(x - dp.x, z - dp.y).length()
 		if d < dp.z:
 			var k := 1.0 - (d / dp.z) * (d / dp.z)
-			h -= dp.w * k * k
-	return h
+			dip = maxf(dip, dp.w * k * k)
+	return h - dip
 
 
 ## Altura do relevo antes de qualquer ajuste (para escolher a altura de uma área plana).

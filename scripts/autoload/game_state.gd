@@ -14,6 +14,13 @@ signal skills_reset
 signal level_completed(time_sec: float)
 signal frenzy_changed(active: bool)
 signal run_reset
+## Modo contra o relógio: chegou numa parcial (25%, 50%...). `diff` = diferença
+## para a mesma parcial do recorde (INF se ainda não houver recorde).
+signal split_reached(index: int, time_sec: float, diff: float)
+## Conquista destravada (na demo só fica registrada; veja achievements.gd).
+signal achievement_unlocked(id: String)
+
+const Achievements := preload("res://scripts/achievements.gd")
 
 ## Formigas da colônia do Cerrado (cada rainha conta como 200).
 const GOAL := 32000
@@ -22,9 +29,19 @@ const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
 const FRENZY_TIME := 6.0
 const RECORD_PATH := "user://save.cfg"
-const GAME_SAVE_PATH := "user://jogo_salvo.json"
+## Versões antigas tinham um jogo salvo só: ele vira o jogo 1.
+const OLD_SAVE_PATH := "user://jogo_salvo.json"
+## Quantos jogos salvos dá para ter.
+const SLOTS := 3
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
+## Modos de jogo. Contra o relógio é o speedrun: cronômetro na tela, tempos
+## parciais e um recorde só dele. O tempo só corre com o jogo rodando (pausa,
+## mapa e habilidades param o relógio), então dá para comparar jogos.
+const MODE_NORMAL := "normal"
+const MODE_CLOCK := "relogio"
+## Parciais do modo contra o relógio (parte dos insetos comidos).
+const SPLITS := [0.25, 0.5, 0.75, 1.0]
 
 ## As 5 habilidades. "lines" = nomes das duas linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.
@@ -46,16 +63,16 @@ const UPGRADES := [
 		"desc": "Segure o botão para lamber sem parar."},
 	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"],
 		"name": "Lambida",
-		"desc": "Cada lambida pega até 50 formigas perto da ponta da língua."},
+		"desc": "Cada lambida pega até 50 insetos perto da ponta da língua."},
 	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 75, "requires": ["lingua_bocado_1"],
 		"name": "Lambida Larga",
-		"desc": "Até 150 formigas por lambida, e a ponta gruda num raio um pouco maior."},
+		"desc": "Até 150 insetos por lambida, e a ponta gruda num raio um pouco maior."},
 	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "cost": 115, "requires": ["lingua_bocado_2"],
 		"name": "Lambida Gulosa",
-		"desc": "Até 250 formigas por lambida."},
+		"desc": "Até 250 insetos por lambida."},
 	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 170, "requires": ["lingua_bocado_3"],
 		"name": "Lambida Voraz",
-		"desc": "Até 400 formigas por lambida."},
+		"desc": "Até 400 insetos por lambida."},
 	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"],
 		"name": "Língua Comprida",
 		"desc": "Alcance da língua +50%, e ela lambe 25% mais rápido."},
@@ -67,10 +84,10 @@ const UPGRADES := [
 		"desc": "A língua lambe 2x mais rápido."},
 	{"id": "lingua_certeira", "branch": 0, "col": 2, "row": 1, "cost": 30, "requires": ["lingua_segurar"],
 		"name": "Língua Certeira",
-		"desc": "A língua vai sozinha atrás da formiga mais perto da mira."},
+		"desc": "A língua vai sozinha atrás do inseto mais perto da mira."},
 	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"],
 		"name": "Mira Ampla",
-		"desc": "A área da mira em que a língua procura formigas fica 25% maior."},
+		"desc": "A área da mira em que a língua procura insetos fica 25% maior."},
 	# Garras: Cavar abre as linhas de Força, de Rapidez (o descanso entre usos)
 	# e de Fundura (buracos maiores: câmaras grandes e o monte da rainha).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
@@ -87,10 +104,10 @@ const UPGRADES := [
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
 	{"id": "garras_tremor", "branch": 1, "col": 0, "row": 2, "cost": 110, "requires": ["garras_fortes"],
 		"name": "Tremor",
-		"desc": "[Espaço] Pule e caia com força: as formigas num raio de 6 m ficam tontas por 3 s. Recarrega em 21 s."},
+		"desc": "[Espaço] Pule e caia com força: os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
 	{"id": "garras_terremoto", "branch": 1, "col": 0, "row": 3, "cost": 170, "requires": ["garras_tremor"],
 		"name": "Terremoto",
-		"desc": "Pulo mais alto e tremor quase 2x maior; as formigas tontas são puxadas para a sua boca."},
+		"desc": "Pulo mais alto e tremor quase 2x maior; os insetos tontos são puxados para a sua boca."},
 	{"id": "garras_ageis", "branch": 1, "col": 1, "row": 1, "cost": 50, "requires": ["garras_cavar"],
 		"name": "Garras Ágeis",
 		"desc": "As garras descansam só 15 s depois de cavar."},
@@ -106,38 +123,38 @@ const UPGRADES := [
 	# Patas
 	{"id": "patas_corrida", "branch": 2, "col": -1, "row": 0, "cost": 30, "requires": [],
 		"name": "Corrida",
-		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e as formigas fogem mais cedo."},
+		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e os insetos fogem mais cedo."},
 	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 80, "requires": ["patas_corrida"],
 		"name": "Patas Ligeiras",
 		"desc": "Corre mais 25%."},
 	{"id": "patas_galope", "branch": 2, "col": 0, "row": 2, "cost": 130, "requires": ["patas_ligeiras"],
 		"name": "Galope Silencioso",
-		"desc": "Correndo, você não assusta mais as formigas."},
+		"desc": "Correndo, você não assusta mais os insetos."},
 	{"id": "patas_lamber", "branch": 2, "col": 1, "row": 1, "cost": 60, "requires": ["patas_corrida"],
 		"name": "Lamber Correndo",
 		"desc": "Dá para lamber enquanto corre."},
 	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "cost": 20, "requires": [],
 		"name": "Farejar",
-		"desc": "[Q] Fareje: descubra quantas formigas há a até 10 m (até 100 delas) e a que distância está a mais perto. Recarrega em 10 s."},
+		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles) e a que distância está o mais perto. Recarrega em 10 s."},
 	{"id": "faro_atento", "branch": 3, "col": 0, "row": 1, "cost": 40, "requires": ["faro_farejar"],
 		"name": "Faro Atento",
-		"desc": "Fareja até 16 m e até 250 formigas. Recarrega em 9 s."},
+		"desc": "Fareja até 16 m e até 250 insetos. Recarrega em 9 s."},
 	{"id": "faro_apurado", "branch": 3, "col": 0, "row": 2, "cost": 70, "requires": ["faro_atento"],
 		"name": "Faro Apurado",
-		"desc": "Fareja até 24 m e até 500 formigas, e o cheiro dura mais. Recarrega em 8 s."},
+		"desc": "Fareja até 24 m e até 500 insetos, e o cheiro dura mais. Recarrega em 8 s."},
 	{"id": "faro_agucado", "branch": 3, "col": 0, "row": 3, "cost": 110, "requires": ["faro_apurado"],
 		"name": "Faro Aguçado",
-		"desc": "Fareja até 34 m e até 1000 formigas; a bússola mostra quanto falta em cada formigueiro. Recarrega em 7 s."},
+		"desc": "Fareja até 34 m e até 1000 insetos; a bússola mostra quanto falta em cada formigueiro. Recarrega em 7 s."},
 	{"id": "faro_lendario", "branch": 3, "col": 0, "row": 4, "cost": 160, "requires": ["faro_agucado"],
 		"name": "Faro Lendário",
-		"desc": "Fareja até 50 m e até 2000 formigas, e marca as rainhas na bússola. Recarrega em 6 s."},
+		"desc": "Fareja até 50 m e até 2000 insetos, e marca as rainhas na bússola. Recarrega em 6 s."},
 	{"id": "faro_preciso", "branch": 3, "col": 1, "row": 1, "cost": 45, "requires": ["faro_farejar"],
 		"name": "Faro Preciso",
-		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão as formigas farejadas."},
+		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão os insetos farejados."},
 	{"id": "faro_nitido", "branch": 3, "col": 1, "row": 2, "cost": 85, "requires": ["faro_preciso"],
 		"name": "Faro Nítido",
-		"desc": "As formigas farejadas brilham nítidas, mesmo atrás do capim."},
+		"desc": "Os insetos farejados brilham nítidos, mesmo atrás do capim."},
 	{"id": "faro_camara", "branch": 3, "col": 1, "row": 3, "cost": 100, "requires": ["faro_nitido"],
 		"name": "Faro de Câmara",
 		"desc": "Farejar também mostra as câmaras fechadas por perto (até no meio do campo), com uma coluna de cheiro."},
@@ -165,7 +182,25 @@ var combo_timer: float = 0.0
 var frenzy_time: float = 0.0
 var best_time: float = 0.0
 var tanajuras_eaten: int = 0
+## O jogo salvo em uso (1 a SLOTS).
+var slot: int = 1
+## Marcador que o jogador pôs no mapa (mundo, plano xz); INF = nenhum.
+var marker := Vector2.INF
 var queens_eaten: int = 0
+## Modo deste jogo e o do próximo jogo novo (escolhido ao começar).
+var mode := MODE_NORMAL
+var next_mode := MODE_NORMAL
+## Tempos parciais deste jogo e os do recorde contra o relógio.
+var splits: Array = []
+var best_splits: Array = []
+var best_time_clock: float = 0.0
+## Números deste jogo para a tela de estatísticas (distância, lambidas...).
+var stats: Dictionary = {}
+## Somas de todos os jogos e conquistas destravadas (ficam em save.cfg).
+var lifetime: Dictionary = {}
+var achievements: Dictionary = {}
+var _facts_dirty := false
+var _facts_timer := 0.0
 ## Habilidades que já cabiam nos pontos (para avisar só das novas).
 var _affordable: Dictionary = {}
 
@@ -173,6 +208,7 @@ var _affordable: Dictionary = {}
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	_load_record()
+	_migrate_old_save()
 
 
 func reset_run() -> void:
@@ -187,6 +223,9 @@ func reset_run() -> void:
 	frenzy_time = 0.0
 	tanajuras_eaten = 0
 	queens_eaten = 0
+	marker = Vector2.INF
+	splits.clear()
+	stats.clear()
 	_affordable.clear()
 	run_reset.emit()
 	ants_eaten_changed.emit(0, 0)
@@ -196,6 +235,12 @@ func _process(delta: float) -> void:
 	if not playing or completed:
 		return
 	elapsed += delta
+	lifetime["playtime"] = float(lifetime.get("playtime", 0.0)) + delta
+	_facts_timer -= delta
+	if _facts_dirty and _facts_timer <= 0.0:
+		_facts_dirty = false
+		_facts_timer = 0.5
+		_check_achievements()
 	if combo_timer > 0.0:
 		combo_timer -= delta
 		if combo_timer <= 0.0:
@@ -212,7 +257,11 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	if count <= 0 or completed:
 		return
 	count = mini(count, GOAL - ants_eaten)
+	var before := ants_eaten
 	ants_eaten += count
+	lifetime["eaten"] = int(lifetime.get("eaten", 0)) + count
+	_check_splits(before)
+	_facts_dirty = true
 	combo += count
 	combo_timer = 2.5
 	best_combo = maxi(best_combo, combo)
@@ -227,10 +276,79 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	_check_affordable(true)
 	if ants_eaten >= GOAL:
 		completed = true
-		if (best_time <= 0.0 or elapsed < best_time) and not DevTools.autoplay:
-			best_time = elapsed
-			_save_record()
+		lifetime["cleared"] = int(lifetime.get("cleared", 0)) + 1
+		if not DevTools.autoplay:
+			if mode == MODE_CLOCK:
+				if best_time_clock <= 0.0 or elapsed < best_time_clock:
+					best_time_clock = elapsed
+					best_splits = splits.duplicate()
+			elif best_time <= 0.0 or elapsed < best_time:
+				best_time = elapsed
+		_check_achievements()
+		_save_record()
 		level_completed.emit(elapsed)
+
+
+## O recorde do modo deste jogo.
+func mode_best_time() -> float:
+	return best_time_clock if mode == MODE_CLOCK else best_time
+
+
+## Marca as parciais que esse tanto de insetos passou.
+func _check_splits(before: int) -> void:
+	for i in SPLITS.size():
+		var at := int(round(GOAL * SPLITS[i]))
+		if before < at and ants_eaten >= at and splits.size() == i:
+			splits.append(elapsed)
+			var diff := INF
+			if i < best_splits.size():
+				diff = elapsed - float(best_splits[i])
+			split_reached.emit(i, elapsed, diff)
+
+
+## Soma um número do jogo (lambidas, distância, câmaras abertas...).
+func count(id: String, amount: float = 1.0) -> void:
+	if not playing:
+		return
+	stats[id] = float(stats.get(id, 0.0)) + amount
+	_facts_dirty = true
+	if completed and id != "distance" and id != "run_time":
+		# Com a clareira limpa o relógio parou: confere na hora.
+		_check_achievements()
+
+
+func stat(id: String) -> float:
+	return float(stats.get(id, 0.0))
+
+
+## Os números que as conquistas olham (achievements.gd).
+func achievement_facts() -> Dictionary:
+	var all_skills := true
+	for u in UPGRADES:
+		if region_required(u.id).is_empty() and not has(u.id):
+			all_skills = false
+	return {
+		"eaten": ants_eaten, "eaten_total": int(lifetime.get("eaten", 0)),
+		"nests_cleaned": stat("nests_cleaned"), "chambers_opened": stat("chambers_opened"),
+		"queens": queens_eaten, "tanajuras": tanajuras_eaten, "best_combo": best_combo,
+		"skills": purchased.size(), "skills_all": 1 if all_skills else 0,
+		"sniffs": stat("sniffs"), "distance": stat("distance"), "exit_broken": stat("exit_broken"),
+		"clock_done": 1 if completed and mode == MODE_CLOCK else 0,
+		"clock_fast": 1 if completed and mode == MODE_CLOCK and elapsed < Achievements.FAST_TIME else 0,
+	}
+
+
+func _check_achievements() -> void:
+	if DevTools.autoplay:
+		return
+	var new := Achievements.newly_unlocked(achievement_facts(), achievements)
+	if new.is_empty():
+		return
+	for id in new:
+		achievements[id] = Time.get_unix_time_from_system()
+		print("[conquista] %s" % Achievements.get_def(id).name)
+		achievement_unlocked.emit(id)
+	_save_record()
 
 
 ## Pontos para gastar: 1 a cada 10 formigas comidas, menos o que já foi gasto.
@@ -557,6 +675,63 @@ func sniff_queens() -> bool:
 	return has("faro_lendario")
 
 
+## O que uma habilidade muda em números: [{"label", "before", "after"}], para a
+## árvore mostrar "10 → 50". "—" quando a habilidade é que libera o gesto.
+func stat_changes(id: String) -> Array:
+	# Conta como se as habilidades anteriores da linha já estivessem aprendidas.
+	var saved := purchased.duplicate()
+	var fz := frenzy_time
+	frenzy_time = 0.0
+	var todo: Array = (get_upgrade(id).get("requires", []) as Array).duplicate()
+	while not todo.is_empty():
+		var r: String = todo.pop_back()
+		if not purchased.get(r, false):
+			purchased[r] = true
+			todo.append_array(get_upgrade(r).get("requires", []))
+	purchased.erase(id)
+	var before := _stat_snapshot()
+	purchased[id] = true
+	var after := _stat_snapshot()
+	purchased = saved
+	frenzy_time = fz
+	var out := []
+	for k in after.size():
+		if before[k][1] != after[k][1]:
+			out.append({"label": after[k][0], "before": before[k][1] if before[k][1] != "" else "—",
+				"after": after[k][1] if after[k][1] != "" else "—"})
+	return out
+
+
+func _stat_snapshot() -> Array:
+	var run := can_run()
+	var snf := can_sniff()
+	var dig := can_dig()
+	var trem := can_tremor()
+	return [
+		["Insetos por lambida", str(lick_capacity())],
+		["Lambidas por segundo", _num(lick_rate(), 2)],
+		["Alcance da língua", _num(tongue_range(), 1) + " m"],
+		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
+		["Área da mira", _num(aim_cone_deg(), 1) + "°"],
+		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
+		["Tempo para cavar", _num(dig_time(), 1) + " s" if dig else ""],
+		["Descanso das garras", _num(dig_cooldown(), 0) + " s" if dig else ""],
+		["Raio do Tremor", _num(tremor_radius(), 0) + " m" if trem else ""],
+		["Recarga do Tremor", _num(tremor_cooldown(), 0) + " s" if trem else ""],
+		["Alcance do faro", _num(sniff_radius(), 0) + " m" if snf else ""],
+		["Insetos farejados", str(sniff_max_ants()) if snf else ""],
+		["Recarga do faro", _num(sniff_cooldown(), 0) + " s" if snf else ""],
+	]
+
+
+## Número com vírgula e sem zeros sobrando ("1,75", "3", "4,1").
+static func _num(v: float, decimals: int) -> String:
+	var t := String.num(v, decimals)
+	if t.contains("."):
+		t = t.rstrip("0").rstrip(".")
+	return t.replace(".", ",")
+
+
 # ---------------------------------------------------------------- Recorde e jogo salvo
 
 func _load_record() -> void:
@@ -564,12 +739,20 @@ func _load_record() -> void:
 	if cfg.load(RECORD_PATH) == OK:
 		# O recorde é por versão do mapa: tempos de 1000 formigas não contam.
 		best_time = float(cfg.get_value("records", "best_time_%d" % GOAL, 0.0))
+		best_time_clock = float(cfg.get_value("records", "best_clock_%d" % GOAL, 0.0))
+		best_splits = cfg.get_value("records", "best_splits_%d" % GOAL, [])
+		lifetime = cfg.get_value("lifetime", "totals", {})
+		achievements = cfg.get_value("achievements", "unlocked", {})
 
 
 func _save_record() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(RECORD_PATH)
 	cfg.set_value("records", "best_time_%d" % GOAL, best_time)
+	cfg.set_value("records", "best_clock_%d" % GOAL, best_time_clock)
+	cfg.set_value("records", "best_splits_%d" % GOAL, best_splits)
+	cfg.set_value("lifetime", "totals", lifetime)
+	cfg.set_value("achievements", "unlocked", achievements)
 	cfg.save(RECORD_PATH)
 
 
@@ -579,6 +762,8 @@ func to_save() -> Dictionary:
 		"purchased": purchased.keys(), "elapsed": elapsed, "best_combo": best_combo,
 		"tanajuras_eaten": tanajuras_eaten, "queens_eaten": queens_eaten,
 		"regions_reached": regions_reached, "completed": completed,
+		"marker": [marker.x, marker.y] if marker != Vector2.INF else [],
+		"mode": mode, "splits": splits.duplicate(), "stats": stats.duplicate(),
 	}
 
 
@@ -599,40 +784,103 @@ func from_save(d: Dictionary) -> void:
 	for r in d.get("regions_reached", ["Cerrado"]):
 		regions_reached.append(String(r))
 	completed = bool(d.get("completed", false)) and ants_eaten >= GOAL
+	var m: Array = d.get("marker", [])
+	marker = Vector2(float(m[0]), float(m[1])) if m.size() == 2 else Vector2.INF
+	mode = MODE_CLOCK if String(d.get("mode", MODE_NORMAL)) == MODE_CLOCK else MODE_NORMAL
+	splits = Array(d.get("splits", []))
+	stats = Dictionary(d.get("stats", {}))
 	combo = 0
 	frenzy_time = 0.0
 	_check_affordable(false)
 	ants_eaten_changed.emit(ants_eaten, 0)
 
 
+func save_path(s: int = -1) -> String:
+	return "user://jogo_salvo_%d.json" % (slot if s < 0 else s)
+
+
+func _migrate_old_save() -> void:
+	if FileAccess.file_exists(OLD_SAVE_PATH) and not FileAccess.file_exists(save_path(1)):
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(OLD_SAVE_PATH),
+			ProjectSettings.globalize_path(save_path(1)))
+
+
 ## Só conta como jogo salvo se for da versão atual do mapa.
-func has_saved_game() -> bool:
-	return not read_saved_game().is_empty()
+func has_saved_game(s: int = -1) -> bool:
+	return not read_saved_game(s).is_empty()
+
+
+func any_saved_game() -> bool:
+	return latest_slot() > 0
+
+
+## O jogo salvo mais recente (0 se não houver nenhum).
+func latest_slot() -> int:
+	var best := 0
+	var best_at := -1.0
+	for s in range(1, SLOTS + 1):
+		var d := read_saved_game(s)
+		if not d.is_empty() and float(d.get("saved_at", 0.0)) > best_at:
+			best_at = float(d.get("saved_at", 0.0))
+			best = s
+	return best
+
+
+## Resumo de um jogo salvo para a tela de escolha ({} se estiver vazio).
+func slot_summary(s: int) -> Dictionary:
+	var d := read_saved_game(s)
+	if d.is_empty():
+		return {}
+	var st: Dictionary = d.get("state", {})
+	return {"eaten": int(st.get("ants_eaten", 0)), "elapsed": float(st.get("elapsed", 0.0)),
+		"saved_at": float(d.get("saved_at", 0.0)), "completed": bool(st.get("completed", false)),
+		"mode": String(st.get("mode", MODE_NORMAL))}
 
 
 func write_saved_game(data: Dictionary) -> void:
 	if DevTools.autoplay and not DevTools.args.has("allow-save"):
 		return
-	var f := FileAccess.open(GAME_SAVE_PATH, FileAccess.WRITE)
+	data["saved_at"] = Time.get_unix_time_from_system()
+	_save_record()
+	var f := FileAccess.open(save_path(), FileAccess.WRITE)
 	if f:
 		f.store_string(JSON.stringify(data, "\t"))
 
 
-func read_saved_game() -> Dictionary:
-	if not FileAccess.file_exists(GAME_SAVE_PATH):
+func read_saved_game(s: int = -1) -> Dictionary:
+	var path := save_path(s)
+	if not FileAccess.file_exists(path):
 		return {}
-	var txt := FileAccess.get_file_as_string(GAME_SAVE_PATH)
+	var txt := FileAccess.get_file_as_string(path)
 	var parsed = JSON.parse_string(txt)
 	if not parsed is Dictionary or int(parsed.get("version", 0)) != SAVE_VERSION:
 		return {}
 	return parsed
 
 
-func delete_saved_game() -> void:
-	if FileAccess.file_exists(GAME_SAVE_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(GAME_SAVE_PATH))
+func delete_saved_game(s: int = -1) -> void:
+	var path := save_path(s)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 
 static func format_time(t: float) -> String:
 	var total := int(t)
+	if total >= 3600:
+		return "%d:%02d:%02d" % [total / 3600, (total / 60) % 60, total % 60]
 	return "%d:%02d" % [total / 60, total % 60]
+
+
+## Cronômetro com décimos (modo contra o relógio): 12:34.5
+static func format_clock(t: float) -> String:
+	var tenths := int(floor(t * 10.0))
+	var total := tenths / 10
+	var head := "%d:%02d:%02d" % [total / 3600, (total / 60) % 60, total % 60] if total >= 3600 \
+		else "%d:%02d" % [total / 60, total % 60]
+	return "%s.%d" % [head, tenths % 10]
+
+
+## Diferença para o recorde: −0:05.2 (mais rápido) ou +0:12.0.
+static func format_diff(d: float) -> String:
+	var sign := "−" if d < 0.0 else "+"
+	return sign + format_clock(absf(d))

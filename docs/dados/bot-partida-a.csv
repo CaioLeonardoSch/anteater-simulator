@@ -1,0 +1,218 @@
+tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe
+0.0;0;0;0;0;0;progresso;
+30.0;38;0;3;0;0;progresso;
+60.1;84;0;8;0;0;progresso;
+90.1;116;0;11;0;0;progresso;
+120.1;198;0;19;0;0;progresso;
+147.5;254;0;0;1;0;compra;lingua_segurar;Lambida Contínua;25
+150.1;264;0;1;1;0;progresso;
+180.1;372;0;12;1;0;progresso;
+210.1;417;0;16;1;0;progresso;
+240.2;463;0;21;1;0;progresso;
+270.2;539;0;28;1;0;progresso;
+293.8;600;0;0;2;0;compra;garras_cavar;Cavar;35
+300.2;621;0;2;2;0;progresso;
+330.2;690;0;9;2;0;progresso;
+360.3;705;0;10;2;0;progresso;
+390.3;774;0;17;2;0;progresso;
+420.3;868;0;26;2;0;progresso;
+450.3;884;0;28;2;0;progresso;
+480.3;896;0;29;2;0;progresso;
+484.1;900;0;0;3;0;compra;patas_corrida;Corrida;30
+510.4;950;0;5;3;0;progresso;
+540.4;1064;0;16;3;0;progresso;
+570.4;1092;0;19;3;0;progresso;
+578.1;1102;0;0;4;0;compra;faro_farejar;Farejar;20
+600.4;1213;0;11;4;0;progresso;
+630.4;1254;0;15;4;0;progresso;
+660.5;1255;0;15;4;0;progresso;
+690.5;1303;0;20;4;0;progresso;
+707.9;1402;0;0;5;0;compra;lingua_certeira;Língua Certeira;30
+720.5;1431;0;3;5;0;progresso;
+750.5;1487;0;8;5;0;progresso;
+780.6;1587;0;18;5;0;progresso;
+810.6;1650;0;25;5;0;progresso;
+840.6;1721;0;32;5;0;progresso;
+870.7;1821;0;42;5;0;progresso;
+888.1;1900;0;0;6;0;compra;garras_ageis;Garras Ágeis;50
+900.7;1948;0;4;6;0;progresso;
+930.8;2043;0;14;6;0;progresso;
+960.8;2130;0;23;6;0;progresso;
+990.8;2191;0;29;6;0;progresso;
+1020.9;2241;0;34;6;0;progresso;
+1050.9;2290;0;39;6;0;progresso;
+1081.0;2409;0;50;6;0;progresso;
+1111.0;2473;0;57;6;0;progresso;
+1118.6;2502;0;0;7;0;compra;patas_lamber;Lamber Correndo;60
+1141.0;2578;0;7;7;0;progresso;
+1171.0;2660;0;16;7;0;progresso;
+1201.0;2751;0;25;7;0;progresso;
+1231.5;2849;0;34;7;0;progresso;
+1240.7;2900;0;0;8;0;compra;faro_atento;Faro Atento;40
+1261.6;2940;0;4;8;0;progresso;
+1291.7;3097;0;19;8;0;progresso;
+1321.8;3279;0;37;8;0;progresso;
+1330.4;3309;0;0;9;0;compra;lingua_bocado_1;Lambida;40
+1351.8;3442;0;14;9;0;progresso;
+1382.0;3494;0;19;9;0;progresso;
+1412.1;3532;0;23;9;0;progresso;
+1442.1;3608;0;30;9;0;progresso;
+1472.2;3745;0;44;9;0;progresso;
+1502.3;3786;0;48;9;0;progresso;
+1532.4;3850;0;55;9;0;progresso;
+1549.4;3907;0;0;10;0;compra;garras_fundo;Cavar Fundo;60
+1562.6;3978;0;7;10;0;progresso;
+1592.7;4081;0;18;10;0;progresso;
+1622.7;4203;0;30;10;0;progresso;
+1652.8;4295;0;39;10;0;progresso;
+1683.2;4408;0;50;10;0;progresso;
+1713.3;4546;0;64;10;0;progresso;
+1743.3;4648;0;74;10;0;progresso;
+1760.1;4700;0;0;11;0;compra;patas_ligeiras;Patas Ligeiras;80
+1773.3;4729;0;2;11;0;progresso;
+1803.3;4871;0;17;11;0;progresso;
+1833.3;4942;0;24;11;0;progresso;
+1863.3;5063;0;36;11;0;progresso;
+1872.1;5164;0;1;12;0;compra;faro_preciso;Faro Preciso;45
+1893.4;5247;0;9;12;0;progresso;
+1923.4;5350;0;20;12;0;progresso;
+1953.4;5455;0;30;12;0;progresso;
+1983.5;5543;0;39;12;0;progresso;
+2013.5;5617;0;46;12;0;progresso;
+2043.5;5798;0;64;12;0;progresso;
+2073.6;5845;0;69;12;0;progresso;
+2078.0;5850;0;0;13;0;compra;lingua_comprida;Língua Comprida;70
+2104.0;5996;0;14;13;0;progresso;
+2134.0;6144;0;29;13;0;progresso;
+2164.0;6224;0;37;13;0;progresso;
+2194.0;6298;0;44;13;0;progresso;
+2224.1;6429;0;57;13;0;progresso;
+2237.6;6553;0;0;14;0;compra;garras_fortes;Garras Fortes;70
+2254.1;6839;0;28;14;0;progresso;
+2284.1;7010;0;46;14;0;progresso;
+2314.2;7192;0;64;14;0;progresso;
+2344.2;7303;0;75;14;0;progresso;
+2374.3;7376;0;82;14;0;progresso;
+2404.3;7454;0;90;14;0;progresso;
+2434.5;7594;0;104;14;0;progresso;
+2464.7;7689;0;113;14;0;progresso;
+2494.9;7757;0;120;14;0;progresso;
+2525.7;7826;0;127;14;0;progresso;
+2536.9;7850;0;0;15;0;compra;patas_galope;Galope Silencioso;130
+2555.7;7983;0;13;15;0;progresso;
+2585.8;8049;0;19;15;0;progresso;
+2615.8;8114;0;26;15;0;progresso;
+2645.8;8190;0;34;15;0;progresso;
+2675.9;8246;0;39;15;0;progresso;
+2705.9;8421;0;57;15;0;progresso;
+2722.1;8552;0;0;16;0;compra;faro_apurado;Faro Apurado;70
+2736.0;8620;0;7;16;0;progresso;
+2766.1;8699;0;14;16;0;progresso;
+2796.2;8766;0;21;16;0;progresso;
+2826.2;8914;0;36;16;0;progresso;
+2856.2;9049;0;49;16;0;progresso;
+2880.4;9186;0;3;17;0;compra;lingua_mira;Mira Ampla;60
+2886.3;9236;0;8;17;0;progresso;
+2916.3;9541;0;39;17;0;progresso;
+2946.3;9718;0;56;17;0;progresso;
+2976.4;9752;0;60;17;0;progresso;
+3006.7;9844;0;69;17;0;progresso;
+3036.7;9926;0;77;17;0;progresso;
+3066.7;9995;0;84;17;0;progresso;
+3096.7;10097;0;94;17;0;progresso;
+3097.2;10131;0;3;18;0;compra;garras_incansaveis;Garras Incansáveis;95
+3126.7;10329;0;22;18;0;progresso;
+3156.8;10459;0;35;18;0;progresso;
+3186.9;10576;0;47;18;0;progresso;
+3216.9;10657;0;55;18;0;progresso;
+3246.9;10749;0;64;18;0;progresso;
+3276.9;10819;0;71;18;0;progresso;
+3305.0;10950;0;0;19;0;compra;faro_nitido;Faro Nítido;85
+3307.0;10953;0;0;19;0;progresso;
+3337.0;11038;0;8;19;0;progresso;
+3367.1;11304;0;35;19;0;progresso;
+3397.1;11490;0;54;19;0;progresso;
+3427.1;11604;0;65;19;0;progresso;
+3457.1;11687;0;73;19;0;progresso;
+3462.4;11700;0;0;20;0;compra;lingua_bocado_2;Lambida Larga;75
+3487.1;11790;0;9;20;0;progresso;
+3517.2;11949;0;24;20;0;progresso;
+3547.2;12050;0;35;20;0;progresso;
+3577.2;12183;0;48;20;0;progresso;
+3607.3;12301;0;60;20;0;progresso;
+3637.3;12386;0;68;20;0;progresso;
+3667.3;12472;0;77;20;0;progresso;
+3697.3;12605;0;90;20;0;progresso;
+3725.2;12801;0;0;21;0;compra;garras_tremor;Tremor;110
+3727.3;12828;0;2;21;1;progresso;
+3757.3;12961;0;16;21;2;progresso;
+3787.4;13121;0;32;21;3;progresso;
+3817.4;13476;0;67;21;4;progresso;
+3847.4;13593;0;79;21;5;progresso;
+3877.4;13773;0;97;21;7;progresso;
+3881.6;13810;0;1;22;7;compra;faro_camara;Faro de Câmara;100
+3907.4;13913;0;11;22;7;progresso;
+3937.5;14228;0;42;22;9;progresso;
+3967.5;14310;0;51;22;10;progresso;
+3997.5;14567;0;76;22;11;progresso;
+4006.0;14729;1;92;22;11;formigueiro;Formigueiro Centro-Sul (pequeno)
+4014.0;14819;1;1;23;11;compra;lingua_saliva;Saliva Grudenta;100
+4027.6;14898;1;9;23;12;progresso;
+4057.6;15468;1;66;23;14;progresso;
+4087.6;15756;1;95;23;15;progresso;
+4117.6;15915;1;111;23;16;progresso;
+4127.4;16009;1;0;24;17;compra;garras_real;Escavação Real;120
+4147.6;16183;1;18;24;18;progresso;
+4177.7;16424;1;42;24;19;progresso;
+4207.7;16684;1;68;24;20;progresso;
+4237.7;16962;1;96;24;22;progresso;
+4244.2;17108;1;0;25;22;compra;faro_agucado;Faro Aguçado;110
+4267.7;17288;1;18;25;23;progresso;
+4297.8;17542;1;44;25;24;progresso;
+4327.8;17870;1;77;25;25;progresso;
+4337.1;18250;1;0;26;25;compra;lingua_bocado_3;Lambida Gulosa;115
+4357.8;18977;1;72;26;26;progresso;
+4387.8;19395;1;114;26;28;progresso;
+4406.3;19554;1;0;27;28;compra;garras_recarga;Recarga do Tremor;130
+4417.8;19683;1;13;27;29;progresso;
+4420.4;19763;2;21;27;29;formigueiro;Formigueiro Oés-Noroeste (grande)
+4447.9;19965;2;41;27;31;progresso;
+4477.9;20234;2;68;27;33;progresso;
+4507.9;20553;2;100;27;34;progresso;
+4537.9;20913;2;136;27;36;progresso;
+4549.5;21151;2;0;28;37;compra;faro_lendario;Faro Lendário;160
+4567.9;21342;2;19;28;38;progresso;
+4597.9;21617;2;46;28;40;progresso;
+4627.9;21913;2;76;28;41;progresso;
+4658.0;22306;2;115;28;43;progresso;
+4679.0;22667;2;1;29;44;compra;lingua_turbo;Língua Turbo;150
+4688.1;23064;2;41;29;45;progresso;
+4718.1;23768;2;111;29;47;progresso;
+4748.1;24268;2;161;29;49;progresso;
+4755.1;24350;2;0;30;49;compra;garras_terremoto;Terremoto;170
+4771.8;25205;3;85;30;49;formigueiro;Formigueiro Sudoeste (grande)
+4778.1;25358;3;100;30;49;progresso;
+4788.6;26124;4;7;31;49;compra;lingua_bocado_4;Lambida Voraz;170
+4788.6;26124;4;7;31;49;formigueiro;Formigueiro Oés-Sudoeste (grande)
+4808.2;26865;4;81;31;49;progresso;
+4810.2;27196;5;114;31;49;formigueiro;Formigueiro Oeste (grande)
+4825.9;27558;5;0;32;49;compra;garras_recarga_2;Recarga Relâmpago;150
+4827.7;27809;6;25;32;49;formigueiro;Formigueiro Centro-Sudoeste (grande)
+4837.5;28269;7;71;32;49;formigueiro;Formigueiro Centro-Noroeste (grande)
+4838.2;28269;7;71;32;49;progresso;
+4849.4;28543;8;99;32;49;formigueiro;Formigueiro Centro-Nordeste (pequeno)
+4868.2;28909;8;135;32;49;progresso;
+4870.5;29092;9;154;32;49;formigueiro;Formigueiro Centro-Norte (pequeno)
+4886.0;29366;10;181;32;49;formigueiro;Formigueiro Norte (pequeno)
+4898.2;29503;10;195;32;49;progresso;
+4909.3;29777;11;222;32;49;formigueiro;Formigueiro Nordeste (pequeno)
+4928.3;30051;11;250;32;49;progresso;
+4930.5;30188;12;263;32;49;formigueiro;Formigueiro Lés-Nordeste (pequeno)
+4954.6;30407;13;285;32;49;formigueiro;Formigueiro Sudeste (pequeno)
+4958.3;30407;13;285;32;49;progresso;
+4973.2;30681;14;313;32;49;formigueiro;Formigueiro Sul (pequeno)
+4988.3;30818;14;326;32;49;progresso;
+4992.0;30955;15;340;32;49;formigueiro;Formigueiro Centro-Sudeste (pequeno)
+5018.3;31771;15;422;32;49;progresso;
+5020.0;32000;16;445;32;49;fim;
+5020.0;32000;16;445;32;49;formigueiro;Formigueiro Noroeste (grande)

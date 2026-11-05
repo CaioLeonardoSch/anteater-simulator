@@ -34,7 +34,7 @@ uniform float rot = 0.0;
 uniform float world_size = 150.0;
 uniform float area_radius = 74.0;
 uniform float territory_radius = 63.0;
-uniform vec2 nests[16];
+uniform vec2 nests[32];
 uniform int nest_count = 0;
 uniform int hover = -1;
 void fragment() {
@@ -87,6 +87,7 @@ var hover_nest := -1
 ## Números da legenda (atualizados ao abrir).
 var nests_text := ""
 var chambers_text := ""
+var insects_text := ""
 var _port: Port
 var _map_rect: ColorRect
 var _mat: ShaderMaterial
@@ -94,6 +95,8 @@ var _overlay: MapOverlay
 var _shot_started := false
 var _zoom_ready := false
 var _dragging := false
+var _right_from := Vector2(-999, -999)
+var _joy_y := false
 
 
 func _ready() -> void:
@@ -210,7 +213,24 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	time += delta
+	_gamepad(delta)
 	_overlay.queue_redraw()
+
+
+## No controle: o analógico esquerdo move o mapa e o direito (para cima e para
+## baixo) aproxima e afasta.
+func _gamepad(delta: float) -> void:
+	var pan := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
+	if pan.length() > 0.2:
+		_set_view(zoom, focus + pan * delta * 420.0 / zoom)
+	var y_now := Input.is_joy_button_pressed(0, JOY_BUTTON_Y)
+	if y_now and not _joy_y:
+		toggle_marker(port.size * 0.5)
+	_joy_y = y_now
+	var z := -Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
+	if absf(z) > 0.25:
+		zoom_at(pow(2.2, z * delta), port.size * 0.5)
+		_update_hover(port.size * 0.5)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -228,6 +248,12 @@ func _gui_input(event: InputEvent) -> void:
 				closed.emit()
 				return
 			_dragging = event.pressed and port.has_point(event.position)
+			# Clique com o botão direito (sem arrastar): põe ou tira o marcador.
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				if event.pressed:
+					_right_from = event.position
+				elif _right_from.distance_to(event.position) < 6.0 and port.has_point(event.position):
+					toggle_marker(event.position - port.position)
 			accept_event()
 	elif event is InputEventMouseMotion:
 		if _dragging:
@@ -244,6 +270,23 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif event.keycode in [KEY_MINUS, KEY_KP_SUBTRACT]:
 		zoom_at(0.8, port.size * 0.5)
 		get_viewport().set_input_as_handled()
+
+
+## Ponto do retângulo do mapa no mundo (plano xz).
+func px_world(local: Vector2) -> Vector2:
+	return WorldMap.to_world(focus + (local - port.size * 0.5) / zoom)
+
+
+## Põe o marcador onde clicou; clicar perto dele tira o marcador.
+func toggle_marker(local: Vector2) -> void:
+	var m: Vector2 = GameState.marker
+	if m != Vector2.INF and world_px(m).distance_to(local) < 14.0:
+		GameState.marker = Vector2.INF
+		Sfx.play("ui_click", -8.0, 0.8)
+	else:
+		GameState.marker = px_world(local)
+		Sfx.play("ui_click", -6.0, 1.2)
+	_overlay.queue_redraw()
 
 
 func _update_hover(local: Vector2) -> void:
@@ -284,6 +327,7 @@ func open() -> void:
 		done += n.clean_chambers()
 	chambers_text = "%d/%d" % [done, total]
 	nests_text = "%d/%d" % [colony.nests_cleaned(), world.nests.size()]
+	insects_text = MapOverlay._thousands(colony.remaining())
 	hover_nest = -1
 	_mat.set_shader_parameter("hover", -1)
 	_dragging = false
@@ -350,7 +394,8 @@ func _draw() -> void:
 	# Teclas: zoom e mover, à esquerda; voltar, à direita.
 	var y := port.end.y + 18.0
 	var x := _key(Vector2(port.position.x, y), "Roda", "zoom")
-	_key(Vector2(x + 18.0, y), "Arrastar", "mover")
+	x = _key(Vector2(x + 18.0, y), "Arrastar", "mover")
+	_key(Vector2(x + 18.0, y), "Botão direito", "marcar")
 	_key(_back_rect().position, "Tab", "Voltar")
 
 
@@ -377,6 +422,8 @@ func _legend(at: Vector2) -> void:
 		["cave", UiTheme.SAND, "Caverna", ""],
 		["player", UiTheme.PALE, "Jogador", ""],
 		["lock", UiTheme.SAND, "Fechada", ""],
+		["ant", UiTheme.SAND, "Insetos", insects_text],
+		["pin", UiTheme.PALE, "Marcador", ""],
 	]
 	var row_h := 34.0
 	var rect := Rect2(at, Vector2(LEGEND_W, 18.0 + rows.size() * row_h))
@@ -553,6 +600,12 @@ class MapOverlay extends Control:
 						diamond(self, p, 5.0 * s, gold)
 					else:
 						diamond_outline(self, p, 4.5 * s, UT.LEAF)
+		# Marcador que você pôs.
+		if GameState.marker != Vector2.INF:
+			var mp: Vector2 = view.world_px(GameState.marker)
+			var bob := sin(view.time * 3.0) * 2.0
+			draw_circle(mp, 4.0, Color(0, 0, 0, 0.35))
+			GL.paint(self, "pin", mp + Vector2(0, -13.0 + bob), 15.0, UT.PALE)
 		# Você: a setinha e o que você está vendo.
 		var pl = view.player
 		if pl:
@@ -612,3 +665,20 @@ class MapOverlay extends Control:
 			draw_rect(Rect2(Vector2(p.x - w * 0.5, y - 7.5), Vector2(w, 15.0)), Color(0.04, 0.028, 0.022, 0.8))
 			diamond_outline(self, Vector2(p.x - w * 0.5 + 9.0, y), 3.0, gold)
 			draw_string(f, Vector2(p.x - w * 0.5 + 17.0, y + 5.0), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, UT.PALE)
+		# Quantos insetos ainda faltam neste formigueiro (trilha, passeio, câmaras e rainha).
+		var nf: Font = UT.display_bold_font()
+		var cnt := _thousands(n.remaining())
+		var cw := nf.get_string_size(cnt, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 22.0
+		var cy := y + 14.0
+		draw_rect(Rect2(Vector2(p.x - cw * 0.5, cy - 7.5), Vector2(cw, 15.0)), Color(0.04, 0.028, 0.022, 0.8))
+		GL.paint(self, "ant", Vector2(p.x - cw * 0.5 + 9.0, cy), 5.5, UT.SAND)
+		draw_string(nf, Vector2(p.x - cw * 0.5 + 17.0, cy + 5.0), cnt, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, UT.PALE)
+
+	## 12345 -> "12 345"
+	static func _thousands(v: int) -> String:
+		var t := str(v)
+		var out := ""
+		while t.length() > 3:
+			out = " " + t.substr(t.length() - 3) + out
+			t = t.substr(0, t.length() - 3)
+		return t + out

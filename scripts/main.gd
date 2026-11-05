@@ -22,11 +22,9 @@ enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 static var skip_menu := false
 const AUTOSAVE_EVERY := 30.0
 ## Ordem em que o bot de teste aprende as habilidades (junta pontos para a próxima).
-const BOT_ORDER := ["lingua_segurar", "faro_farejar", "garras_cavar", "lingua_bocado_1", "garras_fundo", "patas_corrida",
-	"garras_ageis", "faro_preciso", "lingua_bocado_2", "lingua_comprida", "garras_fortes", "faro_atento",
-	"patas_lamber", "lingua_bocado_3", "lingua_saliva", "garras_incansaveis", "garras_tremor", "faro_nitido",
-	"garras_real", "faro_apurado", "faro_camara", "lingua_turbo", "lingua_bocado_4", "patas_ligeiras", "garras_terremoto",
-	"faro_agucado", "garras_recarga", "patas_galope", "faro_lendario", "garras_recarga_2"]
+## Bot de teste: compra uma habilidade de cada ramo por vez, nesta ordem, para
+## as linhas crescerem juntas (ver _bot_buy).
+const BOT_BRANCHES := [0, 1, 2, 3]
 
 var state := State.LOADING
 var world: World
@@ -49,6 +47,11 @@ var _base_time_scale := 1.0
 var _new_record := false
 var _reloading := false
 var _autosave := AUTOSAVE_EVERY
+## Bot: de qual ramo é a vez de comprar, o arquivo do registro (--botlog) e o
+## tempo até a próxima linha de progresso.
+var _bot_turn := 0
+var _bot_log: FileAccess
+var _bot_log_t := 0.0
 
 
 func _ready() -> void:
@@ -60,6 +63,7 @@ func _ready() -> void:
 	menus = Menus.new()
 	ui.add_child(menus)
 	menus.show_screen("loading")
+	Settings.changed.connect(_apply_hud_visibility)
 	fade = ColorRect.new()
 	fade.color = Color(0.06, 0.03, 0.02, 1.0)
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -72,6 +76,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	_build_game()
+	if DevTools.args.has("slot"):
+		GameState.slot = clampi(int(DevTools.args.slot), 1, GameState.SLOTS)
+	if DevTools.args.get("mode", "") == GameState.MODE_CLOCK:
+		GameState.next_mode = GameState.MODE_CLOCK
 	if DevTools.start_mode == "continue":
 		_continue_game()
 	elif DevTools.start_mode == "settings":
@@ -80,6 +88,12 @@ func _ready() -> void:
 	elif DevTools.start_mode == "howto":
 		_enter_menu()
 		menus.show_screen("howto")
+	elif DevTools.start_mode == "slots":
+		_enter_menu()
+		menus._goto("slots", "title")
+	elif DevTools.start_mode == "mode":
+		_enter_menu()
+		menus._choose_mode(1, "title")
 	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()
@@ -87,6 +101,16 @@ func _ready() -> void:
 			_open_tree(TabMenu.SKILLS)
 		elif DevTools.start_mode == "map":
 			_open_tree(TabMenu.MAP)
+		elif DevTools.start_mode == "pause":
+			_pause()
+		elif DevTools.start_mode == "stats":
+			_pause()
+			menus._goto("stats", "pause")
+		elif DevTools.start_mode == "end":
+			GameState.playing = false
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			hud.visible = false
+			menus.show_end(GameState.elapsed, false)
 	else:
 		_enter_menu()
 	fade.modulate.a = 1.0
@@ -151,14 +175,22 @@ func _build_game() -> void:
 	# Foto da clareira vista de cima para o mapa (enquanto a tela ainda está escura).
 	tab_ui.map_view.take_shot()
 	ui.move_child(menus, -1)
+	menus.setup_stats(world, colony)
 	menus.play_pressed.connect(_on_play_pressed)
 	menus.continue_pressed.connect(_on_continue_pressed)
+	menus.slot_chosen.connect(_on_slot_chosen)
 	menus.resume_pressed.connect(_resume)
 	menus.restart_pressed.connect(_restart)
 	menus.main_menu_pressed.connect(_to_main_menu)
 	menus.skill_tree_pressed.connect(_open_tree.bind(TabMenu.SKILLS))
 	GameState.level_completed.connect(_on_complete)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
+	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
+	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
+	if DevTools.autoplay and DevTools.args.has("botlog"):
+		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
+		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
+		colony.nest_cleaned.connect(func(n): _bot_write.call_deferred("formigueiro", "%s (%s)" % [n.display_name, "grande" if n.big else "pequeno"]))
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
 	_apply_sniff_color()
@@ -169,6 +201,12 @@ func _build_game() -> void:
 func _apply_sniff_color() -> void:
 	swarm.set_sniff_color(Settings.sniff_color())
 	world.scent_marks.set_color(Settings.sniff_color())
+
+
+## A interface some com "Mostrar a interface" desligado (ou --nohud nos testes).
+func _apply_hud_visibility() -> void:
+	if state == State.PLAYING or state == State.TREE or state == State.PAUSED:
+		hud.visible = Settings.show_hud and not DevTools.args.has("nohud")
 
 
 func _enter_menu() -> void:
@@ -190,6 +228,15 @@ func _on_play_pressed() -> void:
 	tw.tween_property(fade, "modulate:a", 0.0, 0.6)
 
 
+## Escolheu um jogo salvo: continua ele, ou começa um jogo novo se estiver vazio.
+func _on_slot_chosen(slot: int) -> void:
+	GameState.slot = slot
+	if GameState.has_saved_game():
+		_on_continue_pressed()
+	else:
+		_on_play_pressed()
+
+
 func _on_continue_pressed() -> void:
 	var tw := create_tween()
 	tw.tween_property(fade, "modulate:a", 1.0, 0.35)
@@ -200,6 +247,7 @@ func _on_continue_pressed() -> void:
 ## Jogo novo.
 func _start_play() -> void:
 	GameState.reset_run()
+	GameState.mode = GameState.next_mode
 	player.place_at(world.player_start, world.player_start_yaw)
 	_begin_playing()
 	save_game()
@@ -215,6 +263,13 @@ func _start_play() -> void:
 	if DevTools.pose.size() >= 4:
 		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
 		player.pitch = deg_to_rad(DevTools.pose[3])
+	if DevTools.args.has("explored"):
+		# Teste: o mapa todo já explorado.
+		exploration.reveal(Vector2.ZERO, 80.0)
+	if DevTools.args.has("marker"):
+		# Teste: um marcador no mapa (--marker=x,z).
+		var mk := String(DevTools.args.marker).split(",")
+		GameState.marker = Vector2(float(mk[0]), float(mk[1]))
 	if DevTools.args.has("sniff"):
 		# Teste: fareja sozinho nesse instante (para capturas do faro).
 		get_tree().create_timer(float(DevTools.args.sniff)).timeout.connect(player.do_sniff)
@@ -254,8 +309,8 @@ func _begin_playing() -> void:
 	player.bot = DevTools.autoplay
 	player.controls_enabled = not DevTools.autoplay
 	menus.show_screen("")
-	# Teste (capturas limpas): --nohud esconde a interface.
-	hud.visible = not DevTools.args.has("nohud")
+	# "Mostrar a interface" desligado (ou --nohud nos testes) esconde o HUD.
+	_apply_hud_visibility()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Sfx.set_music_duck(0.35)
 
@@ -358,6 +413,8 @@ func _close_tree() -> void:
 
 func _restart() -> void:
 	GameState.delete_saved_game()
+	# Recomeçar mantém o modo (normal ou contra o relógio).
+	GameState.next_mode = GameState.mode
 	skip_menu = true
 	_reload()
 
@@ -396,20 +453,64 @@ func _on_eaten_changed(_total: int, _delta: int) -> void:
 		_bot_buy()
 
 
-## Bot de teste: aprende as habilidades na ordem de BOT_ORDER.
+## Bot de teste: compra em rodízio, uma habilidade de cada ramo por vez (Língua,
+## Garras, Patas, Faro). No ramo da vez, pega a de menor nível (a mais perto da
+## raiz) e, empatando, a mais barata; assim as linhas de dentro do ramo também
+## crescem juntas. Se ainda não dá para pagar, espera juntar os pontos (não
+## pula para outro ramo). Ramo terminado (ou trancado) sai do rodízio.
 func _bot_buy() -> void:
-	for id in BOT_ORDER:
-		if GameState.has(id):
+	for _i in BOT_BRANCHES.size() * 2:
+		var id := _bot_next(BOT_BRANCHES[_bot_turn % BOT_BRANCHES.size()])
+		if id.is_empty():
+			_bot_turn += 1
 			continue
 		if not GameState.can_buy(id):
 			return
 		GameState.buy(id)
+		_bot_turn += 1
+		var u := GameState.get_upgrade(id)
 		print("[bot] comprou %s com %d formigas comidas" % [id, GameState.ants_eaten])
+		_bot_write("compra", "%s;%s;%d" % [id, u.name, GameState.cost_of(id)])
+
+
+## A próxima habilidade do ramo para o bot: requisitos prontos, sem área trancada,
+## a de menor nível e, empatando, a mais barata. Vazio se não há nenhuma.
+func _bot_next(branch: int) -> String:
+	var best := ""
+	var best_key := Vector2(INF, INF)
+	for u in GameState.UPGRADES:
+		if u.branch != branch or GameState.has(u.id) or GameState.upgrade_state(u.id) != 1:
+			continue
+		var key := Vector2(_bot_depth(u.id), GameState.cost_of(u.id))
+		if key.x < best_key.x or (key.x == best_key.x and key.y < best_key.y):
+			best_key = key
+			best = u.id
+	return best
+
+
+func _bot_depth(id: String) -> int:
+	var req: Array = GameState.get_upgrade(id).requires
+	return 0 if req.is_empty() else 1 + _bot_depth(req[0])
+
+
+## Registro do bot (--botlog=arquivo.csv): tempo de jogo, insetos comidos,
+## formigueiros limpos, pontos sobrando, habilidades, tremores usados, o que
+## aconteceu e detalhes.
+func _bot_write(what: String, detail: String = "") -> void:
+	if _bot_log == null:
+		return
+	_bot_log.store_line("%.1f;%d;%d;%d;%d;%d;%s;%s" % [GameState.elapsed, GameState.ants_eaten,
+		colony.nests_cleaned(), GameState.points_available(), GameState.purchased.size(),
+		int(GameState.stat("tremors")), what, detail])
+	_bot_log.flush()
 
 
 ## Clareira 100% limpa: o tronco da saída já pode ser quebrado com as garras.
 func _on_complete(_time: float) -> void:
-	_new_record = is_equal_approx(GameState.best_time, GameState.elapsed)
+	if _bot_log:
+		_bot_write("fim")
+		get_tree().quit()
+	_new_record = is_equal_approx(GameState.mode_best_time(), GameState.elapsed)
 	world.exit_breakable = true
 	hud.big_note("Clareira limpa!", "Quebre o tronco na saída", 5.0, "log")
 	Sfx.play("complete", 0.0)
@@ -425,6 +526,7 @@ func _belly_growl() -> void:
 
 ## O tronco foi quebrado: a passagem para a área 2 está aberta (fim da demo).
 func _on_exit_broken() -> void:
+	GameState.count("exit_broken")
 	state = State.COMPLETE
 	GameState.delete_saved_game()
 	player.controls_enabled = false
@@ -440,6 +542,11 @@ func _process(delta: float) -> void:
 		if _autosave <= 0.0:
 			_autosave = AUTOSAVE_EVERY
 			save_game()
+		if _bot_log:
+			_bot_log_t -= delta
+			if _bot_log_t <= 0.0:
+				_bot_log_t = 30.0
+				_bot_write("progresso")
 	if state == State.MENU and menu_cam:
 		_menu_t += delta
 		var a := _menu_t * 0.06 + 2.2

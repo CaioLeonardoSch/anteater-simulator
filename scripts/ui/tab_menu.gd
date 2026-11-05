@@ -1,6 +1,7 @@
 extends Control
 ## Tela do TAB: duas abas, o mapa (abre primeiro) e a árvore de habilidades.
-## Q e E (ou os botões de ombro do controle) trocam de aba.
+## Q e E (ou os botões de ombro do controle) trocam de aba. As estatísticas
+## ficam na pausa (Esc).
 
 signal closed
 
@@ -10,6 +11,7 @@ const SkillTree := preload("res://scripts/ui/skill_tree.gd")
 
 const MAP := 0
 const SKILLS := 1
+const NAMES := ["Mapa", "Habilidades"]
 
 var map_view: MapView
 var tree: SkillTree
@@ -37,9 +39,9 @@ func _ready() -> void:
 	bar.offset_bottom = 70
 	add_child(bar)
 	bar.add_child(_key_chip("Q"))
-	for i in 2:
+	for i in NAMES.size():
 		var b := Button.new()
-		b.text = ["Mapa", "Habilidades"][i]
+		b.text = NAMES[i]
 		b.toggle_mode = true
 		b.focus_mode = Control.FOCUS_NONE
 		b.custom_minimum_size = Vector2(196, 48)
@@ -98,14 +100,15 @@ func _input(event: InputEvent) -> void:
 	var to := -1
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_Q:
-			to = MAP
+			to = maxi(page - 1, 0)
 		elif event.keycode == KEY_E:
-			to = SKILLS
+			to = mini(page + 1, NAMES.size() - 1)
 	elif event is InputEventJoypadButton and event.pressed:
 		if event.button_index == JOY_BUTTON_LEFT_SHOULDER:
-			to = MAP
+			to = maxi(page - 1, 0)
 		elif event.button_index == JOY_BUTTON_RIGHT_SHOULDER:
-			to = SKILLS
+			to = mini(page + 1, NAMES.size() - 1)
 	if to >= 0:
-		show_page(to)
+		if to != page:
+			show_page(to)
 		get_viewport().set_input_as_handled()

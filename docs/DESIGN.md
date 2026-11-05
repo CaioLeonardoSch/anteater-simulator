@@ -52,7 +52,7 @@ buscamos, no espírito delas:
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
 | **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
-| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 32 000 formigas (cada uma sozinha, um terço passeando pelo campo), 12 formigueiros e 82 câmaras (36 no meio do campo), rainhas no fundo dos montes grandes, 5 habilidades (32 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | A área 1 (uma clareira do cerrado, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 32 000 insetos (cada um sozinho, um quarto passeando pelo campo), 18 formigueiros e 116 câmaras (48 no meio do campo), rainhas no fundo dos montes grandes, 5 habilidades (32 níveis), mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -241,29 +241,34 @@ floresta**, onde ela é usada.
 
 Feito, seguindo as decisões:
 
-1. **12 formigueiros**, com **46 câmaras fechadas**, e mais **36 câmaras
-   sozinhas no meio do campo**, longe das trilhas (cada uma conta para o
-   formigueiro mais perto, no máximo 4 por formigueiro). Os **7 pequenos**, sem
-   rainha, ficam do lado da caverna (o começo) e o Cavar já abre todas as
-   câmaras deles; os **5 grandes**, com a rainha, ficam do lado da saída para a
-   área 2. Segurando **E** com a habilidade Cavar, a câmara abre e as moradoras
+1. **18 formigueiros** espalhados pelo mapa inteiro (8 no anel de fora, 4 no
+   meio e 6 nos vãos), com **68 câmaras fechadas**, e mais **48 câmaras
+   sozinhas no meio do campo**, longe das trilhas e espalhadas por igual (cada
+   uma conta para o formigueiro mais perto, no máximo 3 por formigueiro). Os
+   **11 pequenos**, sem rainha, ficam do lado da caverna (o começo) e o Cavar já
+   abre todas as câmaras deles; os **7 grandes**, com a rainha, ficam do lado da
+   saída para a área 2. Segurando **E** com a habilidade Cavar, a câmara abre e as moradoras
    **saem correndo**; elas fogem quando você chega perto e depois voltam para
    casa. Até 40 ficam à vista (120 no buraco da rainha); as outras saem do
    túnel conforme você come. Depois de cavar, as garras descansam. As câmaras
    grandes, de tampa mais escura, pedem **Cavar Fundo**.
 2. **Dá para subir nos formigueiros** e olhar dentro das câmaras lá de cima.
-3. **Rainha** no fundo dos 5 formigueiros grandes: a tampa dela fica no topo do
+3. **Rainha** no fundo dos 7 formigueiros grandes: a tampa dela fica no topo do
    monte, e só a **Escavação Real** a abre. Aí o **monte inteiro some** e fica
    um buraco escuro com a rainha andando devagar no fundo, junto com a corte e
    as moradoras das outras câmaras do monte. A rainha brilha de leve, fica
    protegida enquanto houver formigas no buraco e **vale 200 formigas (20
    pontos)**.
-4. **As 32 000 formigas andam uma a uma** (31 000 operárias + 5 rainhas × 200),
-   e cada formiga comida conta 1: cerca de 31% vão e voltam pelas trilhas, 36%
+4. **Os 32 000 insetos andam um a um** (30 600 operárias + 7 rainhas × 200),
+   e cada inseto comido conta 1: 25% vão e voltam pelas trilhas, 25%
    passeiam em volta das câmaras do campo (saem, dão uma volta de até 5 m e
-   entram de novo) e o resto mora nas câmaras. Para caber tanta formiga, a
+   entram de novo) e a metade mora nas câmaras. Para caber tanta formiga, a
    placa de vídeo calcula onde está cada uma das que andam pelas trilhas e pelo
-   campo, com 4 níveis de detalhe conforme a distância; quando uma precisa de
+   campo, com 5 níveis de detalhe conforme a distância (4, 9,5, 22 e 40 m). As
+   malhas detalhadas de perto só recebem as formigas que estão perto, e a
+   sombra delas usa uma malha simples: na mesma cena, a placa de vídeo passou
+   de 33,5 para 7,6 milhões de triângulos por quadro. As moradoras das câmaras
+   só existem como um número até a câmara abrir; quando uma precisa de
    atenção (fugir, ficar tonta, ir para a língua ou para a mira), o jogo passa a
    cuidar dela, e depois ela volta para o caminho dela. Uma formiga em cada
    16 000 usa um **chapéu de Natal**.
@@ -281,19 +286,23 @@ Feito, seguindo as decisões:
    câmaras do formigueiro), formigueiro limpo, rainha, Frenesi (com a barra do
    tempo) e habilidade aprendida, que se juntam (×2, ×3); e florzinhas no
    formigueiro quando ele fica limpo. A bússola mostra só a distância e as
-   câmaras do formigueiro à frente (sem nomes). Não há relógio na tela. O Faro mostra, conforme os níveis, quantas formigas
+   câmaras do formigueiro à frente (sem nomes) e o marcador do mapa, com a distância. Não há relógio na tela, a não ser no modo contra o relógio. O Faro mostra, conforme os níveis, quantas formigas
    há (num selo em cima do botão de Farejar), uma nuvem onde elas estão, as
    formigas brilhando e as câmaras fechadas; o Faro Aguçado mostra na bússola
    quanto falta em cada formigueiro e o Faro Lendário marca as rainhas. Salvar
    aparece só como um ícone girando no canto.
-8. **Jogo salvo:** salva sozinho a cada 30 s, ao pausar e ao sair. A tela
-   inicial ganha **Continuar** e **Novo jogo**. Jogos salvos da versão com 1000
-   formigas não são carregados (o mapa mudou).
-9. **Configurações** em abas (Tela, Gráficos, Jogo, Áudio): janela, tela cheia
-   ou tela cheia exclusiva, resolução, resolução do 3D, VSync, limite de FPS,
-   sombras, capim, suavização, efeitos de luz, balanço da câmera, **cor do
-   faro** (vermelho, ciano, magenta ou branco) e **Dicas** (Todas, Poucas ou
-   Nenhuma). **F11** ou **Alt+Enter** alternam a tela cheia.
+8. **Jogo salvo:** salva sozinho a cada 30 s, ao pausar e ao sair, em até **3
+   jogos salvos**. **Continuar** abre o mais recente; **Jogos salvos** mostra os
+   três (insetos comidos, tempo, data) e deixa apagar um (com confirmação).
+   Jogos salvos de versões com outro mapa não são carregados (o de 12
+   formigueiros também não).
+9. **Configurações** em abas (Tela, Gráficos, Jogo, Controles, Áudio): janela,
+   tela cheia ou tela cheia exclusiva, resolução, resolução do 3D, VSync, limite
+   de FPS, sombras, capim, suavização, efeitos de luz, balanço da câmera, **cor
+   do faro** (vermelho, ciano, magenta ou branco), **Dicas** (Todas, Poucas ou
+   Nenhuma), sensibilidade do controle, **mostrar a interface (HUD)**, **trocar
+   as teclas**, Correr e Cavar como segurar ou apertar uma vez, e volumes de
+   música, efeitos e ambiente. **F11** ou **Alt+Enter** alternam a tela cheia.
 10. **Pausa de verdade:** na pausa e na árvore de habilidades, as formigas
    param.
 11. **Penhascos** em volta da clareira, que são o fim do mapa, com muitas
@@ -309,8 +318,10 @@ Feito, seguindo as decisões:
    caído**. Com 100% limpo, a bússola mostra a saída; segurando **E** perto do
    tronco, as garras quebram o tronco e a demo termina. Pela passagem dá para
    ver a rampa que sobe para a **mata fechada** da área 2.
-14. **Sempre o mesmo fim de tarde** (o sol não se põe mais) e **duas lagoas** de
-   enfeite.
+14. **Sempre o mesmo fim de tarde** (o sol não se põe mais) e **quatro lagoas**
+   de enfeite, de formas irregulares (cada uma junta 3 a 5 círculos), de tamanhos
+   diferentes e espalhadas sem simetria. Olhando para o sol, a névoa fica
+   quente em vez de branca.
 15. **Interface nova, no estilo Constelação:** HUD, menus, pausa, configurações e
    árvore com a mesma cara (moldura dourada, Alegreya SC e Alegreya Sans), e a
    bússola em faixa com medalhão (seção 3).
@@ -328,7 +339,23 @@ Feito, seguindo as decisões:
    câmaras) e não visitados; câmaras do campo que você já viu ou farejou; a
    caverna e você. Passar o mouse num formigueiro clareia de leve a área dele.
    A legenda à direita é curta (Formigueiros, Câmaras, Caverna, Jogador,
-   Fechada). O que foi explorado vai no jogo salvo.
+   Fechada, Insetos, Marcador). Cada formigueiro já visto mostra quantos
+   insetos faltam nele. Clique direito (ou Y no controle) põe um marcador, que
+   aparece na bússola. O que foi explorado e o marcador vão no jogo salvo.
+18. **Estatísticas** (um botão na pausa abre a tela delas; também aparecem na tela do fim): os números deste jogo, as ações
+   (linguadas e acerto, faro, tremores, distância, tempo correndo), as parciais
+   do contra o relógio e os recordes de todos os jogos.
+19. **Contra o relógio:** escolhido ao começar um jogo novo. Cronômetro com
+   décimos no canto, parcial a cada 25% dos insetos comparada com a do recorde,
+   e um recorde só desse modo. O relógio só corre com o jogo rodando.
+20. **Conquistas preparadas** (21, em `scripts/achievements.gd`): contadas, mas
+   escondidas na demo; prontas para a Steam ou para um menu próprio.
+21. **Leitura melhor:** nomes das habilidades com contorno escuro, habilidade
+   bloqueada em cinza claro, o capim some perto da câmera (não tampa as
+   formigas), a formiga que a língua vai buscar tem um contorno verde suave, a
+   árvore mostra os números de antes → depois, e a tanajura zumbe baixinho
+   quando está perto. Nos textos, "formigas" virou **"insetos"** onde vale para
+   formigas e cupins.
 
 Ainda a ajustar:
 
@@ -338,6 +365,13 @@ Ainda a ajustar:
   de 19 minutos.
 - **Desempenho:** as 32 000 formigas foram testadas só num servidor sem placa
   de vídeo; falta medir num PC de verdade.
+- **Economia das habilidades:** a pesquisa de 05/11/2026
+  ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
+  tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
+  uma hora de ritmo parado e uma explosão nos últimos 15 minutos. A proposta
+  de reformulação (seção 6, ainda não feita) traz estamina desde o começo,
+  trava por insetos comidos em cada nível (1 000, 3 000, 8 000 e 21 000),
+  Tremor e rainha mais cedo, pontas mais caras e 1 ponto a cada 8 insetos.
 
 ---
 
@@ -465,7 +499,7 @@ Também recomendava lançar a página na Steam **antes** da segunda região.
 
 **Onde estamos:** a demo 3D já cobre a M2 (visual final, câmera de verdade,
 andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
-12 formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
+18 formigueiros e a árvore de habilidades). Falta acertar a duração com testes.
 
 ---
 
@@ -489,10 +523,10 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 - **1ª pessoa** numa clareira do cerrado, sempre no mesmo fim de tarde, cercada
   por **penhascos**. Começa numa **caverna**, de frente para o **cupinzeiro
   gigante** lá longe, e termina quebrando o **tronco caído** que fecha a saída.
-- **12 formigueiros** (5 com rainha) e **58 câmaras** para abrir e esvaziar (12
+- **18 formigueiros** (7 com rainha) e **116 câmaras** para abrir e esvaziar (48
   delas no meio do campo); dá para subir nos montes. As formigas das câmaras
   saem correndo quando você abre.
-- **32 000 formigas**, cada uma sozinha, andando pelas **trilhas** até os
+- **32 000 insetos**, cada um sozinho, andando pelas **trilhas** até os
   arbustos e passeando em volta das câmaras do campo. Correr assusta as
   formigas.
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
@@ -583,3 +617,15 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Formigueiros grandes | Espalhados | Do lado da saída; perto da caverna só os pequenos, que o Cavar já abre |
 | 05/11/2026 | Velocidade da língua | 3,2 lambidas por segundo desde o começo | 1,4 no começo; Língua Comprida e Saliva Grudenta +25% cada, Língua Turbo 2x |
 | 05/11/2026 | Chapéu de Natal | Nenhum | Uma formiga em cada 16 000 (0,00625%) usa um chapéu de Natal |
+| 05/11/2026 | Formigueiros | 12 (5 com rainha), 36 câmaras no campo; 74% dos insetos soltos | 18 (7 com rainha), espalhados pelo mapa inteiro; 48 câmaras no campo espalhadas por igual; metade dos insetos mora nas câmaras (25% nas trilhas, 25% passeando) |
+| 05/11/2026 | Lagoas | Duas, redondas | Quatro, de formas irregulares e tamanhos diferentes, sem simetria |
+| 05/11/2026 | Jogos salvos | Um | Até 3, com Continuar (o mais recente) e a tela de Jogos salvos |
+| 05/11/2026 | Modo de jogo | Só um | Normal ou Contra o relógio (cronômetro, parciais a cada 25%, recorde próprio) |
+| 05/11/2026 | Estatísticas e conquistas | Nenhuma | Estatísticas num botão da pausa (Esc) e na tela do fim (primeiro foram uma aba do TAB); 21 conquistas preparadas, escondidas na demo |
+| 05/11/2026 | Controles e acessibilidade | Teclas fixas | Teclas trocáveis; Correr e Cavar segurar ou apertar; esconder o HUD; volumes de efeitos e ambiente; sensibilidade do controle |
+| 05/11/2026 | Mapa | Sem números | Insetos que faltam em cada formigueiro e um marcador (que aparece na bússola) |
+| 05/11/2026 | Textos | "formigas" | "insetos" onde vale para formigas e cupins |
+| 05/11/2026 | Sol | Névoa branca do lado do sol | Névoa mais quente e com menos brilho; halo do sol menor (o longe fica colorido, como em Firewatch) |
+| 05/11/2026 | Estatísticas (lugar) | Aba do TAB | Botão "Estatísticas" na pausa, com tela própria, e os mesmos quadros na tela do fim |
+| 05/11/2026 | Bot de teste | Comprava numa ordem fixa e só mirava nas formigas soltas | Compra em rodízio entre os ramos e anota cada compra (`--botlog`); vai atrás de todos os insetos, usa Tremor, corrida e Lamber Correndo |
+| 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

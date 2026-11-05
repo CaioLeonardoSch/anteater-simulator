@@ -39,6 +39,8 @@ var cliffs: Cliffs
 var giant_mound: GiantMound
 ## Lagoas (só enfeite): Vector3(x, z, raio).
 var ponds: Array[Vector3] = []
+## Os lobos de cada lagoa (uma lista de Vector3 por lagoa).
+var pond_shapes: Array = []
 ## Trilha de terra (sem capim) da caverna até o formigueiro mais perto.
 var cave_path := PackedVector2Array()
 ## Tronco caído que fecha a passagem para a área 2.
@@ -292,68 +294,142 @@ func near_cave_path(p: Vector2, dist: float) -> bool:
 	return false
 
 
-## Uma ou duas lagoas, só de enfeite: longe das trilhas, dos formigueiros, das
-## câmaras, da caverna e da passagem.
+## Lagoas de enfeite, de forma natural: cada uma é um punhado de círculos que se
+## sobrepõem (lobos), de tamanhos diferentes e espalhadas pelo mapa, longe das
+## trilhas, dos formigueiros, das câmaras, da caverna e da passagem.
+## `ponds` guarda cada lobo (x, z, raio): quem desvia da água trata cada lobo
+## como um círculo. `pond_shapes` guarda os lobos de cada lagoa.
 func _plan_ponds() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = SEED + 31
-	var tries := 0
-	while ponds.size() < 2 and tries < 500:
-		tries += 1
-		var a := rng.randf() * TAU
-		var p := Vector2(cos(a), sin(a)) * rng.randf_range(14.0, 50.0)
-		var size := rng.randf_range(3.4, 4.6)
-		if trails.distance_to_trails(p) < size + 3.0:
-			continue
-		var ok := p.distance_to(cliffs.cave_mouth()) > 16.0 and p.distance_to(cliffs.exit_center(0.0)) > 16.0
-		for n in nests:
-			if p.distance_to(n.center2) < n.radius + size + 4.0:
-				ok = false
+	# Tamanho de cada lagoa (m, de uma ponta à outra, mais ou menos).
+	for size in [15.0, 11.0, 8.0, 6.0]:
+		var placed := false
+		var r: float = size * 0.5
+		for attempt in 600:
+			if attempt > 0 and attempt % 150 == 0:
+				r *= 0.85
+			var a := rng.randf() * TAU
+			var c := Vector2(cos(a), sin(a)) * rng.randf_range(10.0, 52.0)
+			var lobes: Array[Vector3] = [Vector3(c.x, c.y, r * rng.randf_range(0.55, 0.68))]
+			var n := rng.randi_range(2, 4)
+			var dir0 := rng.randf() * TAU
+			for k in n:
+				var ang := dir0 + TAU * k / n + rng.randf_range(-0.6, 0.6)
+				var off: float = r * rng.randf_range(0.3, 0.58)
+				lobes.append(Vector3(c.x + cos(ang) * off, c.y + sin(ang) * off, r * rng.randf_range(0.3, 0.5)))
+			if not _pond_fits(lobes):
+				continue
+			_dig_pond(lobes)
+			placed = true
+			break
+		if not placed:
+			push_warning("Lagoa de %.0f m não coube no mapa." % size)
+
+
+func _pond_fits(lobes: Array[Vector3]) -> bool:
+	for l in lobes:
+		var p := Vector2(l.x, l.y)
+		var lr := l.z
+		if trails.distance_to_trails(p) < lr + 2.6:
+			return false
+		if p.distance_to(cliffs.cave_mouth()) < lr + 14.0 or p.distance_to(cliffs.exit_center(0.0)) < lr + 14.0:
+			return false
+		if p.length() > walk_limit(p) - lr - 3.0:
+			return false
+		for nest in nests:
+			if p.distance_to(nest.center2) < nest.radius + lr + 3.5:
+				return false
 		for f in food_sources:
-			if p.distance_to(f) < size + 4.0:
-				ok = false
+			if p.distance_to(f) < lr + 3.5:
+				return false
 		for q in satellite_spots:
-			if p.distance_to(q) < size + 4.0:
-				ok = false
+			if p.distance_to(q) < lr + 3.5:
+				return false
 		for w in ponds:
-			if p.distance_to(Vector2(w.x, w.y)) < 22.0:
-				ok = false
-		if not ok:
-			continue
-		ponds.append(Vector3(p.x, p.y, size))
-		# Nivela o entorno antes de cavar, para a água encher a lagoa por igual.
-		terrain.add_flat_zone(p.x, p.y, size * 1.9, terrain.natural_height(p.x, p.y))
-		terrain.add_dip(p.x, p.y, size, 0.75)
-		terrain.mask_paint(p.x, p.y, size + 0.6, 1, 1.0)
+			if p.distance_to(Vector2(w.x, w.y)) < lr + w.z + 9.0:
+				return false
+	return true
+
+
+## Cava a bacia da lagoa: cada lobo afunda o chão, todos na mesma altura de
+## beira, e tira o capim de dentro.
+func _dig_pond(lobes: Array[Vector3]) -> void:
+	var level := INF
+	for l in lobes:
+		level = minf(level, terrain.natural_height(l.x, l.y))
+	for l in lobes:
+		terrain.add_flat_zone(l.x, l.y, l.z * 1.8, level)
+	for l in lobes:
+		terrain.add_dip(l.x, l.y, l.z, clampf(0.35 + l.z * 0.13, 0.5, 0.95))
+		terrain.mask_paint(l.x, l.y, l.z + 0.5, 1, 1.0)
+		ponds.append(l)
+	pond_shapes.append(lobes)
 
 
 func _build_pond_water() -> void:
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.08, 0.2, 0.2, 0.92)
+	mat.vertex_color_use_as_albedo = true
+	mat.albedo_color = Color.WHITE
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.18
-	mat.metallic_specular = 0.6
-	for w in ponds:
-		# Nível da água um pouco abaixo da beira mais baixa (a água nunca sobe no capim).
-		var level := INF
-		for k in 12:
-			var a := TAU * k / 12.0
-			level = minf(level, terrain.get_height(w.x + cos(a) * w.z * 0.95, w.y + sin(a) * w.z * 0.95))
-		level -= 0.08
-		var b := MeshBuilder.new()
-		b.add_vertex(Vector3.ZERO, Vector3.UP)
-		var segs := 28
+	mat.roughness = 0.3
+	mat.metallic_specular = 0.3
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	for lobes in pond_shapes:
+		_build_one_pond(lobes, mat)
+
+
+## A água de uma lagoa: o contorno é a união dos lobos (alisada), mais clara e
+## transparente na beira (raso) e escura no meio (fundo).
+func _build_one_pond(lobes: Array, mat: Material) -> void:
+	var c := Vector2(lobes[0].x, lobes[0].y)
+	var segs := 72
+	var radial := PackedFloat32Array()
+	radial.resize(segs)
+	for j in segs:
+		var d := Vector2.RIGHT.rotated(TAU * j / segs)
+		var best := 0.0
+		for l in lobes:
+			var o: Vector2 = Vector2(l.x, l.y) - c
+			var t := o.dot(d)
+			var perp2 := o.length_squared() - t * t
+			var disc: float = l.z * l.z - perp2
+			if disc >= 0.0:
+				best = maxf(best, t + sqrt(disc))
+		radial[j] = best
+	# Alisa as quinas onde dois lobos se encontram.
+	for _pass in 3:
+		var sm := radial.duplicate()
 		for j in segs:
-			var a := TAU * j / segs
-			b.add_vertex(Vector3(cos(a), 0.0, sin(a)) * w.z, Vector3.UP)
+			sm[j] = (radial[(j + segs - 1) % segs] + radial[j] * 2.0 + radial[(j + 1) % segs]) * 0.25
+		radial = sm
+	# Nível da água um pouco abaixo da beira mais baixa (a água nunca sobe no capim).
+	var level := INF
+	for j in segs:
+		var q := c + Vector2.RIGHT.rotated(TAU * j / segs) * radial[j] * 0.93
+		level = minf(level, terrain.get_height(q.x, q.y))
+	level -= 0.06
+	var deep := Color(0.035, 0.12, 0.13, 0.95)
+	var mid := Color(0.07, 0.19, 0.18, 0.88)
+	var shore := Color(0.22, 0.26, 0.17, 0.45)
+	var b := MeshBuilder.new()
+	b.color = deep
+	b.add_vertex(Vector3.ZERO, Vector3.UP)
+	for ring in [[0.55, mid], [1.0, shore]]:
+		b.color = ring[1]
 		for j in segs:
-			b.add_tri(0, 1 + (j + 1) % segs, 1 + j)
-		var mi := MeshInstance3D.new()
-		mi.name = "Lagoa"
-		mi.mesh = b.commit(null, mat)
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		mi.position = Vector3(w.x, level, w.y)
-		add_child(mi)
+			var d := Vector2.RIGHT.rotated(TAU * j / segs) * radial[j] * float(ring[0])
+			b.add_vertex(Vector3(d.x, 0.0, d.y), Vector3.UP)
+	for j in segs:
+		var j2 := (j + 1) % segs
+		b.add_tri(0, 1 + j2, 1 + j)
+		b.add_quad(1 + j, 1 + j2, 1 + segs + j2, 1 + segs + j)
+	var mi := MeshInstance3D.new()
+	mi.name = "Lagoa"
+	mi.mesh = b.commit(null, mat)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(c.x, level, c.y)
+	add_child(mi)
 
 
 ## Tronco caído atravessado na passagem para a área 2 (em duas metades, que se

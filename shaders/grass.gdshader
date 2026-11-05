@@ -17,8 +17,8 @@ uniform float fade_end = 48.0;
 uniform float sway_amount = 0.13;
 // Perto da câmera os tufos somem (encolhem até o chão, cada um a uma distância
 // um pouco diferente), para o capim não tapar as formigas nem a tela.
-uniform float near_fade_start = 0.9;
-uniform float near_fade_end = 2.6;
+uniform float near_fade_start = 0.5;
+uniform float near_fade_end = 1.9;
 
 varying float vh;
 varying float vrand;

@@ -125,7 +125,7 @@ func _ready() -> void:
 	camera.name = "Camera"
 	camera.fov = Settings.fov
 	camera.near = 0.02
-	camera.far = 600.0
+	camera.far = 1500.0
 	head.add_child(camera)
 	viewmodel = Node3D.new()
 	viewmodel.name = "Viewmodel"

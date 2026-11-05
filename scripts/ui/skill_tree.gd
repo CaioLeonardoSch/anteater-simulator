@@ -38,7 +38,6 @@ var _tip_title: Label
 var _tip_where: Label
 var _tip_desc: Label
 var _tip_state: Label
-var _hint: Label
 var _respec: Button
 var _first_node: Control
 var _shown_id := ""
@@ -72,17 +71,6 @@ func _ready() -> void:
 		_nodes[u.id] = node
 		if _first_node == null:
 			_first_node = node
-	# O título é a aba "Habilidades" (tela do TAB); aqui fica só quanto vale um ponto.
-	var sub := UiTheme.label("10 formigas comidas = 1 ponto", 17, UiTheme.SAND)
-	sub.position = Vector2(38, 30)
-	add_child(sub)
-	_hint = UiTheme.label("", 19, UiTheme.SAND)
-	_hint.add_theme_font_override("font", UiTheme.semi_font())
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_hint.offset_top = -FOOTER_H + 6
-	_hint.offset_bottom = -FOOTER_H + 40
-	add_child(_hint)
 	var footer := HBoxContainer.new()
 	footer.alignment = BoxContainer.ALIGNMENT_CENTER
 	footer.add_theme_constant_override("separation", 18)
@@ -229,6 +217,12 @@ func _on_node_pressed(id: String) -> void:
 		tw.tween_property(node, "scale", Vector2.ONE, 0.22)
 	else:
 		Sfx.play("deny", -6.0)
+	# Clique do mouse: a habilidade não fica escolhida (senão o quadro não some
+	# quando o mouse sai). Com o controle, ela continua escolhida.
+	if _hover_id == id:
+		var node: Control = _nodes[id]
+		if node.has_focus():
+			node.release_focus()
 	_show_tip(id)
 
 
@@ -245,7 +239,6 @@ func _on_respec() -> void:
 func refresh() -> void:
 	if _respec:
 		_respec.disabled = GameState.purchased.is_empty()
-	_hint.text = _summary_text()
 	for id in _nodes:
 		(_nodes[id] as Control).queue_redraw()
 	_canvas.queue_redraw()
@@ -282,47 +275,46 @@ func _show_tip(id: String) -> void:
 			text = "Aprendida."
 			col = UiTheme.GOLD
 		3:
-			text = "Ainda não disponível."
+			text = "Custa %d pontos · ainda não disponível." % cost
 		0:
-			var names := []
-			for r in GameState.missing_requirements(id):
-				names.append(GameState.get_upgrade(r).name)
-			text = "Custa %d pontos. Aprenda antes: %s." % [cost, ", ".join(names)]
+			text = "Custa %d pontos." % cost
 		_:
 			if pts >= cost:
-				text = "Clique para aprender por %d pontos." % cost
+				text = "Custa %d pontos · clique para aprender." % cost
 				col = branch.color.lightened(0.3)
 			else:
-				text = "Custa %d pontos: faltam %d formigas." % [cost, GameState.ants(cost - pts)]
+				text = "Custa %d pontos · faltam %d formigas." % [cost, GameState.ants(cost - pts)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true
 	_tip.reset_size()
 	var tsize := _tip.get_combined_minimum_size()
 	_tip.size = tsize
-	# Ao lado da habilidade, do lado de fora da árvore, sem sair da tela.
+	_tip.position = _tip_position(id, (u.requires as Array).is_empty(), tsize)
+
+
+## Onde fica o quadro: ao lado da habilidade (do lado de fora da árvore) quando
+## cabe sem cobri-la; senão, acima ou abaixo dela.
+func _tip_position(id: String, is_root: bool, tsize: Vector2) -> Vector2:
 	var p := node_pos(id)
-	var r := (ROOT_R if (u.requires as Array).is_empty() else NODE_R) + 22.0
-	var pos := Vector2(p.x + r, p.y - tsize.y * 0.5)
-	if p.x < _center.x - 10.0:
-		pos.x = p.x - r - tsize.x
-	elif absf(p.x - _center.x) <= 10.0:
-		pos = Vector2(p.x + r, p.y - tsize.y * 0.5)
-	pos.x = clampf(pos.x, 12.0, size.x - tsize.x - 12.0)
-	pos.y = clampf(pos.y, HEADER_H, size.y - FOOTER_H - tsize.y)
-	_tip.position = pos
-
-
-func _summary_text() -> String:
-	var n := GameState.affordable_count()
-	if n == 1:
-		return "Já dá para aprender 1 habilidade: passe o mouse para ver, clique para aprender."
-	if n > 1:
-		return "Já dá para aprender %d habilidades: passe o mouse para ver, clique para aprender." % n
-	var goal := GameState.next_goal()
-	if goal.is_empty():
-		return "Passe o mouse numa habilidade para ver o que ela faz."
-	return "Próxima: %s (%d pontos) · faltam %d formigas." % [goal.name, goal.cost, GameState.ants(goal.cost - GameState.points_available())]
+	var r := (ROOT_R if is_root else NODE_R) + 22.0
+	var top := HEADER_H
+	var bottom := size.y - FOOTER_H
+	var keep := Rect2(p - Vector2.ONE * (r - 6.0), Vector2.ONE * (r - 6.0) * 2.0)
+	var side := Vector2(p.x - r - tsize.x if p.x < _center.x - 10.0 else p.x + r, p.y - tsize.y * 0.5)
+	side.x = clampf(side.x, 12.0, size.x - tsize.x - 12.0)
+	side.y = clampf(side.y, top, bottom - tsize.y)
+	if not Rect2(side, tsize).intersects(keep):
+		return side
+	var x := clampf(p.x - tsize.x * 0.5, 12.0, size.x - tsize.x - 12.0)
+	var above := Vector2(x, p.y - r - tsize.y)
+	var below := Vector2(x, p.y + r + 8.0)
+	# Na metade de baixo da tela, prefere em cima; na de cima, embaixo.
+	var order := [above, below] if p.y > _center.y else [below, above]
+	for cand in order:
+		if cand.y >= top - 50.0 and cand.y + tsize.y <= size.y - 12.0:
+			return cand
+	return order[0]
 
 
 func open() -> void:
@@ -440,12 +432,16 @@ class TreeCanvas extends Control:
 				if last.is_empty():
 					continue
 				var lp: Vector2 = tree.node_pos(last.id)
-				var dir := (lp - c).normalized()
+				# Na mesma direção da linha (da habilidade anterior até a última).
+				var prev := c
+				if not (last.requires as Array).is_empty():
+					prev = tree.node_pos(String(last.requires[0]))
+				var dir := (lp - prev).normalized()
 				# Encostado na última habilidade, sem cobrir o círculo nem o preço.
 				var half := _pill_size(branch.lines[col], 14, false) * 0.5
-				var gap: float = tree.NODE_R + 16.0 + absf(dir.x) * half.x + absf(dir.y) * half.y
+				var gap: float = tree.NODE_R + 12.0 + absf(dir.x) * half.x + absf(dir.y) * half.y
 				if dir.y > 0.3:
-					gap += 14.0
+					gap += 16.0
 				_pill(lp + dir * gap, branch.lines[col], 14, branch.color, false)
 
 	## Ligação: escura (0), clara (1, a próxima que dá para aprender) ou dourada (2, aprendida).

@@ -15,6 +15,8 @@ uniform float haze_base = 0.66;
 uniform float extra_haze = 0.0;
 // Brilho na borda virada para o sol (contraluz), como nas árvores.
 uniform float rim_strength = 0.35;
+// Escala do modelo no mundo (o desenho da terra e a névoa seguem o tamanho dele).
+uniform float world_scale = 1.0;
 
 // Copiados do céu, da névoa e do sol do cenário (world.gd).
 uniform vec3 fog_color : source_color = vec3(0.92, 0.74, 0.6);
@@ -54,8 +56,9 @@ vec3 sky_color(vec3 dir, vec3 sdir) {
 }
 
 void fragment() {
-	float n = texture(noise_tex, wpos.xz * 0.012 + vec2(0.0, wpos.y * 0.01)).r;
-	float streak = texture(noise_tex, vec2((wpos.x + wpos.z) * 0.03, wpos.y * 0.004)).r;
+	vec3 lp = wpos / world_scale;
+	float n = texture(noise_tex, lp.xz * 0.012 + vec2(0.0, lp.y * 0.01)).r;
+	float streak = texture(noise_tex, vec2((lp.x + lp.z) * 0.03, lp.y * 0.004)).r;
 	vec3 base = mix(color_a, color_b, smoothstep(0.3, 0.7, n)) * COLOR.rgb;
 	base *= mix(0.78, 1.08, smoothstep(0.35, 0.65, streak));
 	ALBEDO = base;
@@ -73,7 +76,7 @@ void fragment() {
 	// Névoa: cor do céu atrás dele + brilho do sol, como a névoa do cenário.
 	vec3 fog_col = mix(fog_color, sky_color(view, sdir), aerial);
 	fog_col += sun_color * sun_energy * sun_scatter * pow(max(dot(view, sdir), 0.0), 8.0);
-	float amount = mix(haze_base, haze_top, smoothstep(0.0, 55.0, wpos.y));
+	float amount = mix(haze_base, haze_top, smoothstep(0.0, 55.0, lp.y));
 	amount = 1.0 - (1.0 - amount) * (1.0 - extra_haze);
 	FOG = vec4(fog_col, amount);
 }

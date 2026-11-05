@@ -14,6 +14,7 @@ const Props := preload("res://scripts/world/props.gd")
 const ScentMarks := preload("res://scripts/world/scent_marks.gd")
 const Cliffs := preload("res://scripts/world/cliffs.gd")
 const GiantMound := preload("res://scripts/world/giant_mound.gd")
+const WorldMap := preload("res://scripts/world/world_map.gd")
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const SKY_SHADER := preload("res://shaders/sky_dusk.gdshader")
@@ -167,7 +168,7 @@ func build() -> void:
 	cliffs.build(mats)
 	# O tamanduá acorda no fundo da caverna, olhando para o cupinzeiro gigante.
 	player_start = cliffs.cave_spot()
-	var look := Vector2(cos(GiantMound.ANGLE), sin(GiantMound.ANGLE)) * 60.0
+	var look := WorldMap.mound_world()
 	var to := look - player_start
 	player_start_yaw = atan2(-to.x, -to.y)
 	for nest in nests:

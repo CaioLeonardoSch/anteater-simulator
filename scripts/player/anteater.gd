@@ -805,6 +805,9 @@ func _bot_update(delta: float) -> void:
 	var lost: bool = _bot_target >= 0 and (swarm.alive[_bot_target] == 0 or swarm.mode[_bot_target] == swarm.Mode.STUCK)
 	if _bot_hungry > 20.0:
 		# Muito tempo sem comer: larga o alvo e dá uns passos para o lado.
+		print("[bot] sem comer: pos=%s alvo=%d campo=%s alvo_pos=%s dig=%d nest=%s" % [global_position.snapped(Vector3.ONE * 0.1),
+			_bot_target, _bot_field, (swarm.pos[_bot_target] if _bot_target >= 0 else field_pos).snapped(Vector3.ONE * 0.1),
+			GameState.dig_level(), dig_nest.display_name if dig_nest else "-"])
 		_bot_hungry = 0.0
 		lost = true
 		_bot_side = -1.0 if randf() < 0.5 else 1.0

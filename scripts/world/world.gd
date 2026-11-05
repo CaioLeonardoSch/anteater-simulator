@@ -667,13 +667,17 @@ func _build_environment() -> void:
 	env.glow_enabled = true
 	env.glow_intensity = 0.55
 	env.glow_strength = 1.0
-	env.glow_bloom = 0.06
-	env.glow_hdr_threshold = 0.95
+	# Contra o sol: pouco "bloom" (ele lavava a imagem de branco) e só o que é
+	# bem claro brilha.
+	env.glow_bloom = 0.02
+	env.glow_hdr_threshold = 1.1
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.92, 0.72, 0.58)
 	env.fog_light_energy = 1.0
-	env.fog_sun_scatter = 0.45
+	# A névoa do lado do sol fica mais quente, sem virar uma parede branca
+	# (perspectiva aérea: o longe fica colorido, não esbranquiçado).
+	env.fog_sun_scatter = 0.14
 	env.fog_density = 0.0065
 	env.fog_aerial_perspective = 0.6
 	env.fog_sky_affect = 0.15
@@ -686,7 +690,7 @@ func _build_environment() -> void:
 	env.adjustment_contrast = 1.06
 	env.volumetric_fog_density = 0.012
 	env.volumetric_fog_albedo = Color(0.95, 0.8, 0.65)
-	env.volumetric_fog_anisotropy = 0.6
+	env.volumetric_fog_anisotropy = 0.35
 	env.volumetric_fog_length = 48.0
 	world_env = WorldEnvironment.new()
 	world_env.environment = env
@@ -840,7 +844,7 @@ func _apply_day() -> void:
 	sky_mat.set_shader_parameter("mid_color", Color(0.66, 0.62, 0.74).lerp(Color(0.62, 0.45, 0.66), p))
 	sky_mat.set_shader_parameter("zenith_color", Color(0.26, 0.36, 0.62).lerp(Color(0.18, 0.20, 0.45), p))
 	sky_mat.set_shader_parameter("sun_glow_color", Color(1.0, 0.6, 0.3).lerp(Color(1.0, 0.42, 0.25), p))
-	env.fog_light_color = Color(0.92, 0.74, 0.6).lerp(Color(0.85, 0.55, 0.52), p)
+	env.fog_light_color = Color(0.86, 0.66, 0.52).lerp(Color(0.8, 0.5, 0.48), p)
 	if giant_mound:
 		giant_mound.set_atmosphere(sky_mat, env, s, sun)
 	if fireflies:

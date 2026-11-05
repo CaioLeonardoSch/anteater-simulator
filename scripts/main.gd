@@ -189,7 +189,7 @@ func _build_game() -> void:
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
 	if DevTools.autoplay and DevTools.args.has("botlog"):
 		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
-		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;evento;detalhe")
+		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
 		colony.nest_cleaned.connect(func(n): _bot_write.call_deferred("formigueiro", "%s (%s)" % [n.display_name, "grande" if n.big else "pequeno"]))
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
@@ -494,12 +494,14 @@ func _bot_depth(id: String) -> int:
 
 
 ## Registro do bot (--botlog=arquivo.csv): tempo de jogo, insetos comidos,
-## formigueiros limpos, pontos sobrando, o que aconteceu e detalhes.
+## formigueiros limpos, pontos sobrando, habilidades, tremores usados, o que
+## aconteceu e detalhes.
 func _bot_write(what: String, detail: String = "") -> void:
 	if _bot_log == null:
 		return
-	_bot_log.store_line("%.1f;%d;%d;%d;%d;%s;%s" % [GameState.elapsed, GameState.ants_eaten,
-		colony.nests_cleaned(), GameState.points_available(), GameState.purchased.size(), what, detail])
+	_bot_log.store_line("%.1f;%d;%d;%d;%d;%d;%s;%s" % [GameState.elapsed, GameState.ants_eaten,
+		colony.nests_cleaned(), GameState.points_available(), GameState.purchased.size(),
+		int(GameState.stat("tremors")), what, detail])
 	_bot_log.flush()
 
 

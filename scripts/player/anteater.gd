@@ -103,6 +103,8 @@ var _bot_field := Vector2i(-1, -1)
 var _bot_hungry := 0.0
 ## Alvos que o bot desistiu de pegar (índice -> quando tentar de novo).
 var _bot_skip := {}
+## Quantos insetos estão no raio do Tremor (contado junto com a escolha do alvo).
+var _bot_crowd := 0
 var _bot_eaten := 0
 var _bot_think := 0.0
 var _bot_lick := false
@@ -664,8 +666,15 @@ func _update_abilities(delta: float) -> void:
 	else:
 		exit_progress = maxf(exit_progress - delta * 2.0, 0.0)
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
-	if bot and GameState.can_tremor() and tremor_cd <= 0.0 and _bot_target >= 0:
-		want_tremor = swarm.alive[_bot_target] == 1 and swarm.pos[_bot_target].distance_to(global_position) < 4.0
+	if bot and GameState.can_tremor() and tremor_cd <= 0.0:
+		# Tremor quando vale a pena: um bolo de insetos em volta, ou o alvo
+		# fugindo perto.
+		var fleeing: bool = _bot_target >= 0 and swarm.alive[_bot_target] == 1 \
+			and swarm.mode[_bot_target] == swarm.Mode.FLEE \
+			and swarm.pos[_bot_target].distance_to(global_position) < GameState.tremor_radius() * 0.7
+		want_tremor = _bot_crowd >= BOT_TREMOR_CROWD or fleeing
+		if want_tremor:
+			_bot_crowd = 0
 	if want_tremor and GameState.can_tremor() and tremor_cd <= 0.0 and is_on_floor():
 		do_tremor()
 	if pull_time > 0.0:
@@ -791,6 +800,10 @@ func _update_arms(delta: float) -> void:
 
 # ------------------------------------------------------------- Bot de teste
 
+## O bot usa o Tremor quando tem pelo menos isso de insetos no raio dele.
+const BOT_TREMOR_CROWD := 12
+
+
 func _bot_update(delta: float) -> void:
 	_bot_think -= delta
 	if GameState.ants_eaten != _bot_eaten:
@@ -871,8 +884,13 @@ func _bot_update(delta: float) -> void:
 	if moving:
 		if Vector2(move_goal.x - global_position.x, move_goal.z - global_position.z).length() > 0.25:
 			_bot_input = Vector2(0, -1)
-			_bot_run = dist > 9.0
+			# Correr assusta os insetos (menos com o Galope Silencioso): sem ele,
+			# só corre para longe; com ele, corre até perto do alvo.
+			_bot_run = dist > (3.0 if GameState.has("patas_galope") else 9.0)
 			_bot_unstuck(delta)
+		# Já ao alcance da língua: lambe andando (ou correndo, com Lamber Correndo).
+		if not to_chamber and dist <= reach and (not _bot_run or GameState.can_lick_running()):
+			_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
 	else:
 		_bot_lick = absf(angle_difference(yaw, want_yaw)) < 0.25
 
@@ -882,6 +900,10 @@ func _bot_update(delta: float) -> void:
 func _bot_pick_target(field) -> void:
 	_bot_target = -1
 	_bot_field = Vector2i(-1, -1)
+	if GameState.can_tremor() and tremor_cd <= 0.0:
+		var found: Array[Vector4] = []
+		field.gather(global_position, GameState.tremor_radius() * 0.8, found)
+		_bot_crowd = found.size()
 	for k in _bot_skip.keys():
 		if GameState.elapsed >= _bot_skip[k]:
 			_bot_skip.erase(k)

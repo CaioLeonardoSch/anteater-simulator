@@ -384,6 +384,48 @@ as últimas compras ainda saem juntas. Na árvore nova o Tremor e a rainha
 chegam antes, e isso deve acelerar o meio e suavizar o fim; só medindo para
 saber. **Depois de implementar, rodo o bot de novo** com a árvore nova.
 
+## 7. Árvore feita (05/11/2026): travas e preços
+
+Decidido com o Caio, depois das contas acima:
+
+- **Cinco travas**, em insetos comidos: **1 000, 3 000, 8 000, 13 000 e
+  21 000** (números de Fibonacci; cada um cerca de 1,6 a 2,6 vezes o
+  anterior). O começo de cada ramo não tem trava. Cada habilidade tem a sua:
+  as linhas curtas e de apoio terminam até 13 000, e as pontas mais fortes
+  ficam para 21 000.
+- **O Tremor virou uma linha própria**, que sai de Força nível 1: Tremor
+  nível 1 (o pulo), nível 2 (recarga de 14 s) e nível 3 (Terremoto, recarga
+  de 7 s). Força ganhou um nível 2 (tontas por 4 s) e Rapidez ficou só com
+  o descanso das garras.
+
+**A regra dos preços.** Quem compra de tudo um pouco deve terminar de pagar o
+que uma trava abriu **bem quando a seguinte abre**. Ou seja, a soma dos preços
+de tudo o que já abriu é igual aos pontos ganhos até a próxima trava (10
+insetos = 1 ponto). Assim a trava quase nunca segura quem compra equilibrado,
+mas segura quem gasta tudo numa linha só. Dentro de cada faixa, o preço segue
+a conta "pontos por minuto × minutos até a próxima compra", mirando uma
+compra a cada 1,5 a 2 minutos.
+
+| Trava | Habilidades que abrem | Soma dos preços | Soma até aqui | Pontos ao abrir a próxima | Minuto aproximado* |
+|---|---|---|---|---|---|
+| começo | Lambida Contínua 25 · Cavar 35 · Fôlego 1 20 · Farejar 20 | 100 | 100 | 100 | 0 |
+| 1 000 | Bocado 1 40 · Mira 1 30 · Rapidez 1 30 · Respiro 1 30 · Passada 1 30 · Alcance 1 40 | 200 | 300 | 300 | 7 |
+| 3 000 | Bocado 2 80 · Destreza 1 70 · Mira 2 60 · Força 1 55 · Fundura 1 60 · Corrida 1 60 · Fôlego 2 50 · Precisão 1 50 | 485 | 785 | 800 | 17 |
+| 8 000 | Destreza 2 90 · Força 2 50 · **Tremor 1 100** · Rapidez 2 80 · Respiro 2 60 · Passada 2 60 · Alcance 2 70 | 510 | 1 295 | 1 300 | 33 |
+| 13 000 | Bocado 3 120 · Tremor 2 100 · **Fundura 2 (rainha) 120** · Corrida 2 90 · Respiro 3 70 · Passada 3 70 · Fôlego 3 80 · Alcance 3 100 · Precisão 2 80 | 830 | 2 125 | 2 100 | 48 |
+| 21 000 | Bocado 4 320 · Destreza 3 300 · Tremor 3 330 · Corrida 3 250 · Alcance 4 260 · Precisão 3 240 | 1 700 | 3 825 | 4 400 (fim) | 66 |
+
+\* Pela curva do bot antigo, ajustada para 44 000 insetos. A árvore nova
+deve mudar essa curva (o Tremor chega perto dos 33 minutos, antes 61, e a
+rainha perto dos 48, antes 68), então os minutos são só um ponto de partida.
+
+As 40 habilidades custam **3 825 pontos (87% dos 4 400)**. Com as pontas a
+21 000, os últimos 1 700 pontos chegam por volta de 38 000 insetos: sobra
+um pedaço do fim para usar as habilidades mais fortes.
+
+**Ainda não medido:** o bot não rodou com a árvore nova (a pedido, para não
+gastar processamento). Os números vêm das contas acima e do teste do Caio.
+
 ## Fontes
 
 - Anthony Pecorella, "The Math of Idle Games",

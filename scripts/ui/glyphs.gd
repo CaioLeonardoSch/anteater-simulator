@@ -6,7 +6,7 @@ extends RefCounted
 ## GameState.BRANCHES).
 const BRANCH_GLYPHS := [
 	["tongue", "ant", "bolt", "cross"],
-	["claws", "burst", "clock", "pit"],
+	["claws", "dizzy", "burst", "clock", "pit"],
 	["paw", "chevrons", "wind", "steps", "heart"],
 	["nose", "rings", "eye"],
 	["peak"],
@@ -103,6 +103,18 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 			for x0 in [-0.62, -0.02]:
 				ci.draw_polyline(PackedVector2Array([c + Vector2(x0, -0.55) * s, c + Vector2(x0 + 0.5, 0) * s,
 					c + Vector2(x0, 0.55) * s]), col, s * 0.17, true)
+		"dizzy":
+			# Espiral de tontura, com duas estrelinhas.
+			var pts := PackedVector2Array()
+			for i in 30:
+				var t := i / 29.0
+				var a := t * TAU * 1.75
+				pts.append(c + Vector2(cos(a), sin(a)) * lerpf(0.08, 0.62, t) * s)
+			ci.draw_polyline(pts, col, s * 0.13, true)
+			for q in [Vector2(0.72, -0.62), Vector2(-0.7, 0.6)]:
+				var sc: Vector2 = c + q * s
+				ci.draw_line(sc + Vector2(-0.14, 0) * s, sc + Vector2(0.14, 0) * s, col, s * 0.08, true)
+				ci.draw_line(sc + Vector2(0, -0.14) * s, sc + Vector2(0, 0.14) * s, col, s * 0.08, true)
 		"wind":
 			for k in 3:
 				var y := (k - 1) * 0.42

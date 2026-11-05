@@ -102,11 +102,10 @@ buscamos, no espírito delas:
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
 - **44 000 insetos** (eram 1000, depois 3200, depois 32 000), cada um andando
   sozinho: **10 insetos comidos = 1 ponto**, 4 400 pontos no jogo inteiro. A
-  árvore de hoje (já com a estamina) custa **3215 pontos** (73%); os preços
-  novos da reformulação ([`pesquisa-habilidades.md`](pesquisa-habilidades.md),
-  seção 6) vão usar quase todos.
-- **Por enquanto as habilidades ficam como estão.** A pontuação e a quantidade
-  de formigas e cupins para liberar tudo serão reavaliadas mais para a frente.
+  árvore custa **3 825 pontos** (87%), e cada habilidade tem uma **trava**: só
+  abre depois de comer 1 000, 3 000, 8 000, 13 000 ou 21 000 insetos (o começo
+  de cada ramo abre já). As contas estão em
+  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 7.
 
 ### O mapa: 4 áreas (esboço de 02/11/2026)
 
@@ -211,24 +210,25 @@ faz aparecem ao passar o mouse (ou o controle). Ela **não abre sozinha**: quand
 dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**). O
 **TAB** abre primeiro o **mapa**; a árvore fica na aba ao lado.
 
-| Habilidade | Linha | Níveis (preço em pontos) |
+| Habilidade | Linha | Níveis (preço · trava em insetos comidos) |
 |---|---|---|
 | **Língua** | começo | Lambida Contínua (25: segurar para lamber) |
-| | Bocado | nível 1 (40: até 50 insetos por lambida) · nível 2 (75: até 150) · nível 3 (115: até 250) · nível 4 (170: até 400) |
-| | Destreza | nível 1 (70: +50% de alcance) · nível 2 (100: gruda num raio 70% maior) · nível 3 (150: 2x mais rápida) |
-| | Mira | nível 1 (30: a língua vai atrás do inseto mais perto da mira; sem ela, vai reta) · nível 2 (60: essa área fica 25% maior) |
+| | Bocado | nível 1 (40 · 1 mil: até 50 insetos por lambida) · nível 2 (80 · 3 mil: até 150) · nível 3 (120 · 13 mil: até 250) · nível 4 (320 · 21 mil: até 400) |
+| | Destreza | nível 1 (70 · 3 mil: +50% de alcance) · nível 2 (90 · 8 mil: gruda num raio 70% maior) · nível 3 (300 · 21 mil: 2x mais rápida) |
+| | Mira | nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira; sem ela, vai reta) · nível 2 (60 · 3 mil: essa área fica 25% maior) |
 | **Garras** | começo | Cavar (35: abre as câmaras pequenas; depois as garras descansam 25 s) |
-| | Força | nível 1 (70: as moradoras ficam tontas ao abrir) · nível 2 (110: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 3 (170: Terremoto: pulo mais alto, tremor maior, puxa as tontas) |
-| | Rapidez | nível 1 (50: descanso de 15 s) · nível 2 (95: descanso de 5 s e cava na metade do tempo) · nível 3 (130: Tremor em 14 s) · nível 4 (150: Tremor em 7 s) |
-| | Fundura | nível 1 (60: abre as câmaras grandes) · nível 2 (120: desmancha o monte da rainha) |
+| | Força | nível 1 (55 · 3 mil: as moradoras ficam tontas por 2,5 s ao abrir) · nível 2 (50 · 8 mil: tontas por 4 s) |
+| | Tremor (sai de Força nível 1) | nível 1 (100 · 8 mil: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (100 · 13 mil: recarga de 14 s) · nível 3 (330 · 21 mil: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
+| | Rapidez | nível 1 (30 · 1 mil: descanso de 15 s) · nível 2 (80 · 8 mil: descanso de 5 s e cava na metade do tempo) |
+| | Fundura | nível 1 (60 · 3 mil: abre as câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
 | **Patas** | começo | Fôlego nível 1 (20: estamina máxima de 50 para 100). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (70: +50% sobre andar) · nível 2 (80: lamber correndo) · nível 3 (120: correr não assusta) |
-| | Respiro | níveis 1 a 3 (25, 50, 90): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
-| | Passada | níveis 1 a 3 (25, 50, 90): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
-| | Fôlego | nível 2 (50: estamina máxima 150) · nível 3 (90: 200) |
+| | Corrida | nível 1 (60 · 3 mil: +50% sobre andar) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta) |
+| | Respiro | níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
+| | Passada | níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
+| | Fôlego | nível 2 (50 · 3 mil: estamina máxima 150) · nível 3 (80 · 13 mil: 200) |
 | **Faro** | começo | Farejar (20: diz quantas formigas há a até 10 m, até 100 delas, e a distância da mais perto) |
-| | Alcance | nível 1 (40: 16 m, 250 formigas) · nível 2 (70: 24 m, 500) · nível 3 (110: 34 m, 1000, e quanto falta em cada formigueiro) · nível 4 (160: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
-| | Precisão | nível 1 (45: nuvem borrada onde estão) · nível 2 (85: as formigas brilham nítidas) · nível 3 (100: colunas de cheiro nas câmaras fechadas) |
+| | Alcance | nível 1 (40 · 1 mil: 16 m, 250 formigas) · nível 2 (70 · 8 mil: 24 m, 500) · nível 3 (100 · 13 mil: 34 m, 1000, e quanto falta em cada formigueiro) · nível 4 (260 · 21 mil: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
+| | Precisão | nível 1 (50 · 3 mil: nuvem borrada onde estão) · nível 2 (80 · 13 mil: as formigas brilham nítidas) · nível 3 (240 · 21 mil: colunas de cheiro nas câmaras fechadas) |
 | **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400): ainda não feitas, aparecem com cadeado |
 
 **Habilidades por região:** a **Escalada + Cauda** aparece na árvore desde o
@@ -371,11 +371,9 @@ Ainda a ajustar:
 - **Economia das habilidades:** a pesquisa de 05/11/2026
   ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
   tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
-  uma hora de ritmo parado e uma explosão nos últimos 15 minutos. A proposta
-  de reformulação (seção 6) trouxe a estamina (já feita); falta a
-  trava por insetos comidos em cada nível (1 000, 3 000, 8 000 e 21 000),
-  Tremor e rainha mais cedo e pontas mais caras (em vez de 1 ponto a cada 8
-  insetos, a clareira passou para 44 000).
+  uma hora de ritmo parado e uma explosão nos últimos 15 minutos. A
+  reformulação já foi feita (estamina, travas, preços novos, Tremor e rainha
+  mais cedo), mas o bot ainda não rodou com ela: o ritmo novo falta medir.
 
 ---
 
@@ -635,4 +633,6 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Quantidade de insetos | 32 000 (3 200 pontos) | 44 000 (4 400 pontos), para caber a árvore nova com estamina; jogos salvos antigos não carregam mais |
 | 05/11/2026 | Correr | Só depois da habilidade Corrida (30), sem limite | Desde o começo, com estamina (barra no canto de baixo, à esquerda): começa com 50, gasta 10/s, volta 3/s 1 s depois de parar. Se zerar, volta a correr com 15%. A habilidade Corrida saiu; Patas ganhou as linhas Respiro, Passada e Fôlego |
 | 05/11/2026 | Nomes das habilidades | Um nome para cada nível (Lambida Larga, Garras Ágeis, Faro Apurado...) | Linha + nível (Bocado nível 2, Rapidez nível 1, Alcance nível 2); só o começo de cada ramo tem nome (Lambida Contínua, Cavar, Fôlego nível 1, Farejar) |
+| 05/11/2026 | Travas e preços | Tudo aberto desde o começo; árvore de 3 215 pontos | Cinco travas por insetos comidos (1 000, 3 000, 8 000, 13 000, 21 000), com cadeado e "8 mil" na árvore e um aviso quando abrem; árvore de 3 825 pontos (87%), com as pontas mais fortes em 21 000 |
+| 05/11/2026 | Tremor | Força nível 2; a recarga ficava na Rapidez | Linha própria, saindo de Força nível 1 (Tremor 1 a 3, o 3 é o Terremoto); Força ganhou nível 2 (tontas por 4 s); Rapidez ficou com 2 níveis |
 | 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

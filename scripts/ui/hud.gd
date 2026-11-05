@@ -100,6 +100,7 @@ func setup(p, sw, col, w) -> void:
 	GameState.skills_reset.connect(_refresh_points)
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
+	GameState.gate_opened.connect(_on_gate_opened)
 	GameState.split_reached.connect(_on_split)
 	Settings.changed.connect(_refresh_keys)
 	_on_eaten_changed(GameState.ants_eaten, 0)
@@ -514,6 +515,18 @@ func _on_purchased(id: String) -> void:
 	_cards.push("learned:" + id, {"title": u.name, "sub": "Aprendida", "icon": Glyphs.for_upgrade(u),
 		"icon_col": bc.lightened(0.35), "icon_bg": bc.darkened(0.72), "ring": UiTheme.GOLD,
 		"value_col": UiTheme.GOLD})
+
+
+## Comeu insetos o bastante para abrir mais habilidades na árvore.
+func _on_gate_opened(insects: int) -> void:
+	var n := 0
+	for u in GameState.UPGRADES:
+		if GameState.gate_of(u.id) == insects:
+			n += 1
+	_cards.push("gate:%d" % insects, {"title": "Novas habilidades", "sub": "%d na árvore  ·  %d mil insetos" % [n, insects / 1000],
+		"icon": "lock", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD, "ring": UiTheme.GOLD,
+		"value_col": UiTheme.GOLD})
+	Sfx.play("point", -2.0)
 
 
 func _on_chamber_cleaned(nest, _ci: int) -> void:

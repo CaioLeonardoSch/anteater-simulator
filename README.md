@@ -162,12 +162,16 @@ uma vez".
 
 ### Habilidades
 
-| Habilidade | Níveis (preço em pontos) |
+Entre parênteses: o preço em pontos e, depois do ponto, a **trava**: quantos
+insetos é preciso ter comido para a habilidade abrir (o começo de cada ramo não
+tem trava). Na árvore, ela aparece com cadeado e "8 mil" embaixo.
+
+| Habilidade | Níveis (preço · trava) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · nível 1 (40: até 50 insetos por lambida) · nível 2 (75: até 150) · nível 3 (115: até 250) · nível 4 (170: até 400); **Destreza** · nível 1 (70: alcance +50% e lambe 25% mais rápido) · nível 2 (100: raio maior e mais 25% de rapidez) · nível 3 (150: 2x mais rápido); **Mira** · nível 1 (30: a língua vai atrás do inseto mais perto da mira) · nível 2 (60: essa área 25% maior) |
-| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (70: moradoras tontas) · nível 2 (110: libera o Tremor, recarga de 21 s) · nível 3 (170: Terremoto); **Rapidez** · nível 1 (50: descanso de 15 s) · nível 2 (95: 5 s) · nível 3 (130: Tremor em 14 s) · nível 4 (150: 7 s); **Fundura** · nível 1 (60: câmaras grandes) · nível 2 (120: desmancha o monte da rainha) |
-| **Patas** | Fôlego nível 1 (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · nível 1 (70: +50% sobre andar, eram +25%) · nível 2 (80: lamber correndo) · nível 3 (120: correr não assusta); **Respiro** · níveis 1 a 3 (25, 50, 90): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · níveis 1 a 3 (25, 50, 90): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · nível 2 (50: 150) · nível 3 (90: 200) |
-| **Faro** | Farejar (20), e depois: **Alcance** · nível 1 (40: 16 m) · nível 2 (70: 24 m) · nível 3 (110: 34 m) · nível 4 (160: 50 m); **Precisão** · nível 1 (45: nuvem) · nível 2 (85: insetos brilhando) · nível 3 (100: câmaras) |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · nível 1 (40 · 1 mil: até 50 insetos por lambida) · nível 2 (80 · 3 mil: até 150) · nível 3 (120 · 13 mil: até 250) · nível 4 (320 · 21 mil: até 400); **Destreza** · nível 1 (70 · 3 mil: alcance +50% e lambe 25% mais rápido) · nível 2 (90 · 8 mil: raio maior e mais 25% de rapidez) · nível 3 (300 · 21 mil: 2x mais rápido); **Mira** · nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira) · nível 2 (60 · 3 mil: essa área 25% maior) |
+| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (55 · 3 mil: moradoras tontas por 2,5 s) · nível 2 (50 · 8 mil: 4 s); **Tremor** (sai de Força nível 1) · nível 1 (100 · 8 mil: libera o Tremor, recarga de 21 s) · nível 2 (100 · 13 mil: 14 s) · nível 3 (330 · 21 mil: Terremoto, 7 s); **Rapidez** · nível 1 (30 · 1 mil: descanso de 15 s) · nível 2 (80 · 8 mil: 5 s); **Fundura** · nível 1 (60 · 3 mil: câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
+| **Patas** | Fôlego nível 1 (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · nível 1 (60 · 3 mil: +50% sobre andar, eram +25%) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta); **Respiro** · níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · nível 2 (50 · 3 mil: 150) · nível 3 (80 · 13 mil: 200) |
+| **Faro** | Farejar (20), e depois: **Alcance** · nível 1 (40 · 1 mil: 16 m) · nível 2 (70 · 8 mil: 24 m) · nível 3 (100 · 13 mil: 34 m) · nível 4 (260 · 21 mil: 50 m); **Precisão** · nível 1 (50 · 3 mil: nuvem) · nível 2 (80 · 13 mil: insetos brilhando) · nível 3 (240 · 21 mil: câmaras) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
 **Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde
@@ -176,8 +180,11 @@ no canto de baixo, à esquerda (fica vermelho-escura quando acaba). Ela só volt
 15%. Começa com 50, gasta 10 por segundo e volta 3 por segundo.
 
 10 formigas comidas = 1 ponto (a rainha vale 20 pontos). As linhas de um ramo
-não se excluem. Tudo o que dá para aprender no Cerrado soma 3215 pontos (de 4 400 no jogo), e dá
-para redistribuir os pontos de graça na árvore.
+não se excluem. Tudo o que dá para aprender no Cerrado soma 3 825 pontos (de
+4 400 no jogo), e dá para redistribuir os pontos de graça na árvore. Os preços
+foram feitos para que, comprando de tudo um pouco, você termine de pagar o que
+uma trava abriu bem quando a seguinte abre (as contas estão em
+[`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md), seção 7).
 
 ### Tela e gráficos
 

@@ -10,6 +10,8 @@ signal ants_eaten_changed(total: int, delta: int)
 ## Uma habilidade que ainda não dava para comprar agora cabe nos pontos.
 signal upgrade_affordable(id: String)
 signal upgrade_purchased(id: String)
+## Comeu insetos o bastante para abrir mais habilidades (uma das GATES).
+signal gate_opened(insects: int)
 signal skills_reset
 signal level_completed(time_sec: float)
 signal frenzy_changed(active: bool)
@@ -47,11 +49,17 @@ const SPLITS := [0.25, 0.5, 0.75, 1.0]
 ## "region" = só pode ser comprada ao chegar nessa região.
 const BRANCHES := [
 	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Mira"]},
-	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Rapidez", "Fundura"]},
+	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Tremor", "Rapidez", "Fundura"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Corrida", "Respiro", "Passada", "Fôlego"]},
 	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
 	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Floresta"},
 ]
+
+## Travas: cada habilidade (menos o começo de cada ramo) só abre depois de comer
+## um tanto de insetos ("gate"). Os preços foram feitos para que, quem compra
+## de tudo um pouco, termine de pagar o que uma trava abriu bem quando a
+## seguinte abre (ver docs/pesquisa-habilidades.md, seção 7).
+const GATES := [1000, 3000, 8000, 13000, 21000]
 
 ## Cada habilidade: ramo, posição na árvore (col -1 = topo do ramo, centralizado;
 ## 0/1 = linha da esquerda/direita), preço em formigas e o que precisa antes.
@@ -61,65 +69,66 @@ const UPGRADES := [
 	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "cost": 25, "requires": [],
 		"name": "Lambida Contínua",
 		"desc": "Segure o botão para lamber sem parar."},
-	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"],
+	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"], "gate": 1000,
 		"name": "Bocado nível 1",
 		"desc": "Cada lambida pega até 50 insetos perto da ponta da língua."},
-	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 75, "requires": ["lingua_bocado_1"],
+	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 80, "requires": ["lingua_bocado_1"], "gate": 3000,
 		"name": "Bocado nível 2",
 		"desc": "Até 150 insetos por lambida, e a ponta gruda num raio um pouco maior."},
-	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "cost": 115, "requires": ["lingua_bocado_2"],
+	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "cost": 120, "requires": ["lingua_bocado_2"], "gate": 13000,
 		"name": "Bocado nível 3",
 		"desc": "Até 250 insetos por lambida."},
-	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 170, "requires": ["lingua_bocado_3"],
+	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 320, "requires": ["lingua_bocado_3"], "gate": 21000,
 		"name": "Bocado nível 4",
 		"desc": "Até 400 insetos por lambida."},
-	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"],
+	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"], "gate": 3000,
 		"name": "Destreza nível 1",
 		"desc": "Alcance da língua +50%, e ela lambe 25% mais rápido."},
-	{"id": "lingua_saliva", "branch": 0, "col": 1, "row": 2, "cost": 100, "requires": ["lingua_comprida"],
+	{"id": "lingua_saliva", "branch": 0, "col": 1, "row": 2, "cost": 90, "requires": ["lingua_comprida"], "gate": 8000,
 		"name": "Destreza nível 2",
 		"desc": "A ponta da língua gruda num raio 70% maior, e ela lambe 25% mais rápido."},
-	{"id": "lingua_turbo", "branch": 0, "col": 1, "row": 3, "cost": 150, "requires": ["lingua_saliva"],
+	{"id": "lingua_turbo", "branch": 0, "col": 1, "row": 3, "cost": 300, "requires": ["lingua_saliva"], "gate": 21000,
 		"name": "Destreza nível 3",
 		"desc": "A língua lambe 2x mais rápido."},
-	{"id": "lingua_certeira", "branch": 0, "col": 2, "row": 1, "cost": 30, "requires": ["lingua_segurar"],
+	{"id": "lingua_certeira", "branch": 0, "col": 2, "row": 1, "cost": 30, "requires": ["lingua_segurar"], "gate": 1000,
 		"name": "Mira nível 1",
 		"desc": "A língua vai sozinha atrás do inseto mais perto da mira."},
-	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"],
+	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"], "gate": 3000,
 		"name": "Mira nível 2",
 		"desc": "A área da mira em que a língua procura insetos fica 25% maior."},
-	# Garras: Cavar abre as linhas de Força, de Rapidez (o descanso entre usos)
-	# e de Fundura (buracos maiores: câmaras grandes e o monte da rainha).
+	# Garras: Cavar abre as linhas de Força (moradoras tontas), de Rapidez (o
+	# descanso entre usos) e de Fundura (buracos maiores: câmaras grandes e o
+	# monte da rainha). A linha do Tremor sai de Força nível 1.
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
 		"name": "Cavar",
 		"desc": "Segure [E] perto de uma câmara pequena fechada para abri-la. Depois, as garras descansam 25 s."},
-	{"id": "garras_fundo", "branch": 1, "col": 2, "row": 1, "cost": 60, "requires": ["garras_cavar"],
-		"name": "Fundura nível 1",
-		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
-	{"id": "garras_real", "branch": 1, "col": 2, "row": 2, "cost": 120, "requires": ["garras_fundo"],
-		"name": "Fundura nível 2",
-		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
-	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 70, "requires": ["garras_cavar"],
+	{"id": "garras_fortes", "branch": 1, "col": 0, "row": 1, "cost": 55, "requires": ["garras_cavar"], "gate": 3000,
 		"name": "Força nível 1",
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
-	{"id": "garras_tremor", "branch": 1, "col": 0, "row": 2, "cost": 110, "requires": ["garras_fortes"],
+	{"id": "garras_fortes_2", "branch": 1, "col": 0, "row": 2, "cost": 50, "requires": ["garras_fortes"], "gate": 8000,
 		"name": "Força nível 2",
-		"desc": "[Espaço] Pule e caia com força: os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
-	{"id": "garras_terremoto", "branch": 1, "col": 0, "row": 3, "cost": 170, "requires": ["garras_tremor"],
-		"name": "Força nível 3",
-		"desc": "Pulo mais alto e tremor quase 2x maior; os insetos tontos são puxados para a sua boca."},
-	{"id": "garras_ageis", "branch": 1, "col": 1, "row": 1, "cost": 50, "requires": ["garras_cavar"],
+		"desc": "As moradoras ficam tontas por 4 s."},
+	{"id": "garras_tremor", "branch": 1, "col": 1, "row": 2, "cost": 100, "requires": ["garras_fortes"], "gate": 8000,
+		"name": "Tremor nível 1",
+		"desc": "[Espaço] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
+	{"id": "garras_recarga", "branch": 1, "col": 1, "row": 3, "cost": 100, "requires": ["garras_tremor"], "gate": 13000,
+		"name": "Tremor nível 2",
+		"desc": "O Tremor recarrega em 14 s."},
+	{"id": "garras_terremoto", "branch": 1, "col": 1, "row": 4, "cost": 330, "requires": ["garras_recarga"], "gate": 21000,
+		"name": "Tremor nível 3",
+		"desc": "Vira Terremoto: pulo mais alto, tremor quase 2x maior, os insetos tontos são puxados para a sua boca, e recarrega em só 7 s."},
+	{"id": "garras_ageis", "branch": 1, "col": 2, "row": 1, "cost": 30, "requires": ["garras_cavar"], "gate": 1000,
 		"name": "Rapidez nível 1",
 		"desc": "As garras descansam só 15 s depois de cavar."},
-	{"id": "garras_incansaveis", "branch": 1, "col": 1, "row": 2, "cost": 95, "requires": ["garras_ageis"],
+	{"id": "garras_incansaveis", "branch": 1, "col": 2, "row": 2, "cost": 80, "requires": ["garras_ageis"], "gate": 8000,
 		"name": "Rapidez nível 2",
 		"desc": "Descanso de só 5 s, e a câmara abre na metade do tempo."},
-	{"id": "garras_recarga", "branch": 1, "col": 1, "row": 3, "cost": 130, "requires": ["garras_incansaveis"],
-		"name": "Rapidez nível 3",
-		"desc": "O Tremor (e o Terremoto) recarrega em 14 s."},
-	{"id": "garras_recarga_2", "branch": 1, "col": 1, "row": 4, "cost": 150, "requires": ["garras_recarga"],
-		"name": "Rapidez nível 4",
-		"desc": "O Tremor (e o Terremoto) recarrega em só 7 s."},
+	{"id": "garras_fundo", "branch": 1, "col": 3, "row": 1, "cost": 60, "requires": ["garras_cavar"], "gate": 3000,
+		"name": "Fundura nível 1",
+		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
+	{"id": "garras_real", "branch": 1, "col": 3, "row": 2, "cost": 120, "requires": ["garras_fundo"], "gate": 13000,
+		"name": "Fundura nível 2",
+		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
 	# Patas
 	# Patas: correr existe desde o começo, gastando estamina. Fôlego abre as
 	# linhas de Fôlego (estamina máxima), Passada (gastar menos correndo),
@@ -128,62 +137,62 @@ const UPGRADES := [
 	{"id": "patas_folego", "branch": 2, "col": -1, "row": 0, "cost": 20, "requires": [],
 		"name": "Fôlego nível 1",
 		"desc": "Estamina máxima de 50 para 100."},
-	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 1, "cost": 50, "requires": ["patas_folego"],
+	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 1, "cost": 50, "requires": ["patas_folego"], "gate": 3000,
 		"name": "Fôlego nível 2",
 		"desc": "Estamina máxima de 100 para 150."},
-	{"id": "patas_folego_3", "branch": 2, "col": 3, "row": 2, "cost": 90, "requires": ["patas_folego_2"],
+	{"id": "patas_folego_3", "branch": 2, "col": 3, "row": 2, "cost": 80, "requires": ["patas_folego_2"], "gate": 13000,
 		"name": "Fôlego nível 3",
 		"desc": "Estamina máxima de 150 para 200."},
-	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "cost": 25, "requires": ["patas_folego"],
+	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "cost": 30, "requires": ["patas_folego"], "gate": 1000,
 		"name": "Passada nível 1",
 		"desc": "Correndo, gasta menos estamina."},
-	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "cost": 50, "requires": ["patas_passada_1"],
+	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "cost": 60, "requires": ["patas_passada_1"], "gate": 8000,
 		"name": "Passada nível 2",
 		"desc": "Correndo, gasta ainda menos estamina."},
-	{"id": "patas_passada_3", "branch": 2, "col": 2, "row": 3, "cost": 90, "requires": ["patas_passada_2"],
+	{"id": "patas_passada_3", "branch": 2, "col": 2, "row": 3, "cost": 70, "requires": ["patas_passada_2"], "gate": 13000,
 		"name": "Passada nível 3",
 		"desc": "Correndo, gasta metade da estamina do começo."},
-	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "cost": 25, "requires": ["patas_folego"],
+	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "cost": 30, "requires": ["patas_folego"], "gate": 1000,
 		"name": "Respiro nível 1",
 		"desc": "A estamina volta mais rápido."},
-	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "cost": 50, "requires": ["patas_respiro_1"],
+	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "cost": 60, "requires": ["patas_respiro_1"], "gate": 8000,
 		"name": "Respiro nível 2",
 		"desc": "A estamina volta ainda mais rápido."},
-	{"id": "patas_respiro_3", "branch": 2, "col": 1, "row": 3, "cost": 90, "requires": ["patas_respiro_2"],
+	{"id": "patas_respiro_3", "branch": 2, "col": 1, "row": 3, "cost": 70, "requires": ["patas_respiro_2"], "gate": 13000,
 		"name": "Respiro nível 3",
 		"desc": "A estamina volta mais que o dobro do começo."},
-	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 70, "requires": ["patas_folego"],
+	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 60, "requires": ["patas_folego"], "gate": 3000,
 		"name": "Corrida nível 1",
 		"desc": "Corre mais rápido: +50% sobre andar (eram +25%)."},
-	{"id": "patas_lamber", "branch": 2, "col": 0, "row": 2, "cost": 80, "requires": ["patas_ligeiras"],
+	{"id": "patas_lamber", "branch": 2, "col": 0, "row": 2, "cost": 90, "requires": ["patas_ligeiras"], "gate": 13000,
 		"name": "Corrida nível 2",
 		"desc": "Dá para lamber enquanto corre."},
-	{"id": "patas_galope", "branch": 2, "col": 0, "row": 3, "cost": 120, "requires": ["patas_lamber"],
+	{"id": "patas_galope", "branch": 2, "col": 0, "row": 3, "cost": 250, "requires": ["patas_lamber"], "gate": 21000,
 		"name": "Corrida nível 3",
 		"desc": "Correndo, você não assusta mais os insetos."},
 	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "cost": 20, "requires": [],
 		"name": "Farejar",
 		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles) e a que distância está o mais perto. Recarrega em 10 s."},
-	{"id": "faro_atento", "branch": 3, "col": 0, "row": 1, "cost": 40, "requires": ["faro_farejar"],
+	{"id": "faro_atento", "branch": 3, "col": 0, "row": 1, "cost": 40, "requires": ["faro_farejar"], "gate": 1000,
 		"name": "Alcance nível 1",
 		"desc": "Fareja até 16 m e até 250 insetos. Recarrega em 9 s."},
-	{"id": "faro_apurado", "branch": 3, "col": 0, "row": 2, "cost": 70, "requires": ["faro_atento"],
+	{"id": "faro_apurado", "branch": 3, "col": 0, "row": 2, "cost": 70, "requires": ["faro_atento"], "gate": 8000,
 		"name": "Alcance nível 2",
 		"desc": "Fareja até 24 m e até 500 insetos, e o cheiro dura mais. Recarrega em 8 s."},
-	{"id": "faro_agucado", "branch": 3, "col": 0, "row": 3, "cost": 110, "requires": ["faro_apurado"],
+	{"id": "faro_agucado", "branch": 3, "col": 0, "row": 3, "cost": 100, "requires": ["faro_apurado"], "gate": 13000,
 		"name": "Alcance nível 3",
 		"desc": "Fareja até 34 m e até 1000 insetos; a bússola mostra quanto falta em cada formigueiro. Recarrega em 7 s."},
-	{"id": "faro_lendario", "branch": 3, "col": 0, "row": 4, "cost": 160, "requires": ["faro_agucado"],
+	{"id": "faro_lendario", "branch": 3, "col": 0, "row": 4, "cost": 260, "requires": ["faro_agucado"], "gate": 21000,
 		"name": "Alcance nível 4",
 		"desc": "Fareja até 50 m e até 2000 insetos, e marca as rainhas na bússola. Recarrega em 6 s."},
-	{"id": "faro_preciso", "branch": 3, "col": 1, "row": 1, "cost": 45, "requires": ["faro_farejar"],
+	{"id": "faro_preciso", "branch": 3, "col": 1, "row": 1, "cost": 50, "requires": ["faro_farejar"], "gate": 3000,
 		"name": "Precisão nível 1",
 		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão os insetos farejados."},
-	{"id": "faro_nitido", "branch": 3, "col": 1, "row": 2, "cost": 85, "requires": ["faro_preciso"],
+	{"id": "faro_nitido", "branch": 3, "col": 1, "row": 2, "cost": 80, "requires": ["faro_preciso"], "gate": 13000,
 		"name": "Precisão nível 2",
 		"desc": "Os insetos farejados brilham nítidos, mesmo atrás do capim."},
-	{"id": "faro_camara", "branch": 3, "col": 1, "row": 3, "cost": 100, "requires": ["faro_nitido"],
+	{"id": "faro_camara", "branch": 3, "col": 1, "row": 3, "cost": 240, "requires": ["faro_nitido"], "gate": 21000,
 		"name": "Precisão nível 3",
 		"desc": "Farejar também mostra as câmaras fechadas por perto (até no meio do campo), com uma coluna de cheiro."},
 	# Escalada + Cauda (ainda não feita: aparece com cadeado)
@@ -289,6 +298,9 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	ants_eaten += count
 	lifetime["eaten"] = int(lifetime.get("eaten", 0)) + count
 	_check_splits(before)
+	for g in GATES:
+		if before < g and ants_eaten >= g:
+			gate_opened.emit(g)
 	_facts_dirty = true
 	combo += count
 	combo_timer = 2.5
@@ -427,7 +439,13 @@ func missing_requirements(id: String) -> Array[String]:
 	return missing
 
 
-## 0 = falta aprender outra antes, 1 = disponível, 2 = comprada, 3 = região ainda não alcançada
+## Quantos insetos é preciso ter comido para esta habilidade abrir (0 = já abre).
+func gate_of(id: String) -> int:
+	return int(get_upgrade(id).get("gate", 0))
+
+
+## 0 = falta aprender outra antes, 1 = disponível, 2 = comprada, 3 = região ainda
+## não alcançada, 4 = travada até comer gate_of(id) insetos
 func upgrade_state(id: String) -> int:
 	if has(id):
 		return 2
@@ -436,6 +454,8 @@ func upgrade_state(id: String) -> int:
 		return 0
 	if not region_required(id).is_empty():
 		return 3
+	if ants_eaten < gate_of(id):
+		return 4
 	if not missing_requirements(id).is_empty():
 		return 0
 	return 1
@@ -603,6 +623,8 @@ func dig_cooldown() -> float:
 
 ## Quanto tempo as moradoras ficam tontas quando a câmara é aberta (0 = nada).
 func dig_stun_time() -> float:
+	if has("garras_fortes_2"):
+		return 4.0
 	return 2.5 if has("garras_fortes") else 0.0
 
 
@@ -619,7 +641,7 @@ func tremor_pulls() -> bool:
 
 
 func tremor_cooldown() -> float:
-	if has("garras_recarga_2"):
+	if has("garras_terremoto"):
 		return 7.0
 	if has("garras_recarga"):
 		return 14.0
@@ -841,6 +863,10 @@ func from_save(d: Dictionary) -> void:
 		if not get_upgrade(key).is_empty():
 			purchased[key] = true
 			points_spent += cost_of(key)
+	# Preços mudaram desde que o jogo foi salvo e não cabem mais: devolve os pontos.
+	if points_spent > ants_eaten / ANTS_PER_POINT:
+		purchased.clear()
+		points_spent = 0
 	elapsed = float(d.get("elapsed", 0.0))
 	best_combo = int(d.get("best_combo", 0))
 	tanajuras_eaten = int(d.get("tanajuras_eaten", 0))

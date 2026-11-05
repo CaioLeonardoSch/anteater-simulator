@@ -441,11 +441,12 @@ Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câ
 
 [b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (gasta a estamina)
 [b]Clique esquerdo[/b] lamber: cada clique é uma lambida (com a [b]Lambida Contínua[/b], é só segurar)
-[b]Q[/b] ou [b]clique direito[/b] farejar (com Farejar) · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] pulo do Tremor
+[b]Q[/b] ou [b]clique direito[/b] farejar (com Farejar) · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] pulo do Tremor (com Tremor nível 1)
 [b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
 · [b]Cada 10 insetos comidos valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
+· Habilidades com [b]cadeado[/b] e um número ("8 mil") abrem quando você tiver comido essa quantidade de insetos: 1 mil, 3 mil, 8 mil, 13 mil e 21 mil.
 · A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com [b]Mira[/b] (na Língua), ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
 · Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Fundura nível 1[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só [b]Fundura nível 2[/b] desmancha o monte inteiro.

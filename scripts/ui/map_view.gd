@@ -34,7 +34,7 @@ uniform float rot = 0.0;
 uniform float world_size = 150.0;
 uniform float area_radius = 74.0;
 uniform float territory_radius = 63.0;
-uniform vec2 nests[16];
+uniform vec2 nests[32];
 uniform int nest_count = 0;
 uniform int hover = -1;
 void fragment() {

@@ -557,6 +557,63 @@ func sniff_queens() -> bool:
 	return has("faro_lendario")
 
 
+## O que uma habilidade muda em números: [{"label", "before", "after"}], para a
+## árvore mostrar "10 → 50". "—" quando a habilidade é que libera o gesto.
+func stat_changes(id: String) -> Array:
+	# Conta como se as habilidades anteriores da linha já estivessem aprendidas.
+	var saved := purchased.duplicate()
+	var fz := frenzy_time
+	frenzy_time = 0.0
+	var todo: Array = (get_upgrade(id).get("requires", []) as Array).duplicate()
+	while not todo.is_empty():
+		var r: String = todo.pop_back()
+		if not purchased.get(r, false):
+			purchased[r] = true
+			todo.append_array(get_upgrade(r).get("requires", []))
+	purchased.erase(id)
+	var before := _stat_snapshot()
+	purchased[id] = true
+	var after := _stat_snapshot()
+	purchased = saved
+	frenzy_time = fz
+	var out := []
+	for k in after.size():
+		if before[k][1] != after[k][1]:
+			out.append({"label": after[k][0], "before": before[k][1] if before[k][1] != "" else "—",
+				"after": after[k][1] if after[k][1] != "" else "—"})
+	return out
+
+
+func _stat_snapshot() -> Array:
+	var run := can_run()
+	var snf := can_sniff()
+	var dig := can_dig()
+	var trem := can_tremor()
+	return [
+		["Formigas por lambida", str(lick_capacity())],
+		["Lambidas por segundo", _num(lick_rate(), 2)],
+		["Alcance da língua", _num(tongue_range(), 1) + " m"],
+		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
+		["Área da mira", _num(aim_cone_deg(), 1) + "°"],
+		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
+		["Tempo para cavar", _num(dig_time(), 1) + " s" if dig else ""],
+		["Descanso das garras", _num(dig_cooldown(), 0) + " s" if dig else ""],
+		["Raio do Tremor", _num(tremor_radius(), 0) + " m" if trem else ""],
+		["Recarga do Tremor", _num(tremor_cooldown(), 0) + " s" if trem else ""],
+		["Alcance do faro", _num(sniff_radius(), 0) + " m" if snf else ""],
+		["Formigas farejadas", str(sniff_max_ants()) if snf else ""],
+		["Recarga do faro", _num(sniff_cooldown(), 0) + " s" if snf else ""],
+	]
+
+
+## Número com vírgula e sem zeros sobrando ("1,75", "3", "4,1").
+static func _num(v: float, decimals: int) -> String:
+	var t := String.num(v, decimals)
+	if t.contains("."):
+		t = t.rstrip("0").rstrip(".")
+	return t.replace(".", ",")
+
+
 # ---------------------------------------------------------------- Recorde e jogo salvo
 
 func _load_record() -> void:

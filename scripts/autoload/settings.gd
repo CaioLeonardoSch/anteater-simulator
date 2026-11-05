@@ -86,12 +86,36 @@ var hints_level: int = 0
 var hints_learned: Array[String] = []
 var master_volume: float = 0.85
 var music_volume: float = 0.55
+var sfx_volume: float = 1.0
+var ambience_volume: float = 1.0
+## Sensibilidade do analógico direito (câmera no controle).
+var gamepad_sensitivity: float = 1.0
+## Correr e Cavar: false = segurar a tecla, true = apertar uma vez para ligar.
+var run_toggle: bool = false
+var dig_toggle: bool = false
+## Mostrar a interface durante o jogo (desligar é bom para fotos).
+var show_hud: bool = true
+
+# Controles que dá para trocar: [ação, nome]. Só teclado e mouse; o controle
+# (gamepad) fica com o padrão.
+const REBINDABLE := [
+	["move_forward", "Andar para a frente"], ["move_back", "Andar para trás"],
+	["move_left", "Andar para a esquerda"], ["move_right", "Andar para a direita"],
+	["run", "Correr"], ["lick", "Lamber"], ["sniff", "Farejar"], ["dig", "Cavar"],
+	["tremor", "Tremor"], ["skill_tree", "Mapa e habilidades"], ["pause", "Pausa"],
+]
+## Teclas de cada ação (texto: "k123" = tecla física, "m1" = botão do mouse).
+var bindings := {}
+var _default_bindings := {}
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_input_map()
+	for pair in REBINDABLE:
+		_default_bindings[pair[0]] = _codes_of(pair[0])
 	load_settings()
+	apply_bindings()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--captures") or arg == "--windowed":
 			# Capturas de tela de teste: sempre numa janela de 1600x900.
@@ -182,6 +206,133 @@ func _bind_axis(action: String, axis: JoyAxis, value: float) -> void:
 	_add_event(action, _axis_event(axis, value))
 
 
+# ------------------------------------------------------------------ Teclas
+
+static func event_code(ev: InputEvent) -> String:
+	if ev is InputEventKey:
+		var k: int = ev.physical_keycode if ev.physical_keycode != 0 else ev.keycode
+		return "k%d" % k
+	if ev is InputEventMouseButton:
+		return "m%d" % int(ev.button_index)
+	return ""
+
+
+static func _event_from_code(code: String) -> InputEvent:
+	var n := int(code.substr(1))
+	if code.begins_with("k"):
+		var ev := InputEventKey.new()
+		ev.physical_keycode = n
+		return ev
+	var mb := InputEventMouseButton.new()
+	mb.button_index = n
+	return mb
+
+
+## As teclas (e botões do mouse) de uma ação, na ordem.
+func _codes_of(action: String) -> Array:
+	var out := []
+	for ev in InputMap.action_get_events(action):
+		var c := event_code(ev)
+		if c != "":
+			out.append(c)
+	return out
+
+
+func codes_of(action: String) -> Array:
+	return bindings.get(action, _default_bindings.get(action, []))
+
+
+## Põe no mapa de controles as teclas escolhidas (o controle fica como está).
+func apply_bindings() -> void:
+	for pair in REBINDABLE:
+		var action: String = pair[0]
+		for ev in InputMap.action_get_events(action):
+			if event_code(ev) != "":
+				InputMap.action_erase_event(action, ev)
+		for code in codes_of(action):
+			InputMap.action_add_event(action, _event_from_code(code))
+
+
+## Troca a tecla principal de uma ação. A mesma tecla sai de qualquer outra
+## ação; se essa ação ficar sem tecla, ela fica com a tecla antiga desta (troca).
+func rebind(action: String, ev: InputEvent) -> void:
+	var code := event_code(ev)
+	if code == "":
+		return
+	var old_list: Array = codes_of(action)
+	var old: String = old_list[0] if not old_list.is_empty() else ""
+	for pair in REBINDABLE:
+		var other: String = pair[0]
+		var list: Array = codes_of(other).duplicate()
+		var had := list.has(code)
+		list.erase(code)
+		if other == action:
+			if list.is_empty():
+				list.append(code)
+			else:
+				list[0] = code
+		elif had and list.is_empty() and old != "" and old != code:
+			list.append(old)
+		bindings[other] = list
+	apply_bindings()
+	save_settings()
+	changed.emit()
+
+
+func reset_bindings() -> void:
+	bindings.clear()
+	apply_bindings()
+	save_settings()
+	changed.emit()
+
+
+## Nome curto da tecla principal de uma ação, para as dicas na tela ("E", "Espaço").
+func key_label(action: String) -> String:
+	var list := codes_of(action)
+	if list.is_empty():
+		return "—"
+	return code_label(list[0])
+
+
+static func code_label(code: String) -> String:
+	var n := int(code.substr(1))
+	if code.begins_with("m"):
+		match n:
+			MOUSE_BUTTON_LEFT: return "Clique"
+			MOUSE_BUTTON_RIGHT: return "Clique dir."
+			MOUSE_BUTTON_MIDDLE: return "Roda"
+			MOUSE_BUTTON_XBUTTON1: return "Mouse 4"
+			MOUSE_BUTTON_XBUTTON2: return "Mouse 5"
+		return "Mouse %d" % n
+	match n:
+		KEY_SPACE: return "Espaço"
+		KEY_ESCAPE: return "Esc"
+		KEY_SHIFT: return "Shift"
+		KEY_CTRL: return "Ctrl"
+		KEY_ALT: return "Alt"
+		KEY_TAB: return "Tab"
+		KEY_ENTER: return "Enter"
+		KEY_BACKSPACE: return "Apagar"
+		KEY_UP: return "↑"
+		KEY_DOWN: return "↓"
+		KEY_LEFT: return "←"
+		KEY_RIGHT: return "→"
+		KEY_CAPSLOCK: return "Caps"
+	var shown := n
+	if DisplayServer.get_name() != "headless":
+		shown = DisplayServer.keyboard_get_keycode_from_physical(n)
+	return OS.get_keycode_string(shown)
+
+
+## As 4 teclas de andar juntas ("WASD"), ou cada uma separada se forem nomes longos.
+func move_keys_label() -> String:
+	var parts := []
+	for a in ["move_forward", "move_left", "move_back", "move_right"]:
+		parts.append(key_label(a))
+	var joined := "".join(parts)
+	return joined if joined.length() <= 4 else " ".join(parts)
+
+
 # ------------------------------------------------------------------ Salvar
 
 func load_settings() -> void:
@@ -217,6 +368,20 @@ func load_settings() -> void:
 	invert_y = bool(cfg.get_value("input", "invert_y", invert_y))
 	master_volume = float(cfg.get_value("audio", "master", master_volume))
 	music_volume = float(cfg.get_value("audio", "music", music_volume))
+	sfx_volume = float(cfg.get_value("audio", "sfx", sfx_volume))
+	ambience_volume = float(cfg.get_value("audio", "ambience", ambience_volume))
+	gamepad_sensitivity = clampf(float(cfg.get_value("input", "gamepad_sensitivity", gamepad_sensitivity)), 0.3, 2.5)
+	run_toggle = bool(cfg.get_value("input", "run_toggle", run_toggle))
+	dig_toggle = bool(cfg.get_value("input", "dig_toggle", dig_toggle))
+	show_hud = bool(cfg.get_value("game", "show_hud", show_hud))
+	bindings.clear()
+	if cfg.has_section("keys"):
+		for action in cfg.get_section_keys("keys"):
+			if _default_bindings.has(action):
+				var list := []
+				for c in cfg.get_value("keys", action, []):
+					list.append(String(c))
+				bindings[action] = list
 
 
 ## Primeira vez: escolhe a qualidade pelo tipo de placa de vídeo e a resolução pela tela.
@@ -258,6 +423,14 @@ func save_settings() -> void:
 	cfg.set_value("input", "invert_y", invert_y)
 	cfg.set_value("audio", "master", master_volume)
 	cfg.set_value("audio", "music", music_volume)
+	cfg.set_value("audio", "sfx", sfx_volume)
+	cfg.set_value("audio", "ambience", ambience_volume)
+	cfg.set_value("input", "gamepad_sensitivity", gamepad_sensitivity)
+	cfg.set_value("input", "run_toggle", run_toggle)
+	cfg.set_value("input", "dig_toggle", dig_toggle)
+	cfg.set_value("game", "show_hud", show_hud)
+	for action in bindings:
+		cfg.set_value("keys", action, bindings[action])
 	cfg.save(SAVE_PATH)
 
 
@@ -371,9 +544,10 @@ func effective_3d_scale() -> float:
 func apply_audio() -> void:
 	var master := AudioServer.get_bus_index("Master")
 	AudioServer.set_bus_volume_db(master, linear_to_db(maxf(master_volume, 0.0001)))
-	var music := AudioServer.get_bus_index("Music")
-	if music >= 0:
-		AudioServer.set_bus_volume_db(music, linear_to_db(maxf(music_volume, 0.0001)))
+	for pair in [["Music", music_volume], ["SFX", sfx_volume], ["Ambience", ambience_volume]]:
+		var idx := AudioServer.get_bus_index(pair[0])
+		if idx >= 0:
+			AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(float(pair[1]), 0.0001)))
 
 
 func sniff_color() -> Color:

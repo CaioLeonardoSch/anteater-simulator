@@ -78,6 +78,8 @@ var _stomp_pending := false
 var _air_time := 0.0
 var pull_time := 0.0
 var dig_progress := 0.0
+var _run_latch := false
+var _dig_latch := false
 var near_nest = null
 ## Câmara fechada ao alcance das garras (formigueiro + índice).
 var dig_nest = null
@@ -226,10 +228,13 @@ func _physics_process(delta: float) -> void:
 	var want_run := false
 	if controls_enabled:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		want_run = Input.is_action_pressed("run") and GameState.can_run()
+		want_run = _run_held(input) and GameState.can_run()
+		_update_dig_latch()
 		var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
-		yaw -= look.x * delta * 2.6
-		pitch = clampf(pitch - look.y * delta * 2.0, deg_to_rad(-75.0), deg_to_rad(40.0))
+		var gs := Settings.gamepad_sensitivity
+		yaw -= look.x * delta * 2.6 * gs
+		var inv := -1.0 if Settings.invert_y else 1.0
+		pitch = clampf(pitch - look.y * delta * 2.0 * gs * inv, deg_to_rad(-75.0), deg_to_rad(40.0))
 	elif bot:
 		_bot_update(delta)
 		input = _bot_input
@@ -329,12 +334,41 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set("player_pos", global_position)
 
 
+## Correr: segurando a tecla ou, com "Correr: Apertar" nas configurações,
+## apertando uma vez (desliga ao apertar de novo ou ao parar de andar).
+func _run_held(input: Vector2) -> bool:
+	if not Settings.run_toggle:
+		_run_latch = false
+		return Input.is_action_pressed("run")
+	if Input.is_action_just_pressed("run"):
+		_run_latch = not _run_latch
+	if input.length() < 0.1:
+		_run_latch = false
+	return _run_latch
+
+
+## Cavar com "Cavar: Apertar": um toque começa e as garras seguem até abrir
+## (ou até você se afastar, ou apertar de novo).
+func _update_dig_latch() -> void:
+	if not Settings.dig_toggle:
+		_dig_latch = false
+		return
+	if Input.is_action_just_pressed("dig"):
+		_dig_latch = not _dig_latch
+	if dig_nest == null and not near_exit:
+		_dig_latch = false
+
+
+func _dig_held() -> bool:
+	return _dig_latch if Settings.dig_toggle else Input.is_action_pressed("dig")
+
+
 ## Quebrando o tronco da saída com as garras (só com a clareira 100% limpa).
 func _breaking_exit() -> bool:
 	if not near_exit or not GameState.can_dig():
 		return false
 	if controls_enabled:
-		return Input.is_action_pressed("dig")
+		return _dig_held()
 	return false
 
 
@@ -345,7 +379,7 @@ func _is_digging() -> bool:
 	if GameState.dig_level() < dig_nest.chambers[dig_chamber].size_class:
 		return false
 	if controls_enabled:
-		return Input.is_action_pressed("dig")
+		return _dig_held()
 	return bot and _bot_dig
 
 
@@ -455,6 +489,7 @@ func _tracked_ant() -> int:
 ## Para a mira da tela: a formiga que a língua vai buscar e se a lambida pega alguma.
 func _update_aim() -> void:
 	aim_ant = _tracked_ant()
+	swarm.aim_target = aim_ant
 	if aim_ant >= 0:
 		aim_hits = true
 	else:
@@ -587,6 +622,7 @@ func _update_abilities(delta: float) -> void:
 			var opened_chamber := dig_chamber
 			var released: int = colony.open_chamber(opened_nest, opened_chamber, false, GameState.dig_stun_time())
 			dig_cd = GameState.dig_cooldown()
+			_dig_latch = false
 			shake = 0.5
 			Sfx.play("burst", -2.0)
 			dug.emit(opened_nest, opened_chamber, released)

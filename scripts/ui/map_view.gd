@@ -210,7 +210,20 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	time += delta
+	_gamepad(delta)
 	_overlay.queue_redraw()
+
+
+## No controle: o analógico esquerdo move o mapa e o direito (para cima e para
+## baixo) aproxima e afasta.
+func _gamepad(delta: float) -> void:
+	var pan := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
+	if pan.length() > 0.2:
+		_set_view(zoom, focus + pan * delta * 420.0 / zoom)
+	var z := -Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
+	if absf(z) > 0.25:
+		zoom_at(pow(2.2, z * delta), port.size * 0.5)
+		_update_hover(port.size * 0.5)
 
 
 func _gui_input(event: InputEvent) -> void:

@@ -94,8 +94,12 @@ func setup(p, sw, col, w) -> void:
 	GameState.skills_reset.connect(_refresh_points)
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
+	Settings.changed.connect(_refresh_keys)
 	_on_eaten_changed(GameState.ants_eaten, 0)
 	_refresh_points()
+
+
+var _badge_key: PanelContainer
 
 
 func _ready() -> void:
@@ -221,7 +225,18 @@ func _build_counter() -> void:
 	_badge_count = UiTheme.display_label("", 18, UiTheme.PALE)
 	_badge_count.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(_badge_count)
-	h.add_child(_key_chip("Tab"))
+	_badge_key = _key_chip(Settings.key_label("skill_tree"))
+	h.add_child(_badge_key)
+
+
+## As teclas mudaram nas configurações: atualiza os nomes nos botões e no selo.
+func _refresh_keys() -> void:
+	for a in _abilities:
+		if a.has_meta("action"):
+			a.key_text = Settings.key_label(a.get_meta("action"))
+			a.queue_redraw()
+	if _badge_key and _badge_key.get_child_count() > 0:
+		(_badge_key.get_child(0) as Label).text = Settings.key_label("skill_tree")
 
 
 ## Tecla num quadradinho com borda dourada (TAB, E...).
@@ -299,15 +314,16 @@ func _build_abilities() -> void:
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(-280, -128), Vector2(560, 112))
 	var b: Array = GameState.BRANCHES
 	var defs := [
-		{"key": "Clique", "name": "Lamber", "kind": "lick", "glyph": "tongue", "tint": b[0].color, "primary": true},
-		{"key": "Q", "name": "Farejar", "kind": "sniff", "glyph": "nose", "tint": b[3].color, "primary": false},
-		{"key": "E", "name": "Cavar", "kind": "dig", "glyph": "claws", "tint": b[1].color, "primary": false},
-		{"key": "Espaço", "name": "Tremor", "kind": "tremor", "glyph": "burst", "tint": b[1].color, "primary": false},
+		{"key": Settings.key_label("lick"), "action": "lick", "name": "Lamber", "kind": "lick", "glyph": "tongue", "tint": b[0].color, "primary": true},
+		{"key": Settings.key_label("sniff"), "action": "sniff", "name": "Farejar", "kind": "sniff", "glyph": "nose", "tint": b[3].color, "primary": false},
+		{"key": Settings.key_label("dig"), "action": "dig", "name": "Cavar", "kind": "dig", "glyph": "claws", "tint": b[1].color, "primary": false},
+		{"key": Settings.key_label("tremor"), "action": "tremor", "name": "Tremor", "kind": "tremor", "glyph": "burst", "tint": b[1].color, "primary": false},
 	]
 	for d in defs:
 		var a := AbilityIcon.new()
 		a.kind = d.kind
 		a.key_text = d.key
+		a.set_meta("action", d.action)
 		a.name_text = d.name
 		a.glyph = d.glyph
 		a.tint = d.tint
@@ -472,7 +488,7 @@ func _flash_hint(parts: Array, duration: float) -> void:
 ## Dica de cadeado: falta aprender a habilidade `id` (o Tab abre ela na aba
 ## de habilidades).
 func _locked(id: String) -> Array:
-	return [{"icon": "lock", "col": UiTheme.MUTED, "skill": id}, {"text": GameState.get_upgrade(id).name}, {"key": "Tab"}]
+	return [{"icon": "lock", "col": UiTheme.MUTED, "skill": id}, {"text": GameState.get_upgrade(id).name}, {"key": Settings.key_label("skill_tree")}]
 
 
 ## A habilidade da dica de cadeado na tela agora ("" se não há uma).
@@ -493,7 +509,7 @@ func _context_hint() -> Array:
 			return _locked(GameState.dig_skill_for(dc.size_class))
 		if player.dig_cd > 0.0:
 			return [{"icon": "clock", "col": UiTheme.GOLD}, {"num": "%d s" % int(ceil(player.dig_cd))}]
-		return [{"key": "E"}, {"text": "Desmanchar o monte" if dc.royal else "Abrir câmara"}]
+		return [{"key": Settings.key_label("dig")}, {"text": "Desmanchar o monte" if dc.royal else "Abrir câmara"}]
 	var p2 := Vector2(player.global_position.x, player.global_position.z)
 	# Tronco caído na saída para a área 2.
 	if not world.exit_open and world.near_exit(p2, 4.5):
@@ -502,7 +518,7 @@ func _context_hint() -> Array:
 				{"icon": "ant", "col": UiTheme.SAND}]
 		if not GameState.can_dig():
 			return _locked("garras_cavar")
-		return [{"key": "E"}, {"text": "Quebrar o tronco"}]
+		return [{"key": Settings.key_label("dig")}, {"text": "Quebrar o tronco"}]
 	# Câmara aberta por perto: quantas formigas faltam (e a rainha protegida).
 	for n in world.nests:
 		var ci: int = n.open_chamber_near(p2, 3.0)
@@ -521,7 +537,7 @@ func _context_hint() -> Array:
 		var parts: Array = [{"icon": "diamond", "col": Settings.sniff_color()}, {"num": str(nest.closed_chambers())},
 			{"text": "no campo"}]
 		if GameState.can_sniff():
-			parts.append({"key": "Q"})
+			parts.append({"key": Settings.key_label("sniff")})
 		return parts
 	return []
 
@@ -538,11 +554,11 @@ func _closed_on_mound(nest) -> int:
 func _tutorial_hint() -> Array:
 	var parts: Array = []
 	if not Settings.hint_learned("move"):
-		parts += [{"key": "WASD"}, {"text": "Andar"}, {"gap": 16.0}]
+		parts += [{"key": Settings.move_keys_label()}, {"text": "Andar"}, {"gap": 16.0}]
 	if GameState.can_run() and not Settings.hint_learned("run"):
-		parts += [{"key": "Shift"}, {"text": "Correr"}, {"gap": 16.0}]
+		parts += [{"key": Settings.key_label("run")}, {"text": "Correr"}, {"gap": 16.0}]
 	if not Settings.hint_learned("map"):
-		parts += [{"key": "Tab"}, {"text": "Mapa e habilidades"}, {"gap": 16.0}]
+		parts += [{"key": Settings.key_label("skill_tree")}, {"text": "Mapa e habilidades"}, {"gap": 16.0}]
 	if not parts.is_empty():
 		parts.pop_back()
 	return parts
@@ -557,7 +573,7 @@ func _learn_controls(delta: float) -> void:
 	_moved += delta
 	if _moved > 0.6:
 		Settings.learn_hint("move")
-	if GameState.can_run() and Input.is_action_pressed("run"):
+	if GameState.can_run() and player.running:
 		_ran += delta
 		if _ran > 0.6:
 			Settings.learn_hint("run")
@@ -581,7 +597,7 @@ func _maybe_help() -> void:
 
 func _on_lick_blocked_running() -> void:
 	if Settings.hints_level < 2:
-		_flash_hint([{"key": "Shift", "col": UiTheme.TERRACOTTA}, {"text": "Solte para lamber"}], 2.5)
+		_flash_hint([{"key": Settings.key_label("run"), "col": UiTheme.TERRACOTTA}, {"text": "Solte para lamber"}], 2.5)
 
 
 ## A rainha ainda está protegida: a dica com a coroa pisca.
@@ -1411,14 +1427,15 @@ class AbilityIcon extends Control:
 		draw_rect(kr.grow(-0.5), kcol, false, 1.0)
 		var ktext := gold if primary else UT.SAND
 		if locked:
-			ktext = Color(0.5, 0.45, 0.4)
+			ktext = Color(0.7, 0.66, 0.6)
 		draw_string(cf, Vector2(kr.position.x + 7.0, kr.end.y - 4.0), key, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, ktext)
 		# Nome embaixo.
 		var nf: Font = UT.bold_font()
 		var nw := nf.get_string_size(name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
 		var npos := Vector2(c.x - nw * 0.5, c.y + r + 30.0)
-		draw_string(nf, npos + Vector2(0, 2), name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0, 0, 0, 0.6))
-		draw_string(nf, npos, name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UT.CREAM if not locked else Color(0.55, 0.5, 0.44))
+		# Contorno escuro: o nome fica legível em cima do focinho, do capim e do céu.
+		draw_string_outline(nf, npos + Vector2(0, 1), name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 5, Color(0, 0, 0, 0.75))
+		draw_string(nf, npos, name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UT.CREAM if not locked else Color(0.8, 0.77, 0.72))
 
 	func _padlock(c: Vector2) -> void:
 		var metal := Color(0.55, 0.49, 0.42)

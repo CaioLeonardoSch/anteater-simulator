@@ -15,6 +15,10 @@ uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 uniform float fade_start = 34.0;
 uniform float fade_end = 48.0;
 uniform float sway_amount = 0.13;
+// Perto da câmera os tufos somem (encolhem até o chão, cada um a uma distância
+// um pouco diferente), para o capim não tapar as formigas nem a tela.
+uniform float near_fade_start = 0.9;
+uniform float near_fade_end = 2.6;
 
 varying float vh;
 varying float vrand;
@@ -44,7 +48,10 @@ void vertex() {
 	offset.y -= push * 0.22;
 	offset.y -= length(offset.xz) * 0.35 * vh;
 
-	float fade = 1.0 - smoothstep(fade_start, fade_end, distance(origin, cam));
+	float cam_d = distance(origin, cam);
+	float fade = 1.0 - smoothstep(fade_start, fade_end, cam_d);
+	float near = smoothstep(near_fade_start, near_fade_end, distance(origin.xz, cam.xz));
+	fade *= clamp((near - vrand * 0.85) * 5.0, 0.0, 1.0);
 	VERTEX = origin + (VERTEX - origin) * fade + offset * fade;
 	NORMAL = normalize(mix(NORMAL, vec3(0.0, 1.0, 0.0), 0.45));
 	vworld = VERTEX;

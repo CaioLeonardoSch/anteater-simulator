@@ -60,6 +60,7 @@ func _ready() -> void:
 	menus = Menus.new()
 	ui.add_child(menus)
 	menus.show_screen("loading")
+	Settings.changed.connect(_apply_hud_visibility)
 	fade = ColorRect.new()
 	fade.color = Color(0.06, 0.03, 0.02, 1.0)
 	fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -171,6 +172,12 @@ func _apply_sniff_color() -> void:
 	world.scent_marks.set_color(Settings.sniff_color())
 
 
+## A interface some com "Mostrar a interface" desligado (ou --nohud nos testes).
+func _apply_hud_visibility() -> void:
+	if state == State.PLAYING or state == State.TREE or state == State.PAUSED:
+		hud.visible = Settings.show_hud and not DevTools.args.has("nohud")
+
+
 func _enter_menu() -> void:
 	state = State.MENU
 	GameState.playing = false
@@ -254,8 +261,8 @@ func _begin_playing() -> void:
 	player.bot = DevTools.autoplay
 	player.controls_enabled = not DevTools.autoplay
 	menus.show_screen("")
-	# Teste (capturas limpas): --nohud esconde a interface.
-	hud.visible = not DevTools.args.has("nohud")
+	# "Mostrar a interface" desligado (ou --nohud nos testes) esconde o HUD.
+	_apply_hud_visibility()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Sfx.set_music_duck(0.35)
 

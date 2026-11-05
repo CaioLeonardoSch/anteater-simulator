@@ -22,6 +22,9 @@ var _settings_controls: Dictionary = {}
 var _settings_pages: Array[Control] = []
 var _settings_tab_buttons: Array[Button] = []
 var _settings_note: Label
+## Botões das teclas (ação -> botão) e a ação esperando uma tecla nova.
+var _key_buttons: Dictionary = {}
+var _rebinding := ""
 
 
 func _ready() -> void:
@@ -293,9 +296,9 @@ func _build_settings() -> Control:
 	var stack := MarginContainer.new()
 	stack.custom_minimum_size = Vector2(800, 446)
 	v.add_child(stack)
-	var tab_names := ["Tela", "Gráficos", "Jogo", "Áudio"]
+	var tab_names := ["Tela", "Gráficos", "Jogo", "Controles", "Áudio"]
 	for i in tab_names.size():
-		var b := UiTheme.button(tab_names[i], 176)
+		var b := UiTheme.button(tab_names[i], 150)
 		b.toggle_mode = true
 		b.pressed.connect(_show_settings_tab.bind(i))
 		tabs.add_child(b)
@@ -331,15 +334,21 @@ func _build_settings() -> Control:
 	# Jogo
 	g = _settings_page(stack)
 	_add_slider(g, "mouse_sensitivity", "Sensibilidade do mouse", 0.05, 0.6)
+	_add_slider(g, "gamepad_sensitivity", "Sensibilidade do controle", 0.3, 2.5)
 	_add_check(g, "invert_y", "Inverter eixo Y")
 	_add_slider(g, "fov", "Campo de visão", 60.0, 100.0)
 	_add_slider(g, "camera_bob", "Balanço da câmera", 0.0, 1.0)
 	_add_option(g, "sniff_color_index", "Cor do faro", Settings.SNIFF_COLOR_NAMES)
 	_add_option(g, "hints_level", "Dicas", Settings.HINTS_NAMES)
+	_add_check(g, "show_hud", "Mostrar a interface (HUD)")
+	# Controles
+	_build_controls_page(stack)
 	# Áudio
 	g = _settings_page(stack)
 	_add_slider(g, "master_volume", "Volume geral", 0.0, 1.0)
-	_add_slider(g, "music_volume", "Volume da música", 0.0, 1.0)
+	_add_slider(g, "music_volume", "Música", 0.0, 1.0)
+	_add_slider(g, "sfx_volume", "Efeitos", 0.0, 1.0)
+	_add_slider(g, "ambience_volume", "Ambiente (vento, bichos)", 0.0, 1.0)
 	_settings_note = UiTheme.label("", 16, UiTheme.SAND)
 	_settings_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_settings_note)
@@ -348,6 +357,7 @@ func _build_settings() -> Control:
 	back.pressed.connect(func(): show_screen(_back_to))
 	v.add_child(back)
 	Settings.changed.connect(_sync_settings)
+	Settings.changed.connect(_sync_keys)
 	s.visibility_changed.connect(_sync_settings)
 	_show_settings_tab(0)
 	return s
@@ -358,6 +368,75 @@ func open_settings(tab: int = 0) -> void:
 	_goto("settings", "title")
 	_show_settings_tab(clampi(tab, 0, _settings_pages.size() - 1))
 
+
+## Aba Controles: segurar ou apertar (Correr e Cavar) e as teclas de cada ação.
+func _build_controls_page(stack: Control) -> void:
+	var page := VBoxContainer.new()
+	page.add_theme_constant_override("separation", 12)
+	stack.add_child(page)
+	_settings_pages.append(page)
+	var top := GridContainer.new()
+	top.columns = 2
+	top.add_theme_constant_override("h_separation", 26)
+	top.add_theme_constant_override("v_separation", 8)
+	page.add_child(top)
+	_add_option(top, "run_toggle", "Correr", ["Segurar a tecla", "Apertar para ligar e desligar"], [false, true])
+	_add_option(top, "dig_toggle", "Cavar", ["Segurar a tecla", "Apertar uma vez"], [false, true])
+	var keys := GridContainer.new()
+	keys.columns = 4
+	keys.add_theme_constant_override("h_separation", 18)
+	keys.add_theme_constant_override("v_separation", 6)
+	page.add_child(keys)
+	for pair in Settings.REBINDABLE:
+		var l := UiTheme.label(pair[1], 18)
+		l.add_theme_font_override("font", UiTheme.semi_font())
+		l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		l.custom_minimum_size.x = 220
+		keys.add_child(l)
+		var b := UiTheme.button("", 150)
+		b.custom_minimum_size = Vector2(150, 40)
+		b.pressed.connect(_start_rebind.bind(pair[0]))
+		keys.add_child(b)
+		_key_buttons[pair[0]] = b
+	var reset := UiTheme.button("Restaurar as teclas", 300)
+	reset.custom_minimum_size.y = 44
+	reset.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	reset.pressed.connect(func():
+		_rebinding = ""
+		Settings.reset_bindings())
+	page.add_child(reset)
+	_sync_keys()
+
+
+func _sync_keys() -> void:
+	for action in _key_buttons:
+		var b: Button = _key_buttons[action]
+		b.text = "Aperte uma tecla..." if action == _rebinding else Settings.key_label(action)
+
+
+func _start_rebind(action: String) -> void:
+	_rebinding = action
+	_sync_keys()
+
+
+## Esperando uma tecla nova: a próxima tecla ou botão do mouse vira a tecla da ação.
+func _input(event: InputEvent) -> void:
+	if _rebinding == "" or not visible:
+		return
+	var pressed: bool = (event is InputEventKey and event.pressed and not event.echo) \
+		or (event is InputEventMouseButton and event.pressed
+			and event.button_index not in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN,
+				MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT])
+	if not pressed:
+		return
+	get_viewport().set_input_as_handled()
+	var action := _rebinding
+	_rebinding = ""
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
+		_sync_keys()
+		return
+	Settings.rebind(action, event)
+	_sync_keys()
 
 func _settings_page(stack: Control) -> GridContainer:
 	var grid := GridContainer.new()
@@ -377,6 +456,7 @@ func _show_settings_tab(i: int) -> void:
 		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
 		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
 		"Dicas \"Poucas\": só o que dá para fazer perto de você. \"Todas\": também ensina os controles, cada um até você usar.",
+		"Clique numa tecla e aperte a nova (Esc cancela). No controle, os botões ficam como estão.",
 		"",
 	][i]
 

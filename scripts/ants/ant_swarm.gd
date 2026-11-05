@@ -70,6 +70,8 @@ var yaw := PackedFloat32Array()
 var gait := PackedFloat32Array()
 var timer := PackedFloat32Array()
 var highlight := PackedFloat32Array()
+## A formiga que a língua vai buscar (Língua Certeira): ganha um contorno verde.
+var aim_target := -1
 var rnd := PackedFloat32Array()
 var seed_of := PackedFloat32Array()
 ## Escala extra (formigas encolhem na boca do tamanduá).
@@ -947,7 +949,7 @@ func _process(_delta: float) -> void:
 		buf[o + 12] = tint
 		buf[o + 13] = tint
 		buf[o + 14] = tint
-		buf[o + 15] = 1.0
+		buf[o + 15] = 0.5 if i == aim_target else 1.0
 		buf[o + 16] = gait[i]
 		buf[o + 17] = hl
 		buf[o + 18] = state + 4.0 * seed_of[i]

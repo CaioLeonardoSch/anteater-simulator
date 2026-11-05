@@ -342,7 +342,7 @@ func _build_howto() -> Control:
 	text.add_theme_font_override("bold_font", UiTheme.bold_font())
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
-	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d formigas[/b]. Coma todas e deixe os [b]12 formigueiros[/b] limpos.
+	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d insetos[/b]. Coma todos e deixe os [b]18 formigueiros[/b] limpos.
 Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
 
 [b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)

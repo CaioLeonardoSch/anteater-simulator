@@ -27,7 +27,7 @@ const OLD_SAVE_PATH := "user://jogo_salvo.json"
 ## Quantos jogos salvos dá para ter.
 const SLOTS := 3
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
 
 ## As 5 habilidades. "lines" = nomes das duas linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.

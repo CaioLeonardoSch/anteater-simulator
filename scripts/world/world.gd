@@ -69,8 +69,9 @@ var _nest_grid_n := 0
 var _grass_quality_built := -1
 var _shadow_atlas := 0
 
-## 12 formigueiros: 8 num anel em volta do mapa e 4 no meio. Perto da
-## caverna (o começo) ficam os pequenos, sem rainha, que Cavar já abre; os
+## 18 formigueiros espalhados pelo mapa inteiro (8 num anel por fora, 4 no
+## meio e 6 nos vãos entre eles), para cada pedaço do mapa ter o seu. Perto
+## da caverna (o começo) ficam os pequenos, sem rainha, que Cavar já abre; os
 ## grandes ("big"), com a rainha, ficam do lado da saída para a área 2.
 const NEST_LAYOUT := [
 	{"name": "Formigueiro Norte", "pos": Vector2(4, -42), "big": false},
@@ -85,6 +86,12 @@ const NEST_LAYOUT := [
 	{"name": "Formigueiro Centro-Sudeste", "pos": Vector2(7, 12), "big": false},
 	{"name": "Formigueiro Centro-Sudoeste", "pos": Vector2(-12, 7), "big": true},
 	{"name": "Formigueiro Centro-Noroeste", "pos": Vector2(-7, -12), "big": true},
+	{"name": "Formigueiro Oés-Sudoeste", "pos": Vector2(-44, 14), "big": true},
+	{"name": "Formigueiro Lés-Sudeste", "pos": Vector2(41, 21), "big": false},
+	{"name": "Formigueiro Oés-Noroeste", "pos": Vector2(-40, -24), "big": true},
+	{"name": "Formigueiro Centro-Sul", "pos": Vector2(-3, 27), "big": false},
+	{"name": "Formigueiro Lés-Nordeste", "pos": Vector2(44, -16), "big": false},
+	{"name": "Formigueiro Centro-Norte", "pos": Vector2(6, -24), "big": false},
 ]
 ## Arbustos onde as saúvas cortam folhas.
 const FOOD_LAYOUT := [
@@ -93,13 +100,15 @@ const FOOD_LAYOUT := [
 ## Trilhas: [formigueiro, arbusto].
 const LINKS := [[0, 0], [0, 1], [1, 1], [2, 2], [2, 1], [3, 3], [3, 2], [4, 3], [4, 4],
 	[5, 4], [5, 5], [6, 5], [7, 0], [7, 5],
-	[8, 1], [8, 2], [9, 3], [9, 2], [10, 4], [10, 5], [11, 0], [11, 5]]
+	[8, 1], [8, 2], [9, 3], [9, 2], [10, 4], [10, 5], [11, 0], [11, 5],
+	[12, 5], [12, 4], [13, 2], [13, 3], [14, 5], [14, 0], [15, 4], [15, 3],
+	[16, 1], [16, 2], [17, 1], [17, 0]]
 ## Grade que diz qual formigueiro (se algum) cobre cada pedaço do mapa.
 const NEST_GRID_CELL := 2.0
 ## Câmaras sozinhas no meio do campo, longe das trilhas (as formigas saem
 ## delas para passear).
-const SATELLITE_COUNT := 36
-const SATELLITES_PER_NEST := 4
+const SATELLITE_COUNT := 48
+const SATELLITES_PER_NEST := 3
 const SATELLITE_SPACING := 7.5
 ## Trilha onde o jogador começa (formigueiro Leste -> arbusto 2), olhando para o sol.
 const START_LINK := [2, 2]
@@ -538,35 +547,48 @@ func _splinters(at: Vector3) -> void:
 
 ## Espalha câmaras pelo campo, longe das trilhas, dos montes e dos arbustos.
 ## Cada uma pertence ao formigueiro mais perto (no máximo SATELLITES_PER_NEST).
+## Espalha as câmaras do campo por igual: para cada uma sorteia vários
+## lugares possíveis e fica com o mais longe das câmaras e montes que já
+## existem (assim nenhum pedaço do mapa fica vazio nem amontoado).
 func _plan_satellites() -> void:
 	var per_nest := {}
 	var tries := 0
-	while satellite_spots.size() < SATELLITE_COUNT and tries < 4000:
+	while satellite_spots.size() < SATELLITE_COUNT and tries < 400:
 		tries += 1
-		var a := _rng.randf() * TAU
-		var r := sqrt(_rng.randf_range(8.0 * 8.0, 54.0 * 54.0))
-		var p := Vector2(cos(a), sin(a)) * r
-		if p.length() > walk_limit(p) - 4.0:
+		var best := Vector2.INF
+		var best_owner: Nest = null
+		var best_d := -INF
+		for _cand in 40:
+			var a := _rng.randf() * TAU
+			var r := sqrt(_rng.randf_range(8.0 * 8.0, 54.0 * 54.0))
+			var p := Vector2(cos(a), sin(a)) * r
+			if p.length() > walk_limit(p) - 4.0:
+				continue
+			if trails.distance_to_trails(p) < 3.5 or p.distance_to(player_start) < 7.0:
+				# (player_start aqui ainda é o ponto antigo, ao lado da trilha)
+				continue
+			var d := INF
+			for n in nests:
+				d = minf(d, p.distance_to(n.center2) - n.radius - 4.5)
+			for f in food_sources:
+				d = minf(d, p.distance_to(f) - 4.0)
+			if d < 0.0:
+				continue
+			for q in satellite_spots:
+				d = minf(d, p.distance_to(q) - SATELLITE_SPACING)
+			if d < 0.0:
+				continue
+			var owner := nearest_nest(p)
+			if int(per_nest.get(owner.index, 0)) >= SATELLITES_PER_NEST:
+				continue
+			if d > best_d:
+				best_d = d
+				best = p
+				best_owner = owner
+		if best_owner == null:
 			continue
-		if trails.distance_to_trails(p) < 3.5 or p.distance_to(player_start) < 7.0:
-			# (player_start aqui ainda é o ponto antigo, ao lado da trilha)
-			continue
-		var ok := true
-		for n in nests:
-			if p.distance_to(n.center2) < n.radius + 4.5:
-				ok = false
-				break
-		for f in food_sources:
-			if p.distance_to(f) < 4.0:
-				ok = false
-		for q in satellite_spots:
-			if p.distance_to(q) < SATELLITE_SPACING:
-				ok = false
-		if not ok:
-			continue
-		var owner := nearest_nest(p)
-		if int(per_nest.get(owner.index, 0)) >= SATELLITES_PER_NEST:
-			continue
+		var owner := best_owner
+		var p := best
 		per_nest[owner.index] = int(per_nest.get(owner.index, 0)) + 1
 		var c := Nest.Chamber.new()
 		c.satellite = true

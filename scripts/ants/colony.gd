@@ -19,8 +19,8 @@ const QUEEN_VALUE := Nest.QUEEN_VALUE
 const CHAMBER_VISIBLE := 40
 ## Parte das formigas de cada formigueiro nas trilhas e passeando pelo campo
 ## (o resto mora nas câmaras).
-const TRAIL_SHARE := 0.32
-const ROAM_SHARE := 0.42
+const TRAIL_SHARE := 0.25
+const ROAM_SHARE := 0.25
 ## Tanajuras em cada trilha (contam como formigas da trilha).
 const TANAJURAS_PER_TRAIL := 2
 const ROYAL_WEIGHT := 1.7

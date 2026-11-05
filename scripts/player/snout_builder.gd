@@ -76,7 +76,7 @@ static func _catmull(pts: Array[Vector3], per_seg: int) -> PackedVector3Array:
 	return out
 
 
-static func build_snout(shells: int = 14) -> ArrayMesh:
+static func build_snout(shells: int = 18) -> ArrayMesh:
 	var ctrl: Array[Vector3] = [
 		Vector3(0, -0.24, 0.0), Vector3(0, -0.222, -0.17), Vector3(0, -0.2, -0.33),
 		Vector3(0, -0.181, -0.45), Vector3(0, -0.167, -0.53), MOUTH + Vector3(0, 0.0, 0.014)]
@@ -89,13 +89,23 @@ static func build_snout(shells: int = 14) -> ArrayMesh:
 	var sides := 28
 	var start := b.verts.size()
 	b.add_tube(path, radii, sides, true, false, 2.0)
-	# Cor: cinza-amarronzado, mais escuro na ponta e embaixo.
+	# Cor: cinza mesclado, escurecendo até quase preto perto da ponta, e mais
+	# escuro embaixo. Uns fios mais claros em manchas compridas (o pelo do
+	# tamanduá não é liso). Os últimos centímetros são pele, sem pelo.
+	var patches := FastNoiseLite.new()
+	patches.seed = 7
+	patches.frequency = 9.0
 	for i in range(start, b.verts.size()):
 		var v := b.verts[i]
 		var t := clampf((-v.z + 0.04) / 0.6, 0.0, 1.0)
 		var top := clampf(b.normals[i].y * 0.5 + 0.5, 0.0, 1.0)
-		var c := Color(0.36, 0.31, 0.27).lerp(Color(0.13, 0.11, 0.10), smoothstep(0.4, 1.0, t))
-		c = c.lerp(c.darkened(0.3), 1.0 - top)
+		var c := Color(0.45, 0.42, 0.38).lerp(Color(0.15, 0.13, 0.12), smoothstep(0.35, 0.97, t))
+		c = c.lerp(c.darkened(0.35), smoothstep(0.55, 0.0, top))
+		var a := atan2(b.normals[i].x, b.normals[i].y)
+		c = c.lightened(maxf(patches.get_noise_2d(a * 0.06, v.z * 0.35), 0.0) * 0.18 * (1.0 - t))
+		# As cores acima são as que a gente vê (sRGB); o shader trabalha em linear.
+		c = c.srgb_to_linear()
+		c.a = 0.0 if -v.z > MOUTH.z * -1.0 - 0.03 else 1.0
 		b.colors[i] = c
 	# Ponta arredondada com a boca (pele escura e lisa).
 	var tip_ring := b.verts.size() - (sides + 1)
@@ -114,14 +124,25 @@ static func build_snout(shells: int = 14) -> ArrayMesh:
 			var radial := base_v - tip_center
 			var p := tip_center + radial * cos(f * PI * 0.5) + fwd * radii[radii.size() - 1] * sin(f * PI * 0.5) * 0.7
 			var n := (radial.normalized() * cos(f * PI * 0.5) + fwd * sin(f * PI * 0.5)).normalized()
-			var dark := smoothstep(0.4, 1.0, f)
-			b.color = Color(0.30, 0.26, 0.24).lerp(Color(0.05, 0.03, 0.03), dark)
+			# Pele preta, com as duas narinas (fendas mais escuras dos lados).
+			var skin := Color(0.2, 0.17, 0.16).lerp(Color(0.1, 0.085, 0.08), smoothstep(0.3, 1.0, f))
+			var nostril := absf(n.x) * smoothstep(0.35, 0.8, f) * (1.0 - smoothstep(0.85, 1.0, f))
+			skin = skin.lerp(Color(0.0, 0.0, 0.0), smoothstep(0.3, 0.55, nostril))
+			skin = skin.srgb_to_linear()
+			skin.a = 0.0
+			b.color = skin
 			ring_idx.append(b.add_vertex(p, n, Vector2(float(s) / sides, 1.0 + f * 0.1)))
 		for s in sides:
 			b.add_quad(last_ring[s], last_ring[s + 1], ring_idx[s + 1], ring_idx[s])
 		last_ring = ring_idx
 	var fur := _shells(b, shells)
-	return fur.commit(null, fur_material(0.009, 40.0, 0.62))
+	var m := fur_material(0.011, 55.0, 0.6)
+	# Fios compridos, deitados para trás (para o rosto) e mesclados.
+	m.set_shader_parameter("stretch", 3.5)
+	m.set_shader_parameter("comb", Vector3(0.0, 0.15, 1.6))
+	m.set_shader_parameter("grizzle", 0.55)
+	m.set_shader_parameter("droop", 0.1)
+	return fur.commit(null, m)
 
 
 ## Pata dianteira com as garras (lado -1 esquerda, +1 direita), no espaço do ombro.

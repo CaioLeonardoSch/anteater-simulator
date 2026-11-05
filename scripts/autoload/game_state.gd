@@ -49,16 +49,16 @@ const UPGRADES := [
 		"desc": "Segure o botão para lamber sem parar."},
 	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"],
 		"name": "Lambida",
-		"desc": "Cada lambida pega até 50 formigas perto da ponta da língua."},
+		"desc": "Cada lambida pega até 50 insetos perto da ponta da língua."},
 	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 75, "requires": ["lingua_bocado_1"],
 		"name": "Lambida Larga",
-		"desc": "Até 150 formigas por lambida, e a ponta gruda num raio um pouco maior."},
+		"desc": "Até 150 insetos por lambida, e a ponta gruda num raio um pouco maior."},
 	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "cost": 115, "requires": ["lingua_bocado_2"],
 		"name": "Lambida Gulosa",
-		"desc": "Até 250 formigas por lambida."},
+		"desc": "Até 250 insetos por lambida."},
 	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 170, "requires": ["lingua_bocado_3"],
 		"name": "Lambida Voraz",
-		"desc": "Até 400 formigas por lambida."},
+		"desc": "Até 400 insetos por lambida."},
 	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"],
 		"name": "Língua Comprida",
 		"desc": "Alcance da língua +50%, e ela lambe 25% mais rápido."},
@@ -70,10 +70,10 @@ const UPGRADES := [
 		"desc": "A língua lambe 2x mais rápido."},
 	{"id": "lingua_certeira", "branch": 0, "col": 2, "row": 1, "cost": 30, "requires": ["lingua_segurar"],
 		"name": "Língua Certeira",
-		"desc": "A língua vai sozinha atrás da formiga mais perto da mira."},
+		"desc": "A língua vai sozinha atrás do inseto mais perto da mira."},
 	{"id": "lingua_mira", "branch": 0, "col": 2, "row": 2, "cost": 60, "requires": ["lingua_certeira"],
 		"name": "Mira Ampla",
-		"desc": "A área da mira em que a língua procura formigas fica 25% maior."},
+		"desc": "A área da mira em que a língua procura insetos fica 25% maior."},
 	# Garras: Cavar abre as linhas de Força, de Rapidez (o descanso entre usos)
 	# e de Fundura (buracos maiores: câmaras grandes e o monte da rainha).
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "cost": 35, "requires": [],
@@ -90,10 +90,10 @@ const UPGRADES := [
 		"desc": "Abrir uma câmara deixa as moradoras tontas por 2,5 s: elas não fogem logo."},
 	{"id": "garras_tremor", "branch": 1, "col": 0, "row": 2, "cost": 110, "requires": ["garras_fortes"],
 		"name": "Tremor",
-		"desc": "[Espaço] Pule e caia com força: as formigas num raio de 6 m ficam tontas por 3 s. Recarrega em 21 s."},
+		"desc": "[Espaço] Pule e caia com força: os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
 	{"id": "garras_terremoto", "branch": 1, "col": 0, "row": 3, "cost": 170, "requires": ["garras_tremor"],
 		"name": "Terremoto",
-		"desc": "Pulo mais alto e tremor quase 2x maior; as formigas tontas são puxadas para a sua boca."},
+		"desc": "Pulo mais alto e tremor quase 2x maior; os insetos tontos são puxados para a sua boca."},
 	{"id": "garras_ageis", "branch": 1, "col": 1, "row": 1, "cost": 50, "requires": ["garras_cavar"],
 		"name": "Garras Ágeis",
 		"desc": "As garras descansam só 15 s depois de cavar."},
@@ -109,38 +109,38 @@ const UPGRADES := [
 	# Patas
 	{"id": "patas_corrida", "branch": 2, "col": -1, "row": 0, "cost": 30, "requires": [],
 		"name": "Corrida",
-		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e as formigas fogem mais cedo."},
+		"desc": "Corra com [Shift]: +25% de velocidade. Correndo não dá para lamber, e os insetos fogem mais cedo."},
 	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 80, "requires": ["patas_corrida"],
 		"name": "Patas Ligeiras",
 		"desc": "Corre mais 25%."},
 	{"id": "patas_galope", "branch": 2, "col": 0, "row": 2, "cost": 130, "requires": ["patas_ligeiras"],
 		"name": "Galope Silencioso",
-		"desc": "Correndo, você não assusta mais as formigas."},
+		"desc": "Correndo, você não assusta mais os insetos."},
 	{"id": "patas_lamber", "branch": 2, "col": 1, "row": 1, "cost": 60, "requires": ["patas_corrida"],
 		"name": "Lamber Correndo",
 		"desc": "Dá para lamber enquanto corre."},
 	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "cost": 20, "requires": [],
 		"name": "Farejar",
-		"desc": "[Q] Fareje: descubra quantas formigas há a até 10 m (até 100 delas) e a que distância está a mais perto. Recarrega em 10 s."},
+		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles) e a que distância está o mais perto. Recarrega em 10 s."},
 	{"id": "faro_atento", "branch": 3, "col": 0, "row": 1, "cost": 40, "requires": ["faro_farejar"],
 		"name": "Faro Atento",
-		"desc": "Fareja até 16 m e até 250 formigas. Recarrega em 9 s."},
+		"desc": "Fareja até 16 m e até 250 insetos. Recarrega em 9 s."},
 	{"id": "faro_apurado", "branch": 3, "col": 0, "row": 2, "cost": 70, "requires": ["faro_atento"],
 		"name": "Faro Apurado",
-		"desc": "Fareja até 24 m e até 500 formigas, e o cheiro dura mais. Recarrega em 8 s."},
+		"desc": "Fareja até 24 m e até 500 insetos, e o cheiro dura mais. Recarrega em 8 s."},
 	{"id": "faro_agucado", "branch": 3, "col": 0, "row": 3, "cost": 110, "requires": ["faro_apurado"],
 		"name": "Faro Aguçado",
-		"desc": "Fareja até 34 m e até 1000 formigas; a bússola mostra quanto falta em cada formigueiro. Recarrega em 7 s."},
+		"desc": "Fareja até 34 m e até 1000 insetos; a bússola mostra quanto falta em cada formigueiro. Recarrega em 7 s."},
 	{"id": "faro_lendario", "branch": 3, "col": 0, "row": 4, "cost": 160, "requires": ["faro_agucado"],
 		"name": "Faro Lendário",
-		"desc": "Fareja até 50 m e até 2000 formigas, e marca as rainhas na bússola. Recarrega em 6 s."},
+		"desc": "Fareja até 50 m e até 2000 insetos, e marca as rainhas na bússola. Recarrega em 6 s."},
 	{"id": "faro_preciso", "branch": 3, "col": 1, "row": 1, "cost": 45, "requires": ["faro_farejar"],
 		"name": "Faro Preciso",
-		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão as formigas farejadas."},
+		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão os insetos farejados."},
 	{"id": "faro_nitido", "branch": 3, "col": 1, "row": 2, "cost": 85, "requires": ["faro_preciso"],
 		"name": "Faro Nítido",
-		"desc": "As formigas farejadas brilham nítidas, mesmo atrás do capim."},
+		"desc": "Os insetos farejados brilham nítidos, mesmo atrás do capim."},
 	{"id": "faro_camara", "branch": 3, "col": 1, "row": 3, "cost": 100, "requires": ["faro_nitido"],
 		"name": "Faro de Câmara",
 		"desc": "Farejar também mostra as câmaras fechadas por perto (até no meio do campo), com uma coluna de cheiro."},
@@ -170,6 +170,8 @@ var best_time: float = 0.0
 var tanajuras_eaten: int = 0
 ## O jogo salvo em uso (1 a SLOTS).
 var slot: int = 1
+## Marcador que o jogador pôs no mapa (mundo, plano xz); INF = nenhum.
+var marker := Vector2.INF
 var queens_eaten: int = 0
 ## Habilidades que já cabiam nos pontos (para avisar só das novas).
 var _affordable: Dictionary = {}
@@ -193,6 +195,7 @@ func reset_run() -> void:
 	frenzy_time = 0.0
 	tanajuras_eaten = 0
 	queens_eaten = 0
+	marker = Vector2.INF
 	_affordable.clear()
 	run_reset.emit()
 	ants_eaten_changed.emit(0, 0)
@@ -596,7 +599,7 @@ func _stat_snapshot() -> Array:
 	var dig := can_dig()
 	var trem := can_tremor()
 	return [
-		["Formigas por lambida", str(lick_capacity())],
+		["Insetos por lambida", str(lick_capacity())],
 		["Lambidas por segundo", _num(lick_rate(), 2)],
 		["Alcance da língua", _num(tongue_range(), 1) + " m"],
 		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
@@ -607,7 +610,7 @@ func _stat_snapshot() -> Array:
 		["Raio do Tremor", _num(tremor_radius(), 0) + " m" if trem else ""],
 		["Recarga do Tremor", _num(tremor_cooldown(), 0) + " s" if trem else ""],
 		["Alcance do faro", _num(sniff_radius(), 0) + " m" if snf else ""],
-		["Formigas farejadas", str(sniff_max_ants()) if snf else ""],
+		["Insetos farejados", str(sniff_max_ants()) if snf else ""],
 		["Recarga do faro", _num(sniff_cooldown(), 0) + " s" if snf else ""],
 	]
 
@@ -642,6 +645,7 @@ func to_save() -> Dictionary:
 		"purchased": purchased.keys(), "elapsed": elapsed, "best_combo": best_combo,
 		"tanajuras_eaten": tanajuras_eaten, "queens_eaten": queens_eaten,
 		"regions_reached": regions_reached, "completed": completed,
+		"marker": [marker.x, marker.y] if marker != Vector2.INF else [],
 	}
 
 
@@ -662,6 +666,8 @@ func from_save(d: Dictionary) -> void:
 	for r in d.get("regions_reached", ["Cerrado"]):
 		regions_reached.append(String(r))
 	completed = bool(d.get("completed", false)) and ants_eaten >= GOAL
+	var m: Array = d.get("marker", [])
+	marker = Vector2(float(m[0]), float(m[1])) if m.size() == 2 else Vector2.INF
 	combo = 0
 	frenzy_time = 0.0
 	_check_affordable(false)

@@ -1120,6 +1120,7 @@ class SaveIcon extends Control:
 ## (verdes = limpas) numa plaquinha embaixo.
 class Compass extends Control:
 	const UT := preload("res://scripts/ui/ui_theme.gd")
+	const Glyphs := preload("res://scripts/ui/glyphs.gd")
 	var player
 	var world
 	var sniff_target := Vector3.INF
@@ -1296,6 +1297,22 @@ class Compass extends Control:
 			_diamond(Vector2(ex, b.position.y - 8.0), 7.0, Color(UT.PALE, pulse))
 			var dist := Vector2(player.global_position.x, player.global_position.z).distance_to(ep)
 			_text_centered(UT.caps_font(), ex, b.position.y - 22.0, "SAÍDA · %d M" % int(dist), 12, Color(UT.PALE, pulse))
+		# Marcador que você pôs no mapa: um alfinete com a distância.
+		if GameState.marker != Vector2.INF:
+			var mk: Vector2 = GameState.marker
+			var mx := clampf(_x_for(_yaw_to(Vector3(mk.x, 0.0, mk.y))), b.position.x + 14.0, b.end.x - 14.0)
+			var md := Vector2(player.global_position.x, player.global_position.z).distance_to(mk)
+			var mtxt := "%d m" % int(md)
+			var mf: Font = UT.display_bold_font()
+			var mw := mf.get_string_size(mtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 30.0
+			var mr := Rect2(Vector2(mx - mw * 0.5, b.position.y - 26.0), Vector2(mw, 20.0))
+			draw_rect(mr, Color(0.04, 0.028, 0.024, 0.85))
+			draw_rect(mr.grow(-0.5), Color(UT.PALE, 0.6), false, 1.0)
+			Glyphs.paint(self, "pin", Vector2(mr.position.x + 11.0, mr.get_center().y - 1.0), 10.0, UT.PALE)
+			draw_string(mf, Vector2(mr.position.x + 21.0, mr.end.y - 5.0), mtxt, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, UT.PALE)
+			# Chegou: o marcador some sozinho.
+			if md < 2.5:
+				GameState.marker = Vector2.INF
 		# Faro: câmaras e o rumo das formigas, dentro da faixa.
 		var scent: Color = Settings.sniff_color()
 		if now < sniff_until:

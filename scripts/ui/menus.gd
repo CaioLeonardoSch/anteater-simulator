@@ -151,7 +151,7 @@ func _build_title() -> Control:
 	sub.add_theme_constant_override("outline_size", 4)
 	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 formigas comidas valem 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 insetos comidos valem 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
 	tag.add_theme_font_override("font", UiTheme.semi_font())
 	tag.add_theme_constant_override("outline_size", 4)
 	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
@@ -270,7 +270,7 @@ func _update_slots(rows: Array) -> void:
 			b.text = "  Jogo %d  ·  vazio: começar um jogo novo" % slot
 		else:
 			var when := Time.get_datetime_dict_from_unix_time(int(info.saved_at) + _utc_offset())
-			b.text = "  Jogo %d  ·  %d de %d formigas  ·  %s\n  Salvo em %02d/%02d às %02d:%02d" % [
+			b.text = "  Jogo %d  ·  %d de %d insetos  ·  %s\n  Salvo em %02d/%02d às %02d:%02d" % [
 				slot, info.eaten, GameState.GOAL, GameState.format_time(info.elapsed),
 				when.day, when.month, when.hour, when.minute]
 
@@ -351,7 +351,7 @@ Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câ
 [b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
-· [b]Cada 10 formigas comidas valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
+· [b]Cada 10 insetos comidos valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
 · A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
 · Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Cavar Fundo[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só a [b]Escavação Real[/b] desmancha o monte inteiro.
@@ -661,7 +661,7 @@ func show_end(time_sec: float, new_record: bool) -> void:
 	for u in GameState.UPGRADES:
 		if GameState.has(u.id):
 			learned.append(u.name)
-	var lines := "Tempo: %s%s\nMaior combo: %d formigas\nTanajuras comidas: %d\nHabilidades: %s" % [
+	var lines := "Tempo: %s%s\nMaior combo: %d insetos\nTanajuras comidas: %d\nHabilidades: %s" % [
 		GameState.format_time(time_sec), _record_text(new_record),
 		GameState.best_combo, GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
 	_end_stats.text = lines

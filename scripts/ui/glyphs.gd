@@ -168,6 +168,15 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 			ci.draw_line(c + Vector2(0, -0.85) * s, c + Vector2(0, 0.2) * s, col, s * 0.16, true)
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.32, -0.02) * s, c + Vector2(0.32, -0.02) * s,
 				c + Vector2(0, 0.36) * s]), col)
+		"pin":
+			# Marcador do jogador: gota de cabeça para baixo com um furo.
+			var pts := PackedVector2Array()
+			for i in 13:
+				var a := lerpf(PI * 0.85, PI * 2.15, i / 12.0)
+				pts.append(c + Vector2(cos(a), sin(a)) * 0.58 * s + Vector2(0, -0.3) * s)
+			pts.append(c + Vector2(0, 0.95) * s)
+			ci.draw_colored_polygon(pts, col)
+			ci.draw_circle(c + Vector2(0, -0.3) * s, s * 0.22, Color(0.04, 0.028, 0.022, col.a))
 		"cave":
 			ci.draw_colored_polygon(_dome(c, s, 0.92, 1.0), col)
 			ci.draw_colored_polygon(_dome(c, s, 0.42, 0.62), Color(0.04, 0.028, 0.022, col.a))

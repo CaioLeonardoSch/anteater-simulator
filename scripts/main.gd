@@ -237,6 +237,13 @@ func _start_play() -> void:
 	if DevTools.pose.size() >= 4:
 		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
 		player.pitch = deg_to_rad(DevTools.pose[3])
+	if DevTools.args.has("explored"):
+		# Teste: o mapa todo já explorado.
+		exploration.reveal(Vector2.ZERO, 80.0)
+	if DevTools.args.has("marker"):
+		# Teste: um marcador no mapa (--marker=x,z).
+		var mk := String(DevTools.args.marker).split(",")
+		GameState.marker = Vector2(float(mk[0]), float(mk[1]))
 	if DevTools.args.has("sniff"):
 		# Teste: fareja sozinho nesse instante (para capturas do faro).
 		get_tree().create_timer(float(DevTools.args.sniff)).timeout.connect(player.do_sniff)

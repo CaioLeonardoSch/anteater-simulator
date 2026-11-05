@@ -283,7 +283,7 @@ func _show_tip(id: String) -> void:
 				text = "Custa %d pontos · clique para aprender." % cost
 				col = branch.color.lightened(0.3)
 			else:
-				text = "Custa %d pontos · faltam %d formigas." % [cost, GameState.ants(cost - pts)]
+				text = "Custa %d pontos · faltam %d formigas." % [cost, GameState.ants_needed(cost)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true

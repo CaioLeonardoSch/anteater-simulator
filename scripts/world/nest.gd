@@ -12,7 +12,7 @@ const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const Props := preload("res://scripts/world/props.gd")
 
-const QUEEN_VALUE := 20
+const QUEEN_VALUE := 200
 ## Tamanho dos buracos (o nível de Cavar que cada um pede).
 const SMALL := 1
 const LARGE := 2
@@ -27,6 +27,10 @@ class Chamber extends RefCounted:
 	var residents := 0
 	## Moradoras que estão à vista agora (o resto sai do túnel aos poucos).
 	var shown := 0
+	## Câmara do campo: formigas que saem dela, passeiam e voltam (as que
+	## ainda não foram comidas) e até onde elas vão (m).
+	var roamers := 0
+	var roam_reach := 0.0
 	var opened := false
 	var royal := false
 	## Câmara no meio do campo, longe do monte (é deste formigueiro, mas fica sozinha).
@@ -61,10 +65,8 @@ var trail_ids: Array[int] = []
 var hole_distance := 0.0
 
 var chambers: Array[Chamber] = []
-## Forrageiras guardadas no formigueiro (saem pelas trilhas e voltam).
+## Forrageiras das trilhas deste formigueiro que ainda não foram comidas.
 var pool := 0
-## Forrageiras deste formigueiro andando no mapa agora.
-var outside := 0
 var queen_alive := false
 var cleaned := false
 var used_ai_model := false
@@ -232,7 +234,15 @@ func residents_left() -> int:
 
 ## Quanto ainda falta comer aqui (a rainha vale QUEEN_VALUE formigas).
 func remaining() -> int:
-	return pool + outside + residents_left() + (QUEEN_VALUE if queen_alive else 0)
+	return pool + roamers_left() + residents_left() + (QUEEN_VALUE if queen_alive else 0)
+
+
+## Formigas passeando em volta das câmaras do campo deste formigueiro.
+func roamers_left() -> int:
+	var n := 0
+	for c in chambers:
+		n += c.roamers
+	return n
 
 
 func closed_chambers() -> int:

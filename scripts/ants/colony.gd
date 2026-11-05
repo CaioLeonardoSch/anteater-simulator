@@ -1,36 +1,43 @@
 extends Node
 ## A colônia do Cerrado: GameState.GOAL formigas ao todo (cada rainha conta
-## como 20). Cada formigueiro guarda forrageiras, que saem pelas trilhas e
-## voltam, e moradoras, que vivem nas câmaras e só aparecem quando você cava.
-## Numa câmara aberta ficam até CHAMBER_VISIBLE à vista; as outras saem do
-## túnel conforme você come. Só as formigas que você come somem de vez.
+## como QUEEN_VALUE). Cada formigueiro reparte as suas em três partes:
+## - forrageiras, que vão e voltam pelas trilhas sem parar;
+## - passeadoras, que saem das câmaras do campo, dão uma volta e entram de novo;
+## - moradoras, que vivem nas câmaras e só aparecem quando você cava. Numa
+##   câmara aberta ficam até CHAMBER_VISIBLE à vista; as outras saem do túnel
+##   conforme você come.
+## Cada formiga é uma só (sem grupos). Só as que você come somem de vez.
 
-signal wave_announced(wave: int, nest_name: String, count: int, nest_index: int)
-signal final_wave(remaining: int)
 signal chamber_opened(nest, chamber_index: int)
 signal chamber_cleaned(nest, chamber_index: int)
 signal nest_cleaned(nest)
 signal queen_eaten(nest)
 
 const Nest := preload("res://scripts/world/nest.gd")
+const AntField := preload("res://scripts/ants/ant_field.gd")
 const QUEEN_VALUE := Nest.QUEEN_VALUE
-const CHAMBER_VISIBLE := 12
-## Parte de cada formigueiro que anda pelas trilhas (o resto mora nas câmaras).
-const FORAGER_SHARE := 0.45
+const CHAMBER_VISIBLE := 40
+## Parte das formigas de cada formigueiro nas trilhas e passeando pelo campo
+## (o resto mora nas câmaras).
+const TRAIL_SHARE := 0.32
+const ROAM_SHARE := 0.42
+## Tanajuras em cada trilha (contam como formigas da trilha).
+const TANAJURAS_PER_TRAIL := 2
 const ROYAL_WEIGHT := 1.7
-## Câmaras no meio do campo são menores.
+## Câmaras no meio do campo guardam menos moradoras.
 const SATELLITE_WEIGHT := 0.6
+## Até onde as passeadoras vão (m), longe da câmara delas.
+const ROAM_REACH := 5.5
+const ROAM_REACH_MIN := 2.2
 
 var swarm
 var world
-var max_alive := 300
-var wave_number := 0
-var wave_timer := 22.0
-var final_released := false
 var active := false
-
-var _trail_timers := PackedFloat32Array()
-var _wave := {}
+## Formigas de cada trilha que ainda não foram comidas (as de campo) e as
+## tanajuras de cada trilha.
+var trail_left := PackedInt32Array()
+var tanajuras_left := PackedInt32Array()
+var _trail_total := PackedInt32Array()
 var _clean_announced := {}
 var _refill_timer := 0.0
 
@@ -38,16 +45,31 @@ var _refill_timer := 0.0
 func setup(w, sw) -> void:
 	world = w
 	swarm = sw
-	swarm.ant_entered_nest.connect(_on_ant_entered_nest)
-	_trail_timers.resize(world.trails.trails.size())
-	for i in _trail_timers.size():
-		_trail_timers[i] = randf_range(0.0, 1.5)
 	_distribute()
+	var trail_counts: Array = []
+	for ti in trail_left.size():
+		trail_counts.append(trail_left[ti])
+	var roams: Array = []
+	for nest in world.nests:
+		for ci in nest.chambers.size():
+			var c = nest.chambers[ci]
+			if c.roamers > 0:
+				roams.append({"code": nest.index * 16 + ci, "home": c.pos2, "reach": c.roam_reach, "count": c.roamers})
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7741
+	swarm.field.build(world, trail_counts, roams, rng)
+	_spawn_tanajuras()
 
 
-## Reparte as formigas da colônia entre os formigueiros, as trilhas e as câmaras.
+## Reparte as formigas da colônia entre os formigueiros, as trilhas, os
+## passeios e as câmaras.
 func _distribute() -> void:
 	var nests: Array = world.nests
+	var trails: Array = world.trails.trails
+	trail_left.resize(trails.size())
+	trail_left.fill(0)
+	tanajuras_left.resize(trails.size())
+	tanajuras_left.fill(0)
 	var queens := 0
 	var total_w := 0.0
 	for n in nests:
@@ -62,15 +84,41 @@ func _distribute() -> void:
 		if k == nests.size() - 1:
 			share = workers - assigned
 		assigned += share
-		n.pool = int(round(share * FORAGER_SHARE))
-		n.outside = 0
 		n.queen_alive = n.big
 		n.cleaned = false
-		var residents: int = share - n.pool
+		# Trilhas.
+		var on_trails := int(round(share * TRAIL_SHARE)) if not n.trail_ids.is_empty() else 0
+		var given := 0
+		for j in n.trail_ids.size():
+			var ti: int = n.trail_ids[j]
+			var m: int = on_trails / n.trail_ids.size()
+			if j == n.trail_ids.size() - 1:
+				m = on_trails - given
+			given += m
+			tanajuras_left[ti] = mini(TANAJURAS_PER_TRAIL, m)
+			trail_left[ti] = m - tanajuras_left[ti]
+		n.pool = on_trails
+		# Passeios em volta das câmaras do campo.
+		var sats: Array = []
+		for c in n.chambers:
+			c.roamers = 0
+			if c.satellite:
+				sats.append(c)
+		var roaming := int(round(share * ROAM_SHARE)) if not sats.is_empty() else 0
+		given = 0
+		for j in sats.size():
+			var m: int = roaming / sats.size()
+			if j == sats.size() - 1:
+				m = roaming - given
+			given += m
+			sats[j].roamers = m
+			sats[j].roam_reach = _roam_reach(sats[j].pos2)
+		# Moradoras.
+		var residents: int = share - on_trails - roaming
 		var weights := 0.0
 		for c in n.chambers:
 			weights += _chamber_weight(c)
-		var given := 0
+		given = 0
 		for ci in n.chambers.size():
 			var c = n.chambers[ci]
 			var r := int(floor(residents * _chamber_weight(c) / weights))
@@ -80,6 +128,22 @@ func _distribute() -> void:
 			c.shown = 0
 			c.opened = false
 			given += r
+	_trail_total = trail_left.duplicate()
+
+
+## Até onde as passeadoras de uma câmara do campo andam: sem entrar nas
+## lagoas nem passar dos penhascos.
+func _roam_reach(p: Vector2) -> float:
+	var reach := ROAM_REACH
+	for w in world.ponds:
+		reach = minf(reach, p.distance_to(Vector2(w.x, w.y)) - w.z - 0.4)
+	for k in 16:
+		var d := Vector2.RIGHT.rotated(TAU * k / 16.0)
+		var q := p + d * reach
+		var limit: float = world.walk_limit(q) - 0.6
+		if q.length() > limit:
+			reach = minf(reach, maxf(limit - p.length(), ROAM_REACH_MIN))
+	return maxf(reach, ROAM_REACH_MIN)
 
 
 ## Peso de cada câmara na hora de repartir as moradoras.
@@ -89,6 +153,15 @@ func _chamber_weight(c) -> float:
 	if c.satellite:
 		return SATELLITE_WEIGHT
 	return 1.0
+
+
+func _spawn_tanajuras() -> void:
+	var trails: Array = world.trails.trails
+	for ti in tanajuras_left.size():
+		var t = trails[ti]
+		for _k in tanajuras_left[ti]:
+			swarm.spawn(swarm.TANAJURA, ti, randf_range(0.6, t.length), 1.0 if randf() < 0.5 else -1.0,
+				randf_range(-0.2, 0.2))
 
 
 func total_remaining() -> int:
@@ -102,17 +175,11 @@ func remaining() -> int:
 	return total_remaining()
 
 
-func pools_total() -> int:
+## Formigas fora das câmaras fechadas (trilhas e passeios) que ainda não foram comidas.
+func loose_total() -> int:
 	var n := 0
 	for nest in world.nests:
-		n += nest.pool
-	return n
-
-
-func outside_total() -> int:
-	var n := 0
-	for nest in world.nests:
-		n += nest.outside
+		n += nest.pool + nest.roamers_left()
 	return n
 
 
@@ -131,40 +198,33 @@ func closed_chambers_total() -> int:
 	return n
 
 
-## Espalha forrageiras pelas trilhas para o mundo já começar vivo.
-func populate(count: int) -> void:
-	var trails: Array = world.trails.trails
-	for _k in count:
-		var ti := randi() % trails.size()
-		var t = trails[ti]
-		var nest = world.nests[t.nest]
-		if nest.pool <= 0:
-			continue
-		var going := randf() < 0.5
-		if swarm.spawn(_roll_kind(0.01), ti, randf() * t.length, 1.0 if going else -1.0,
-				randf_range(-0.22, 0.22), not going) >= 0:
-			nest.pool -= 1
-			nest.outside += 1
-
-
-func _roll_kind(tanajura_chance: float) -> int:
-	return swarm.TANAJURA if randf() < tanajura_chance else swarm.WORKER
-
-
-func _on_ant_entered_nest(nest_index: int) -> void:
-	var nest = world.nests[nest_index]
-	nest.outside -= 1
-	nest.pool += 1
-
-
 ## Chamado logo antes de uma formiga ser engolida. Retorna quanto ela vale.
 func ant_eaten(i: int) -> int:
 	var code: int = swarm.home[i]
-	if code < 0:
-		var nest = world.nests[world.trails.trails[swarm.trail_id[i]].nest]
-		nest.outside -= 1
-		_check_cleaned(nest)
-		return 1
+	if code >= 0:
+		return _resident_eaten(i, code)
+	var ci: int = swarm.origin_chunk[i]
+	var nest
+	if ci >= 0:
+		var ch = swarm.field.chunks[ci]
+		if ch.kind == AntField.TRAIL:
+			trail_left[ch.index] -= 1
+			nest = world.nests[world.trails.trails[ch.index].nest]
+			nest.pool -= 1
+		else:
+			nest = world.nests[ch.index / 16]
+			nest.chambers[ch.index % 16].roamers -= 1
+	else:
+		# Tanajura.
+		var ti: int = swarm.trail_id[i]
+		tanajuras_left[ti] = maxi(tanajuras_left[ti] - 1, 0)
+		nest = world.nests[world.trails.trails[ti].nest]
+		nest.pool -= 1
+	_check_cleaned(nest)
+	return 1
+
+
+func _resident_eaten(i: int, code: int) -> int:
 	var nest = world.nests[code / 16]
 	var ci := code % 16
 	var value := 1
@@ -243,7 +303,7 @@ func _refill(nest, ci: int, from_tunnel: bool) -> void:
 		c.shown += 1
 
 
-## Quantos grupos ficam à vista numa câmara (a vala da rainha é maior).
+## Quantas ficam à vista numa câmara (a vala da rainha é maior).
 func _visible_cap(c) -> int:
 	return CHAMBER_VISIBLE * 2 if c.half_len > 0.0 else CHAMBER_VISIBLE
 
@@ -260,83 +320,6 @@ func _process(delta: float) -> void:
 				var c = nest.chambers[ci]
 				if c.opened and c.shown < mini(c.residents, _visible_cap(c)):
 					_refill(nest, ci, true)
-	var trails: Array = world.trails.trails
-	var outside := outside_total()
-	# Fluxo contínuo nas trilhas.
-	for ti in _trail_timers.size():
-		_trail_timers[ti] -= delta
-		if _trail_timers[ti] > 0.0:
-			continue
-		_trail_timers[ti] = randf_range(0.9, 1.9)
-		var nest = world.nests[trails[ti].nest]
-		if nest.pool <= 0 or outside >= max_alive:
-			continue
-		if swarm.spawn(_roll_kind(0.008), ti, 0.0, 1.0, randf_range(-0.2, 0.2)) >= 0:
-			nest.pool -= 1
-			nest.outside += 1
-			outside += 1
-	# Ondas.
-	if not _wave.is_empty():
-		var nest = world.nests[_wave.nest]
-		_wave.timer -= delta
-		while _wave.timer <= 0.0 and _wave.left > 0 and nest.pool > 0:
-			_wave.timer += _wave.interval
-			var ti: int = _wave.trails[randi() % _wave.trails.size()]
-			var k: int = swarm.WORKER
-			if _wave.tanajuras > 0 and randf() < 0.08:
-				k = swarm.TANAJURA
-				_wave.tanajuras -= 1
-			if swarm.spawn(k, ti, 0.0, 1.0, randf_range(-0.38, 0.38)) >= 0:
-				nest.pool -= 1
-				nest.outside += 1
-				_wave.left -= 1
-			else:
-				break
-		if _wave.left <= 0 or nest.pool <= 0:
-			_wave = {}
-	wave_timer -= delta
-	if wave_timer <= 0.0 and _wave.is_empty():
-		_start_wave()
-	# Reta final das trilhas: todas as forrageiras saem e ninguém volta para casa.
-	if not final_released and pools_total() + outside <= 60 and pools_total() > 0:
-		_release_all()
-		final_wave.emit(pools_total() + outside_total())
-
-
-func _release_all() -> void:
-	final_released = true
-	swarm.stay_outside = true
-	var trails: Array = world.trails.trails
-	for nest in world.nests:
-		while nest.pool > 0:
-			var ti: int = nest.trail_ids[randi() % nest.trail_ids.size()]
-			var t = trails[ti]
-			if swarm.spawn(_roll_kind(0.0), ti, randf() * t.length * 0.5, 1.0, randf_range(-0.3, 0.3)) < 0:
-				break
-			nest.pool -= 1
-			nest.outside += 1
-
-
-func _start_wave() -> void:
-	wave_timer = randf_range(34.0, 44.0)
-	var candidates: Array = []
-	for n in world.nests:
-		if n.pool >= 8:
-			candidates.append(n)
-	if candidates.is_empty():
-		return
-	wave_number += 1
-	var nest = candidates[randi() % candidates.size()]
-	var count := mini(nest.pool, 24 + wave_number * 10)
-	_wave = {
-		"nest": nest.index,
-		"left": count,
-		"interval": clampf(5.0 / count, 0.04, 0.14),
-		"timer": 2.5,
-		"trails": nest.trail_ids.duplicate(),
-		"tanajuras": 1 + wave_number / 3,
-	}
-	wave_announced.emit(wave_number, nest.display_name, count, nest.index)
 
 
 # ------------------------------------------------------------------ Salvar
@@ -346,40 +329,50 @@ func to_save() -> Dictionary:
 	for n in world.nests:
 		var ch := []
 		for c in n.chambers:
-			ch.append({"residents": c.residents, "opened": c.opened})
-		nests.append({"pool": n.pool + n.outside, "queen": n.queen_alive, "chambers": ch})
-	return {"nests": nests, "wave_number": wave_number, "wave_timer": wave_timer,
-		"final_released": final_released}
+			ch.append({"residents": c.residents, "roamers": c.roamers, "opened": c.opened})
+		nests.append({"queen": n.queen_alive, "chambers": ch})
+	return {"nests": nests, "trails": Array(trail_left), "tanajuras": Array(tanajuras_left)}
 
 
 func from_save(d: Dictionary) -> void:
 	swarm.clear_all()
-	_wave = {}
 	_clean_announced.clear()
+	var field = swarm.field
+	# Trilhas: some com as formigas já comidas.
+	var saved_trails: Array = d.get("trails", [])
+	for ti in mini(saved_trails.size(), trail_left.size()):
+		var left := clampi(int(saved_trails[ti]), 0, _trail_total[ti])
+		var gone := trail_left[ti] - left
+		if gone > 0 and field.trail_chunk.has(ti):
+			field.remove_count(field.trail_chunk[ti], gone)
+		trail_left[ti] = left
+	var saved_taj: Array = d.get("tanajuras", [])
+	for ti in mini(saved_taj.size(), tanajuras_left.size()):
+		tanajuras_left[ti] = clampi(int(saved_taj[ti]), 0, tanajuras_left[ti])
 	var saved: Array = d.get("nests", [])
 	for k in mini(saved.size(), world.nests.size()):
 		var n = world.nests[k]
 		var sd: Dictionary = saved[k]
-		n.pool = int(sd.get("pool", 0))
-		n.outside = 0
 		n.queen_alive = bool(sd.get("queen", false)) and n.big
+		n.pool = 0
+		for ti in n.trail_ids:
+			n.pool += trail_left[ti] + tanajuras_left[ti]
 		for c in n.chambers:
 			c.shown = 0
 			c.opened = false
 		var ch: Array = sd.get("chambers", [])
 		for ci in mini(ch.size(), n.chambers.size()):
-			n.chambers[ci].residents = int(ch[ci].get("residents", 0))
+			var c = n.chambers[ci]
+			c.residents = int(ch[ci].get("residents", 0))
+			var roam_left := clampi(int(ch[ci].get("roamers", c.roamers)), 0, c.roamers)
+			var code: int = k * 16 + ci
+			if roam_left < c.roamers and field.roam_chunk.has(code):
+				field.remove_count(field.roam_chunk[code], c.roamers - roam_left)
+			c.roamers = roam_left
 			if bool(ch[ci].get("opened", false)):
 				open_chamber(n, ci, true)
-				var c = n.chambers[ci]
 				if c.residents == 0 and not (c.royal and n.queen_alive):
-					_clean_announced[k * 16 + ci] = true
+					_clean_announced[code] = true
 		if n.remaining() == 0:
 			n.set_cleaned(true)
-	wave_number = int(d.get("wave_number", 0))
-	wave_timer = float(d.get("wave_timer", 22.0))
-	final_released = false
-	if bool(d.get("final_released", false)):
-		_release_all()
-	else:
-		populate(220)
+	_spawn_tanajuras()

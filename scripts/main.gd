@@ -110,7 +110,6 @@ func _build_game() -> void:
 	add_child(colony)
 	swarm.setup(world, colony)
 	colony.setup(world, swarm)
-	colony.populate(220)
 	colony.active = true
 	player = Player.new()
 	player.name = "Anteater"
@@ -208,7 +207,7 @@ func _start_play() -> void:
 	if DevTools.start_mode == "" or DevTools.args.has("growl"):
 		get_tree().create_timer(1.4).timeout.connect(_belly_growl)
 	if DevTools.give > 0:
-		GameState.add_eaten(DevTools.give)
+		GameState.add_eaten(DevTools.give * GameState.ANTS_PER_POINT)
 		GameState.combo = 0
 		GameState.best_combo = 0
 	for id in DevTools.buy:

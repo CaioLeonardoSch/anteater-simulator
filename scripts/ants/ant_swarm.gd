@@ -1,45 +1,41 @@
 extends Node3D
-## Enxame de formigas: simulação leve em arrays + desenho com MultiMesh.
-## Cada operária da simulação é um grupo de SQUAD formigas (vale 1 ponto): o
-## shader desenha as 10, em fila na trilha, num bando solto quando fogem e num
-## bolo apertado na câmara e na língua. Rainhas e tanajuras andam sozinhas.
-## Modos: seguindo a trilha, fugindo, voltando (para a trilha ou para a câmara),
-## tonta, grudada na língua e morando numa câmara aberta de um formigueiro.
-## As moradoras de uma câmara recém-aberta saem correndo, e todas fogem quando
-## o tamanduá chega perto; depois voltam para casa.
-
-signal ant_entered_nest(nest_index: int)
+## Enxame de formigas. Há dois tipos:
+## - As de campo (AntField, filho deste nó): milhares, nas trilhas e passeando
+##   em volta das câmaras; a placa de vídeo calcula onde cada uma está.
+## - As simuladas aqui, uma a uma, em arrays + MultiMesh: as moradoras das
+##   câmaras abertas, as rainhas, as tanajuras e as de campo que precisam de
+##   atenção agora (fugindo do tamanduá, tontas, grudadas na língua ou na mira
+##   da Língua Certeira). Quando a de campo se acalma, ela volta para o
+##   caminho dela e para de ser simulada aqui.
+## Modos: seguindo a trilha (tanajuras), fugindo, voltando, tonta, grudada na
+## língua, morando numa câmara aberta e "na mira" (segue o caminho de campo).
 
 const AntMeshBuilder := preload("res://scripts/ants/ant_mesh_builder.gd")
+const AntField := preload("res://scripts/ants/ant_field.gd")
 const SCENT_SHADER := preload("res://shaders/ant_scent.gdshader")
 
-const CAPACITY := 1600
-## Distâncias em que os grupos trocam de malha: detalhada (com sombra) até a
+const CAPACITY := 4096
+## Distâncias em que as formigas trocam de malha: detalhada (com sombra) até a
 ## 1ª, depois simples, bem simples e mínima (até DRAW_DIST).
-const LOD_DISTS := [6.0, 13.0, 28.0]
-const DRAW_DIST := 75.0
+const LOD_DISTS := [4.5, 11.0, 24.0]
+const DRAW_DIST := 80.0
 ## Camadas de desenho (uma MultiMesh cada).
 const LAYER_QUEEN := 4
 const LAYER_TANAJURA := 5
-## Grupos a menos disto acompanham a inclinação do chão.
+## Formigas a menos disto acompanham a inclinação do chão.
 const TILT_DIST := 30.0
-## Formigas em cada grupo de operárias.
-const SQUAD := 10
-## Formações dos grupos (o shader mistura as vizinhas na troca).
-const FORM_LINE := 1.0
-const FORM_LOOSE := 2.0
-const FORM_TIGHT := 3.0
-## Meia fila e raio do bando e do bolo, em unidades da formiga.
-const LINE_HALF := 4.6
-const LOOSE_RADIUS := 2.9
-const TIGHT_RADIUS := 1.6
 ## Moradoras de câmaras longe do tamanduá: simuladas 1 vez a cada 4 passos
 ## e não desenhadas muito longe (estão dentro do buraco, nem dá para ver).
 const CHAMBER_SIM_LOD_DIST := 20.0
 const CHAMBER_DRAW_DIST := 48.0
 const STRIDE := 20
+## De quantos em quantos passos as formigas de campo conferem se o tamanduá
+## está perto.
+const FLEE_CHECK_EVERY := 3
+## Quanto tempo a formiga "na mira" fica com o enxame antes de voltar ao campo.
+const GHOST_TIME := 1.2
 
-enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, CHAMBER }
+enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, CHAMBER, GHOST }
 const WORKER := 0
 const QUEEN := 1
 const TANAJURA := 2
@@ -47,19 +43,25 @@ const SIZE := [0.15, 0.44, 0.22]
 const SPEED := [0.7, 0.0, 0.95]
 const PANIC_SPEED := [1.8, 0.0, 2.2]
 const CHAMBER_SPEED := 0.32
+const QUEEN_SPEED := 0.05
 
 var world
 var colony
+var field: AntField
 var trails: Array = []
 var obstacles: Array[Vector3] = []
 
 var alive := PackedByteArray()
 var kind := PackedByteArray()
 var mode := PackedByteArray()
+## Folha na boca (bit 1) e chapéu de Natal (bit 2).
 var carry := PackedByteArray()
 var trail_id := PackedInt32Array()
-## -1 = formiga de trilha; senão ninho * 16 + câmara (moradora de uma câmara).
+## Moradora de uma câmara: ninho * 16 + câmara; -1 = não é moradora.
 var home := PackedInt32Array()
+## De onde veio uma formiga de campo (grupo e índice no AntField); -1 = nasceu aqui.
+var origin_chunk := PackedInt32Array()
+var origin_idx := PackedInt32Array()
 var s := PackedFloat32Array()
 var dir := PackedFloat32Array()
 var lateral := PackedFloat32Array()
@@ -69,18 +71,16 @@ var gait := PackedFloat32Array()
 var timer := PackedFloat32Array()
 var highlight := PackedFloat32Array()
 var rnd := PackedFloat32Array()
-## Escala extra (formigas encolhem ao entrar na boca).
+var seed_of := PackedFloat32Array()
+## Escala extra (formigas encolhem na boca do tamanduá).
 var shrink := PackedFloat32Array()
-## Formação do grupo agora (vai mudando aos poucos até a da situação).
-var form := PackedFloat32Array()
 var pos := PackedVector3Array()
 var vel := PackedVector2Array()
-## Centro da câmara (x, raio, z) para as moradoras.
+## Centro da câmara (x, raio, z) para as moradoras; a casa (x, 0, z) das que
+## passeiam em volta de uma câmara do campo.
 var anchor := PackedVector3Array()
 var _free := PackedInt32Array()
 var alive_count := 0
-## Quando true, as formigas de trilha não entram mais nos formigueiros (reta final).
-var stay_outside := false
 
 ## Posição do tamanduá e raio de fuga, atualizados pelo jogador.
 var threat_pos := Vector3(9999, 0, 9999)
@@ -94,7 +94,12 @@ var _buf: Array[PackedFloat32Array] = []
 var _counts := PackedInt32Array([0, 0, 0, 0, 0, 0])
 var _scent_mat: ShaderMaterial
 var _time := 0.0
-var cam_pos := Vector3.ZERO
+var cam_pos := Vector3.ZERO:
+	set(v):
+		cam_pos = v
+		if field:
+			field.cam = v
+var _found: Array[Vector4] = []
 
 
 func setup(w, col) -> void:
@@ -105,12 +110,15 @@ func setup(w, col) -> void:
 	for arr in [alive, kind, mode, carry]:
 		arr.resize(CAPACITY)
 		arr.fill(0)
-	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, shrink, form]:
+	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, seed_of, shrink]:
 		arr.resize(CAPACITY)
 		arr.fill(0.0)
 	trail_id.resize(CAPACITY)
 	home.resize(CAPACITY)
 	home.fill(-1)
+	origin_chunk.resize(CAPACITY)
+	origin_chunk.fill(-1)
+	origin_idx.resize(CAPACITY)
 	pos.resize(CAPACITY)
 	vel.resize(CAPACITY)
 	anchor.resize(CAPACITY)
@@ -119,15 +127,18 @@ func setup(w, col) -> void:
 		_free[i] = CAPACITY - 1 - i
 	for t in trails:
 		t.bake_heights(w)
+	field = AntField.new()
+	field.name = "Field"
+	add_child(field)
 	_scent_mat = ShaderMaterial.new()
 	_scent_mat.shader = SCENT_SHADER
-	# 0..3 grupos de operárias (de perto para longe), 4 rainha, 5 tanajura
+	# 0..3 operárias (de perto para longe), 4 rainha, 5 tanajura
 	var meshes: Array[Mesh] = []
 	for lod in 4:
-		meshes.append(AntMeshBuilder.squad(AntMeshBuilder.build("worker", lod), SQUAD))
+		meshes.append(AntMeshBuilder.build("worker", lod))
 	meshes.append(AntMeshBuilder.build("queen", 0))
 	meshes.append(AntMeshBuilder.build("tanajura", 0))
-	var caps := [400, 800, CAPACITY, CAPACITY, 8, 60]
+	var caps := [1200, 2000, CAPACITY, CAPACITY, 16, 60]
 	for k in 6:
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -158,25 +169,28 @@ func _take_slot() -> int:
 	alive[i] = 1
 	alive_count += 1
 	rnd[i] = randf()
+	seed_of[i] = float(randi() % 1024)
 	gait[i] = randf() * TAU
 	timer[i] = 0.0
 	highlight[i] = 0.0
 	shrink[i] = 1.0
-	form[i] = FORM_LINE
-	carry[i] = 0
+	carry[i] = 2 if randf() < AntField.HAT_CHANCE else 0
 	vel[i] = Vector2.ZERO
 	home[i] = -1
+	origin_chunk[i] = -1
+	trail_id[i] = -1
 	return i
 
 
-## Formiga de trilha (sai do formigueiro e vai até um arbusto).
+## Formiga de trilha simulada aqui (as tanajuras).
 func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: float = 0.0, carrying: bool = false) -> int:
 	var i := _take_slot()
 	if i < 0:
 		return -1
 	kind[i] = ant_kind
 	mode[i] = Mode.TRAIL
-	carry[i] = 1 if carrying else 0
+	if carrying:
+		carry[i] |= 1
 	trail_id[i] = trail_index
 	s[i] = at_s
 	dir[i] = direction
@@ -188,7 +202,7 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 	return i
 
 
-## Moradora de uma câmara aberta (ou a rainha, parada no centro).
+## Moradora de uma câmara aberta (ou a rainha, que anda devagar no fundo).
 ## `from_tunnel` = acabou de sair do túnel, no meio da câmara. Numa vala,
 ## `axis` e `half_len` dão a direção e o meio comprimento dela.
 func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false,
@@ -200,21 +214,19 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	mode[i] = Mode.CHAMBER
 	home[i] = home_code
 	anchor[i] = Vector3(center.x, radius, center.y)
-	# Moradoras já saem do túnel em bolo (as das trilhas andam em fila).
-	form[i] = FORM_TIGHT
 	# Moradoras não usam a trilha: dir e lateral guardam a forma da vala.
 	dir[i] = axis
 	lateral[i] = half_len
 	trail_id[i] = 0
-	speed[i] = CHAMBER_SPEED * randf_range(0.7, 1.3)
+	speed[i] = (QUEEN_SPEED if ant_kind == QUEEN else CHAMBER_SPEED) * randf_range(0.7, 1.3)
 	var p2 := center
+	var a := randf() * TAU
 	if ant_kind != QUEEN:
-		var a := randf() * TAU
 		var spread := 0.22 if from_tunnel else 0.9
 		p2 += Vector2(cos(a), sin(a)) * radius * sqrt(randf()) * spread
 		if half_len > 0.0:
 			p2 += Vector2(cos(axis), sin(axis)) * half_len * randf_range(-1.0, 1.0) * (0.35 if from_tunnel else 0.9)
-		vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
+	vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
 	return i
@@ -226,15 +238,76 @@ func despawn(i: int) -> void:
 	alive[i] = 0
 	alive_count -= 1
 	home[i] = -1
+	origin_chunk[i] = -1
 	_free.append(i)
 
 
 func clear_all() -> void:
 	for i in CAPACITY:
 		if alive[i] == 1:
+			# As de campo voltam para o campo.
+			if origin_chunk[i] >= 0 and mode[i] != Mode.STUCK:
+				field.unhide(origin_chunk[i], origin_idx[i])
 			despawn(i)
-	stay_outside = false
 
+
+# ------------------------------------------------------------------ Campo
+
+## Assume a formiga `fi` do grupo `ci` do campo: ela some de lá e passa a ser
+## simulada aqui, no modo `m`. Retorna o índice aqui (ou -1).
+func take_from_field(ci: int, fi: int, m: int) -> int:
+	var ch = field.chunks[ci]
+	var st: Vector4 = field.ant_state(ch, fi)
+	if st.w == INF:
+		return -1
+	var i := _take_slot()
+	if i < 0:
+		return -1
+	field.hide_ant(ci, fi)
+	kind[i] = WORKER
+	mode[i] = m
+	origin_chunk[i] = ci
+	origin_idx[i] = fi
+	var flags := int(field.flags_of(ci, fi))
+	carry[i] = (flags & 2) | ((flags & 1) if field.returning(ci, fi) else 0)
+	var size: float = field.size_of(ci, fi)
+	rnd[i] = clampf((size / SIZE[WORKER] - 0.92) / 0.16, 0.0, 1.0)
+	seed_of[i] = field.seed_of(ci, fi)
+	speed[i] = field.speed_of(ci, fi)
+	pos[i] = Vector3(st.x, st.y, st.z)
+	yaw[i] = st.w
+	if ch.kind == AntField.TRAIL:
+		trail_id[i] = ch.index
+		var sd: Vector2 = field.trail_s(ci, fi)
+		s[i] = sd.x
+		dir[i] = sd.y
+		lateral[i] = 0.0
+	else:
+		anchor[i] = Vector3(ch.home.x, 0.0, ch.home.y)
+	if m == Mode.GHOST:
+		timer[i] = GHOST_TIME
+	return i
+
+
+## A formiga de campo i, já calma, volta para o campo (e sai daqui).
+func _back_to_field(i: int, rejoin: bool) -> void:
+	var ci := origin_chunk[i]
+	var fi := origin_idx[i]
+	if rejoin:
+		if field.chunks[ci].kind == AntField.TRAIL:
+			field.rejoin_trail(ci, fi, s[i], dir[i])
+		else:
+			field.rejoin_home(ci, fi)
+	else:
+		field.unhide(ci, fi)
+	despawn(i)
+
+
+func _is_field_trail(i: int) -> bool:
+	return origin_chunk[i] >= 0 and field.chunks[origin_chunk[i]].kind == AntField.TRAIL
+
+
+# ------------------------------------------------------------------ Passo
 
 func _physics_process(delta: float) -> void:
 	if world == null:
@@ -243,14 +316,23 @@ func _physics_process(delta: float) -> void:
 	var tp2 := Vector2(threat_pos.x, threat_pos.z)
 	var flee_r2 := flee_radius * flee_radius
 	var lod_r2 := CHAMBER_SIM_LOD_DIST * CHAMBER_SIM_LOD_DIST
-	var lod_tick := Engine.get_physics_frames() % 4
+	var frame := Engine.get_physics_frames()
+	var lod_tick := frame % 4
+	# As de campo perto do tamanduá saem correndo.
+	if frame % FLEE_CHECK_EVERY == 0:
+		_found.clear()
+		field.gather(threat_pos, flee_radius, _found)
+		for f in _found:
+			var i := take_from_field(int(f.x), int(f.y), Mode.FLEE)
+			if i >= 0:
+				_start_flee(i, tp2)
 	for i in CAPACITY:
 		if alive[i] == 0:
 			continue
 		var m := mode[i]
 		if highlight[i] > 0.0:
 			highlight[i] = maxf(highlight[i] - delta, 0.0)
-		if m == Mode.TRAIL or m == Mode.RETURN or m == Mode.CHAMBER:
+		if m == Mode.TRAIL or m == Mode.RETURN or m == Mode.CHAMBER or m == Mode.GHOST:
 			var d2 := Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2)
 			if d2 < flee_r2 and kind[i] != QUEEN:
 				_start_flee(i, tp2)
@@ -271,6 +353,8 @@ func _physics_process(delta: float) -> void:
 				_update_return(i, delta)
 			Mode.STUNNED:
 				_update_stunned(i, delta)
+			Mode.GHOST:
+				_update_ghost(i, delta)
 			_:
 				pass
 
@@ -284,9 +368,10 @@ func _start_flee(i: int, from: Vector2) -> void:
 	mode[i] = Mode.FLEE
 	vel[i] = away * PANIC_SPEED[kind[i]] * randf_range(0.85, 1.15)
 	# Moradoras correm mais longe antes de pensar em voltar para a câmara.
-	timer[i] = randf_range(2.4, 3.8) if home[i] >= 0 else randf_range(1.6, 2.8)
+	timer[i] = randf_range(2.4, 3.8) if home[i] >= 0 else randf_range(1.2, 2.2)
 
 
+## Tanajuras: andam pela trilha e nunca entram no formigueiro.
 func _update_trail(i: int, delta: float) -> void:
 	var t = trails[trail_id[i]]
 	var sp := speed[i]
@@ -294,16 +379,9 @@ func _update_trail(i: int, delta: float) -> void:
 	if dir[i] > 0.0 and ns >= t.length:
 		ns = t.length
 		dir[i] = -1.0
-		carry[i] = 1 if kind[i] == WORKER else 0
-	elif dir[i] < 0.0 and ns <= 0.0:
-		if stay_outside:
-			ns = 0.0
-			dir[i] = 1.0
-		else:
-			var nest_index: int = t.nest
-			despawn(i)
-			ant_entered_nest.emit(nest_index)
-			return
+	elif dir[i] < 0.0 and ns <= 0.6:
+		ns = 0.6
+		dir[i] = 1.0
 	s[i] = ns
 	var lat := lateral[i] + sin(_time * 1.3 + rnd[i] * 40.0) * 0.03
 	var p2: Vector2 = t.point_at(ns) + t.side_at(ns) * lat
@@ -344,26 +422,39 @@ func _update_free(i: int, delta: float) -> void:
 	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
 	timer[i] -= delta
 	if timer[i] <= 0.0:
-		mode[i] = Mode.RETURN
-		if home[i] < 0:
-			var t = trails[trail_id[i]]
-			s[i] = t.closest_s(p2, s[i], 30.0)
+		_start_return(i)
+
+
+func _start_return(i: int) -> void:
+	mode[i] = Mode.RETURN
+	if home[i] < 0 and trail_id[i] >= 0:
+		var t = trails[trail_id[i]]
+		s[i] = t.closest_s(Vector2(pos[i].x, pos[i].z), s[i], 30.0)
 
 
 func _update_return(i: int, delta: float) -> void:
 	if home[i] >= 0:
 		_update_homing(i, delta)
 		return
-	var t = trails[trail_id[i]]
-	var target: Vector2 = t.point_at(s[i]) + t.side_at(s[i]) * lateral[i]
 	var p2 := Vector2(pos[i].x, pos[i].z)
+	var target: Vector2
+	var on_trail := trail_id[i] >= 0
+	if on_trail:
+		var t = trails[trail_id[i]]
+		target = t.point_at(s[i]) + t.side_at(s[i]) * lateral[i]
+	else:
+		target = Vector2(anchor[i].x, anchor[i].z)
 	var to := target - p2
 	var dist := to.length()
-	var step := speed[i] * 1.8 * delta
-	if dist <= step + 0.02:
-		mode[i] = Mode.TRAIL
+	var sp := maxf(speed[i] * 1.8, 0.6)
+	var step := sp * delta
+	if dist <= step + 0.04:
+		if origin_chunk[i] >= 0:
+			_back_to_field(i, true)
+		else:
+			mode[i] = Mode.TRAIL
 		return
-	var v := to / dist * speed[i] * 1.8
+	var v := to / dist * sp
 	p2 += v * delta
 	var y: float = world.ground_height(p2.x, p2.y)
 	if kind[i] == TANAJURA:
@@ -371,8 +462,10 @@ func _update_return(i: int, delta: float) -> void:
 	pos[i] = Vector3(p2.x, y, p2.y)
 	yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * 10.0, 1.0))
 	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
-	# Vai avançando o ponto-alvo para não voltar para trás.
-	s[i] = clampf(s[i] + speed[i] * dir[i] * delta * 0.5, 0.0, t.length)
+	if on_trail:
+		# Vai avançando o ponto-alvo para não voltar para trás.
+		var t = trails[trail_id[i]]
+		s[i] = clampf(s[i] + speed[i] * dir[i] * delta * 0.5, 0.0, t.length)
 
 
 ## Moradora voltando para a sua câmara depois de fugir.
@@ -394,20 +487,33 @@ func _update_homing(i: int, delta: float) -> void:
 	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32)
 
 
-## Moradoras andam em círculos dentro da câmara e se afastam do focinho.
-func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
-	if kind[i] == QUEEN:
+## Na mira da Língua Certeira: continua no caminho de campo dela.
+func _update_ghost(i: int, delta: float) -> void:
+	var ci := origin_chunk[i]
+	var st: Vector4 = field.ant_state(field.chunks[ci], origin_idx[i], true)
+	timer[i] -= delta
+	if st.w == INF or timer[i] <= 0.0:
+		_back_to_field(i, false)
 		return
+	pos[i] = Vector3(st.x, st.y, st.z)
+	yaw[i] = st.w
+	gait[i] += speed[i] * delta / (SIZE[WORKER] * 0.32)
+
+
+## Moradoras andam em círculos dentro da câmara e se afastam do focinho. A
+## rainha anda bem devagar.
+func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 	var a := anchor[i]
 	var center := Vector2(a.x, a.z)
 	var radius := a.y
+	var queen := kind[i] == QUEEN
 	var p2 := Vector2(pos[i].x, pos[i].z)
-	var v := vel[i].rotated(randf_range(-2.5, 2.5) * delta)
+	var v := vel[i].rotated(randf_range(-2.5, 2.5) * delta * (0.4 if queen else 1.0))
 	# O bolo de formigas fica dentro da câmara.
-	var limit := maxf(radius * 0.92 - SIZE[WORKER] * TIGHT_RADIUS * 0.8, radius * 0.4)
+	var limit := maxf(radius * (0.45 if queen else 0.9) - SIZE[kind[i]] * 0.5, radius * 0.25)
 	var away := p2 - threat
 	var dthreat := away.length()
-	if dthreat < 1.6 and dthreat > 0.001:
+	if not queen and dthreat < 1.6 and dthreat > 0.001:
 		v = v.lerp(away / dthreat * speed[i] * 2.2, minf(delta * 3.0, 1.0))
 	else:
 		v = v.normalized() * speed[i] if v.length_squared() > 0.000001 else Vector2.RIGHT.rotated(randf() * TAU) * speed[i]
@@ -424,8 +530,8 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 		v = v.bounce(n) * 0.8
 	vel[i] = v
 	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
-	if v.length_squared() > 0.0001:
-		yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * 8.0, 1.0))
+	if v.length_squared() > 0.000001:
+		yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * (2.0 if queen else 8.0), 1.0))
 	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
 
 
@@ -449,9 +555,7 @@ func _update_stunned(i: int, delta: float) -> void:
 				mode[i] = Mode.CHAMBER
 				vel[i] = -off.normalized() * speed[i]
 		else:
-			mode[i] = Mode.RETURN
-			var t = trails[trail_id[i]]
-			s[i] = t.closest_s(Vector2(pos[i].x, pos[i].z), s[i], 30.0)
+			_start_return(i)
 
 
 ## Câmara recém-aberta: as moradoras saem correndo para longe do tamanduá.
@@ -468,9 +572,9 @@ func scatter_home(home_code: int) -> void:
 		var away := p2 - tp2
 		if away.length_squared() < 0.0001:
 			away = out
-		var dir := (out.normalized() + away.normalized() * 0.8).normalized().rotated(randf_range(-0.6, 0.6))
+		var d := (out.normalized() + away.normalized() * 0.8).normalized().rotated(randf_range(-0.6, 0.6))
 		mode[i] = Mode.FLEE
-		vel[i] = dir * PANIC_SPEED[kind[i]] * randf_range(0.8, 1.2)
+		vel[i] = d * PANIC_SPEED[kind[i]] * randf_range(0.8, 1.2)
 		timer[i] = randf_range(2.2, 4.0)
 
 
@@ -490,6 +594,10 @@ func stun_home(home_code: int, duration: float) -> int:
 func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	var n := 0
 	var r2 := radius * radius
+	_found.clear()
+	field.gather(center, radius, _found)
+	for f in _found:
+		take_from_field(int(f.x), int(f.y), Mode.STUNNED)
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK or kind[i] == QUEEN:
 			continue
@@ -504,22 +612,8 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	return n
 
 
-## Distância (ao quadrado) de p até a formiga i. Para um grupo, até a fila ou
-## o bando dele (a língua pega o grupo inteiro se encostar em qualquer parte).
 func _reach2(i: int, p: Vector3) -> float:
-	var c := pos[i] + Vector3(0, SIZE[kind[i]] * 0.25, 0)
-	if kind[i] != WORKER:
-		return c.distance_squared_to(p)
-	var unit: float = SIZE[WORKER]
-	var f := form[i]
-	if f < 1.5:
-		var fwd := Vector3(-sin(yaw[i]), 0.0, -cos(yaw[i]))
-		var half := LINE_HALF * unit
-		var t := clampf((p - c).dot(fwd), -half, half)
-		return (c + fwd * t).distance_squared_to(p)
-	var r := (LOOSE_RADIUS if f < 2.5 else TIGHT_RADIUS) * unit
-	var d := maxf(c.distance_to(p) - r, 0.0)
-	return d * d
+	return (pos[i] + Vector3(0, SIZE[kind[i]] * 0.25, 0)).distance_squared_to(p)
 
 
 func _queen_blocked(i: int) -> bool:
@@ -531,7 +625,8 @@ func _queen_blocked(i: int) -> bool:
 func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 	var protected_queen := false
 	var r2 := radius * radius
-	var near: Array[Vector2] = []
+	# Vector3(distância², índice, 0 = daqui / 1 = do campo, grupo do campo)
+	var near: Array[Vector4] = []
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
@@ -543,11 +638,23 @@ func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 		if _queen_blocked(i):
 			protected_queen = true
 			continue
-		near.append(Vector2(d2, i))
+		near.append(Vector4(d2, i, 0, 0))
+	_found.clear()
+	field.gather(tip, radius + 0.3, _found)
+	for f in _found:
+		var st: Vector4 = field.ant_state(field.chunks[int(f.x)], int(f.y))
+		var d2 := Vector3(st.x, st.y + SIZE[WORKER] * 0.25, st.z).distance_squared_to(tip)
+		if d2 <= r2:
+			near.append(Vector4(d2, f.y, 1, f.x))
 	near.sort()
 	var captured := PackedInt32Array()
 	for k in mini(capacity, near.size()):
-		var i := int(near[k].y)
+		var e := near[k]
+		var i := int(e.y)
+		if e.z > 0.5:
+			i = take_from_field(int(e.w), int(e.y), Mode.STUCK)
+			if i < 0:
+				continue
 		mode[i] = Mode.STUCK
 		captured.append(i)
 	return {"captured": captured, "queen_protected": protected_queen}
@@ -561,28 +668,52 @@ func any_near(point: Vector3, radius: float) -> bool:
 			continue
 		if _reach2(i, point) <= r2:
 			return true
-	return false
+	return field.any_near(point, radius)
 
 
-## Formiga mais próxima da mira (Língua Certeira), ou -1.
+## Formiga mais próxima da mira (Língua Certeira), ou -1. Se for uma de
+## campo, o enxame passa a acompanhá-la (para a língua saber onde ela está).
 func best_target(origin: Vector3, aim_dir: Vector3, max_dist: float, max_angle_cos: float) -> int:
 	var best := -1
 	var best_score := -INF
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK or _queen_blocked(i):
 			continue
-		var to := pos[i] - origin
-		var d := to.length()
-		if d > max_dist or d < 0.05:
-			continue
-		var c := to.dot(aim_dir) / d
-		if c < max_angle_cos:
-			continue
-		var score := c * 4.0 - d * 0.08
+		var score := _aim_score(pos[i] - origin, aim_dir, max_dist, max_angle_cos)
 		if score > best_score:
 			best_score = score
 			best = i
+	_found.clear()
+	field.gather(origin, max_dist, _found)
+	var best_field := Vector2(-1, -1)
+	for f in _found:
+		var st: Vector4 = field.ant_state(field.chunks[int(f.x)], int(f.y))
+		var score := _aim_score(Vector3(st.x, st.y, st.z) - origin, aim_dir, max_dist, max_angle_cos)
+		if score > best_score:
+			best_score = score
+			best_field = Vector2(f.x, f.y)
+	if best_field.x >= 0.0:
+		var i := take_from_field(int(best_field.x), int(best_field.y), Mode.GHOST)
+		if i >= 0:
+			return i
+	keep_target(best)
 	return best
+
+
+func _aim_score(to: Vector3, aim_dir: Vector3, max_dist: float, max_angle_cos: float) -> float:
+	var d := to.length()
+	if d > max_dist or d < 0.05:
+		return -INF
+	var c := to.dot(aim_dir) / d
+	if c < max_angle_cos:
+		return -INF
+	return c * 4.0 - d * 0.08
+
+
+## A formiga na mira continua sendo acompanhada (a língua está indo atrás dela).
+func keep_target(i: int) -> void:
+	if i >= 0 and alive[i] == 1 and mode[i] == Mode.GHOST:
+		timer[i] = GHOST_TIME
 
 
 ## Faro: sente as `max_ants` formigas mais perto num raio. Com `sharp`
@@ -602,18 +733,78 @@ func sniff(center: Vector3, radius: float, max_ants: int, duration: float, sharp
 	near.sort()
 	var n := mini(max_ants, near.size())
 	var points := PackedVector3Array()
+	var nearest := sqrt(near[0].x) if n > 0 else INF
 	for k in n:
 		var i := int(near[k].y)
 		points.append(pos[i])
 		if sharp:
 			highlight[i] = duration
-	return {"count": n, "capped": near.size() > max_ants,
-		"nearest": sqrt(near[0].x) if n > 0 else -1.0, "points": points}
+	var res := _sniff_field(center, radius, max_ants - n, duration, sharp, points)
+	n += int(res.count)
+	nearest = minf(nearest, float(res.nearest))
+	return {"count": n, "capped": near.size() > max_ants or bool(res.capped),
+		"nearest": nearest if nearest < INF else -1.0, "points": points}
+
+
+## O faro nas formigas de campo: os grupos mais perto primeiro. Para não
+## pesar, só os grupos na beirada do raio são conferidos formiga por formiga;
+## os de dentro contam inteiros.
+func _sniff_field(center: Vector3, radius: float, budget: int, duration: float, sharp: bool,
+		points: PackedVector3Array) -> Dictionary:
+	var c2 := Vector2(center.x, center.z)
+	var order: Array[Vector2] = []
+	for ci in field.chunks.size():
+		var ch = field.chunks[ci]
+		if ch.alive <= 0:
+			continue
+		var d := Vector2(ch.center.x, ch.center.z).distance_to(c2)
+		if d - ch.radius > radius:
+			continue
+		order.append(Vector2(maxf(d - ch.radius, 0.0), ci))
+	order.sort()
+	var count := 0
+	var capped := false
+	var nearest := INF
+	var r2 := radius * radius
+	for e in order:
+		var ci := int(e.y)
+		var ch = field.chunks[ci]
+		var d := Vector2(ch.center.x, ch.center.z).distance_to(c2)
+		var inside: bool = d + ch.radius <= radius
+		var exact: bool = not inside and (radius <= 24.0 or count < 40)
+		for fi in ch.count:
+			if not field.is_alive(ci, fi):
+				continue
+			var p2 := Vector2.INF
+			if exact or count < 40:
+				p2 = field.ant_xz(ch, fi)
+				if p2 == Vector2.INF:
+					continue
+				var d2 := p2.distance_squared_to(c2)
+				if d2 > r2:
+					continue
+				nearest = minf(nearest, sqrt(d2))
+			elif not inside and d > radius:
+				continue
+			if count >= budget:
+				capped = true
+				break
+			count += 1
+			if sharp:
+				field.highlight(ci, fi, duration)
+			if points.size() < 400 and count % 3 == 0:
+				var st: Vector4 = field.ant_state(ch, fi)
+				if st.w != INF:
+					points.append(Vector3(st.x, st.y, st.z))
+		if capped:
+			break
+	return {"count": count, "capped": capped, "nearest": nearest}
 
 
 func set_scent_overlay(enabled: bool) -> void:
 	for mmi in _mmi:
 		mmi.material_overlay = _scent_mat if enabled else null
+	field.set_scent_overlay(enabled)
 
 
 ## Cor do faro (configurável). A rainha continua com o brilho dourado dela.
@@ -623,6 +814,7 @@ func set_sniff_color(c: Color) -> void:
 	for k in [0, 1, 2, 3, LAYER_TANAJURA]:
 		if k < _mmi.size():
 			_mmi[k].set_instance_shader_parameter("glow_color", c)
+	field.set_sniff_color(c)
 
 
 ## Centro aproximado do maior grupo de formigas (para a bússola do faro).
@@ -631,13 +823,22 @@ func densest_point(around: Vector3, max_dist: float) -> Vector3:
 	var counts := {}
 	var best_key := Vector2i.ZERO
 	var best_n := 0
+	var md2 := max_dist * max_dist
 	for i in CAPACITY:
-		if alive[i] == 0:
-			continue
-		if pos[i].distance_squared_to(around) > max_dist * max_dist:
+		if alive[i] == 0 or pos[i].distance_squared_to(around) > md2:
 			continue
 		var key := Vector2i(floori(pos[i].x / cell), floori(pos[i].z / cell))
 		var n: int = counts.get(key, 0) + 1
+		counts[key] = n
+		if n > best_n:
+			best_n = n
+			best_key = key
+	# Grupos de campo: contam no centro deles.
+	for ch in field.chunks:
+		if ch.alive <= 0 or ch.center.distance_squared_to(around) > md2:
+			continue
+		var key := Vector2i(floori(ch.center.x / cell), floori(ch.center.z / cell))
+		var n: int = counts.get(key, 0) + ch.alive
 		counts[key] = n
 		if n > best_n:
 			best_n = n
@@ -647,16 +848,7 @@ func densest_point(around: Vector3, max_dist: float) -> Vector3:
 	return Vector3((best_key.x + 0.5) * cell, 0.0, (best_key.y + 0.5) * cell)
 
 
-## Quantas formigas de trilha estão vivas (fora dos formigueiros).
-func trail_count() -> int:
-	var n := 0
-	for i in CAPACITY:
-		if alive[i] == 1 and home[i] < 0:
-			n += 1
-	return n
-
-
-## Chão inclinado embaixo do grupo: o "para cima" segue a normal do chão.
+## Chão inclinado embaixo da formiga: o "para cima" segue a normal do chão.
 func _ground_basis(p: Vector3, a: float) -> Basis:
 	var e := 0.25
 	var hx: float = world.ground_height(p.x + e, p.z) - world.ground_height(p.x - e, p.z)
@@ -667,7 +859,7 @@ func _ground_basis(p: Vector3, a: float) -> Basis:
 	return Basis(fwd.cross(up), up, -fwd)
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if _mm.is_empty():
 		return
 	_counts.fill(0)
@@ -678,7 +870,6 @@ func _process(delta: float) -> void:
 	var far2 := DRAW_DIST * DRAW_DIST
 	var tilt2 := TILT_DIST * TILT_DIST
 	var chamber_far2 := CHAMBER_DRAW_DIST * CHAMBER_DRAW_DIST
-	var form_step := delta * 2.5
 	for i in CAPACITY:
 		if alive[i] == 0:
 			continue
@@ -707,29 +898,8 @@ func _process(delta: float) -> void:
 		var state := 0.0
 		var origin := p
 		var m := mode[i]
-		var formation := 0.0
-		var clip := 999.0
-		if k == WORKER:
-			# Fila na trilha, bolo na câmara e na língua, bando solto no resto.
-			var want := FORM_LOOSE
-			if m == Mode.TRAIL:
-				want = FORM_LINE
-			elif m == Mode.CHAMBER or m == Mode.STUCK:
-				want = FORM_TIGHT
-			# Na língua o bolo se fecha depressa.
-			form[i] = move_toward(form[i], want, form_step * (3.5 if m == Mode.STUCK else 1.0))
-			formation = form[i]
-			if d2 < tilt2:
-				if m == Mode.TRAIL:
-					var t = trails[trail_id[i]]
-					basis = basis * Basis(Vector3.RIGHT, atan(t.slope_at(s[i]) * dir[i]))
-				elif m != Mode.STUCK:
-					basis = _ground_basis(p, yaw[i])
-			# Na boca do formigueiro, as do grupo que já entraram (ou ainda não
-			# saíram) ficam escondidas.
-			if m == Mode.TRAIL and s[i] < 1.2:
-				var units := s[i] / size
-				clip = units if dir[i] < 0.0 else -units
+		if k == WORKER and d2 < tilt2 and m != Mode.STUCK:
+			basis = _ground_basis(p, yaw[i])
 		if k == QUEEN:
 			size *= 1.0 + sin(_time * 2.0 + rnd[i] * 6.0) * 0.03
 		if m == Mode.STUNNED:
@@ -762,11 +932,11 @@ func _process(delta: float) -> void:
 		buf[o + 12] = tint
 		buf[o + 13] = tint
 		buf[o + 14] = tint
-		buf[o + 15] = clip
+		buf[o + 15] = 1.0
 		buf[o + 16] = gait[i]
 		buf[o + 17] = hl
-		buf[o + 18] = state + 4.0 * float(int(rnd[i] * 1023.0))
-		buf[o + 19] = float(carry[i]) + 2.0 * round(formation * 64.0)
+		buf[o + 18] = state + 4.0 * seed_of[i]
+		buf[o + 19] = float(carry[i])
 	for layer in _mm.size():
 		_mm[layer].buffer = _buf[layer]
 		_mm[layer].visible_instance_count = _counts[layer]

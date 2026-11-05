@@ -93,8 +93,11 @@ const LINKS := [[0, 0], [0, 1], [1, 1], [2, 2], [2, 1], [3, 3], [3, 2], [4, 3], 
 	[8, 1], [8, 2], [9, 3], [9, 2], [10, 4], [10, 5], [11, 0], [11, 5]]
 ## Grade que diz qual formigueiro (se algum) cobre cada pedaço do mapa.
 const NEST_GRID_CELL := 2.0
-## Câmaras sozinhas no meio do campo, longe das trilhas.
-const SATELLITE_COUNT := 12
+## Câmaras sozinhas no meio do campo, longe das trilhas (as formigas saem
+## delas para passear).
+const SATELLITE_COUNT := 36
+const SATELLITES_PER_NEST := 4
+const SATELLITE_SPACING := 7.5
 ## Trilha onde o jogador começa (formigueiro Leste -> arbusto 2), olhando para o sol.
 const START_LINK := [2, 2]
 
@@ -457,15 +460,17 @@ func _splinters(at: Vector3) -> void:
 
 
 ## Espalha câmaras pelo campo, longe das trilhas, dos montes e dos arbustos.
-## Cada uma pertence ao formigueiro mais perto (no máximo 2 por formigueiro).
+## Cada uma pertence ao formigueiro mais perto (no máximo SATELLITES_PER_NEST).
 func _plan_satellites() -> void:
 	var per_nest := {}
 	var tries := 0
-	while satellite_spots.size() < SATELLITE_COUNT and tries < 600:
+	while satellite_spots.size() < SATELLITE_COUNT and tries < 4000:
 		tries += 1
 		var a := _rng.randf() * TAU
 		var r := sqrt(_rng.randf_range(8.0 * 8.0, 54.0 * 54.0))
 		var p := Vector2(cos(a), sin(a)) * r
+		if p.length() > walk_limit(p) - 4.0:
+			continue
 		if trails.distance_to_trails(p) < 3.5 or p.distance_to(player_start) < 7.0:
 			# (player_start aqui ainda é o ponto antigo, ao lado da trilha)
 			continue
@@ -478,12 +483,12 @@ func _plan_satellites() -> void:
 			if p.distance_to(f) < 4.0:
 				ok = false
 		for q in satellite_spots:
-			if p.distance_to(q) < 9.0:
+			if p.distance_to(q) < SATELLITE_SPACING:
 				ok = false
 		if not ok:
 			continue
 		var owner := nearest_nest(p)
-		if int(per_nest.get(owner.index, 0)) >= 2:
+		if int(per_nest.get(owner.index, 0)) >= SATELLITES_PER_NEST:
 			continue
 		per_nest[owner.index] = int(per_nest.get(owner.index, 0)) + 1
 		var c := Nest.Chamber.new()

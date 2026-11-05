@@ -7,7 +7,7 @@ render_mode cull_disabled, blend_mix, depth_draw_opaque, diffuse_burley, specula
 varying vec3 v_local;
 
 void vertex() {
-	ant_animate(VERTEX, NORMAL, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, COLOR.a, TIME);
+	ant_animate(VERTEX, NORMAL, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, TIME);
 	v_local = VERTEX;
 }
 

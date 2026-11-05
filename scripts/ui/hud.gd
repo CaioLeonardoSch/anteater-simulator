@@ -160,7 +160,7 @@ func _build_counter() -> void:
 	_medallion = Medallion.new()
 	_medallion.position = Vector2(24, 18)
 	_medallion.size = Vector2(116, 116)
-	_medallion.sub = "de %d" % GameState.ants(GameState.GOAL)
+	_medallion.sub = "de %d" % GameState.GOAL
 	add_child(_medallion)
 	var col := VBoxContainer.new()
 	col.position = Vector2(152, 24)
@@ -327,7 +327,7 @@ func _process(delta: float) -> void:
 	if player == null:
 		return
 	_play_time += delta
-	var eaten := GameState.ants(GameState.ants_eaten)
+	var eaten := GameState.ants_eaten
 	_shown_count = move_toward(_shown_count, eaten, maxf(delta * 300.0, absf(eaten - _shown_count) * delta * 8.0))
 	var shown := str(int(round(_shown_count)))
 	if _medallion.value != shown:
@@ -438,7 +438,7 @@ func _on_nest_cleaned(_nest) -> void:
 
 func _on_queen_eaten(_nest) -> void:
 	_cards.push("queen", {"title": "Rainha", "icon": "crown", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD,
-		"ring": UiTheme.GOLD, "value": "+%d" % GameState.ants(NestScript.QUEEN_VALUE), "value_col": UiTheme.GOLD})
+		"ring": UiTheme.GOLD, "value": "+%d" % NestScript.QUEEN_VALUE, "value_col": UiTheme.GOLD})
 
 
 func _on_frenzy(on: bool) -> void:
@@ -486,7 +486,7 @@ func _context_hint() -> Array:
 	# Tronco caído na saída para a área 2.
 	if not world.exit_open and world.near_exit(p2, 4.5):
 		if not world.exit_breakable:
-			return [{"icon": "lock", "col": UiTheme.MUTED}, {"num": str(GameState.ants(colony.remaining()))},
+			return [{"icon": "lock", "col": UiTheme.MUTED}, {"num": str(colony.remaining())},
 				{"icon": "ant", "col": UiTheme.SAND}]
 		if not GameState.can_dig():
 			return _locked("Cavar")
@@ -499,10 +499,10 @@ func _context_hint() -> Array:
 		var c = n.chambers[ci]
 		if c.royal and n.queen_alive:
 			if c.residents > 0:
-				return [{"icon": "crown", "col": UiTheme.GOLD}, {"num": str(GameState.ants(c.residents))},
+				return [{"icon": "crown", "col": UiTheme.GOLD}, {"num": str(c.residents)},
 					{"icon": "ant", "col": UiTheme.SAND}]
 			return []
-		return [{"num": str(GameState.ants(c.residents))}, {"icon": "ant", "col": UiTheme.SAND}]
+		return [{"num": str(c.residents)}, {"icon": "ant", "col": UiTheme.SAND}]
 	# No monte, só faltam as câmaras do campo.
 	var nest = player.near_nest
 	if nest != null and not nest.cleaned and _closed_on_mound(nest) == 0 and nest.closed_chambers() > 0:
@@ -554,7 +554,7 @@ func _learn_controls(delta: float) -> void:
 ## Só restam formigas dentro de buracos que as suas garras ainda não abrem:
 ## lembra o que aprender (Dicas: Todas).
 func _maybe_help() -> void:
-	if _play_time < _help_next or colony.outside_total() > 0 or colony.pools_total() > 0:
+	if _play_time < _help_next or colony.loose_total() > 0:
 		return
 	var smallest := 99
 	for n in world.nests:
@@ -581,7 +581,7 @@ func _on_queen_blocked() -> void:
 
 
 func _on_ate(count: int, _taj: int, _queens: int) -> void:
-	var l := UiTheme.display_label("+%d" % GameState.ants(count), 24 + mini(count, 10), UiTheme.GOLD)
+	var l := UiTheme.display_label("+%d" % count, 24 + mini(count, 10), UiTheme.GOLD)
 	_soft_shadow(l)
 	l.position = size * 0.5 + Vector2(randf_range(24, 44), randf_range(-64, -46))
 	_popups.add_child(l)
@@ -1009,7 +1009,7 @@ class SniffChip extends Control:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func show_result(n: int, capped: bool, nearest: float, ch: int, duration: float) -> void:
-		count = ("%d+" % GameState.ants(n)) if capped else str(GameState.ants(n))
+		count = ("%d+" % n) if capped else str(n)
 		dist = ("· %d m" % int(round(nearest))) if n > 0 else ""
 		chambers = ch
 		time = duration
@@ -1256,7 +1256,7 @@ class Compass extends Control:
 				_crown(Vector2(x, tag_y), gold)
 				tag_y -= 12.0
 			if now < nests_until and not n.cleaned:
-				_text_centered(UT.display_bold_font(), x, tag_y, str(GameState.ants(n.remaining())), 14, UT.PALE)
+				_text_centered(UT.display_bold_font(), x, tag_y, str(n.remaining()), 14, UT.PALE)
 		if faced != null:
 			_plate(Vector2(_x_for(_yaw_to(faced.global_position)), b.end.y + 6.0), faced)
 		# Saída para a área 2 (quando a clareira fica limpa).

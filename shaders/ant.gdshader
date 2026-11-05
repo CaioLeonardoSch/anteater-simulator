@@ -15,7 +15,7 @@ varying float v_part;
 varying float v_highlight;
 
 void vertex() {
-	ant_animate(VERTEX, NORMAL, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, COLOR.a, TIME);
+	ant_animate(VERTEX, NORMAL, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, TIME);
 	v_part = CUSTOM0.w;
 	v_highlight = INSTANCE_CUSTOM.y;
 }

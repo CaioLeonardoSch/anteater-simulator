@@ -145,7 +145,7 @@ func _build_title() -> Control:
 	sub.add_theme_constant_override("outline_size", 4)
 	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 formigas comidas valem 1 ponto para aprender habilidades." % GameState.ants(GameState.GOAL), 22, UiTheme.CREAM)
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 formigas comidas valem 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
 	tag.add_theme_font_override("font", UiTheme.semi_font())
 	tag.add_theme_constant_override("outline_size", 4)
 	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
@@ -189,7 +189,7 @@ func _update_title_buttons(cont: Button, play: Button) -> void:
 
 func _update_record(record: Label) -> void:
 	if GameState.best_time > 0.0:
-		record.text = "Seu recorde: %d formigas em %s" % [GameState.ants(GameState.GOAL), GameState.format_time(GameState.best_time)]
+		record.text = "Seu recorde: %d formigas em %s" % [GameState.GOAL, GameState.format_time(GameState.best_time)]
 	else:
 		record.text = ""
 
@@ -271,7 +271,7 @@ Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câ
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
 · Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
 · Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.
-· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % GameState.ants(GameState.GOAL)
+· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % GameState.GOAL
 	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -462,7 +462,7 @@ func _build_end() -> Control:
 	_end_title = UiTheme.display_label("Fim da demo!", 60, UiTheme.PALE)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.ants(GameState.GOAL), 24, UiTheme.CREAM)
+	_end_sub = UiTheme.label("Você comeu as %d formigas da clareira e abriu o caminho\naté o cupinzeiro gigante." % GameState.GOAL, 24, UiTheme.CREAM)
 	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_sub)
 	_end_stats = UiTheme.label("", 22, UiTheme.SAND)
@@ -499,7 +499,7 @@ func show_end(time_sec: float, new_record: bool) -> void:
 			learned.append(u.name)
 	var lines := "Tempo: %s%s\nMaior combo: %d formigas\nTanajuras comidas: %d\nHabilidades: %s" % [
 		GameState.format_time(time_sec), _record_text(new_record),
-		GameState.ants(GameState.best_combo), GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
+		GameState.best_combo, GameState.tanajuras_eaten, ", ".join(learned) if not learned.is_empty() else "nenhuma"]
 	_end_stats.text = lines
 	_end_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_end_stats.custom_minimum_size = Vector2(760, 0)

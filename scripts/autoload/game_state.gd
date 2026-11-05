@@ -2,11 +2,9 @@ extends Node
 ## Estado da partida: formigas comidas, pontos, habilidades compradas,
 ## atributos do tamanduá, recorde e o jogo salvo.
 ##
-## Economia: as formigas andam em grupos de 10, e cada grupo comido (10
-## formigas) vale 1 ponto; a rainha vale 20 pontos (200 formigas). Cada
-## habilidade tem o seu preço. `ants_eaten` conta pontos: na tela, as
-## formigas são `ants(ants_eaten)`. Os pontos gastos podem ser devolvidos de graça
-## ("Redistribuir pontos").
+## Economia: cada formiga comida conta 1 e cada 10 formigas valem 1 ponto; a
+## rainha vale 200 formigas (20 pontos). Cada habilidade tem o seu preço. Os
+## pontos gastos podem ser devolvidos de graça ("Redistribuir pontos").
 
 signal ants_eaten_changed(total: int, delta: int)
 ## Uma habilidade que ainda não dava para comprar agora cabe nos pontos.
@@ -17,17 +15,16 @@ signal level_completed(time_sec: float)
 signal frenzy_changed(active: bool)
 signal run_reset
 
-## Pontos da colônia do Cerrado: 3200 grupos de 10 (32 000 formigas; cada
-## rainha conta como 20 pontos).
-const GOAL := 3200
-## Formigas em cada ponto (um grupo de formigas).
+## Formigas da colônia do Cerrado (cada rainha conta como 200).
+const GOAL := 32000
+## Formigas comidas para ganhar 1 ponto.
 const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
 const FRENZY_TIME := 6.0
 const RECORD_PATH := "user://save.cfg"
 const GAME_SAVE_PATH := "user://jogo_salvo.json"
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 
 ## As 5 habilidades. "lines" = nomes das duas linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.
@@ -210,7 +207,7 @@ func _process(delta: float) -> void:
 			frenzy_changed.emit(false)
 
 
-## Soma formigas comidas. `count` já vem com o valor da rainha (20) incluído.
+## Soma formigas comidas. `count` já vem com o valor da rainha (200) incluído.
 func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	if count <= 0 or completed:
 		return
@@ -236,14 +233,17 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 		level_completed.emit(elapsed)
 
 
-## Formigas que cabem em `points` pontos (para mostrar na tela).
-func ants(points: int) -> int:
-	return points * ANTS_PER_POINT
-
-
-## Pontos para gastar: 1 por grupo de 10 formigas comido, menos o que já foi gasto.
+## Pontos para gastar: 1 a cada 10 formigas comidas, menos o que já foi gasto.
 func points_available() -> int:
-	return ants_eaten - points_spent
+	return ants_eaten / ANTS_PER_POINT - points_spent
+
+
+## Quantas formigas ainda faltam comer para ter `points` pontos para gastar.
+func ants_needed(points: int) -> int:
+	var missing := points - points_available()
+	if missing <= 0:
+		return 0
+	return (ants_eaten / ANTS_PER_POINT + missing) * ANTS_PER_POINT - ants_eaten
 
 
 func has(id: String) -> bool:
@@ -376,9 +376,9 @@ func bocado_level() -> int:
 	return 0
 
 
-## Quantos grupos de formigas (de 10) uma lambida pega de uma vez.
+## Quantas formigas uma lambida pega de uma vez.
 func lick_capacity() -> int:
-	return [1, 5, 15, 25, 40][bocado_level()]
+	return [10, 50, 150, 250, 400][bocado_level()]
 
 
 func tongue_range() -> float:
@@ -518,9 +518,9 @@ func sniff_radius() -> float:
 	return [10.0, 16.0, 24.0, 34.0, 50.0][faro_level()]
 
 
-## Quantos grupos de formigas o faro consegue sentir de uma vez (os mais perto).
+## Quantas formigas o faro consegue sentir de uma vez (as mais perto).
 func sniff_max_ants() -> int:
-	return [10, 25, 50, 100, 200][faro_level()]
+	return [100, 250, 500, 1000, 2000][faro_level()]
 
 
 func sniff_duration() -> float:

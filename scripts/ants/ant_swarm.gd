@@ -72,6 +72,9 @@ var timer := PackedFloat32Array()
 var highlight := PackedFloat32Array()
 ## A formiga que a língua vai buscar (Língua Certeira): ganha um contorno verde.
 var aim_target := -1
+## Até onde se ouve o zumbido da tanajura (m).
+const BUZZ_DIST := 22.0
+var _buzz: AudioStreamPlayer3D
 var rnd := PackedFloat32Array()
 var seed_of := PackedFloat32Array()
 ## Escala extra (formigas encolhem na boca do tamanduá).
@@ -876,6 +879,33 @@ func _ground_basis(p: Vector3, a: float) -> Basis:
 	return Basis(fwd.cross(up), up, -fwd)
 
 
+## Zumbido leve da tanajura mais perto (até BUZZ_DIST metros), para avisar que
+## ela está passando.
+func _update_buzz(at: Vector3) -> void:
+	if at == Vector3.INF:
+		if _buzz and _buzz.playing:
+			_buzz.stop()
+		return
+	if _buzz == null:
+		var stream := load("res://assets/audio/buzz.wav") as AudioStreamWAV
+		if stream == null:
+			return
+		stream = stream.duplicate()
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		stream.loop_begin = 0
+		stream.loop_end = int(stream.get_length() * float(stream.mix_rate))
+		_buzz = AudioStreamPlayer3D.new()
+		_buzz.stream = stream
+		_buzz.bus = "SFX"
+		_buzz.volume_db = -8.0
+		_buzz.unit_size = 3.0
+		_buzz.max_distance = BUZZ_DIST
+		add_child(_buzz)
+	_buzz.global_position = at
+	if not _buzz.playing:
+		_buzz.play(randf() * 1.5)
+
+
 func _process(_delta: float) -> void:
 	if _mm.is_empty():
 		return
@@ -887,11 +917,16 @@ func _process(_delta: float) -> void:
 	var far2 := DRAW_DIST * DRAW_DIST
 	var tilt2 := TILT_DIST * TILT_DIST
 	var chamber_far2 := CHAMBER_DRAW_DIST * CHAMBER_DRAW_DIST
+	var buzz_d2 := BUZZ_DIST * BUZZ_DIST
+	var buzz_at := Vector3.INF
 	for i in CAPACITY:
 		if alive[i] == 0:
 			continue
 		var p := pos[i]
 		var d2 := p.distance_squared_to(cam)
+		if kind[i] == TANAJURA and d2 < buzz_d2:
+			buzz_d2 = d2
+			buzz_at = p
 		if d2 > far2 or (d2 > chamber_far2 and mode[i] == Mode.CHAMBER):
 			continue
 		var k := kind[i]
@@ -954,6 +989,7 @@ func _process(_delta: float) -> void:
 		buf[o + 17] = hl
 		buf[o + 18] = state + 4.0 * seed_of[i]
 		buf[o + 19] = float(carry[i])
+	_update_buzz(buzz_at)
 	for layer in _mm.size():
 		_mm[layer].buffer = _buf[layer]
 		_mm[layer].visible_instance_count = _counts[layer]

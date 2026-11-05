@@ -249,3 +249,39 @@ func _canyon_wall(b: MeshBuilder, side: float) -> void:
 				b.add_quad(a, bb, bb + 1, a + 1)
 			else:
 				b.add_quad(a, a + 1, bb + 1, bb)
+	# Topo e frente da parede: sem eles, de lado ela parecia uma lâmina fina.
+	var thick := 5.0
+	var top_rows: Array[PackedVector3Array] = []
+	for si in steps_s + 1:
+		var inner: Vector3 = b.verts[start + si * (steps_y + 1) + steps_y]
+		var out := inner + Vector3(lateral.x, 0.0, lateral.y) * side * thick + Vector3(0, 0.35, 0)
+		top_rows.append(PackedVector3Array([inner, out]))
+	var front := PackedVector3Array()
+	for yi in steps_y + 1:
+		front.append(b.verts[start + yi])
+	for twice in 2:
+		# As duas faces (o paredão é visto dos dois lados).
+		var flip := twice == 1
+		var t0 := b.vertex_count()
+		for si in steps_s + 1:
+			b.color = _strata_color(top_level, 10, EXIT_ANGLE)
+			b.add_vertex(top_rows[si][0], Vector3.UP)
+			b.add_vertex(top_rows[si][1], Vector3.UP)
+		for si in steps_s:
+			var a := t0 + si * 2
+			if flip:
+				b.add_quad(a, a + 1, a + 3, a + 2)
+			else:
+				b.add_quad(a, a + 2, a + 3, a + 1)
+		var f0 := b.vertex_count()
+		for yi in steps_y + 1:
+			var v := front[yi]
+			b.color = _strata_color(v.y - front[0].y - 1.5, 3 + yi % 6, EXIT_ANGLE)
+			b.add_vertex(v, Vector3.UP)
+			b.add_vertex(v + Vector3(lateral.x, 0.0, lateral.y) * side * thick, Vector3.UP)
+		for yi in steps_y:
+			var a := f0 + yi * 2
+			if flip:
+				b.add_quad(a, a + 1, a + 3, a + 2)
+			else:
+				b.add_quad(a, a + 2, a + 3, a + 1)

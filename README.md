@@ -30,7 +30,7 @@ produção, os protótipos e as decisões, num lugar só.
 
 Uma **clareira do cerrado no fim da tarde**, cercada por penhascos. O tamanduá
 acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
-ronca: hora de comer. A colônia tem **32 000 insetos**, cada um andando
+ronca: hora de comer. A colônia tem **44 000 insetos**, cada um andando
 sozinho, e **18 formigueiros** espalhados pelo mapa inteiro. Um quarto anda em
 fila pelas trilhas de terra, um quarto passeia pelo campo em volta das câmaras
 espalhadas pelo mapa, e a metade mora nas **câmaras**, que você abre cavando.
@@ -65,7 +65,7 @@ tela, a resolução e a qualidade gráfica.
 |---|---|---|
 | Andar | `W` `A` `S` `D` | analógico esquerdo |
 | Olhar | mouse | analógico direito |
-| Correr* | `Shift` | clicar o analógico esquerdo |
+| Correr (gasta estamina) | `Shift` | clicar o analógico esquerdo |
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar* | `Q` ou clique direito | `LT` |
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
@@ -105,7 +105,7 @@ uma vez".
   relógio. No relógio, um cronômetro fica no canto e cada 25% dos insetos marca
   um tempo parcial, comparado com o do seu recorde (verde mais rápido, vermelho
   mais lento). Pausa, mapa e habilidades param o relógio.
-- **32 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
+- **44 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
   entram de novo. Cada uma foge sozinha quando você chega perto, e cada
   formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal.
@@ -118,18 +118,18 @@ uma vez".
   as garras descansam (25 s no começo). As câmaras grandes, de tampa mais
   escura, pedem **Cavar Fundo**.
 - **Suba nos formigueiros:** lá de cima dá para ver dentro das câmaras abertas.
-- **Rainha:** mora no fundo dos formigueiros grandes. Com a **Escavação Real**,
+- **Rainha:** mora no fundo dos formigueiros grandes. Com **Fundura nível 2** (Garras),
   cave o topo do monte: ele se desmancha inteiro e fica um buraco com a rainha
   andando devagar lá embaixo, junto com as moradoras das outras câmaras dele.
   Coma a corte e ela vale **200 formigas** (20 pontos).
 - **Língua:** no começo ela é lenta (pouco mais de uma lambida por segundo) e
   vai reta até onde você mira, pegando até 10 formigas perto da ponta. A linha
-  de Destreza a deixa mais rápida. Com **Língua Certeira**, ela vai sozinha atrás da formiga mais perto
+  de Destreza a deixa mais rápida. Com **Mira nível 1**, ela vai sozinha atrás da formiga mais perto
   da mira (com um contorno verde suave); a **Mira Ampla** aumenta essa área.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega correndo: chegue andando e lamba de longe.
-  Correndo também não dá para lamber, até aprender **Lamber Correndo**.
+  Correndo também não dá para lamber, até aprender **Corrida nível 2**.
 - **Faro:** primeiro só diz quantas formigas há por perto e a que distância
   está a mais perto. Com Precisão, mostra uma nuvem borrada onde elas estão e
   depois as formigas brilhando através do capim; o Faro de Câmara mostra as
@@ -162,17 +162,29 @@ uma vez".
 
 ### Habilidades
 
-| Habilidade | Níveis (preço em pontos) |
+Entre parênteses: o preço em pontos e, depois do ponto, a **trava**: quantos
+insetos é preciso ter comido para a habilidade abrir (o começo de cada ramo não
+tem trava). Na árvore, ela aparece com cadeado e "8 mil" embaixo.
+
+| Habilidade | Níveis (preço · trava) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · Lambida (40: até 50 formigas por lambida) · Lambida Larga (75: até 150) · Lambida Gulosa (115: até 250) · Lambida Voraz (170: até 400); **Destreza** · Língua Comprida (70: alcance +50% e lambe 25% mais rápido) · Saliva Grudenta (100: raio maior e mais 25% de rapidez) · Língua Turbo (150: 2x mais rápido); **Mira** · Língua Certeira (30: a língua vai atrás da formiga mais perto da mira) · Mira Ampla (60: essa área 25% maior) |
-| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · Garras Fortes (70) · Tremor (110: recarga de 21 s) · Terremoto (170); **Rapidez** · Garras Ágeis (50: descanso de 15 s) · Garras Incansáveis (95: 5 s) · Recarga do Tremor (130: 14 s) · Recarga Relâmpago (150: 7 s); **Fundura** · Cavar Fundo (60: câmaras grandes) · Escavação Real (120: desmancha o monte da rainha) |
-| **Patas** | Corrida (30: +25%), e depois: **Velocidade** · Patas Ligeiras (80: mais 25%) · Galope Silencioso (130); **Agilidade** · Lamber Correndo (60) |
-| **Faro** | Farejar (20), e depois: **Alcance** · Faro Atento (40: 16 m) · Faro Apurado (70: 24 m) · Faro Aguçado (110: 34 m) · Faro Lendário (160: 50 m); **Precisão** · Faro Preciso (45: nuvem) · Faro Nítido (85: formigas brilhando) · Faro de Câmara (100) |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · nível 1 (40 · 1 mil: até 50 insetos por lambida) · nível 2 (80 · 3 mil: até 150) · nível 3 (120 · 13 mil: até 250) · nível 4 (320 · 21 mil: até 400); **Destreza** · nível 1 (70 · 3 mil: alcance +50% e lambe 25% mais rápido) · nível 2 (90 · 8 mil: raio maior e mais 25% de rapidez) · nível 3 (300 · 21 mil: 2x mais rápido); **Mira** · nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira) · nível 2 (60 · 3 mil: essa área 25% maior) |
+| **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (55 · 3 mil: moradoras tontas por 2,5 s) · nível 2 (50 · 8 mil: 4 s); **Tremor** (sai de Força nível 1) · nível 1 (100 · 8 mil: libera o Tremor, recarga de 21 s) · nível 2 (100 · 13 mil: 14 s) · nível 3 (330 · 21 mil: Terremoto, 7 s); **Rapidez** · nível 1 (30 · 1 mil: descanso de 15 s) · nível 2 (80 · 8 mil: 5 s); **Fundura** · nível 1 (60 · 3 mil: câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
+| **Patas** | Fôlego nível 1 (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · nível 1 (60 · 3 mil: +50% sobre andar, eram +25%) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta); **Respiro** · níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · nível 2 (50 · 3 mil: 150) · nível 3 (80 · 13 mil: 200) |
+| **Faro** | Farejar (20), e depois: **Alcance** · nível 1 (40 · 1 mil: 16 m) · nível 2 (70 · 8 mil: 24 m) · nível 3 (100 · 13 mil: 34 m) · nível 4 (260 · 21 mil: 50 m); **Precisão** · nível 1 (50 · 3 mil: nuvem) · nível 2 (80 · 13 mil: insetos brilhando) · nível 3 (240 · 21 mil: câmaras) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
 
+**Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde
+no canto de baixo, à esquerda (fica vermelho-escura quando acaba). Ela só volta
+1 s depois de parar de correr; se zerar, dá para correr de novo quando encher
+15%. Começa com 50, gasta 10 por segundo e volta 3 por segundo.
+
 10 formigas comidas = 1 ponto (a rainha vale 20 pontos). As linhas de um ramo
-não se excluem. Tudo o que dá para aprender no Cerrado soma 2755 pontos, e dá
-para redistribuir os pontos de graça na árvore.
+não se excluem. Tudo o que dá para aprender no Cerrado soma 3 825 pontos (de
+4 400 no jogo), e dá para redistribuir os pontos de graça na árvore. Os preços
+foram feitos para que, comprando de tudo um pouco, você termine de pagar o que
+uma trava abriu bem quando a seguinte abre (as contas estão em
+[`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md), seção 7).
 
 ### Tela e gráficos
 

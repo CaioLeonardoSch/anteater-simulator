@@ -168,7 +168,7 @@ func _build_title() -> Control:
 	sub.add_theme_constant_override("outline_size", 4)
 	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A colônia tem %d formigas.\nCada 10 insetos comidos valem 1 ponto para aprender habilidades." % GameState.GOAL, 22, UiTheme.CREAM)
+	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A clareira tem %s insetos.\nCada 10 insetos comidos valem 1 ponto para aprender habilidades." % StatsPanel._n(GameState.GOAL), 22, UiTheme.CREAM)
 	tag.add_theme_font_override("font", UiTheme.semi_font())
 	tag.add_theme_constant_override("outline_size", 4)
 	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
@@ -436,23 +436,25 @@ func _build_howto() -> Control:
 	text.add_theme_font_override("bold_font", UiTheme.bold_font())
 	text.add_theme_font_size_override("bold_font_size", 20)
 	text.add_theme_color_override("default_color", UiTheme.CREAM)
-	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%d insetos[/b]. Coma todos e deixe os [b]18 formigueiros[/b] limpos.
+	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%s insetos[/b]. Coma todos e deixe os [b]18 formigueiros[/b] limpos.
 Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
 
-[b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (depois de aprender Corrida)
+[b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (gasta a estamina)
 [b]Clique esquerdo[/b] lamber: cada clique é uma lambida (com a [b]Lambida Contínua[/b], é só segurar)
-[b]Q[/b] ou [b]clique direito[/b] farejar (com Farejar) · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] pulo do Tremor
+[b]Q[/b] ou [b]clique direito[/b] farejar (com Farejar) · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] pulo do Tremor (com Tremor nível 1)
 [b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
 
 [b]Dicas[/b]
 · [b]Cada 10 insetos comidos valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
-· A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com a [b]Língua Certeira[/b], ela vai sozinha atrás da mais perto.
+· Habilidades com [b]cadeado[/b] e um número ("8 mil") abrem quando você tiver comido essa quantidade de insetos: 1 mil, 3 mil, 8 mil, 13 mil e 21 mil.
+· A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com [b]Mira[/b] (na Língua), ela vai sozinha atrás da mais perto.
 · Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
-· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Cavar Fundo[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só a [b]Escavação Real[/b] desmancha o monte inteiro.
+· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Fundura nível 1[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só [b]Fundura nível 2[/b] desmancha o monte inteiro.
 · [b]Tanajuras[/b] (voando, douradas) ativam o [b]Frenesi[/b]: língua turbinada por 6 s.
-· Correr assusta as formigas, e sem [b]Lamber Correndo[/b] não dá para lamber enquanto corre.
+· Correr gasta a [b]estamina[/b] (a barra verde no canto de baixo, à esquerda). Ela volta quando você para de correr; se zerar, espere a barra encher um pouco.
+· Correr assusta as formigas, e sem [b]Corrida nível 2[/b] não dá para lamber enquanto corre.
 · Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.
-· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % GameState.GOAL
+· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % StatsPanel._n(GameState.GOAL)
 	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

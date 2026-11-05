@@ -94,6 +94,11 @@ var _bob := 0.0
 var _run_blend := 0.0
 var _last_step_sign := 1.0
 var running := false
+## Estamina (ver GameState.stamina_*). -1 = começa cheia.
+var stamina := -1.0
+## Zerou a estamina: só volta a correr quando ela encher um pouco.
+var exhausted := false
+var _stamina_rest := 0.0
 
 # Bot (teste automático)
 var _bot_target := -1
@@ -248,6 +253,8 @@ func _physics_process(delta: float) -> void:
 		_bot_update(delta)
 		input = _bot_input
 		want_run = _bot_run and GameState.can_run()
+	if exhausted or stamina == 0.0:
+		want_run = false
 	var digging := _is_digging() or _breaking_exit()
 	var target_speed := GameState.run_speed() if want_run else GameState.walk_speed()
 	if digging:
@@ -292,6 +299,7 @@ func _physics_process(delta: float) -> void:
 	head.rotation.x = pitch
 	var spd := hv.length()
 	running = want_run and spd > GameState.walk_speed() * 1.1
+	_update_stamina(delta)
 	if controls_enabled:
 		var rv := get_real_velocity()
 		GameState.count("distance", Vector2(rv.x, rv.z).length() * delta)
@@ -350,6 +358,25 @@ func _process(delta: float) -> void:
 
 ## Correr: segurando a tecla ou, com "Correr: Apertar" nas configurações,
 ## apertando uma vez (desliga ao apertar de novo ou ao parar de andar).
+## Correndo gasta; sem correr, recupera depois de STAMINA_DELAY segundos.
+func _update_stamina(delta: float) -> void:
+	var top := GameState.stamina_max()
+	if stamina < 0.0:
+		stamina = top
+	if running:
+		stamina = maxf(stamina - GameState.stamina_drain() * delta, 0.0)
+		_stamina_rest = 0.0
+		if stamina <= 0.0:
+			exhausted = true
+	else:
+		_stamina_rest += delta
+		if _stamina_rest >= GameState.STAMINA_DELAY:
+			stamina = minf(stamina + GameState.stamina_regen() * delta, top)
+	stamina = minf(stamina, top)
+	if exhausted and stamina >= top * GameState.STAMINA_RESUME:
+		exhausted = false
+
+
 func _run_held(input: Vector2) -> bool:
 	if not Settings.run_toggle:
 		_run_latch = false

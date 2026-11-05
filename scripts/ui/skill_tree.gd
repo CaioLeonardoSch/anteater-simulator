@@ -295,6 +295,10 @@ func _show_tip(id: String) -> void:
 			col = UiTheme.GOLD
 		3:
 			text = "Custa %d pontos · ainda não disponível." % cost
+		4:
+			var gate := GameState.gate_of(id)
+			text = "Abre com %s insetos comidos (faltam %s) · custa %d pontos." % [
+				_thousands(gate), _thousands(gate - GameState.ants_eaten), cost]
 		0:
 			text = "Custa %d pontos." % cost
 		_:
@@ -310,6 +314,16 @@ func _show_tip(id: String) -> void:
 	var tsize := _tip.get_combined_minimum_size()
 	_tip.size = tsize
 	_tip.position = _tip_position(id, (u.requires as Array).is_empty(), tsize)
+
+
+## "13 000" (espaço separando os milhares).
+static func _thousands(v: int) -> String:
+	var t := str(maxi(v, 0))
+	var out := ""
+	while t.length() > 3:
+		out = " " + t.substr(t.length() - 3) + out
+		t = t.substr(0, t.length() - 3)
+	return t + out
 
 
 ## Onde fica o quadro: ao lado da habilidade (do lado de fora da árvore) quando
@@ -577,7 +591,7 @@ class SkillNode extends Button:
 					halo_col = Color(1.0, 0.92, 0.8)
 				else:
 					glyph_col = Color(color, 0.75)
-			3:
+			3, 4:
 				ring = Color(0.32, 0.27, 0.23)
 				glyph_col = Color(0.5, 0.45, 0.4, 0.35)
 			_:
@@ -601,6 +615,10 @@ class SkillNode extends Button:
 			draw_arc(c, radius + (10.0 if root else 6.5), 0, TAU, 56, Color(1.0, 0.96, 0.8, 0.95), 2.0, true)
 		if state == 3:
 			_padlock(c)
+		elif state == 4:
+			# Travada até comer mais insetos: cadeado e "8 mil" embaixo.
+			_padlock(c)
+			_label_below(c, "%d mil" % (GameState.gate_of(id) / 1000), Color(0.72, 0.64, 0.55, 0.85))
 		elif state != 2:
 			# Preço embaixo.
 			var font: Font = UT.display_bold_font()
@@ -614,6 +632,19 @@ class SkillNode extends Button:
 			draw_style_box(sb, rect)
 			var tc := color.lightened(0.3) if can else Color(0.75, 0.66, 0.56, 0.9 if state == 1 else 0.6)
 			draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, tc)
+
+	func _label_below(c: Vector2, txt: String, tc: Color) -> void:
+		var font: Font = UT.display_bold_font()
+		var tsz := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
+		var y := c.y + radius + (19.0 if root else 15.0)
+		var rect := Rect2(Vector2(c.x - tsz.x * 0.5 - 6, y - 12), Vector2(tsz.x + 12, 17))
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.05, 0.03, 0.025, 0.9)
+		sb.border_color = Color(0.45, 0.38, 0.3, 0.6)
+		sb.set_border_width_all(1)
+		sb.set_corner_radius_all(8)
+		draw_style_box(sb, rect)
+		draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, tc)
 
 	func _padlock(c: Vector2) -> void:
 		var metal := Color(0.95, 0.85, 0.65)

@@ -169,7 +169,7 @@ func build(mats) -> void:
 	b.recompute_normals()
 	var mi := MeshInstance3D.new()
 	mi.name = "Paredao"
-	mi.mesh = b.commit(null, mats.cliff)
+	mi.mesh = b.commit(null, mats.arenito)
 	add_child(mi)
 	var faces := PackedVector3Array()
 	for n in b.indices.size():

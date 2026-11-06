@@ -5,6 +5,7 @@ const SOFT_SURFACE := preload("res://shaders/soft_surface.gdshader")
 const FOLIAGE := preload("res://shaders/foliage.gdshader")
 const GRASS := preload("res://shaders/grass.gdshader")
 const TERRAIN := preload("res://shaders/terrain.gdshader")
+const ARENITO := preload("res://shaders/arenito.gdshader")
 const FLOWER := preload("res://shaders/flower.gdshader")
 const LEAF_TEX := preload("res://assets/textures/leaf_cluster.png")
 const FLOWER_TEX := preload("res://assets/textures/flower_cluster.png")
@@ -14,6 +15,8 @@ const SOLO_ASPEREZA := preload("res://assets/textures/chao/aspereza.png")
 const TRILHA_COR := preload("res://assets/textures/trilha/cor.png")
 const TRILHA_RELEVO := preload("res://assets/textures/trilha/relevo.png")
 const TRILHA_ASPEREZA := preload("res://assets/textures/trilha/aspereza.png")
+const ARENITO_COR := preload("res://assets/textures/arenito/cor.png")
+const ARENITO_RELEVO := preload("res://assets/textures/arenito/relevo.png")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -35,6 +38,7 @@ var ipe_ground: ShaderMaterial
 var clay: ShaderMaterial
 var rock: ShaderMaterial
 var cliff: ShaderMaterial
+var arenito: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
 
@@ -113,6 +117,16 @@ func _init() -> void:
 	cliff.set_shader_parameter("roughness_value", 0.93)
 	cliff.set_shader_parameter("specular_value", 0.2)
 	cliff.set_shader_parameter("rim_amount", 0.05)
+
+	# Paredões: estampa de arenito feita no Blender (camadas, fendas, blocos), com
+	# as faixas pintadas por vértice por cima e o verde só no topo. O `cliff` de
+	# cima fica para o chão da mata, até ele ganhar o material dele.
+	arenito = _shader(ARENITO)
+	arenito.set_shader_parameter("noise_tex", noise_tex)
+	arenito.set_shader_parameter("rocha_cor", ARENITO_COR)
+	arenito.set_shader_parameter("rocha_relevo", ARENITO_RELEVO)
+	arenito.set_shader_parameter("topo_cor", SOLO_COR)
+	arenito.set_shader_parameter("topo_relevo", SOLO_RELEVO)
 
 	nest_soil = _surface(Color(0.46, 0.26, 0.16), Color(0.64, 0.42, 0.28), Color(0.80, 0.62, 0.46))
 	nest_soil.set_shader_parameter("noise_scale", 3.0)

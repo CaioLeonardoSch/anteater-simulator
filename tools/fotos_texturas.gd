@@ -8,7 +8,8 @@ extends Node
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/depois --so=chao,pedra
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
-## cupinzeiro, pedra, tronco, formigueiro, chao, capim, lagoa, penhasco, trilha.
+## cupinzeiro, pedra, tronco, formigueiro, chao, capim, lagoa, penhasco, paredao,
+## caverna, trilha.
 
 var main
 var out_dir := "user://fotos"
@@ -74,6 +75,23 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		p.pitch = 0.05
 		await _shot("penhasco")
+	if _wanted("paredao"):
+		# De perto, a 5 m do pé do paredão, longe da caverna e da passagem.
+		var a := 0.6
+		while a < 2.4 and not _clear(Vector2(cos(a), sin(a)) * (main.world.cliffs.radius_at(a) - 5.0)):
+			a += 0.05
+		var dir := Vector2(cos(a), sin(a))
+		p.place_at(dir * (main.world.cliffs.radius_at(a) - 5.0), atan2(-dir.x, -dir.y))
+		await get_tree().physics_frame
+		p.pitch = 0.3
+		await _shot("paredao")
+	if _wanted("caverna"):
+		# Do fundo da caverna, olhando para a boca (o que se vê ao acordar).
+		var dir: Vector2 = -main.world.cliffs.cave_spot().normalized()
+		p.place_at(main.world.cliffs.cave_spot(), atan2(-dir.x, -dir.y))
+		await get_tree().physics_frame
+		p.pitch = 0.05
+		await _shot("caverna")
 	if _wanted("trilha"):
 		var sw = main.swarm
 		var best := -1

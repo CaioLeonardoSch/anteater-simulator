@@ -1,6 +1,7 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
-// Paredões de arenito. As paredes usam a estampa de rocha feita no Blender
+// Paredões de arenito (e também pedras soltas e cupinzeiros, com outra estampa
+// e outros valores). As paredes usam a estampa de rocha feita no Blender
 // (camadas, fendas, blocos), projetada de lado com as camadas sempre na
 // horizontal; o topo usa a estampa do chão, puxada para o verde. As cores de
 // vértice (faixas creme e vermelhas, pé mais escuro) continuam por cima.

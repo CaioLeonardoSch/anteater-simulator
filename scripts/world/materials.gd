@@ -17,6 +17,8 @@ const TRILHA_RELEVO := preload("res://assets/textures/trilha/relevo.png")
 const TRILHA_ASPEREZA := preload("res://assets/textures/trilha/aspereza.png")
 const ARENITO_COR := preload("res://assets/textures/arenito/cor.png")
 const ARENITO_RELEVO := preload("res://assets/textures/arenito/relevo.png")
+const BARRO_COR := preload("res://assets/textures/barro/cor.png")
+const BARRO_RELEVO := preload("res://assets/textures/barro/relevo.png")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -86,14 +88,33 @@ func _init() -> void:
 	ipe_ground = ipe_cards.duplicate()
 	ipe_ground.set_shader_parameter("sway", 0.0)
 
-	clay = _surface(Color(0.50, 0.27, 0.15), Color(0.72, 0.45, 0.28), Color(0.82, 0.62, 0.44))
+	# Cupinzeiros: estampa de barro seco feita no Blender (granulado, caneluras
+	# verticais da chuva, rachaduras finas e furinhos), no mesmo shader dos
+	# paredões, que deixa os sulcos sempre em pé.
+	clay = _shader(ARENITO)
+	clay.set_shader_parameter("noise_tex", noise_tex)
+	clay.set_shader_parameter("rocha_cor", BARRO_COR)
+	clay.set_shader_parameter("rocha_relevo", BARRO_RELEVO)
+	clay.set_shader_parameter("topo_cor", BARRO_COR)
+	clay.set_shader_parameter("topo_relevo", BARRO_RELEVO)
+	clay.set_shader_parameter("rocha_media", Color(0.675, 0.495, 0.359))
+	clay.set_shader_parameter("topo_media", Color(0.675, 0.495, 0.359))
+	clay.set_shader_parameter("color_a", Color(0.50, 0.36, 0.27))
+	clay.set_shader_parameter("color_b", Color(0.62, 0.49, 0.39))
+	clay.set_shader_parameter("accent_color", Color(0.58, 0.45, 0.35))
 	clay.set_shader_parameter("noise_scale", 1.6)
 	clay.set_shader_parameter("detail_scale", 7.0)
-	clay.set_shader_parameter("streak_amount", 0.25)
-	clay.set_shader_parameter("streak_scale", 8.0)
-	clay.set_shader_parameter("accent_amount", 0.3)
-	clay.set_shader_parameter("accent_threshold", 0.68)
-	clay.set_shader_parameter("accent_up_bias", 0.25)
+	clay.set_shader_parameter("tint_variation", 0.3)
+	clay.set_shader_parameter("relief_strength", 1.5)
+	clay.set_shader_parameter("tile_size", 1.0)
+	clay.set_shader_parameter("top_tile_size", 1.0)
+	clay.set_shader_parameter("top_detail", 0.8)
+	clay.set_shader_parameter("strata_warp", 0.0)
+	clay.set_shader_parameter("streak_amount", 0.0)
+	clay.set_shader_parameter("relief_fade", Vector2(25.0, 60.0))
+	clay.set_shader_parameter("roughness_value", 0.95)
+	clay.set_shader_parameter("specular_value", 0.15)
+	clay.set_shader_parameter("rim_amount", 0.1)
 
 	# Pedras soltas: a mesma rocha dos paredões (estampa de arenito, camadas mais
 	# finas), um pouco mais apagada, com manchinhas de líquen por cima.

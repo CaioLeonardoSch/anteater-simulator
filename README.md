@@ -195,6 +195,20 @@ Na primeira vez que abre, ele explica e pergunta se pode; não vai nome, e-mail
 nem arquivos. Como funciona e como criar o formulário:
 [`docs/estatisticas-dos-testes.md`](docs/estatisticas-dos-testes.md).
 
+### Versão para Windows (para mandar aos amigos)
+
+O GitHub gera o jogo para Windows sozinho: na aba **Actions**, escolha
+**Versão para Windows** › **Run workflow**, escreva o número da versão (por
+exemplo `0.1.1`) e clique no botão verde. Em uns 3 minutos, o
+`AnteaterSimulator-0.1.1-windows.zip` aparece em **Releases** (na lateral
+direita da página do repositório), com as instruções para quem vai jogar. É
+só mandar o link dessa página. O número escolhido aparece no menu ("Versão de
+teste 0.1.1") e nas estatísticas, para saber qual versão cada amigo jogou.
+
+A configuração de exportação fica em `export_presets.cfg` e a automação em
+`.github/workflows/windows.yml`. Para gerar à mão no Godot: **Projeto ›
+Exportar › Windows** (precisa dos modelos de exportação 4.7.2 instalados).
+
 ### Tela e gráficos
 
 Em **Configurações**:

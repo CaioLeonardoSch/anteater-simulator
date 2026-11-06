@@ -16,8 +16,8 @@ extends Node
 ## %APPDATA%/Godot/app_userdata/Anteater Simulator/registros), mesmo sem internet.
 ##
 ## Desligado: sem formulário configurado (FORM_URL vazio), com "Enviar
-## estatísticas" desligado nas Configurações, nos testes (argumentos depois de
-## "--", a não ser --telemetria) e sem tela (headless).
+## estatísticas" desligado nas Configurações e nos testes (argumentos depois de
+## "--" ou sem tela), a não ser com --telemetria.
 
 ## Endereço "formResponse" do formulário (vazio = não manda nada).
 const FORM_URL := ""
@@ -78,9 +78,9 @@ func _ready() -> void:
 
 ## Pode registrar e mandar? (os testes e o servidor sem tela não mandam)
 func enabled() -> bool:
-	if DisplayServer.get_name() == "headless":
-		return false
-	if not DevTools.args.is_empty() and not DevTools.args.has("telemetria"):
+	if DevTools.args.has("telemetria"):
+		return Settings.send_stats
+	if DisplayServer.get_name() == "headless" or not DevTools.args.is_empty():
 		return false
 	return Settings.send_stats
 

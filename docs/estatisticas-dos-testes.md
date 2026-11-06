@@ -84,12 +84,19 @@ internet falhar, o amigo pode mandar esses arquivos.
    Planilhas** (o ícone verde) e em **Criar**. Cada envio do jogo vira uma
    linha nessa planilha.
 
-Com o link, eu coloco o endereço do formulário e das perguntas em
-`scripts/autoload/telemetry.gd` (`FORM_URL` e `ENTRIES`) e mando uma resposta
-de teste para conferir que chegou na planilha.
+Com o link, o endereço do formulário e das perguntas vão para
+`scripts/autoload/telemetry.gd` (`FORM_URL` e `ENTRIES`). O número de cada
+pergunta também aparece no código da página do formulário (em
+`FB_PUBLIC_LOAD_DATA_`, o segundo número de cada pergunta).
+
+**Já configurado (06/11/2026):** o formulário "Estatísticas dos testes" do
+Caio, com as 10 perguntas acima. Se o formulário for trocado ou as perguntas
+recriadas, os números mudam e precisam ser atualizados.
 
 ## Para testar sem o formulário
 
 `--telemetria=http://127.0.0.1:8765/` manda para outro endereço (por exemplo, um
-receptor local de teste), mesmo nos testes com outros argumentos. Sem
-`--telemetria`, os testes (qualquer argumento depois de "--") não mandam nada.
+receptor local de teste), mesmo nos testes com outros argumentos e sem tela.
+Só `--telemetria` (sem endereço) manda para o formulário de verdade e mostra
+no console se o Google aceitou ("resposta 200"). Sem `--telemetria`, os testes
+(qualquer argumento depois de "--") não mandam nada.

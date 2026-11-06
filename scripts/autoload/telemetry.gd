@@ -20,20 +20,20 @@ extends Node
 ## "--" ou sem tela), a não ser com --telemetria.
 
 ## Endereço "formResponse" do formulário (vazio = não manda nada).
-const FORM_URL := ""
+const FORM_URL := "https://docs.google.com/forms/d/e/1FAIpQLSc-rjX-eJ-PsVels--fuEe_Hycl3pEiQhAy_vPL_yF8r7SxBw/formResponse"
 ## O número ("entry.123456") de cada pergunta do formulário. Sai do link
 ## pré-preenchido do formulário (ver docs/estatisticas-dos-testes.md).
 const ENTRIES := {
-	"jogador": "",
-	"apelido": "",
-	"partida": "",
-	"versao": "",
-	"evento": "",
-	"minutos": "",
-	"insetos": "",
-	"computador": "",
-	"estatisticas": "",
-	"registro": "",
+	"jogador": "entry.510037951",
+	"apelido": "entry.1486572967",
+	"partida": "entry.380032149",
+	"versao": "entry.440404601",
+	"evento": "entry.574340865",
+	"minutos": "entry.1322118713",
+	"insetos": "entry.559935905",
+	"computador": "entry.1407916040",
+	"estatisticas": "entry.1136356305",
+	"registro": "entry.2091696714",
 }
 
 ## De quanto em quanto tempo de jogo manda um envio parcial.
@@ -134,10 +134,9 @@ func end_session(reason: String) -> void:
 ## Fechando o jogo: encerra e espera o envio (até QUIT_WAIT segundos).
 func before_quit() -> void:
 	end_session("fechou o jogo")
-	var t := 0.0
-	while _pending > 0 and t < QUIT_WAIT:
+	var start := Time.get_ticks_msec()
+	while _pending > 0 and Time.get_ticks_msec() - start < QUIT_WAIT * 1000.0:
 		await get_tree().process_frame
-		t += get_process_delta_time()
 
 
 ## Uma linha no registro: tempo de jogo, insetos comidos, o que aconteceu e detalhes.
@@ -207,6 +206,8 @@ func _send(event: String) -> void:
 	req.request_completed.connect(func(result, code, _h, _b):
 		if result != HTTPRequest.RESULT_SUCCESS or code >= 400:
 			push_warning("[estatísticas] envio falhou (%d, %d)" % [result, code])
+		elif DevTools.args.has("telemetria"):
+			print("[estatísticas] enviado (%s): resposta %d" % [event, code])
 		_pending -= 1
 		req.queue_free())
 	var err := req.request(_url(), ["Content-Type: application/x-www-form-urlencoded"],

@@ -72,9 +72,12 @@ var timer := PackedFloat32Array()
 var highlight := PackedFloat32Array()
 ## A formiga que a língua vai buscar (Língua Certeira): ganha um contorno verde.
 var aim_target := -1
-## Até onde se ouve o zumbido da tanajura (m).
-const BUZZ_DIST := 22.0
+## Até onde se ouve o bater de asas da tanajura (m).
+const BUZZ_DIST := 16.0
+## De quanto em quanto tempo (s, sorteado entre os dois) ela bate as asas.
+const BUZZ_EVERY := Vector2(2.5, 5.0)
 var _buzz: AudioStreamPlayer3D
+var _buzz_wait := 0.0
 var rnd := PackedFloat32Array()
 var seed_of := PackedFloat32Array()
 ## Escala extra (formigas encolhem na boca do tamanduá).
@@ -680,6 +683,32 @@ func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 	return {"captured": captured, "queen_protected": protected_queen}
 
 
+## Tanajura voando que a língua cruza indo reta de `from` até `to` (a mais perto
+## de `from`), ou -1. Sem isso, a língua passava por baixo dela e ia até o chão.
+func tanajura_on_path(from: Vector3, to: Vector3, radius: float) -> int:
+	var seg := to - from
+	var len2 := seg.length_squared()
+	if len2 < 0.0001:
+		return -1
+	var r2 := radius * radius
+	var best := -1
+	var best_t := INF
+	for i in CAPACITY:
+		if alive[i] == 0 or kind[i] != TANAJURA or mode[i] == Mode.STUCK or mode[i] == Mode.STUNNED:
+			continue
+		var c := pos[i] + Vector3(0, SIZE[TANAJURA] * 0.25, 0)
+		var t := clampf((c - from).dot(seg) / len2, 0.0, 1.0)
+		if t < best_t and (from + seg * t).distance_squared_to(c) <= r2:
+			best_t = t
+			best = i
+	return best
+
+
+## Onde a língua deve tocar este inseto (o meio do corpo).
+func body_point(i: int) -> Vector3:
+	return pos[i] + Vector3(0, SIZE[kind[i]] * 0.25, 0)
+
+
 ## Há alguma formiga (que dá para pegar) a menos de `radius` deste ponto?
 func any_near(point: Vector3, radius: float) -> bool:
 	var r2 := radius * radius
@@ -879,34 +908,30 @@ func _ground_basis(p: Vector3, a: float) -> Basis:
 	return Basis(fwd.cross(up), up, -fwd)
 
 
-## Zumbido leve da tanajura mais perto (até BUZZ_DIST metros), para avisar que
-## ela está passando.
-func _update_buzz(at: Vector3) -> void:
-	if at == Vector3.INF:
-		if _buzz and _buzz.playing:
-			_buzz.stop()
+## Bater de asas da tanajura mais perto (até BUZZ_DIST metros), de vez em
+## quando (não um zumbido contínuo), para avisar que ela está passando.
+func _update_buzz(at: Vector3, delta: float) -> void:
+	_buzz_wait -= delta
+	if at == Vector3.INF or _buzz_wait > 0.0:
+		return
+	_buzz_wait = randf_range(BUZZ_EVERY.x, BUZZ_EVERY.y)
+	if Sfx._quitting:
 		return
 	if _buzz == null:
-		var stream := load("res://assets/audio/buzz.wav") as AudioStreamWAV
-		if stream == null:
-			return
-		stream = stream.duplicate()
-		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		stream.loop_begin = 0
-		stream.loop_end = int(stream.get_length() * float(stream.mix_rate))
 		_buzz = AudioStreamPlayer3D.new()
-		_buzz.stream = stream
+		_buzz.stream = load("res://assets/audio/flutter.wav")
 		_buzz.bus = "SFX"
-		_buzz.volume_db = -8.0
+		_buzz.volume_db = -12.0
 		_buzz.unit_size = 3.0
 		_buzz.max_distance = BUZZ_DIST
+		_buzz.add_to_group("game_sound")
 		add_child(_buzz)
 	_buzz.global_position = at
-	if not _buzz.playing:
-		_buzz.play(randf() * 1.5)
+	_buzz.pitch_scale = randf_range(0.9, 1.1)
+	_buzz.play()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _mm.is_empty():
 		return
 	_counts.fill(0)
@@ -989,7 +1014,7 @@ func _process(_delta: float) -> void:
 		buf[o + 17] = hl
 		buf[o + 18] = state + 4.0 * seed_of[i]
 		buf[o + 19] = float(carry[i])
-	_update_buzz(buzz_at)
+	_update_buzz(buzz_at, delta)
 	for layer in _mm.size():
 		_mm[layer].buffer = _buf[layer]
 		_mm[layer].visible_instance_count = _counts[layer]

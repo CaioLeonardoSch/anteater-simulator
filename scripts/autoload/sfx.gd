@@ -139,6 +139,10 @@ func _release_all() -> void:
 		if p:
 			p.stop()
 			p.stream = null
+	# Sons tocados fora daqui (o bater de asas da tanajura, no enxame).
+	for p in get_tree().get_nodes_in_group("game_sound"):
+		p.stop()
+		p.stream = null
 	_streams.clear()
 
 

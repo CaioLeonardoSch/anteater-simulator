@@ -420,23 +420,21 @@ def amb_cerrado():
     return out[:-x]
 
 
-def sfx_buzz():
-    """Zumbido leve e contínuo da tanajura voando (loop de 2 s sem emenda)."""
-    dur = 2.0
+def sfx_flutter():
+    """Bater de asas curto da tanajura passando (toca de vez em quando, não em loop)."""
+    dur = 0.45
+    n = int(SR * dur)
     t = t_axis(dur)
-    # Batida das asas: 160 Hz (320 ciclos em 2 s, o loop fecha certinho).
-    f = 160.0
-    wob = 0.012 * np.sin(2 * np.pi * 1.5 * t)          # 3 oscilações por loop
-    phase = 2 * np.pi * f * t + 2 * np.pi * f * np.cumsum(wob) / SR
-    x = np.zeros_like(t)
-    for k, a in ((1, 1.0), (2, 0.55), (3, 0.3), (4, 0.18), (5, 0.1), (6, 0.06)):
-        x += a * np.sin(k * phase)
-    # Pulsar suave (asas se aproximando e afastando).
-    x *= 0.8 + 0.2 * np.sin(2 * np.pi * 2.5 * t)
-    # Filtro em volta (o fim emenda no começo sem estalo).
-    pad = 2000
-    y = fast_lowpass(np.concatenate([x[-pad:], x, x[:pad]]), 1800)
-    return y[pad:-pad]
+    # Asas a ~95 Hz, caindo um pouco (ela passa e se afasta).
+    f = 100.0 - 12.0 * t / dur
+    phase = 2 * np.pi * np.cumsum(f) / SR
+    beat = 0.5 + 0.5 * np.sin(phase)
+    air = bandpass(noise(n), 250, 1300) * beat ** 2 * 0.9
+    body = (np.sin(phase) + 0.35 * np.sin(2 * phase)) * 0.25
+    x = air + body
+    # Chega e vai embora devagar.
+    env = np.sin(np.pi * t / dur) ** 1.5
+    return fast_lowpass(x * env, 1500)
 
 
 def main():
@@ -469,17 +467,17 @@ def main():
     # Sons novos sempre no fim: assim os anteriores continuam idênticos.
     save("growl", sfx_growl(), 0.8)
     save("crack", sfx_crack(), 0.85)
-    save("buzz", sfx_buzz(), 0.6, loop=True)
+    save("flutter", sfx_flutter(), 0.6)
     print("sons gerados em", os.path.abspath(OUT))
 
 
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1:
-        # Só alguns sons: python3 tools/gen_audio.py buzz
+        # Só alguns sons: python3 tools/gen_audio.py flutter
         os.makedirs(OUT, exist_ok=True)
         for name in sys.argv[1:]:
             fn = globals().get("sfx_" + name)
-            save(name, fn(), 0.6, loop=True) if name == "buzz" else save(name, fn())
+            save(name, fn(), 0.6) if name == "flutter" else save(name, fn())
     else:
         main()

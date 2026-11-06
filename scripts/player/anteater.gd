@@ -55,6 +55,9 @@ var t_target := Vector3.ZERO
 var aim_ant := -1
 var aim_hits := false
 var t_tip := Vector3.ZERO
+## Tanajura que a língua está indo buscar (a ponta acompanha ela), ou -1.
+var t_follow := -1
+var _path_tanajura := -1
 var t_stuck := PackedInt32Array()
 var _stuck_offsets: Array[Vector3] = []
 var lick_cooldown := 0.0
@@ -463,6 +466,9 @@ func _update_tongue(delta: float) -> void:
 	match t_state:
 		Tongue.OUT:
 			t_time += delta
+			# A tanajura foge rápido: a ponta vai atrás dela até alcançar.
+			if t_follow >= 0 and swarm.alive[t_follow] == 1 and swarm.mode[t_follow] != swarm.Mode.STUCK:
+				t_target = swarm.body_point(t_follow)
 			var k := clampf(t_time / t_dur_out, 0.0, 1.0)
 			t_tip = mouth_view().lerp(t_target, 1.0 - pow(1.0 - k, 3.0))
 			if k >= 1.0:
@@ -485,10 +491,12 @@ func _start_flick() -> void:
 	t_dur_out = period * 0.36
 	t_dur_back = period * 0.5
 	var target := _straight_target()
+	t_follow = _path_tanajura
 	# Língua Certeira: a ponta vai atrás da formiga mais perto da mira.
 	var ant := _tracked_ant()
 	if ant >= 0:
 		target = swarm.pos[ant] + Vector3(0, 0.02, 0)
+		t_follow = ant if swarm.kind[ant] == swarm.TANAJURA else -1
 	t_target = target
 	t_state = Tongue.OUT
 	t_time = 0.0
@@ -497,7 +505,7 @@ func _start_flick() -> void:
 
 
 ## Onde a língua chega indo reta: no chão (ou no monte) para onde você mira,
-## no máximo até o alcance dela.
+## no máximo até o alcance dela; ou numa tanajura voando no caminho.
 func _straight_target() -> Vector3:
 	var cam_t := camera.global_transform
 	var origin := cam_t.origin
@@ -513,6 +521,10 @@ func _straight_target() -> Vector3:
 	var off := target - mouth
 	if off.length() > reach:
 		target = mouth + off.normalized() * reach
+	# Tanajura voando no caminho: a língua para nela (e não no chão atrás).
+	_path_tanajura = swarm.tanajura_on_path(origin, target, GameState.capture_radius())
+	if _path_tanajura >= 0:
+		target = swarm.body_point(_path_tanajura)
 	return target
 
 

@@ -249,6 +249,10 @@ estilo:
   prompt de cada modelo.
 - **[`assets/models/LEIA-ME.md`](assets/models/LEIA-ME.md)**: nomes de arquivo
   e ajustes. Basta colocar o `.glb` em `assets/models/` que o jogo troca sozinho.
+- **[`docs/texturas-plano.md`](docs/texturas-plano.md)**: como cada superfície
+  do cenário é desenhada hoje, o que refinar (por prioridade) e o prompt para
+  uma sessão local com Blender e Godot. `tools/fotos_texturas.tscn` tira fotos
+  de cada superfície sempre do mesmo lugar, para comparar antes e depois.
 
 O **formigueiro** já foi gerado na Artlist (Hyper3D Rodin, com a geração 3D
 gratuita da conta) e está no seu histórico de lá. O download do `.glb` exige um

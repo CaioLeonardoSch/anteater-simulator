@@ -4,7 +4,8 @@
 # Como usar: aba "Actions" › "Versão para Windows" › "Run workflow", escolha a
 # branch, escreva o número da versão (por exemplo 0.1.1) e clique no botão verde.
 # Em uns 3 minutos o .zip aparece em "Releases" (lado direito da página do
-# repositório). Também roda sozinho ao enviar uma tag "v0.1.1".
+# repositório), e as versões anteriores são apagadas (fica só a mais nova).
+# Também roda sozinho ao enviar uma tag "v0.1.1".
 name: Versão para Windows
 
 on:
@@ -104,3 +105,16 @@ jobs:
             Na primeira vez, o jogo pergunta se pode mandar as estatísticas da partida
             (tempo, insetos, compras, placa de vídeo e FPS; nada de nome ou e-mail).
             Dá para mudar depois em Configurações › Jogo.
+
+      # Por enquanto fica só uma versão publicada: a que acabou de sair.
+      - name: Apaga as versões anteriores
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName --jq '.[].tagName' |
+            while read -r tag; do
+              if [ -n "$tag" ] && [ "$tag" != "v${VERSAO}" ]; then
+                echo "Apagando $tag"
+                gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+              fi
+            done

@@ -423,8 +423,70 @@ As 40 habilidades custam **3 825 pontos (87% dos 4 400)**. Com as pontas a
 21 000, os últimos 1 700 pontos chegam por volta de 38 000 insetos: sobra
 um pedaço do fim para usar as habilidades mais fortes.
 
-**Ainda não medido:** o bot não rodou com a árvore nova (a pedido, para não
-gastar processamento). Os números vêm das contas acima e do teste do Caio.
+O bot rodou com a árvore nova em 06/11/2026: resultados na seção 8.
+
+## 8. Bot com a árvore nova (06/11/2026)
+
+O mesmo bot da seção 5 (compra em rodízio entre os ramos, acelerado 8 vezes
+com a física no passo normal), agora com 44 000 insetos, estamina, travas e
+os preços novos. Duas partidas completas; os registros estão em
+`docs/dados/bot-arvore-nova-a.csv` e `bot-arvore-nova-b.csv` (agora também
+com uma linha quando cada trava abre).
+
+**Resumo:** a clareira ficou limpa em **68 e 73 minutos** (antes 81–84, com
+27% menos insetos). As 40 habilidades foram compradas, a última com **87%**
+dos insetos, como planejado.
+
+### Quando cada trava abriu
+
+| Trava | Previsto | Partida A | Partida B |
+|---|---:|---:|---:|
+| 1 000 | 7 min | 5:49 | 7:31 |
+| 3 000 | 17 min | 15:58 | 17:45 |
+| 8 000 | 33 min | 37:11 | 41:24 |
+| 13 000 | 48 min | 44:56 | 49:09 |
+| 21 000 | 66 min | 53:29 | 59:53 |
+
+### O ritmo (insetos comidos por minuto, em cada faixa de 10 minutos)
+
+| Minutos | Árvore antiga (A / B) | Árvore nova (A / B) |
+|---|---|---|
+| 0–10 | 109 / 107 | 151 / 130 |
+| 10–20 | 157 / 192 | 216 / 211 |
+| 20–30 | 207 / 229 | 231 / 192 |
+| 30–40 | 265 / 244 | 301 / 239 |
+| 40–50 | 238 / 256 | 918 / 555 |
+| 50–60 | 243 / 242 | 1 005 / 761 |
+| 60–70 | 424 / 551 | 1 562 / 1 722 |
+
+### Compras que importam
+
+| Habilidade | Árvore antiga | Árvore nova (A / B) |
+|---|---|---|
+| Tremor (Tremor nível 1) | 61 min | 45 / 49 min |
+| Rainha (Fundura nível 2) | 68 min | 47 / 51 min |
+| Primeiro formigueiro limpo | 46–56% dos insetos | 41% / 39% |
+| Última compra | 86% dos insetos | 87% / 87% |
+
+### O que aprendemos
+
+- **A regra dos preços funcionou.** O bot quase nunca ficou com pontos
+  parados (até o minuto 60, no máximo 66 sobrando): ele gasta o que ganha, e
+  a trava abre mais ou menos quando ele termina a faixa anterior. Entre uma
+  compra e outra, quase sempre 1 a 3 minutos (o maior intervalo: 4,3 min).
+- **A "hora parada" encolheu, mas não sumiu.** Antes o ritmo ficava parado
+  dos 30 aos 60 minutos; agora fica parado dos 20 aos 40 (uns 200 a 300
+  insetos por minuto). Ele acelera logo depois da trava de 8 000, com Bocado
+  nível 2, Destreza nível 2 e Rapidez nível 2, antes mesmo do Tremor.
+- **A trava de 8 000 abriu mais tarde que o previsto** (37 e 41 min, contra
+  33), justamente na fase parada. As de 13 000 e 21 000 abriram mais cedo,
+  porque o fim acelera muito.
+- **O fim continua rápido demais.** Dos 60 minutos em diante o bot come 5 a
+  7 vezes mais rápido que no meio. As habilidades de 21 000 chegam aos 54–60
+  minutos, mas a última (Bocado nível 4) só fica uns 2 a 3 minutos em uso.
+
+Lembrando: o bot não usa o Faro e não planeja o caminho, então os minutos
+servem para comparar as árvores, não como o tempo de um jogador.
 
 ## Fontes
 

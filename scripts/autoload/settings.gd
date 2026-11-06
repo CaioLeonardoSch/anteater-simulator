@@ -96,6 +96,16 @@ var dig_toggle: bool = false
 ## Mostrar a interface durante o jogo (desligar é bom para fotos).
 var show_hud: bool = true
 
+# Estatísticas da versão de teste (ver Telemetry).
+## Mandar as estatísticas das partidas para o formulário do Caio.
+var send_stats: bool = true
+## Já respondeu à pergunta da primeira vez ("Pode enviar?").
+var stats_asked: bool = false
+## Apelido opcional que vai junto com as estatísticas.
+var nickname: String = ""
+## Número aleatório do jogador (o mesmo em todas as partidas deste computador).
+var player_id: String = ""
+
 # Controles que dá para trocar: [ação, nome]. Só teclado e mouse; o controle
 # (gamepad) fica com o padrão.
 const REBINDABLE := [
@@ -374,6 +384,10 @@ func load_settings() -> void:
 	run_toggle = bool(cfg.get_value("input", "run_toggle", run_toggle))
 	dig_toggle = bool(cfg.get_value("input", "dig_toggle", dig_toggle))
 	show_hud = bool(cfg.get_value("game", "show_hud", show_hud))
+	send_stats = bool(cfg.get_value("stats", "send", send_stats))
+	stats_asked = bool(cfg.get_value("stats", "asked", stats_asked))
+	nickname = String(cfg.get_value("stats", "nickname", nickname))
+	player_id = String(cfg.get_value("stats", "player_id", player_id))
 	bindings.clear()
 	if cfg.has_section("keys"):
 		for action in cfg.get_section_keys("keys"):
@@ -429,6 +443,10 @@ func save_settings() -> void:
 	cfg.set_value("input", "run_toggle", run_toggle)
 	cfg.set_value("input", "dig_toggle", dig_toggle)
 	cfg.set_value("game", "show_hud", show_hud)
+	cfg.set_value("stats", "send", send_stats)
+	cfg.set_value("stats", "asked", stats_asked)
+	cfg.set_value("stats", "nickname", nickname)
+	cfg.set_value("stats", "player_id", player_id)
 	for action in bindings:
 		cfg.set_value("keys", action, bindings[action])
 	cfg.save(SAVE_PATH)

@@ -233,6 +233,8 @@ var best_splits: Array = []
 var best_time_clock: float = 0.0
 ## Números deste jogo para a tela de estatísticas (distância, lambidas...).
 var stats: Dictionary = {}
+## Número aleatório desta partida (vai junto com as estatísticas da versão de teste).
+var run_id: String = ""
 ## Somas de todos os jogos e conquistas destravadas (ficam em save.cfg).
 var lifetime: Dictionary = {}
 var achievements: Dictionary = {}
@@ -263,6 +265,7 @@ func reset_run() -> void:
 	marker = Vector2.INF
 	splits.clear()
 	stats.clear()
+	run_id = "%06x" % (randi() & 0xFFFFFF)
 	_affordable.clear()
 	run_reset.emit()
 	ants_eaten_changed.emit(0, 0)
@@ -850,7 +853,7 @@ func to_save() -> Dictionary:
 		"tanajuras_eaten": tanajuras_eaten, "queens_eaten": queens_eaten,
 		"regions_reached": regions_reached, "completed": completed,
 		"marker": [marker.x, marker.y] if marker != Vector2.INF else [],
-		"mode": mode, "splits": splits.duplicate(), "stats": stats.duplicate(),
+		"mode": mode, "splits": splits.duplicate(), "stats": stats.duplicate(), "run_id": run_id,
 	}
 
 
@@ -880,6 +883,7 @@ func from_save(d: Dictionary) -> void:
 	mode = MODE_CLOCK if String(d.get("mode", MODE_NORMAL)) == MODE_CLOCK else MODE_NORMAL
 	splits = Array(d.get("splits", []))
 	stats = Dictionary(d.get("stats", {}))
+	run_id = String(d.get("run_id", run_id))
 	combo = 0
 	frenzy_time = 0.0
 	_check_affordable(false)

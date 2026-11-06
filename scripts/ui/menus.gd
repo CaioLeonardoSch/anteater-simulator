@@ -49,12 +49,16 @@ func _ready() -> void:
 	_screens.mode = _build_mode()
 	_screens.end = _build_end()
 	_screens.loading = _build_loading()
+	_screens.consent = _build_consent()
 	for k in _screens:
 		add_child(_screens[k])
 		_screens[k].visible = false
 
 
 func show_screen(screen_name: String) -> void:
+	# Primeira vez que abre a versão de teste: pergunta das estatísticas antes do menu.
+	if screen_name == "title" and not Settings.stats_asked and Telemetry.enabled():
+		screen_name = "consent"
 	for k in _screens:
 		_screens[k].visible = (k == screen_name)
 	_current = screen_name
@@ -201,11 +205,68 @@ func _build_title() -> Control:
 	v.add_child(quit)
 	for b in [cont, play, how, settings, quit]:
 		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var ver := UiTheme.caps_label("Versão de teste %s" % Telemetry.version(), 15, UiTheme.MUTED)
+	ver.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	ver.offset_left = -360
+	ver.offset_top = -44
+	ver.offset_right = -28
+	ver.offset_bottom = -18
+	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	s.add_child(ver)
 	var record := UiTheme.label("", 20, UiTheme.SAND)
 	record.name = "Record"
 	v.add_child(record)
 	s.visibility_changed.connect(_update_record.bind(record))
 	s.visibility_changed.connect(_update_title_buttons.bind(cont, play))
+	return s
+
+
+## Primeira vez na versão de teste: explica as estatísticas e pergunta se pode
+## mandar (e o apelido). Dá para mudar depois em Configurações > Jogo.
+func _build_consent() -> Control:
+	var s := _screen(0.55)
+	var v := _centered_column(s)
+	var t := UiTheme.display_label("Versão de teste", 46, UiTheme.PALE)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(t)
+	var text := RichTextLabel.new()
+	text.bbcode_enabled = true
+	text.fit_content = true
+	text.scroll_active = false
+	text.custom_minimum_size = Vector2(760, 0)
+	text.add_theme_font_size_override("normal_font_size", 20)
+	text.add_theme_font_size_override("bold_font_size", 20)
+	text.text = """Obrigado por testar o [b]Anteater Simulator[/b]!
+
+Para ajudar a acertar o jogo, esta versão manda [b]estatísticas das suas partidas[/b] para o Caio: o tempo de jogo, os insetos comidos, as habilidades compradas e quando, onde você parou de jogar, e o desempenho do computador (placa de vídeo e FPS).
+
+Não vai nome, e-mail nem nenhum arquivo seu. Dá para mudar isso depois em [b]Configurações › Jogo[/b]."""
+	v.add_child(text)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(row)
+	var l := UiTheme.label("Apelido (opcional):", 20, UiTheme.SAND)
+	l.add_theme_font_override("font", UiTheme.semi_font())
+	row.add_child(l)
+	var nick := LineEdit.new()
+	nick.custom_minimum_size = Vector2(330, 44)
+	nick.max_length = 30
+	nick.placeholder_text = "para o Caio saber quem é"
+	nick.text = Settings.nickname
+	row.add_child(nick)
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 18)
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(buttons)
+	for choice in [true, false]:
+		var b := UiTheme.button("Pode enviar" if choice else "Não enviar", 240)
+		b.pressed.connect(func():
+			Settings.nickname = nick.text.strip_edges()
+			Settings.stats_asked = true
+			Settings.set_value("send_stats", choice)
+			show_screen("title"))
+		buttons.add_child(b)
 	return s
 
 
@@ -521,6 +582,16 @@ func _build_settings() -> Control:
 	_add_option(g, "sniff_color_index", "Cor do faro", Settings.SNIFF_COLOR_NAMES)
 	_add_option(g, "hints_level", "Dicas", Settings.HINTS_NAMES)
 	_add_check(g, "show_hud", "Mostrar a interface (HUD)")
+	_add_check(g, "send_stats", "Enviar estatísticas (teste)")
+	_setting_label(g, "Apelido nas estatísticas")
+	var nick := LineEdit.new()
+	nick.custom_minimum_size = Vector2(330, 44)
+	nick.max_length = 30
+	nick.text = Settings.nickname
+	nick.text_changed.connect(func(t): Settings.nickname = t.strip_edges())
+	nick.focus_exited.connect(Settings.save_settings)
+	nick.text_submitted.connect(func(_t): Settings.save_settings())
+	g.add_child(nick)
 	# Controles
 	_build_controls_page(stack)
 	# Áudio

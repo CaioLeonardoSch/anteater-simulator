@@ -33,6 +33,7 @@ extends Node
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
 ##   --hats                       chapéu de Natal em uma formiga a cada 20
 ##   --stats                      imprime FPS e estatísticas de render a cada segundo
+##   --telemetria[=http://...]    os testes também mandam as estatísticas (para esse endereço)
 
 var args: Dictionary = {}
 var start_mode: String = ""

@@ -1,0 +1,106 @@
+# Gera a versão para Windows (um .zip com o AnteaterSimulator.exe) e publica
+# numa página de "Releases" do GitHub, pronta para mandar aos amigos.
+#
+# Como usar: aba "Actions" › "Versão para Windows" › "Run workflow", escolha a
+# branch, escreva o número da versão (por exemplo 0.1.1) e clique no botão verde.
+# Em uns 3 minutos o .zip aparece em "Releases" (lado direito da página do
+# repositório). Também roda sozinho ao enviar uma tag "v0.1.1".
+name: Versão para Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Número da versão (ex.: 0.1.1)"
+        required: true
+        default: "0.1.0"
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  GODOT: "4.7.2"
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Número da versão
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            V="${{ github.event.inputs.versao }}"
+          else
+            V="${GITHUB_REF_NAME#v}"
+          fi
+          echo "VERSAO=$V" >> "$GITHUB_ENV"
+          # A versão aparece no menu ("Versão de teste 0.1.1") e nas estatísticas.
+          sed -i "s/^config\/version=.*/config\/version=\"$V\"/" project.godot
+          grep '^config/version' project.godot
+
+      - name: Godot guardado de outras vezes
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT }}-windows
+
+      - name: Baixa o Godot e o molde do Windows
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot && cd ~/godot
+          URL="https://github.com/godotengine/godot/releases/download/${GODOT}-stable"
+          curl -fsSL -o godot.zip "$URL/Godot_v${GODOT}-stable_linux.x86_64.zip"
+          unzip -q godot.zip && mv "Godot_v${GODOT}-stable_linux.x86_64" godot && rm godot.zip
+          curl -fsSL -o moldes.tpz "$URL/Godot_v${GODOT}-stable_export_templates.tpz"
+          unzip -q -j moldes.tpz templates/windows_release_x86_64.exe templates/version.txt -d moldes
+          rm moldes.tpz
+
+      - name: Instala o molde
+        run: |
+          D="$HOME/.local/share/godot/export_templates/${GODOT}.stable"
+          mkdir -p "$D" && cp ~/godot/moldes/* "$D/"
+
+      - name: Importa o projeto
+        run: ~/godot/godot --headless --path . --import
+
+      - name: Exporta para Windows
+        run: |
+          mkdir -p build
+          ~/godot/godot --headless --path . --export-release "Windows" build/AnteaterSimulator.exe
+          test -s build/AnteaterSimulator.exe
+          cd build && zip -q "../AnteaterSimulator-${VERSAO}-windows.zip" AnteaterSimulator.exe
+          ls -la ..
+
+      - name: Guarda o .zip nesta execução
+        uses: actions/upload-artifact@v4
+        with:
+          name: AnteaterSimulator-${{ env.VERSAO }}-windows
+          path: AnteaterSimulator-${{ env.VERSAO }}-windows.zip
+
+      - name: Publica em Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSAO }}
+          target_commitish: ${{ github.sha }}
+          name: Anteater Simulator ${{ env.VERSAO }} (versão de teste)
+          prerelease: true
+          files: AnteaterSimulator-${{ env.VERSAO }}-windows.zip
+          body: |
+            Versão de teste para Windows (64 bits).
+
+            **Como jogar**
+            1. Baixe o arquivo `AnteaterSimulator-${{ env.VERSAO }}-windows.zip` abaixo, em "Assets".
+            2. Clique com o botão direito no .zip › **Extrair tudo**.
+            3. Abra o `AnteaterSimulator.exe`.
+
+            O Windows pode avisar "O Windows protegeu o computador" (o jogo não tem
+            assinatura digital, que é paga). Clique em **Mais informações** ›
+            **Executar assim mesmo**.
+
+            Na primeira vez, o jogo pergunta se pode mandar as estatísticas da partida
+            (tempo, insetos, compras, placa de vídeo e FPS; nada de nome ou e-mail).
+            Dá para mudar depois em Configurações › Jogo.

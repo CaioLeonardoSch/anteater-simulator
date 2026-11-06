@@ -191,6 +191,7 @@ func _build_game() -> void:
 		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
 		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
 		colony.nest_cleaned.connect(func(n): _bot_write.call_deferred("formigueiro", "%s (%s)" % [n.display_name, "grande" if n.big else "pequeno"]))
+		GameState.gate_opened.connect(func(g): _bot_write.call_deferred("trava", str(g)))
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
 	_apply_sniff_color()

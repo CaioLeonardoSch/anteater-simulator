@@ -187,7 +187,7 @@ o que for feito nos cupinzeiros).
 
 | Superfície | Situação |
 |---|---|
-| Chão do cerrado | a fazer |
+| Chão do cerrado | feito em 06/11/2026: `assets/textures/chao/` e `assets/textures/trilha/`, feitas por `tools/blender_chao.py` |
 | Paredões de arenito | a fazer |
 | Pedras | a fazer |
 | Cupinzeiros | a fazer |

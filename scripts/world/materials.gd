@@ -8,6 +8,12 @@ const TERRAIN := preload("res://shaders/terrain.gdshader")
 const FLOWER := preload("res://shaders/flower.gdshader")
 const LEAF_TEX := preload("res://assets/textures/leaf_cluster.png")
 const FLOWER_TEX := preload("res://assets/textures/flower_cluster.png")
+const SOLO_COR := preload("res://assets/textures/chao/cor.png")
+const SOLO_RELEVO := preload("res://assets/textures/chao/relevo.png")
+const SOLO_ASPEREZA := preload("res://assets/textures/chao/aspereza.png")
+const TRILHA_COR := preload("res://assets/textures/trilha/cor.png")
+const TRILHA_RELEVO := preload("res://assets/textures/trilha/relevo.png")
+const TRILHA_ASPEREZA := preload("res://assets/textures/trilha/aspereza.png")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -39,6 +45,12 @@ func _init() -> void:
 
 	terrain = _shader(TERRAIN)
 	terrain.set_shader_parameter("noise_tex", noise_tex)
+	terrain.set_shader_parameter("solo_cor", SOLO_COR)
+	terrain.set_shader_parameter("solo_relevo", SOLO_RELEVO)
+	terrain.set_shader_parameter("solo_aspereza", SOLO_ASPEREZA)
+	terrain.set_shader_parameter("trilha_cor", TRILHA_COR)
+	terrain.set_shader_parameter("trilha_relevo", TRILHA_RELEVO)
+	terrain.set_shader_parameter("trilha_aspereza", TRILHA_ASPEREZA)
 
 	grass = _shader(GRASS)
 	grass.set_shader_parameter("noise_tex", noise_tex)

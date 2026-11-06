@@ -5,9 +5,20 @@ const SOFT_SURFACE := preload("res://shaders/soft_surface.gdshader")
 const FOLIAGE := preload("res://shaders/foliage.gdshader")
 const GRASS := preload("res://shaders/grass.gdshader")
 const TERRAIN := preload("res://shaders/terrain.gdshader")
+const ARENITO := preload("res://shaders/arenito.gdshader")
 const FLOWER := preload("res://shaders/flower.gdshader")
 const LEAF_TEX := preload("res://assets/textures/leaf_cluster.png")
 const FLOWER_TEX := preload("res://assets/textures/flower_cluster.png")
+const SOLO_COR := preload("res://assets/textures/chao/cor.png")
+const SOLO_RELEVO := preload("res://assets/textures/chao/relevo.png")
+const SOLO_ASPEREZA := preload("res://assets/textures/chao/aspereza.png")
+const TRILHA_COR := preload("res://assets/textures/trilha/cor.png")
+const TRILHA_RELEVO := preload("res://assets/textures/trilha/relevo.png")
+const TRILHA_ASPEREZA := preload("res://assets/textures/trilha/aspereza.png")
+const ARENITO_COR := preload("res://assets/textures/arenito/cor.png")
+const ARENITO_RELEVO := preload("res://assets/textures/arenito/relevo.png")
+const BARRO_COR := preload("res://assets/textures/barro/cor.png")
+const BARRO_RELEVO := preload("res://assets/textures/barro/relevo.png")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -29,6 +40,7 @@ var ipe_ground: ShaderMaterial
 var clay: ShaderMaterial
 var rock: ShaderMaterial
 var cliff: ShaderMaterial
+var arenito: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
 
@@ -39,6 +51,12 @@ func _init() -> void:
 
 	terrain = _shader(TERRAIN)
 	terrain.set_shader_parameter("noise_tex", noise_tex)
+	terrain.set_shader_parameter("solo_cor", SOLO_COR)
+	terrain.set_shader_parameter("solo_relevo", SOLO_RELEVO)
+	terrain.set_shader_parameter("solo_aspereza", SOLO_ASPEREZA)
+	terrain.set_shader_parameter("trilha_cor", TRILHA_COR)
+	terrain.set_shader_parameter("trilha_relevo", TRILHA_RELEVO)
+	terrain.set_shader_parameter("trilha_aspereza", TRILHA_ASPEREZA)
 
 	grass = _shader(GRASS)
 	grass.set_shader_parameter("noise_tex", noise_tex)
@@ -70,23 +88,57 @@ func _init() -> void:
 	ipe_ground = ipe_cards.duplicate()
 	ipe_ground.set_shader_parameter("sway", 0.0)
 
-	clay = _surface(Color(0.50, 0.27, 0.15), Color(0.72, 0.45, 0.28), Color(0.82, 0.62, 0.44))
+	# Cupinzeiros: estampa de barro seco feita no Blender (granulado, caneluras
+	# verticais da chuva, rachaduras finas e furinhos), no mesmo shader dos
+	# paredões, que deixa os sulcos sempre em pé.
+	clay = _shader(ARENITO)
+	clay.set_shader_parameter("noise_tex", noise_tex)
+	clay.set_shader_parameter("rocha_cor", BARRO_COR)
+	clay.set_shader_parameter("rocha_relevo", BARRO_RELEVO)
+	clay.set_shader_parameter("topo_cor", BARRO_COR)
+	clay.set_shader_parameter("topo_relevo", BARRO_RELEVO)
+	clay.set_shader_parameter("rocha_media", Color(0.675, 0.495, 0.359))
+	clay.set_shader_parameter("topo_media", Color(0.675, 0.495, 0.359))
+	clay.set_shader_parameter("color_a", Color(0.50, 0.36, 0.27))
+	clay.set_shader_parameter("color_b", Color(0.62, 0.49, 0.39))
+	clay.set_shader_parameter("accent_color", Color(0.58, 0.45, 0.35))
 	clay.set_shader_parameter("noise_scale", 1.6)
 	clay.set_shader_parameter("detail_scale", 7.0)
-	clay.set_shader_parameter("streak_amount", 0.25)
-	clay.set_shader_parameter("streak_scale", 8.0)
-	clay.set_shader_parameter("accent_amount", 0.3)
-	clay.set_shader_parameter("accent_threshold", 0.68)
-	clay.set_shader_parameter("accent_up_bias", 0.25)
+	clay.set_shader_parameter("tint_variation", 0.3)
+	clay.set_shader_parameter("relief_strength", 1.5)
+	clay.set_shader_parameter("tile_size", 1.0)
+	clay.set_shader_parameter("top_tile_size", 1.0)
+	clay.set_shader_parameter("top_detail", 0.8)
+	clay.set_shader_parameter("strata_warp", 0.0)
+	clay.set_shader_parameter("streak_amount", 0.0)
+	clay.set_shader_parameter("relief_fade", Vector2(25.0, 60.0))
+	clay.set_shader_parameter("roughness_value", 0.95)
+	clay.set_shader_parameter("specular_value", 0.15)
+	clay.set_shader_parameter("rim_amount", 0.1)
 
-	rock = _surface(Color(0.42, 0.39, 0.35), Color(0.66, 0.61, 0.53), Color(0.72, 0.70, 0.30))
+	# Pedras soltas: a mesma rocha dos paredões (estampa de arenito, camadas mais
+	# finas), um pouco mais apagada, com manchinhas de líquen por cima.
+	rock = _shader(ARENITO)
+	rock.set_shader_parameter("noise_tex", noise_tex)
+	rock.set_shader_parameter("rocha_cor", ARENITO_COR)
+	rock.set_shader_parameter("rocha_relevo", ARENITO_RELEVO)
+	rock.set_shader_parameter("topo_cor", ARENITO_COR)
+	rock.set_shader_parameter("topo_relevo", ARENITO_RELEVO)
+	rock.set_shader_parameter("topo_media", Color(0.796, 0.610, 0.468))
+	rock.set_shader_parameter("color_a", Color(0.47, 0.34, 0.25))
+	rock.set_shader_parameter("color_b", Color(0.66, 0.51, 0.39))
+	rock.set_shader_parameter("accent_color", Color(0.58, 0.44, 0.33))
 	rock.set_shader_parameter("noise_scale", 1.2)
 	rock.set_shader_parameter("detail_scale", 6.0)
-	rock.set_shader_parameter("accent_amount", 0.55)
-	rock.set_shader_parameter("accent_threshold", 0.66)
-	rock.set_shader_parameter("accent_up_bias", 0.35)
-	rock.set_shader_parameter("roughness_value", 0.8)
-	rock.set_shader_parameter("specular_value", 0.4)
+	rock.set_shader_parameter("tile_size", 2.0)
+	rock.set_shader_parameter("top_tile_size", 3.0)
+	rock.set_shader_parameter("top_detail", 0.7)
+	rock.set_shader_parameter("lichen_color", Color(0.64, 0.64, 0.46))
+	rock.set_shader_parameter("streak_amount", 0.0)
+	rock.set_shader_parameter("lichen_amount", 0.6)
+	rock.set_shader_parameter("roughness_value", 0.85)
+	rock.set_shader_parameter("specular_value", 0.3)
+	rock.set_shader_parameter("rim_amount", 0.12)
 
 	# Paredões de arenito da chapada: faixas pintadas por vértice, escorridos
 	# verticais e um verde ralo só no topo plano.
@@ -101,6 +153,16 @@ func _init() -> void:
 	cliff.set_shader_parameter("roughness_value", 0.93)
 	cliff.set_shader_parameter("specular_value", 0.2)
 	cliff.set_shader_parameter("rim_amount", 0.05)
+
+	# Paredões: estampa de arenito feita no Blender (camadas, fendas, blocos), com
+	# as faixas pintadas por vértice por cima e o verde só no topo. O `cliff` de
+	# cima fica para o chão da mata, até ele ganhar o material dele.
+	arenito = _shader(ARENITO)
+	arenito.set_shader_parameter("noise_tex", noise_tex)
+	arenito.set_shader_parameter("rocha_cor", ARENITO_COR)
+	arenito.set_shader_parameter("rocha_relevo", ARENITO_RELEVO)
+	arenito.set_shader_parameter("topo_cor", SOLO_COR)
+	arenito.set_shader_parameter("topo_relevo", SOLO_RELEVO)
 
 	nest_soil = _surface(Color(0.46, 0.26, 0.16), Color(0.64, 0.42, 0.28), Color(0.80, 0.62, 0.46))
 	nest_soil.set_shader_parameter("noise_scale", 3.0)

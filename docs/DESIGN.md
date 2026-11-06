@@ -373,7 +373,9 @@ Ainda a ajustar:
   tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
   uma hora de ritmo parado e uma explosão nos últimos 15 minutos. A
   reformulação já foi feita (estamina, travas, preços novos, Tremor e rainha
-  mais cedo), mas o bot ainda não rodou com ela: o ritmo novo falta medir.
+  mais cedo). Com ela, o bot limpou a clareira em 68–73 minutos e comprou a
+  última habilidade com 87% dos insetos; o ritmo ainda fica parado dos 20 aos
+  40 minutos e acelera muito no fim (seção 8 da pesquisa).
 
 ---
 

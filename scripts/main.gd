@@ -187,6 +187,7 @@ func _build_game() -> void:
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
+	colony.nest_cleaned.connect(func(n): Telemetry.log_event("formigueiro", n.display_name))
 	if DevTools.autoplay and DevTools.args.has("botlog"):
 		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
 		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
@@ -251,6 +252,7 @@ func _start_play() -> void:
 	GameState.mode = GameState.next_mode
 	player.place_at(world.player_start, world.player_start_yaw)
 	_begin_playing()
+	Telemetry.start_session("jogo novo")
 	save_game()
 	# Ele acorda na caverna com fome: a barriga ronca uma vez.
 	if DevTools.start_mode == "" or DevTools.args.has("growl"):
@@ -297,6 +299,7 @@ func _continue_game() -> void:
 		float(p.get("yaw", world.player_start_yaw)))
 	player.pitch = float(p.get("pitch", -0.12))
 	_begin_playing()
+	Telemetry.start_session("continuou")
 	if GameState.completed:
 		# A clareira já estava limpa: o tronco da saída continua esperando as garras.
 		world.exit_breakable = true
@@ -413,6 +416,7 @@ func _close_tree() -> void:
 
 
 func _restart() -> void:
+	Telemetry.end_session("recomeçou do zero")
 	GameState.delete_saved_game()
 	# Recomeçar mantém o modo (normal ou contra o relógio).
 	GameState.next_mode = GameState.mode
@@ -423,6 +427,7 @@ func _restart() -> void:
 func _to_main_menu() -> void:
 	if state in [State.PLAYING, State.PAUSED, State.TREE]:
 		save_game()
+	Telemetry.end_session("voltou ao menu")
 	skip_menu = false
 	_reload()
 
@@ -528,6 +533,7 @@ func _belly_growl() -> void:
 ## O tronco foi quebrado: a passagem para a área 2 está aberta (fim da demo).
 func _on_exit_broken() -> void:
 	GameState.count("exit_broken")
+	Telemetry.log_event("quebrou o tronco", "")
 	state = State.COMPLETE
 	GameState.delete_saved_game()
 	player.controls_enabled = false

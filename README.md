@@ -186,6 +186,15 @@ foram feitos para que, comprando de tudo um pouco, você termine de pagar o que
 uma trava abriu bem quando a seguinte abre (as contas estão em
 [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md), seção 7).
 
+### Versão de teste: estatísticas
+
+Na versão de teste, o jogo manda as estatísticas de cada partida (tempo,
+insetos, compras, travas, formigueiros, onde parou e o desempenho do
+computador) para um Formulário do Google, e as respostas caem numa planilha.
+Na primeira vez que abre, ele explica e pergunta se pode; não vai nome, e-mail
+nem arquivos. Como funciona e como criar o formulário:
+[`docs/estatisticas-dos-testes.md`](docs/estatisticas-dos-testes.md).
+
 ### Tela e gráficos
 
 Em **Configurações**:
@@ -197,8 +206,9 @@ Em **Configurações**:
   sombras, capim, suavização (FXAA, MSAA ou TAA), sombra de contato (SSAO), luz
   rebatida (SSIL), neblina volumétrica e brilho do sol.
 - **Jogo:** sensibilidade do mouse e do controle, inverter eixo Y, campo de
-  visão, balanço da câmera, cor do faro, dicas (Todas, Poucas ou Nenhuma) e
-  mostrar ou esconder a interface (HUD).
+  visão, balanço da câmera, cor do faro, dicas (Todas, Poucas ou Nenhuma),
+  mostrar ou esconder a interface (HUD), enviar ou não as estatísticas da
+  versão de teste e o apelido que vai junto.
 - **Controles:** trocar qualquer tecla; Correr e Cavar como "segurar" ou
   "apertar uma vez".
 - **Áudio:** volume geral, música, efeitos e ambiente.
@@ -276,7 +286,8 @@ com `--timescale`, mantém o passo da física igual ao do jogo normal ·
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·
 `--focus=ID` abre a árvore já com uma habilidade escolhida · `--nohud` esconde a
-interface (capturas limpas do cenário) ·
+interface (capturas limpas do cenário) · `--telemetria` deixa os testes
+mandarem as estatísticas (`--telemetria=http://...` manda para outro endereço) ·
 `--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.

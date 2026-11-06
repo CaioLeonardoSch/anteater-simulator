@@ -95,14 +95,29 @@ func _init() -> void:
 	clay.set_shader_parameter("accent_threshold", 0.68)
 	clay.set_shader_parameter("accent_up_bias", 0.25)
 
-	rock = _surface(Color(0.42, 0.39, 0.35), Color(0.66, 0.61, 0.53), Color(0.72, 0.70, 0.30))
+	# Pedras soltas: a mesma rocha dos paredões (estampa de arenito, camadas mais
+	# finas), um pouco mais apagada, com manchinhas de líquen por cima.
+	rock = _shader(ARENITO)
+	rock.set_shader_parameter("noise_tex", noise_tex)
+	rock.set_shader_parameter("rocha_cor", ARENITO_COR)
+	rock.set_shader_parameter("rocha_relevo", ARENITO_RELEVO)
+	rock.set_shader_parameter("topo_cor", ARENITO_COR)
+	rock.set_shader_parameter("topo_relevo", ARENITO_RELEVO)
+	rock.set_shader_parameter("topo_media", Color(0.796, 0.610, 0.468))
+	rock.set_shader_parameter("color_a", Color(0.47, 0.34, 0.25))
+	rock.set_shader_parameter("color_b", Color(0.66, 0.51, 0.39))
+	rock.set_shader_parameter("accent_color", Color(0.58, 0.44, 0.33))
 	rock.set_shader_parameter("noise_scale", 1.2)
 	rock.set_shader_parameter("detail_scale", 6.0)
-	rock.set_shader_parameter("accent_amount", 0.55)
-	rock.set_shader_parameter("accent_threshold", 0.66)
-	rock.set_shader_parameter("accent_up_bias", 0.35)
-	rock.set_shader_parameter("roughness_value", 0.8)
-	rock.set_shader_parameter("specular_value", 0.4)
+	rock.set_shader_parameter("tile_size", 2.0)
+	rock.set_shader_parameter("top_tile_size", 3.0)
+	rock.set_shader_parameter("top_detail", 0.7)
+	rock.set_shader_parameter("lichen_color", Color(0.64, 0.64, 0.46))
+	rock.set_shader_parameter("streak_amount", 0.0)
+	rock.set_shader_parameter("lichen_amount", 0.6)
+	rock.set_shader_parameter("roughness_value", 0.85)
+	rock.set_shader_parameter("specular_value", 0.3)
+	rock.set_shader_parameter("rim_amount", 0.12)
 
 	# Paredões de arenito da chapada: faixas pintadas por vértice, escorridos
 	# verticais e um verde ralo só no topo plano.

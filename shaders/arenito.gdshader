@@ -19,6 +19,10 @@ uniform float roughness_value : hint_range(0.0, 1.0) = 0.93;
 uniform float specular_value : hint_range(0.0, 1.0) = 0.2;
 uniform float vertex_color_mix : hint_range(0.0, 1.0) = 1.0;
 uniform float rim_amount : hint_range(0.0, 1.0) = 0.05;
+// Líquen em manchinhas, mais nas faces de cima (as pedras soltas usam; os
+// paredões não).
+uniform vec3 lichen_color : source_color = vec3(0.70, 0.68, 0.36);
+uniform float lichen_amount : hint_range(0.0, 1.0) = 0.0;
 uniform sampler2D noise_tex : filter_linear_mipmap, repeat_enable;
 
 uniform sampler2D rocha_cor : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
@@ -31,6 +35,8 @@ uniform vec3 topo_media : source_color = vec3(0.382, 0.316, 0.183);
 // Tamanho de uma estampa no mundo, em metros.
 uniform float tile_size = 4.0;
 uniform float top_tile_size = 2.0;
+// Quanto da estampa aparece no topo (nas pedras soltas fica fraca, sem listras).
+uniform float top_detail : hint_range(0.0, 1.0) = 1.0;
 // As camadas sobem e descem devagar ao longo do paredão (metros), para a
 // estampa não se repetir sempre na mesma altura.
 uniform float strata_warp = 1.2;
@@ -98,12 +104,18 @@ void fragment() {
 	vec3 rock_z = cz.rgb / rocha_media;
 	vec3 det_y = cy.rgb / (up ? topo_media : rocha_media);
 	vec3 wall = tint * mix(vec3(1.0), rock_x * wh.x + rock_z * wh.z, detail_amount);
-	vec3 top = (up ? accent_color : tint) * mix(vec3(1.0), det_y, detail_amount);
+	vec3 top = (up ? accent_color : tint) * mix(vec3(1.0), det_y, detail_amount * (up ? top_detail : 1.0));
 	vec3 col = wall + top * wh.y;
 
 	if (streak_amount > 0.0) {
 		float s = texture(noise_tex, vec2((wpos.x + wpos.z) * streak_scale * 0.05, wpos.y * 0.04)).r;
 		col *= 1.0 - streak_amount * smoothstep(0.55, 0.75, s) * (1.0 - wh.y);
+	}
+	if (lichen_amount > 0.0) {
+		float ln = tri_noise(wpos + 5.3, nw, 1.1);
+		float lf = tri_noise(wpos + 2.1, nw, 7.0);
+		float lich = smoothstep(0.67, 0.71, ln + nw.y * 0.08) * smoothstep(0.30, 0.45, lf);
+		col = mix(col, lichen_color * (0.85 + lf * 0.3), lich * lichen_amount);
 	}
 	col = mix(col, col * COLOR.rgb, vertex_color_mix);
 	ALBEDO = col;
@@ -120,7 +132,7 @@ void fragment() {
 		}
 		if (wh.y > 0.01) {
 			vec2 t = (up ? textureGrad(topo_relevo, uvy, gy.xy, gy.zw).rg : textureGrad(rocha_relevo, uvy, gy.xy, gy.zw).rg) * 2.0 - 1.0;
-			pert += wh.y * vec3(t.x, 0.0, -t.y);
+			pert += wh.y * (up ? top_detail : 1.0) * vec3(t.x, 0.0, -t.y);
 		}
 		vec3 n2w = normalize(nw + pert * relief_strength * fade);
 		NORMAL = normalize((VIEW_MATRIX * vec4(n2w, 0.0)).xyz);

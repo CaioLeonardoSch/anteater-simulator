@@ -189,7 +189,7 @@ o que for feito nos cupinzeiros).
 |---|---|
 | Chão do cerrado | feito em 06/11/2026: `assets/textures/chao/` e `assets/textures/trilha/`, feitas por `tools/blender_chao.py` |
 | Paredões de arenito | feito em 06/11/2026: `assets/textures/arenito/`, feita por `tools/blender_arenito.py`; shader `shaders/arenito.gdshader` (material `arenito`) |
-| Pedras | a fazer |
+| Pedras | feito em 06/11/2026: mesma estampa dos paredões (`assets/textures/arenito/`) no shader `shaders/arenito.gdshader`, com líquen em manchas (`lichen_amount`) e topo mais suave (`top_detail`) |
 | Cupinzeiros | a fazer |
 | Casca das árvores | a fazer |
 | Troncos caídos | a fazer |

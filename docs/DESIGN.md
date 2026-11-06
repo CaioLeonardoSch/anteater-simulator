@@ -167,11 +167,11 @@ buscamos, no espírito delas:
   Real** desmancha o monte da rainha.
 - **Cada formiga é uma só** (não há grupos): **10 formigas comidas = 1 ponto**.
   A **língua** começa **lenta** (1,4 lambida por segundo), com **um clique por
-  lambida**, pegando até 10 formigas. A linha de Destreza a deixa mais rápida
+  lambida**, pegando **uma** formiga. A linha de Destreza a deixa mais rápida
   (Língua Comprida e Saliva Grudenta, +25% cada; Língua Turbo, 2x). A primeira
   habilidade (**Lambida Contínua**, 25 pontos)
   deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez:
-  50, 150, 250 e 400 formigas.
+  5, 15, 25 e 40 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
   estiver perto da ponta. A **Mira nível 1** (30 pontos) faz a língua ir
   sozinha atrás da formiga mais perto da mira, e a **Mira Ampla** (60) deixa
@@ -213,7 +213,7 @@ dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**).
 | Habilidade | Linha | Níveis (preço · trava em insetos comidos) |
 |---|---|---|
 | **Língua** | começo | Lambida Contínua (25: segurar para lamber) |
-| | Bocado | nível 1 (40 · 1 mil: até 50 insetos por lambida) · nível 2 (80 · 3 mil: até 150) · nível 3 (120 · 13 mil: até 250) · nível 4 (320 · 21 mil: até 400) |
+| | Bocado | nível 1 (40 · 1 mil: até 5 insetos por lambida) · nível 2 (80 · 3 mil: até 15) · nível 3 (120 · 13 mil: até 25) · nível 4 (320 · 21 mil: até 40) |
 | | Destreza | nível 1 (70 · 3 mil: +50% de alcance) · nível 2 (90 · 8 mil: gruda num raio 70% maior) · nível 3 (300 · 21 mil: 2x mais rápida) |
 | | Mira | nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira; sem ela, vai reta) · nível 2 (60 · 3 mil: essa área fica 25% maior) |
 | **Garras** | começo | Cavar (35: abre as câmaras pequenas; depois as garras descansam 25 s) |
@@ -638,4 +638,6 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 05/11/2026 | Travas e preços | Tudo aberto desde o começo; árvore de 3 215 pontos | Cinco travas por insetos comidos (1 000, 3 000, 8 000, 13 000, 21 000), com cadeado e "8 mil" na árvore e um aviso quando abrem; árvore de 3 825 pontos (87%), com as pontas mais fortes em 21 000 |
 | 05/11/2026 | Tremor | Força nível 2; a recarga ficava na Rapidez | Linha própria, saindo de Força nível 1 (Tremor 1 a 3, o 3 é o Terremoto); Força ganhou nível 2 (tontas por 4 s); Rapidez ficou com 2 níveis |
 | 06/11/2026 | Versão de teste | Sem estatísticas dos jogadores | Manda as estatísticas de cada partida para um Formulário do Google (com aviso e opção de desligar; sem nome nem e-mail) e guarda uma cópia no computador; "Versão de teste" no canto do menu ([`estatisticas-dos-testes.md`](estatisticas-dos-testes.md)) |
+| 06/11/2026 | Insetos por lambida | 10 no começo e 50, 150, 250, 400 com Bocado (sobra de quando as formigas andavam em grupos de 10) | 1 no começo e 5, 15, 25, 40 com Bocado |
+| 06/11/2026 | Tanajura | A língua passava por baixo dela (ia até o chão) e ela fugia antes da ponta chegar; zumbido contínuo | A língua para na tanajura que estiver no caminho e vai atrás dela; em vez do zumbido, um bater de asas curto de vez em quando |
 | 05/11/2026 | Desempenho | Cada camada de detalhe montava o grupo inteiro | Separação por distância, camada extra de longe e sombra simples (33,5 → 7,6 milhões de triângulos na mesma cena) |

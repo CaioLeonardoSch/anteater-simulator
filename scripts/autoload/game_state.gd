@@ -71,16 +71,16 @@ const UPGRADES := [
 		"desc": "Segure o botão para lamber sem parar."},
 	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "cost": 40, "requires": ["lingua_segurar"], "gate": 1000,
 		"name": "Bocado nível 1",
-		"desc": "Cada lambida pega até 50 insetos perto da ponta da língua."},
+		"desc": "Cada lambida pega até 5 insetos perto da ponta da língua (sem Bocado, só 1)."},
 	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "cost": 80, "requires": ["lingua_bocado_1"], "gate": 3000,
 		"name": "Bocado nível 2",
-		"desc": "Até 150 insetos por lambida, e a ponta gruda num raio um pouco maior."},
+		"desc": "Até 15 insetos por lambida, e a ponta gruda num raio um pouco maior."},
 	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "cost": 120, "requires": ["lingua_bocado_2"], "gate": 13000,
 		"name": "Bocado nível 3",
-		"desc": "Até 250 insetos por lambida."},
+		"desc": "Até 25 insetos por lambida."},
 	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "cost": 320, "requires": ["lingua_bocado_3"], "gate": 21000,
 		"name": "Bocado nível 4",
-		"desc": "Até 400 insetos por lambida."},
+		"desc": "Até 40 insetos por lambida."},
 	{"id": "lingua_comprida", "branch": 0, "col": 1, "row": 1, "cost": 70, "requires": ["lingua_segurar"], "gate": 3000,
 		"name": "Destreza nível 1",
 		"desc": "Alcance da língua +50%, e ela lambe 25% mais rápido."},
@@ -547,7 +547,7 @@ func bocado_level() -> int:
 
 ## Quantas formigas uma lambida pega de uma vez.
 func lick_capacity() -> int:
-	return [10, 50, 150, 250, 400][bocado_level()]
+	return [1, 5, 15, 25, 40][bocado_level()]
 
 
 func tongue_range() -> float:

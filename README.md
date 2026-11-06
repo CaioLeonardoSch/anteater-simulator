@@ -123,7 +123,9 @@ uma vez".
   andando devagar lá embaixo, junto com as moradoras das outras câmaras dele.
   Coma a corte e ela vale **200 formigas** (20 pontos).
 - **Língua:** no começo ela é lenta (pouco mais de uma lambida por segundo) e
-  vai reta até onde você mira, pegando até 10 formigas perto da ponta. A linha
+  vai reta até onde você mira, pegando **uma** formiga perto da ponta (a linha
+  de Bocado aumenta para 5, 15, 25 e 40). Uma tanajura voando no caminho para a
+  língua, e a ponta vai atrás dela se ela fugir. A linha
   de Destreza a deixa mais rápida. Com **Mira nível 1**, ela vai sozinha atrás da formiga mais perto
   da mira (com um contorno verde suave); a **Mira Ampla** aumenta essa área.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
@@ -137,7 +139,7 @@ uma vez".
   formigueiro e onde estão as rainhas. A cor do faro (vermelha) pode ser trocada
   em Configurações → Jogo.
 - **Tremor:** um pulo; ao cair, as formigas em volta ficam tontas.
-- **Tanajuras** (douradas, voando, com um zumbido baixinho quando estão perto)
+- **Tanajuras** (douradas, voando, batendo as asas de vez em quando quando estão perto)
   ativam o **Frenesi**: língua mais rápida e mais longa por 6 s.
 - **Progresso:** formigueiro limpo ganha flores, e um losango por formigueiro
   no canto da tela mostra quantos faltam.
@@ -168,7 +170,7 @@ tem trava). Na árvore, ela aparece com cadeado e "8 mil" embaixo.
 
 | Habilidade | Níveis (preço · trava) |
 |---|---|
-| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · nível 1 (40 · 1 mil: até 50 insetos por lambida) · nível 2 (80 · 3 mil: até 150) · nível 3 (120 · 13 mil: até 250) · nível 4 (320 · 21 mil: até 400); **Destreza** · nível 1 (70 · 3 mil: alcance +50% e lambe 25% mais rápido) · nível 2 (90 · 8 mil: raio maior e mais 25% de rapidez) · nível 3 (300 · 21 mil: 2x mais rápido); **Mira** · nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira) · nível 2 (60 · 3 mil: essa área 25% maior) |
+| **Língua** | Lambida Contínua (25: segurar para lamber), e depois três linhas: **Bocado** · nível 1 (40 · 1 mil: até 5 insetos por lambida) · nível 2 (80 · 3 mil: até 15) · nível 3 (120 · 13 mil: até 25) · nível 4 (320 · 21 mil: até 40); **Destreza** · nível 1 (70 · 3 mil: alcance +50% e lambe 25% mais rápido) · nível 2 (90 · 8 mil: raio maior e mais 25% de rapidez) · nível 3 (300 · 21 mil: 2x mais rápido); **Mira** · nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira) · nível 2 (60 · 3 mil: essa área 25% maior) |
 | **Garras** | Cavar (35: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (55 · 3 mil: moradoras tontas por 2,5 s) · nível 2 (50 · 8 mil: 4 s); **Tremor** (sai de Força nível 1) · nível 1 (100 · 8 mil: libera o Tremor, recarga de 21 s) · nível 2 (100 · 13 mil: 14 s) · nível 3 (330 · 21 mil: Terremoto, 7 s); **Rapidez** · nível 1 (30 · 1 mil: descanso de 15 s) · nível 2 (80 · 8 mil: 5 s); **Fundura** · nível 1 (60 · 3 mil: câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
 | **Patas** | Fôlego nível 1 (20: estamina máxima de 50 para 100), e depois quatro linhas: **Corrida** · nível 1 (60 · 3 mil: +50% sobre andar, eram +25%) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta); **Respiro** · níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): a estamina volta 3 → 4,5 → 6 → 7 por segundo; **Passada** · níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): correndo gasta 10 → 8 → 6,5 → 5 por segundo; **Fôlego** · nível 2 (50 · 3 mil: 150) · nível 3 (80 · 13 mil: 200) |
 | **Faro** | Farejar (20), e depois: **Alcance** · nível 1 (40 · 1 mil: 16 m) · nível 2 (70 · 8 mil: 24 m) · nível 3 (100 · 13 mil: 34 m) · nível 4 (260 · 21 mil: 50 m); **Precisão** · nível 1 (50 · 3 mil: nuvem) · nível 2 (80 · 13 mil: insetos brilhando) · nível 3 (240 · 21 mil: câmaras) |

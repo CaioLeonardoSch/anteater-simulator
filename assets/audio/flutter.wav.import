@@ -2,13 +2,13 @@
 
 importer="wav"
 type="AudioStreamWAV"
-uid="uid://bdjusmxlhvrqr"
-path="res://.godot/imported/buzz.wav-99e208d19c83955ff906237d59b0ab54.sample"
+uid="uid://c8g8y0wh320on"
+path="res://.godot/imported/flutter.wav-bfafb3574bf1e6e45d580bfb61e4125d.sample"
 
 [deps]
 
-source_file="res://assets/audio/buzz.wav"
-dest_files=["res://.godot/imported/buzz.wav-99e208d19c83955ff906237d59b0ab54.sample"]
+source_file="res://assets/audio/flutter.wav"
+dest_files=["res://.godot/imported/flutter.wav-bfafb3574bf1e6e45d580bfb61e4125d.sample"]
 
 [params]
 

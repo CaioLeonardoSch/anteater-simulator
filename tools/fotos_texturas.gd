@@ -8,7 +8,7 @@ extends Node
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/depois --so=chao,pedra
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
-## cupinzeiro, pedra, tronco, formigueiro, chao, capim, lagoa, penhasco, paredao,
+## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, chao, capim, lagoa, penhasco, paredao,
 ## caverna, trilha.
 
 var main
@@ -49,6 +49,20 @@ func _ready() -> void:
 			continue
 		await _look(n.global_position, j[2], j[3])
 		await _shot(j[0])
+	if _wanted("tronco_ponta"):
+		# De frente para uma ponta quebrada do tronco caído (a madeira à mostra).
+		var n := _find(mats.log_bark)
+		if n:
+			var half: float = n.get_meta("radius", 2.0)
+			var axis := n.global_transform.basis.x.normalized()
+			var tip := n.global_transform * Vector3(-half, 0.2, 0.0)
+			var from := tip - axis * 1.5 + n.global_transform.basis.z.normalized() * 0.5
+			var d := tip - from
+			p.place_at(Vector2(from.x, from.z), atan2(-d.x, -d.z))
+			await get_tree().physics_frame
+			var aim: Vector3 = tip - p.camera.global_position
+			p.pitch = clampf(asin(aim.normalized().y), -1.3, 1.3)
+			await _shot("tronco_ponta")
 	if _wanted("formigueiro"):
 		await _look(main.world.nests[0].global_position, 4.0, 0.2)
 		await _shot("formigueiro")

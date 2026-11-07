@@ -163,7 +163,7 @@ const UPGRADES := [
 		"desc": "A estamina volta mais que o dobro do começo."},
 	{"id": "patas_ligeiras", "branch": 2, "col": 0, "row": 1, "cost": 60, "requires": ["patas_folego"], "gate": 3000,
 		"name": "Corrida nível 1",
-		"desc": "Corre mais rápido: +50% sobre andar (eram +25%)."},
+		"desc": "Corre 25% mais rápido."},
 	{"id": "patas_lamber", "branch": 2, "col": 0, "row": 2, "cost": 90, "requires": ["patas_ligeiras"], "gate": 13000,
 		"name": "Corrida nível 2",
 		"desc": "Dá para lamber enquanto corre."},
@@ -173,7 +173,7 @@ const UPGRADES := [
 	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "cost": 20, "requires": [],
 		"name": "Farejar",
-		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles) e a que distância está o mais perto. Recarrega em 10 s."},
+		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles), a que distância está o mais perto, e a bússola aponta o maior grupo. Recarrega em 10 s."},
 	{"id": "faro_atento", "branch": 3, "col": 0, "row": 1, "cost": 40, "requires": ["faro_farejar"], "gate": 1000,
 		"name": "Alcance nível 1",
 		"desc": "Fareja até 16 m e até 250 insetos. Recarrega em 9 s."},
@@ -694,8 +694,9 @@ func _level(ids: Array) -> int:
 	return n
 
 
+## Andar: 2,8 m/s (era 3,3; ficou 15% mais lento a pedido dos testes).
 func walk_speed() -> float:
-	return 3.3
+	return 2.8
 
 
 ## Correr: +25% sobre andar desde o começo, +50% com Patas Ligeiras.

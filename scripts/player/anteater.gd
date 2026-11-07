@@ -734,9 +734,10 @@ func do_sniff() -> void:
 	swarm.set_scent_overlay(precision >= 2)
 	sniff_target = Vector3.INF
 	var points: PackedVector3Array = res.points
-	if precision >= 1 and not points.is_empty():
-		# Faro Preciso: nuvens borradas onde elas estão (com o Faro Nítido, as
-		# próprias formigas brilham no lugar da nuvem), e a bússola aponta o maior grupo.
+	if not points.is_empty():
+		# A bússola aponta o maior grupo desde o Farejar. Faro Preciso: nuvens
+		# borradas onde elas estão (com o Faro Nítido, as próprias formigas
+		# brilham no lugar da nuvem).
 		if precision == 1:
 			world.scent_marks.show_clouds(points)
 		var groups: Array = world.scent_marks.clusters(points)

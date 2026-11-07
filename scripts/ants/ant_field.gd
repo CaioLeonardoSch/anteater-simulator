@@ -257,7 +257,7 @@ func _add_roam_chunk(code: int, home: Vector2, reach: float, n: int, rng: Random
 		ch.buf[o + 14] = tint
 		ch.buf[o + 15] = 1.0
 	var y: float = world.ground_height(home.x, home.y)
-	var ext := Vector3(reach + 0.6, 3.0, reach + 0.6)
+	var ext := Vector3(reach + 0.6, maxf(3.0, reach * 0.5), reach + 0.6)
 	_finish_chunk(ch, AABB(Vector3(home.x, y, home.y) - ext, ext * 2.0))
 
 

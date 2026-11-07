@@ -19,15 +19,15 @@ const QUEEN_VALUE := Nest.QUEEN_VALUE
 const CHAMBER_VISIBLE := 40
 ## Parte das formigas de cada formigueiro nas trilhas e passeando pelo campo
 ## (o resto mora nas câmaras).
-const TRAIL_SHARE := 0.25
-const ROAM_SHARE := 0.25
+const TRAIL_SHARE := 0.2
+const ROAM_SHARE := 0.35
 ## Tanajuras em cada trilha (contam como formigas da trilha).
 const TANAJURAS_PER_TRAIL := 2
 const ROYAL_WEIGHT := 1.7
 ## Câmaras no meio do campo guardam menos moradoras.
 const SATELLITE_WEIGHT := 0.6
 ## Até onde as passeadoras vão (m), longe da câmara delas.
-const ROAM_REACH := 5.5
+const ROAM_REACH := 12.0
 const ROAM_REACH_MIN := 2.2
 
 var swarm
@@ -287,6 +287,10 @@ func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> in
 	elif not instant:
 		# Sem Garras Fortes, as moradoras saem correndo para longe.
 		swarm.scatter_home(code)
+	# Câmara aberta: as moradoras não voltam para ela, se espalham pela região
+	# (no buraco da rainha, a corte fica com ela).
+	if not c.royal:
+		swarm.disperse_home(code, c.pos2, instant)
 	if not instant:
 		chamber_opened.emit(nest, ci)
 		_check_chamber(nest, ci)
@@ -326,8 +330,12 @@ func _refill(nest, ci: int, from_tunnel: bool) -> void:
 	var want: int = mini(c.residents, _visible_cap(c))
 	var code: int = nest.index * 16 + ci
 	while c.shown < want:
-		if swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.area_radius(), from_tunnel, c.axis, c.half_len) < 0:
+		var i: int = swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.area_radius(), from_tunnel, c.axis, c.half_len)
+		if i < 0:
 			break
+		# As que saem do túnel depois vão direto para um canto da região.
+		if from_tunnel and not c.royal:
+			swarm.disperse(i, c.pos2)
 		c.shown += 1
 
 

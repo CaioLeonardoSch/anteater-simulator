@@ -32,6 +32,10 @@ const STRIDE := 20
 ## De quantos em quantos passos as formigas de campo conferem se o tamanduá
 ## está perto.
 const FLEE_CHECK_EVERY := 3
+## Tonta que acorda a menos disso do tamanduá sai fugindo (m).
+const WAKE_FLEE_DIST := 9.0
+## Até onde as moradoras de uma câmara aberta se espalham (m, mínimo e máximo).
+const DISPERSE_REACH := Vector2(4.0, 13.0)
 ## Quanto tempo a formiga "na mira" fica com o enxame antes de voltar ao campo.
 const GHOST_TIME := 1.2
 
@@ -569,6 +573,11 @@ func _update_stunned(i: int, delta: float) -> void:
 			var p2 := Vector2(p.x, p.z) + Vector2(to.x, to.z) / d * minf(2.6 * delta, d)
 			pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	if timer[i] <= 0.0:
+		# Acordou perto do tamanduá: continua fugindo de medo.
+		var tp2 := Vector2(threat_pos.x, threat_pos.z)
+		if kind[i] != QUEEN and Vector2(pos[i].x, pos[i].z).distance_to(tp2) < WAKE_FLEE_DIST:
+			_start_flee(i, tp2)
+			return
 		if home[i] >= 0:
 			# Longe da câmara (puxada pelo Terremoto ou tonta no meio da fuga): volta andando.
 			var off := Vector2(pos[i].x - anchor[i].x, pos[i].z - anchor[i].z)
@@ -579,6 +588,46 @@ func _update_stunned(i: int, delta: float) -> void:
 				vel[i] = -off.normalized() * speed[i]
 		else:
 			_start_return(i)
+
+
+## Câmara aberta (menos o buraco da rainha): as moradoras não voltam para ela.
+## Cada uma escolhe um canto da região em volta e passa a andar por lá.
+## `instant` = já põe cada uma no seu canto (ao carregar um jogo salvo).
+func disperse_home(home_code: int, center: Vector2, instant: bool = false) -> void:
+	for i in CAPACITY:
+		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN:
+			continue
+		disperse(i, center, instant)
+
+
+func disperse(i: int, center: Vector2, instant: bool = false) -> void:
+	var spot := _spread_spot(center)
+	anchor[i] = Vector3(spot.x, randf_range(1.2, 2.4), spot.y)
+	dir[i] = 0.0
+	lateral[i] = 0.0
+	if instant:
+		pos[i] = Vector3(spot.x, world.ground_height(spot.x, spot.y), spot.y)
+		mode[i] = Mode.CHAMBER
+	elif mode[i] == Mode.CHAMBER:
+		mode[i] = Mode.RETURN
+
+
+## Um ponto a DISPERSE_REACH metros da câmara, fora das lagoas e dentro do campo.
+func _spread_spot(center: Vector2) -> Vector2:
+	var best := center
+	for k in 8:
+		var p := center + Vector2.RIGHT.rotated(randf() * TAU) * randf_range(DISPERSE_REACH.x, DISPERSE_REACH.y)
+		if p.length() > world.walk_limit(p) - 1.5:
+			continue
+		var wet := false
+		for w in world.ponds:
+			if p.distance_to(Vector2(w.x, w.y)) < w.z + 1.0:
+				wet = true
+				break
+		if not wet:
+			return p
+		best = p
+	return best
 
 
 ## Câmara recém-aberta: as moradoras saem correndo para longe do tamanduá.

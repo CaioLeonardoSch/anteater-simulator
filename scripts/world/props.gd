@@ -292,7 +292,10 @@ static func build_log(rng: RandomNumberGenerator, mats) -> Node3D:
 
 
 ## Tufo de capim: várias folhas curvas e afinando, com COLOR.r = altura.
-static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_heads: bool) -> ArrayMesh:
+## `lite`: versão para longe, com as mesmas folhas em 2 gomos em vez de 4 (3
+## triângulos por folha em vez de 7). Com o mesmo estado do sorteio, sai a
+## mesma touceira.
+static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_heads: bool, lite: bool = false) -> ArrayMesh:
 	var b := MeshBuilder.new()
 	for i in blades:
 		var start := b.verts.size()
@@ -307,10 +310,11 @@ static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_head
 		var widths := PackedFloat32Array()
 		var hs := PackedFloat32Array()
 		var w0 := rng.randf_range(0.05, 0.075)
-		for k in 5:
-			var t := k / 4.0
+		var segs := 2 if lite else 4
+		for k in segs + 1:
+			var t := float(k) / segs
 			pts.append(base + Vector3.UP * h * t + out * h * lean * t * t)
-			widths.append(w0 * pow(1.0 - t, 0.6) if k < 4 else 0.0)
+			widths.append(w0 * pow(1.0 - t, 0.6) * (1.15 if lite else 1.0) if k < segs else 0.0)
 			hs.append(t * h)
 		b.add_ribbon(pts, widths, side, out, hs)
 		var rnd := rng.randf()
@@ -326,13 +330,14 @@ static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_head
 			var pts := PackedVector3Array()
 			var widths := PackedFloat32Array()
 			var hs := PackedFloat32Array()
-			for k in 7:
-				var t := k / 6.0
+			var ts: Array = [0.0, 0.62, 0.81, 1.0] if lite else [0.0, 1 / 6.0, 2 / 6.0, 3 / 6.0, 4 / 6.0, 5 / 6.0, 1.0]
+			for k in ts.size():
+				var t: float = ts[k]
 				pts.append(Vector3.UP * h * t + out * 0.25 * t * t)
 				var w := 0.012
 				if t > 0.62:
 					w = 0.05 * sin((t - 0.62) / 0.38 * PI) + 0.004
-				widths.append(w if k < 6 else 0.0)
+				widths.append(w if k < ts.size() - 1 else 0.0)
 				hs.append(t * h)
 			b.add_ribbon(pts, widths, side, out, hs)
 			for v in range(start, b.verts.size()):

@@ -311,3 +311,21 @@ func add_ribbon(points: PackedVector3Array, widths: PackedFloat32Array, side: Ve
 			idx += 1
 		else:
 			idx += 1
+
+
+## Copia a malha com versões mais simples para longe (LOD automático do Godot:
+## a placa de vídeo troca sozinha conforme o tamanho na tela, também nas sombras).
+## Malhas pequenas ficam como estão.
+static func with_lods(mesh: ArrayMesh, min_tris: int = 300) -> ArrayMesh:
+	var tris := 0
+	for s in mesh.get_surface_count():
+		tris += mesh.surface_get_array_index_len(s) / 3
+	if tris < min_tris or mesh.get_blend_shape_count() > 0:
+		return mesh
+	var im := ImporterMesh.new()
+	for s in mesh.get_surface_count():
+		im.add_surface(mesh.surface_get_primitive_type(s), mesh.surface_get_arrays(s), [], {},
+			mesh.surface_get_material(s), mesh.surface_get_name(s), mesh.surface_get_format(s))
+	im.generate_lods(25.0, 60.0, [])
+	var out := im.get_mesh()
+	return out if out else mesh

@@ -7,14 +7,23 @@ const Props := preload("res://scripts/world/props.gd")
 
 const CHUNK := 16.0
 const EXTENT := 78.0
+## Blocos com o centro além disto (m) usam a touceira leve. O capim de perto
+## some aos ~26 m; o de longe vai até o fim da vista (64 m no Ultra).
+const LITE_NEAR := 14.0
+const LITE_FAR := 26.0
+## Folga no fim da vista: o bloco fica até o capim da ponta dele sumir no fade.
+const PAD := CHUNK * 0.75
 
 
 func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_dist: float) -> void:
-	var variants: Array[ArrayMesh] = [
-		Props.build_grass_clump(rng, 12, false),
-		Props.build_grass_clump(rng, 15, false),
-		Props.build_grass_clump(rng, 10, true),
-	]
+	# Cada touceira tem a versão cheia (perto) e a leve (longe), iguais no formato.
+	var variants: Array[ArrayMesh] = []
+	var lite: Array[ArrayMesh] = []
+	for v in [[12, false], [15, false], [10, true]]:
+		var state := rng.state
+		variants.append(Props.build_grass_clump(rng, v[0], v[1]))
+		rng.state = state
+		lite.append(Props.build_grass_clump(rng, v[0], v[1], true))
 	var flower_mesh := Props.build_flower_mesh()
 	var patch := FastNoiseLite.new()
 	patch.seed = rng.randi()
@@ -32,9 +41,10 @@ func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_
 	var flower_mat: ShaderMaterial = mats.flower
 	flower_mat.set_shader_parameter("fade_end", near_dist * 1.2)
 	flower_mat.set_shader_parameter("fade_start", near_dist * 0.8)
+	# "lite": a partir de que distância (do centro do bloco) usa a touceira leve.
 	var layers := [
-		{"density": 1.1, "mat": far_mat, "range": view_dist, "scale": 1.12},
-		{"density": 3.0 * density_mult, "mat": near_mat, "range": near_dist, "scale": 1.0},
+		{"density": 1.1, "mat": far_mat, "range": view_dist, "scale": 1.12, "lite": LITE_FAR},
+		{"density": 3.0 * density_mult, "mat": near_mat, "range": near_dist, "scale": 1.0, "lite": LITE_NEAR},
 	]
 	var flowers_per_chunk := int(CHUNK * CHUNK * 0.16 * density_mult)
 	var n := int(ceil(EXTENT * 2.0 / CHUNK))
@@ -68,8 +78,15 @@ func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_
 					var v := 2 if rng.randf() < 0.14 else (rng.randi() % 2)
 					lists[v].append(Transform3D(basis, Vector3(x, y, z)))
 				for v in 3:
-					if not lists[v].is_empty():
-						_add_multimesh(variants[v], lists[v], layer.mat, float(layer.range))
+					if lists[v].is_empty():
+						continue
+					var split: float = layer.lite
+					var end := float(layer.range) + PAD
+					if split >= end:
+						_add_multimesh(variants[v], lists[v], layer.mat, 0.0, end)
+					else:
+						_add_multimesh(variants[v], lists[v], layer.mat, 0.0, split)
+						_add_multimesh(lite[v], lists[v], layer.mat, split, end)
 			var flowers: Array = []
 			var colors: Array = []
 			for _k in flowers_per_chunk:
@@ -84,10 +101,12 @@ func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_
 				flowers.append(Transform3D(basis, Vector3(x, terrain.get_height(x, z) - 0.01, z)))
 				colors.append(flower_colors[rng.randi() % flower_colors.size()])
 			if not flowers.is_empty():
-				_add_multimesh(flower_mesh, flowers, flower_mat, near_dist * 1.2, colors)
+				_add_multimesh(flower_mesh, flowers, flower_mat, 0.0, near_dist * 1.2 + PAD, colors)
 
 
-func _add_multimesh(mesh: Mesh, xforms: Array, mat: Material, view_dist: float, custom: Array = []) -> void:
+## Mostra o bloco quando o centro dele está entre `from_dist` e `view_dist`.
+func _add_multimesh(mesh: Mesh, xforms: Array, mat: Material, from_dist: float, view_dist: float,
+		custom: Array = []) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = not custom.is_empty()
@@ -101,5 +120,6 @@ func _add_multimesh(mesh: Mesh, xforms: Array, mat: Material, view_dist: float, 
 	mmi.multimesh = mm
 	mmi.material_override = mat
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mmi.visibility_range_end = view_dist + CHUNK * 0.75
+	mmi.visibility_range_end = view_dist
+	mmi.visibility_range_begin = from_dist
 	add_child(mmi)

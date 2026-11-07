@@ -175,7 +175,43 @@ func _build_mesh(material: Material) -> void:
 	mesh_instance = MeshInstance3D.new()
 	mesh_instance.name = "TerrainMesh"
 	mesh_instance.mesh = mesh
+	# A sombra do chão sai de uma cópia 4 vezes mais grossa (abaixo).
+	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mesh_instance)
+	_build_shadow_mesh()
+
+
+## Sombra do chão: o terreno numa grade 4x mais grossa (1/16 dos triângulos),
+## um pouco afundada para não sombrear o chão de verdade por engano. O chão
+## quase não faz sombra em si mesmo (as encostas são suaves), mas a sombra é
+## desenhada até 4 vezes por quadro, então a malha cheia custava caro.
+func _build_shadow_mesh() -> void:
+	const STEP := 4
+	const SINK := 0.15
+	var n := RES + 1
+	var m := RES / STEP + 1
+	var verts := PackedVector3Array()
+	verts.resize(m * m)
+	for j in m:
+		for i in m:
+			var h := heights[(j * STEP) * n + i * STEP]
+			verts[j * m + i] = Vector3(-SIZE * 0.5 + i * STEP * cell, h - SINK, -SIZE * 0.5 + j * STEP * cell)
+	var idxs := PackedInt32Array()
+	for j in m - 1:
+		for i in m - 1:
+			var a := j * m + i
+			idxs.append_array([a, a + 1, a + m + 1, a, a + m + 1, a + m])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_INDEX] = idxs
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var mi := MeshInstance3D.new()
+	mi.name = "TerrainShadow"
+	mi.mesh = mesh
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	add_child(mi)
 
 
 func _build_collision() -> void:

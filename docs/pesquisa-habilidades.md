@@ -605,6 +605,30 @@ roda de novo para acertar.
   com setas).
 - O cartão "Aprendida" vira "Clique 2 de 3" e "Completa".
 
+## 10. Bot com a árvore de cliques (07/11/2026)
+
+O bot jogou a partida inteira com a árvore nova, comprando em rodízio entre
+os ramos (sempre o clique mais barato do nível mais baixo de cada ramo). Ele
+come bem mais devagar que uma pessoa (10 000 insetos em 67 minutos; o Caio
+comeu 21 419 em 46), então os minutos abaixo esticam o jogo: importa o
+ritmo, não o relógio.
+
+- **Comprou os 75 cliques** e terminou a clareira com 173 pontos sobrando.
+- **Uma compra a cada 1 min 42 s** (a mediana). No ritmo de uma pessoa, fica
+  perto de uma a cada 40 s.
+- Cliques comprados: 3 até 10 min, 13 até 20, 22 até 30, 40 até 60 e 61 até
+  120 minutos (de jogo do bot).
+- **As esperas mais longas são as pontas caras** (Alcance 3, Tremor 3,
+  Precisão 3, Corrida 3: de 5 a 11 minutos juntando pontos), como planejado.
+  Em quase todas as travas sobravam menos de 30 pontos: o que segura é o
+  ponto, não a trava.
+- **Fugir a 2,5 m andando não atrapalhou:** um segundo bot, com a distância
+  antiga (1,9 m), comeu no mesmo ritmo (9 056 insetos em 60 min, contra
+  9 265 com a regra nova).
+
+Por isso os preços ficaram como na proposta. O próximo ajuste deve vir da
+jogatina do Caio com a árvore nova (a telemetria anota cada clique comprado).
+
 ## Fontes
 
 - Anthony Pecorella, "The Math of Idle Games",

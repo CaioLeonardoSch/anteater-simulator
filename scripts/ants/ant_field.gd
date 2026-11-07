@@ -24,9 +24,9 @@ const FIELD_SCENT_SHADER := preload("res://shaders/ant_field_scent.gdshader")
 const TRAIL := 0
 const ROAM := 1
 ## Faixas de distância de cada camada (malha detalhada perto, mínima longe).
-## A formiga (15 cm) tem uns 40 pixels a 2,5 m e uns 25 a 6 m (tela de 1080
-## linhas): a malha de 3500 triângulos só vale bem de perto.
-const LOD_BANDS := [Vector2(0.0, 2.5), Vector2(2.5, 6.0), Vector2(6.0, 22.0), Vector2(22.0, 40.0),
+## A formiga (15 cm) tem uns 40 pixels a 2,5 m, 25 a 6 m e 12 a 13 m (tela
+## de 1080 linhas): a malha detalhada só vale bem de perto.
+const LOD_BANDS := [Vector2(0.0, 2.5), Vector2(2.5, 6.0), Vector2(6.0, 13.0), Vector2(13.0, 40.0),
 	Vector2(40.0, 100000.0)]
 ## Sombra das formigas das duas primeiras faixas (até 6 m): a da 1ª com a
 ## malha bem simples e a da 2ª com a mínima (aí a sombra é um risquinho).

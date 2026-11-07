@@ -227,9 +227,10 @@ Em **Configurações**:
 
 - **Tela:** janela, tela cheia ou tela cheia exclusiva; resolução (em tela
   cheia, ela muda só o 3D e a interface continua nítida); resolução do 3D (50 a
-  100%); VSync; limite de FPS.
+  100%); VSync; limite de FPS; medidor de desempenho (FPS, tempo do quadro e
+  da placa de vídeo, triângulos), que também liga e desliga com **F3**.
 - **Gráficos:** um preset ajusta tudo de uma vez, ou ajuste item por item:
-  sombras, capim, suavização (FXAA, MSAA ou TAA), sombra de contato (SSAO), luz
+  sombras, capim, suavização (FXAA, SMAA, MSAA, MSAA 2x + SMAA ou TAA), sombra de contato (SSAO), luz
   rebatida (SSIL), neblina volumétrica e brilho do sol.
 - **Jogo:** sensibilidade do mouse e do controle, inverter eixo Y, campo de
   visão, balanço da câmera, cor do faro, dicas (Todas, Poucas ou Nenhuma),
@@ -244,7 +245,10 @@ Em **Configurações**:
 | Baixa | menos capim, sombras curtas, sem SSAO, FXAA, resolução 3D a 80% |
 | Média | SSAO, sombras médias, MSAA 2x (padrão com vídeo integrado) |
 | Alta | capim denso, sombras longas (padrão com placa de vídeo dedicada) |
-| Ultra | ainda mais capim, neblina volumétrica, SSIL, MSAA 4x |
+| Ultra | ainda mais capim, neblina volumétrica, SSIL, MSAA 2x + SMAA |
+
+Quem escolhe um preset recebe os valores dele mesmo quando o preset muda numa
+versão nova; só a qualidade **Personalizada** guarda item por item.
 
 ---
 

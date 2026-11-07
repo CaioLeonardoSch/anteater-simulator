@@ -309,7 +309,9 @@ Feito, seguindo as decisões:
    do faro** (vermelho, ciano, magenta ou branco), **Dicas** (Todas, Poucas ou
    Nenhuma), sensibilidade do controle, **mostrar a interface (HUD)**, **trocar
    as teclas**, Correr e Cavar como segurar ou apertar uma vez, e volumes de
-   música, efeitos e ambiente. **F11** ou **Alt+Enter** alternam a tela cheia.
+   música, efeitos e ambiente. **F11** ou **Alt+Enter** alternam a tela cheia;
+   **F3** mostra o medidor de desempenho (FPS, tempo da placa de vídeo,
+   triângulos).
 10. **Pausa de verdade:** na pausa e na árvore de habilidades, as formigas
    param.
 11. **Penhascos** em volta da clareira, que são o fim do mapa, com muitas
@@ -370,8 +372,10 @@ Ainda a ajustar:
   o robô de testes). Como referência: num teste automático da segunda rodada, um
   robô de mira perfeita terminou a colônia (então com 3200 formigas) em cerca
   de 19 minutos.
-- **Desempenho:** os 44 000 insetos foram testados só num servidor sem placa
-  de vídeo; falta medir num PC de verdade.
+- **Desempenho:** a medição de 07/11/2026 (servidor sem placa de vídeo, que
+  conta o que é desenhado) mostrou onde ia o trabalho e levou às mudanças da
+  tabela do histórico. Falta medir num PC de verdade com o medidor do jogo
+  (**F3**).
 - **Economia das habilidades:** a pesquisa de 05/11/2026
   ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
   tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
@@ -654,3 +658,4 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 07/11/2026 | Câmara aberta | As moradoras fugiam e voltavam para andar em cima da câmara; as tontas acordavam e voltavam ao normal | Elas se espalham pela região em volta e ficam por lá; as tontas, ao acordar perto do tamanduá, saem fugindo |
 | 07/11/2026 | Farejar | Sem Precisão, só um número no canto da tela | A bússola aponta o maior grupo farejado desde o Farejar |
 | 07/11/2026 | Árvore de habilidades | O 1º nó do Bocado ficava em cima do 1º do Fôlego | Ramos da Língua e das Patas mais afastados, e os de 4 linhas um pouco mais fechados |
+| 07/11/2026 | Desempenho (placa de vídeo) | No Ultra, 4,8–7,7 milhões de triângulos por quadro na imagem e 2,0–2,7 milhões na sombra. As formigas de longe tinham 68–114 triângulos e a malha detalhada (3500) ia até 4 m. As tanajuras usavam sempre a malha detalhada, com sombra. O chão inteiro e os torrões dos formigueiros faziam sombra, e o MSAA 4x pesava 40% do quadro | Formigas com 5 malhas (2 600 / 880 / 220 / 30 / 12 triângulos, trocando a 2,5, 6, 13 e 40 m) e sombras com malhas simples. Tanajuras simples a partir de 9,5 m. Sombra do chão numa grade 4x mais grossa. Torrões sem sombra e só até 35 m. Capim leve nos blocos de longe. Árvores, pedras e montes com versões automáticas para longe, e folhas com mipmaps. Ultra com MSAA 2x + SMAA. Resultado: 1,8–3,1 milhões na imagem e 0,26–0,54 milhão na sombra, e 40–48% menos tempo de desenho na mesma máquina de teste. Medidor no jogo (F3) |

@@ -16,7 +16,10 @@ const FPS_LIMITS := [0, 30, 60, 120, 144, 165, 240]
 const RENDER_SCALES := [1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
 const SHADOW_NAMES := ["Baixa", "Média", "Alta", "Ultra"]
 const GRASS_NAMES := ["Pouco", "Médio", "Muito", "Máximo"]
-const AA_NAMES := ["Desligado", "FXAA", "MSAA 2x", "MSAA 4x", "TAA"]
+## (Novas opções entram no fim para não mudar o que já está salvo.) SMAA: filtro
+## de bordas nítido; junto com o MSAA 2x custa bem menos que o MSAA 4x e
+## suaviza quase igual.
+const AA_NAMES := ["Desligado", "FXAA", "MSAA 2x", "MSAA 4x", "TAA", "SMAA", "MSAA 2x + SMAA"]
 ## Cor do faro: precisa contrastar com o cerrado (dourado e vermelho de terra).
 const SNIFF_COLOR_NAMES := ["Vermelho", "Ciano", "Magenta", "Branco"]
 const SNIFF_COLORS := [Color(1.0, 0.16, 0.12), Color(0.2, 0.95, 1.0), Color(1.0, 0.25, 0.85), Color(1.0, 1.0, 1.0)]
@@ -33,7 +36,7 @@ const PRESETS := [
 	{"shadow_quality": 2, "grass_quality": 2, "ssao": true, "ssil": false, "volumetric_fog": false,
 		"glow": true, "antialiasing": 2, "render_scale": 1.0},
 	{"shadow_quality": 3, "grass_quality": 3, "ssao": true, "ssil": true, "volumetric_fog": true,
-		"glow": true, "antialiasing": 3, "render_scale": 1.0},
+		"glow": true, "antialiasing": 6, "render_scale": 1.0},
 ]
 const GRAPHICS_KEYS := ["shadow_quality", "grass_quality", "ssao", "ssil", "volumetric_fog", "glow",
 	"antialiasing", "render_scale"]
@@ -355,10 +358,14 @@ func load_settings() -> void:
 		_pick_default_quality()
 		return
 	graphics_quality = clampi(int(cfg.get_value("video", "quality", graphics_quality)), 0, CUSTOM)
+	# Com um preset escolhido valem os valores dele (assim, quando um preset muda
+	# numa versão nova, quem usa ele recebe a mudança). Só a Personalizada lê
+	# item por item.
 	if graphics_quality < CUSTOM:
 		_apply_preset_values(graphics_quality)
-	for key in GRAPHICS_KEYS:
-		set(key, cfg.get_value("graphics", key, get(key)))
+	else:
+		for key in GRAPHICS_KEYS:
+			set(key, cfg.get_value("graphics", key, get(key)))
 	shadow_quality = clampi(shadow_quality, 0, 3)
 	grass_quality = clampi(grass_quality, 0, 3)
 	antialiasing = clampi(antialiasing, 0, AA_NAMES.size() - 1)

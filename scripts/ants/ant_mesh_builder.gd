@@ -5,7 +5,8 @@ extends RefCounted
 ## Unidade: a formiga tem ~1 de comprimento, olha para -Z e pisa em y = 0.
 ## As operárias andam em grupos de 10: `squad()` junta 10 cópias numa malha só
 ## (CUSTOM1.w = qual delas) e o shader espalha cada uma no seu lugar.
-## LOD: 0 = detalhada (perto), 1 = simples, 2 = bem simples, 3 = mínima (longe).
+## LOD: 0 = detalhada (perto), 1 = simples, 2 = bem simples, 3 = mínima, 4 = só um
+## fuso e a folha (bem longe).
 
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
@@ -43,8 +44,8 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 	b.use_custom0 = true
 	b.use_custom1 = true
 	var tiny := lod >= 2
-	var rings: int = [12, 5, 3][clampi(lod, 0, 2)]
-	var segs: int = [18, 7, 5][clampi(lod, 0, 2)]
+	var rings: int = [9, 5, 3][clampi(lod, 0, 2)]
+	var segs: int = [14, 7, 5][clampi(lod, 0, 2)]
 	var leg_sides: int = [6, 4, 3][clampi(lod, 0, 2)]
 	var head_s := 1.0
 	var gaster_s := 1.0

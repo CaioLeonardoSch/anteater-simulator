@@ -27,6 +27,7 @@ const TERRA_COR := preload("res://assets/textures/terra/cor.png")
 const TERRA_RELEVO := preload("res://assets/textures/terra/relevo.png")
 const CAVA_COR := preload("res://assets/textures/cava/cor.png")
 const CAVA_RELEVO := preload("res://assets/textures/cava/relevo.png")
+const AGUA := preload("res://shaders/agua.gdshader")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -52,6 +53,7 @@ var arenito: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
 var nest_fungus: ShaderMaterial
+var water: ShaderMaterial
 
 
 func _init() -> void:
@@ -210,6 +212,12 @@ func _init() -> void:
 	# Jardim de fungo das saúvas nas câmaras abertas: esponja clara.
 	nest_fungus = nest_soil.duplicate()
 	nest_fungus.set_shader_parameter("fungus_mode", true)
+	# Água das lagoas: ondinhas de um ruído em forma de relevo (sem emenda).
+	var ripple := _make_noise(256, 0.035, 3, 23)
+	ripple.as_normal_map = true
+	ripple.bump_strength = 3.0
+	water = _shader(AGUA)
+	water.set_shader_parameter("ripple_tex", ripple)
 
 
 func _make_noise(size: int, freq: float, octaves: int, seed_value: int) -> NoiseTexture2D:

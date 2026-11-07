@@ -8,7 +8,7 @@ extends Node
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/depois --so=chao,pedra
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
-## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, penhasco, paredao,
+## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, trilha, camara, camara_funda, camara_campo, cratera.
 
 var main
@@ -139,6 +139,15 @@ func _ready() -> void:
 		await _look(lagoa.global_transform * aabb.get_center(), aabb.size.x * 0.5 + 3.0, 0.0)
 		p.pitch = -0.35
 		await _shot("lagoa")
+	if _wanted("lagoa_beira") and not main.world.pond_shapes.is_empty():
+		# Na beira, olhando para a água rasa e a lama (de onde o tamanduá bebe).
+		var l: Vector3 = main.world.pond_shapes[0][0]
+		var c2 := Vector2(l.x, l.y)
+		var dir := (-c2).normalized() if c2.length() > 1.0 else Vector2(1, 0)
+		var edge := c2 + dir * l.z * 0.75
+		var gy: float = main.world.terrain.get_height(edge.x, edge.y)
+		await _look_from(c2 + dir * (l.z + 1.6), Vector3(edge.x, gy, edge.y))
+		await _shot("lagoa_beira")
 	if _wanted("penhasco"):
 		var gp: Vector3 = main.world.giant_mound.global_position
 		var dir := Vector2(gp.x, gp.z).normalized()

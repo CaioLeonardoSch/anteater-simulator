@@ -35,6 +35,9 @@ uniform float detail_amount : hint_range(0.0, 1.5) = 0.9;
 uniform float relief_strength : hint_range(0.0, 3.0) = 1.0;
 // Distância (m) em que o relevo some, para não piscar de longe.
 uniform vec2 relief_fade = vec2(18.0, 55.0);
+// Lama molhada na beira das lagoas (canal alfa da máscara).
+uniform vec3 mud_tint : source_color = vec3(0.52, 0.40, 0.30);
+uniform float mud_rough : hint_range(0.0, 1.0) = 0.55;
 
 varying vec3 wpos;
 
@@ -144,13 +147,17 @@ void fragment() {
 	vec3 col = mix(col_g, col_t, w);
 	// Trilha um pouco mais escura no centro (pisoteada).
 	col *= 1.0 - m.r * 0.12 * smoothstep(0.6, 1.0, m.r);
+	// Beira das lagoas: lama escura, lisa e brilhante, com poças onde é mais baixo.
+	float wet = smoothstep(0.2, 0.75, m.a + (n_mid - 0.5) * 0.35 + (n_fine - 0.5) * 0.15);
+	float puddle = wet * smoothstep(0.55, 0.8, n_fine + (0.5 - t.h) * 0.6);
+	col = mix(col, col * mud_tint, wet);
 	ALBEDO = col;
 
-	vec2 slope = mix(g.slope, t.slope, w) * relief_strength * fade;
+	vec2 slope = mix(g.slope, t.slope, w) * relief_strength * fade * (1.0 - wet * 0.65);
 	vec3 nw = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	nw = normalize(vec3(nw.x + slope.x, nw.y, nw.z + slope.y));
 	NORMAL = normalize((VIEW_MATRIX * vec4(nw, 0.0)).xyz);
 
-	ROUGHNESS = mix(0.92, mix(g.rough, t.rough, w), fade);
+	ROUGHNESS = mix(mix(0.92, mix(g.rough, t.rough, w), fade), mix(mud_rough, 0.2, puddle), wet);
 	SPECULAR = 0.25;
 }

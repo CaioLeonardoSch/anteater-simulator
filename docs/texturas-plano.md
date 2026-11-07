@@ -74,9 +74,9 @@ atuais projetam as manchas nas três direções do mundo (projeção triplanar,
 | Cupinzeiros | `props.gd` `build_termite_mound` | `clay` | `soft_surface` |
 | Casca das árvores e arbustos | `props.gd` `build_tree`, `build_shrub` | `bark` | `soft_surface` |
 | Troncos caídos | `props.gd` `build_log` | `log_bark` | `soft_surface` |
-| Formigueiros e tampas das câmaras | `scripts/world/nest.gd` | `nest_soil`, `nest_cap` | `soft_surface` |
+| Formigueiros e tampas das câmaras | `scripts/world/nest.gd` | `nest_soil`, `nest_cap`, `nest_fungus` | `shaders/formigueiro.gdshader` |
 | Copas, arbustos, ipês | `props.gd` | `leaves_*`, `shrub_*`, `ipe_*` | `shaders/foliage.gdshader` + `assets/textures/leaf_cluster.png` / `flower_cluster.png` (256 px, geradas por `tools/gen_textures.py`) |
-| Lagoas | `scripts/world/world.gd` `_build_pond_water` | `StandardMaterial3D` com cor por vértice | — |
+| Lagoas | `scripts/world/world.gd` `_build_pond_water` | `water` | `shaders/agua.gdshader` |
 | Capim | `scripts/world/grass.gd` | `grass` | `shaders/grass.gdshader` |
 | Terra ao cavar, poeira | `scripts/world/nest.gd`, `world.gd` | `StandardMaterial3D` de cor lisa | — |
 | Cupinzeiro gigante no horizonte | `scripts/world/giant_mound.gd` | próprio | `shaders/landmark.gdshader` |
@@ -143,7 +143,7 @@ godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/fotos/
 
 Nomes das fotos: `arvore`, `copa`, `ipe`, `arbusto`, `cupinzeiro`, `pedra`,
 `tronco`, `tronco_ponta`, `formigueiro`, `formigueiro_grande`, `camara`, `camara_funda`,
-`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `penhasco`, `paredao`, `caverna`, `trilha`. Tire
+`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `trilha`. Tire
 o "antes" de tudo uma vez, no começo. Mostre ao Caio o antes e o depois lado a
 lado. Também vale uma volta no jogo de verdade (com o MCP do Godot), porque a
 foto parada não mostra a repetição da textura nem o FPS.
@@ -195,7 +195,7 @@ o que for feito nos cupinzeiros).
 | Casca das árvores | feito em 07/11/2026: `assets/textures/casca/`, feita por `tools/blender_casca.py`; shader próprio (`shaders/casca.gdshader`, material `bark`), com a estampa presa a cada galho |
 | Troncos caídos | feito em 07/11/2026: mesma estampa e shader da casca (`shaders/casca.gdshader`, material `log_bark`), com falhas mostrando a madeira (`bare_amount`), musgo só embaixo (`moss_amount`) e pontas quebradas com anéis (`add_log_end` em `props.gd`, UV2.x = 1); vale também para o tronco da passagem |
 | Formigueiros e câmaras | feito em 07/11/2026: `assets/textures/terra/` (monte e tampas) e `assets/textures/cava/` (terra cavada), feitas por `tools/blender_terra.py` e `tools/blender_cava.py`; shader `shaders/formigueiro.gdshader` (materiais `nest_soil`, `nest_cap`, `nest_fungus`). Monte com contorno irregular e olheiros em cone; câmaras por nível em `nest.gd`: rasa (nível 1), anel de terra no campo, poço fundo com fungo e túneis (nível 2) e cratera em degraus com câmaras cortadas (rainha) |
-| Lagoas | a fazer |
+| Lagoas | feito em 07/11/2026: shader próprio `shaders/agua.gdshader` (material `water`): reflete as cores do céu (atualizadas com o dia em `world.gd` `_apply_day`) e o paredão numa faixa no fundo (altura reduzida de propósito, `cliff_height`), ondinhas com o vento, transparência pelo caminho da luz na água. Lama molhada na beira pelo canal alfa da máscara do terreno (`mud_tint`, `mud_rough` em `terrain.gdshader`) |
 | Copas e arbustos | a fazer |
 | Chão da mata | a fazer |
 | Terra ao cavar | a fazer |

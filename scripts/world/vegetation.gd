@@ -119,6 +119,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 		_no_shadows(tree)
 		_put(tree, origin, rng)
 	_build_edges(world)
+	_add_lods(self, {})
 	for o in obstacles:
 		terrain.mask_paint(o.x, o.y, o.z + 0.25, 2, 1.0)
 
@@ -277,6 +278,17 @@ func _ai(model_name: String, target: Vector3, col_radius: float, col_height: flo
 		body.add_child(col)
 		node.add_child(body)
 	return node
+
+
+## Dá às malhas versões mais simples para longe (e para as sombras).
+func _add_lods(node: Node, done: Dictionary) -> void:
+	if node is MeshInstance3D and (node as MeshInstance3D).mesh is ArrayMesh:
+		var mi := node as MeshInstance3D
+		if not done.has(mi.mesh):
+			done[mi.mesh] = MeshBuilder.with_lods(mi.mesh)
+		mi.mesh = done[mi.mesh]
+	for c in node.get_children():
+		_add_lods(c, done)
 
 
 func _no_shadows(node: Node) -> void:

@@ -5,7 +5,8 @@ extends RefCounted
 ## Unidade: a formiga tem ~1 de comprimento, olha para -Z e pisa em y = 0.
 ## As operárias andam em grupos de 10: `squad()` junta 10 cópias numa malha só
 ## (CUSTOM1.w = qual delas) e o shader espalha cada uma no seu lugar.
-## LOD: 0 = detalhada (perto), 1 = simples, 2 = bem simples, 3 = mínima (longe).
+## LOD: 0 = detalhada (perto), 1 = simples, 2 = bem simples, 3 = mínima, 4 = só um
+## fuso e a folha (bem longe).
 
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
@@ -43,8 +44,8 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 	b.use_custom0 = true
 	b.use_custom1 = true
 	var tiny := lod >= 2
-	var rings: int = [12, 6, 4][clampi(lod, 0, 2)]
-	var segs: int = [18, 8, 6][clampi(lod, 0, 2)]
+	var rings: int = [9, 5, 3][clampi(lod, 0, 2)]
+	var segs: int = [14, 7, 5][clampi(lod, 0, 2)]
 	var leg_sides: int = [6, 4, 3][clampi(lod, 0, 2)]
 	var head_s := 1.0
 	var gaster_s := 1.0
@@ -106,7 +107,8 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 		# Olhos brilhantes.
 		b.color = Color(0.05, 0.03, 0.02)
 		for sx in [-1.0, 1.0]:
-			b.add_ellipsoid(Vector3(sx * 0.115 * head_s, 0.255, -0.335 - (head_s - 1.0) * 0.08), Vector3(0.03, 0.032, 0.03) * clampf(head_s, 1.0, 1.2), 6, 10)
+			b.add_ellipsoid(Vector3(sx * 0.115 * head_s, 0.255, -0.335 - (head_s - 1.0) * 0.08), Vector3(0.03, 0.032, 0.03) * clampf(head_s, 1.0, 1.2),
+				6 if lod == 0 else 3, 10 if lod == 0 else 5)
 	var head_front := -0.4 - (head_s - 1.0) * 0.14
 	# --- Mandíbulas
 	b.color = Color(0.32, 0.12, 0.05)
@@ -147,6 +149,8 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 			var tarsus := foot + Vector3(sx * 0.05, -0.005, fd.z * 0.15)
 			if tiny:
 				b.add_tube(PackedVector3Array([hip, knee, foot]), PackedFloat32Array([0.026, 0.02, 0.014]), leg_sides, false, true)
+			elif lod == 1:
+				b.add_tube(PackedVector3Array([hip, knee, foot, tarsus]), PackedFloat32Array([0.024, 0.019, 0.012, 0.008]), leg_sides, false, true)
 			else:
 				var pts := PackedVector3Array([hip, hip.lerp(knee, 0.5), knee, knee.lerp(foot, 0.5), foot, tarsus])
 				b.add_tube(pts, PackedFloat32Array([0.024, 0.022, 0.019, 0.015, 0.012, 0.008]), leg_sides, false, true)
@@ -155,7 +159,9 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 		_tag(b, Part.LEAF, Vector3(0, 0.17, head_front - 0.09))
 		b.color = Color(0.36, 0.72, 0.18)
 		_add_leaf(b, Vector3(0, 0.17, head_front - 0.09), 6 if tiny else 14)
-		_add_hat(b, tiny)
+		# O chapéu (uma formiga em 16 000) só nas malhas de perto: de longe nem se vê.
+		if not tiny:
+			_add_hat(b, lod > 0)
 	var mesh := b.commit(null, body_material)
 	# --- Asas (superfície translúcida separada)
 	if kind == "tanajura":
@@ -174,22 +180,22 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 	return mesh
 
 
-## Formiga mínima, para longe (poucos pixels): três gomos, um traço de perna de
-## cada lado e a folha.
+## Formiga mínima, para longe (4 a 6 pixels): dois fusos (abdômen e
+## cabeça+tórax), uma plaquinha de perna de cada lado e a folha. ~30 triângulos.
 static func _build_micro(b: MeshBuilder, kind: String, c_head: Color, c_meso: Color, c_gaster: Color, c_leg: Color,
 		gaster_s: float, head_s: float) -> ArrayMesh:
 	_tag(b, Part.BODY)
-	b.color = c_gaster
-	b.add_ellipsoid(Vector3(0, 0.21, 0.3 + (gaster_s - 1.0) * 0.16), Vector3(0.15, 0.13, 0.2) * gaster_s, 3, 5)
-	b.color = c_meso
-	b.add_ellipsoid(Vector3(0, 0.2, -0.07), Vector3(0.08, 0.08, 0.14), 3, 5)
-	b.color = c_head
-	b.add_ellipsoid(Vector3(0, 0.235, -0.29), Vector3(0.15, 0.1, 0.12) * head_s, 3, 5)
-	b.color = c_leg
+	var gz := 0.3 + (gaster_s - 1.0) * 0.16
+	_spindle(b, Vector3(0, 0.2, gz + 0.2 * gaster_s), Vector3(0, 0.21, 0.08), Vector3(0, 0.21, gz),
+		Vector2(0.15, 0.13) * gaster_s, 5, c_gaster, c_gaster, c_meso)
+	_spindle(b, Vector3(0, 0.2, 0.06), Vector3(0, 0.23, -0.4 - (head_s - 1.0) * 0.14), Vector3(0, 0.22, -0.2),
+		Vector2(0.13, 0.1) * head_s, 5, c_meso, c_meso, c_head)
 	for sx in [-1.0, 1.0]:
 		var hip := Vector3(sx * 0.06, 0.17, -0.05)
 		_tag(b, Part.LEG, hip, PI if sx > 0.0 else 0.0, sx)
-		b.add_tube(PackedVector3Array([hip, hip + Vector3(sx * 0.4, -0.16, 0.02)]), PackedFloat32Array([0.05, 0.03]), 3, false, true)
+		b.color = c_leg
+		_flat_quad(b, hip + Vector3(0, 0, -0.05), hip + Vector3(0, 0, 0.05),
+			hip + Vector3(sx * 0.42, -0.16, 0.06), hip + Vector3(sx * 0.42, -0.16, -0.06))
 	if kind == "worker":
 		var grip := Vector3(0, 0.17, -0.49)
 		_tag(b, Part.LEAF, grip)
@@ -198,28 +204,61 @@ static func _build_micro(b: MeshBuilder, kind: String, c_head: Color, c_meso: Co
 	return b.commit(null, body_material)
 
 
-## Bem longe (a formiga tem 2 ou 3 pixels): só o corpo em 3 gomos, um par de
-## pernas e a folha (o ponto verde que mostra a fila de longe).
+## Bem longe (a formiga tem 1 a 3 pixels): um fuso de 4 lados para o corpo, uma
+## plaquinha atravessada para as pernas e um losango para a folha (o ponto
+## verde que mostra a fila de longe). 12 triângulos.
 static func _build_nano(b: MeshBuilder, kind: String, c_head: Color, c_meso: Color, c_gaster: Color, c_leg: Color,
 		gaster_s: float, head_s: float) -> ArrayMesh:
 	_tag(b, Part.BODY)
-	b.color = c_gaster
-	b.add_ellipsoid(Vector3(0, 0.21, 0.3 + (gaster_s - 1.0) * 0.16), Vector3(0.15, 0.13, 0.2) * gaster_s, 2, 4)
-	b.color = c_meso
-	b.add_ellipsoid(Vector3(0, 0.2, -0.07), Vector3(0.08, 0.08, 0.14), 2, 4)
-	b.color = c_head
-	b.add_ellipsoid(Vector3(0, 0.235, -0.29), Vector3(0.15, 0.1, 0.12) * head_s, 2, 4)
-	b.color = c_leg
+	_spindle(b, Vector3(0, 0.2, 0.3 + (gaster_s - 1.0) * 0.16 + 0.2 * gaster_s), Vector3(0, 0.23, -0.4 - (head_s - 1.0) * 0.14),
+		Vector3(0, 0.21, 0.08), Vector2(0.14 * gaster_s, 0.12 * gaster_s), 4, c_gaster, c_head, c_meso)
 	# Pernas paradas (de longe não dá para ver o passo).
-	var hip := Vector3(-0.06, 0.17, -0.05)
-	b.add_tube(PackedVector3Array([hip + Vector3(-0.34, -0.16, 0.02), hip, hip + Vector3(0.46, -0.16, 0.02)]),
-		PackedFloat32Array([0.03, 0.05, 0.03]), 3, false, true)
+	b.color = c_leg
+	_flat_quad(b, Vector3(-0.42, 0.03, -0.12), Vector3(-0.42, 0.03, 0.04),
+		Vector3(0.42, 0.03, 0.04), Vector3(0.42, 0.03, -0.12))
 	if kind == "worker":
 		var grip := Vector3(0, 0.17, -0.49)
 		_tag(b, Part.LEAF, grip)
 		b.color = Color(0.36, 0.72, 0.18)
-		_add_leaf(b, grip, 4)
+		var c := grip + Vector3(0, 0.26, 0.16)
+		_flat_quad(b, grip, c + Vector3(0, 0, -0.25), c + Vector3(0, 0.26, 0), c + Vector3(0, 0, 0.25), Vector3.RIGHT)
 	return b.commit(null, body_material)
+
+
+## Fuso de `sides` lados entre duas pontas (`a` e `b`), mais largo em `mid`
+## (raios x e y). Cores: ponta a, ponta b, meio.
+static func _spindle(b: MeshBuilder, a: Vector3, z: Vector3, mid: Vector3, r: Vector2, sides: int,
+		ca: Color, cz: Color, cm: Color) -> void:
+	b.color = ca
+	var ia := b.add_vertex(a, (a - mid).normalized())
+	b.color = cz
+	var iz := b.add_vertex(z, (z - mid).normalized())
+	b.color = cm
+	var ring: Array[int] = []
+	for k in sides:
+		var ang := TAU * k / sides + PI * 0.5
+		var n := Vector3(cos(ang), sin(ang), 0.0)
+		ring.append(b.add_vertex(mid + Vector3(n.x * r.x, n.y * r.y, 0.0), n))
+	var front := 1.0 if z.z < a.z else -1.0
+	for k in sides:
+		var p := ring[k]
+		var q := ring[(k + 1) % sides]
+		if front > 0.0:
+			b.add_tri(ia, p, q)
+			b.add_tri(iz, q, p)
+		else:
+			b.add_tri(ia, q, p)
+			b.add_tri(iz, p, q)
+
+
+## Quadrado chato (o shader das formigas desenha os dois lados).
+static func _flat_quad(b: MeshBuilder, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3,
+		n: Vector3 = Vector3.UP) -> void:
+	var i0 := b.add_vertex(p0, n)
+	var i1 := b.add_vertex(p1, n)
+	var i2 := b.add_vertex(p2, n)
+	var i3 := b.add_vertex(p3, n)
+	b.add_quad(i0, i1, i2, i3)
 
 
 ## Chapéu de Natal (só aparece numa formiga sorteada a cada 16 000; o shader

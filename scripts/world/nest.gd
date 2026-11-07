@@ -556,6 +556,8 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 		b.add_blob(Vector3(off.x, y + 0.015, off.y), Vector3.ONE * rng.randf_range(0.03, 0.055), n, 0.2, 1)
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit(null, mats.nest_cap)
+	# A tampa fica rente ao monte: a sombra dela quase não aparece.
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pivot.add_child(mi)
 	return pivot
 
@@ -631,6 +633,12 @@ func _build_procedural(rng: RandomNumberGenerator, mats) -> MeshInstance3D:
 			var j1 := (j + 1) % segs
 			b.add_quad(r0 + j, r0 + j1, r1 + j1, r1 + j)
 	b.recompute_normals()
+	var mi := MeshInstance3D.new()
+	mi.name = "MonteProcedural"
+	mi.mesh = MeshBuilder.with_lods(b.commit(null, mats.nest_soil))
+	# Torrões e folhinhas numa malha à parte: sem sombra (são de 2 a 5 cm) e
+	# somem de longe (a 35 m um torrão tem menos de 2 pixels).
+	b = MeshBuilder.new()
 	# Torrões de terra escavada (fora das câmaras e dos olheiros).
 	var crumb_noise := FastNoiseLite.new()
 	crumb_noise.frequency = 2.0
@@ -660,9 +668,12 @@ func _build_procedural(rng: RandomNumberGenerator, mats) -> MeshInstance3D:
 			var i2 := b.add_vertex(c + dx + dz, Vector3.UP)
 			var i3 := b.add_vertex(c - dx + dz, Vector3.UP)
 			b.add_quad(i0, i3, i2, i1)
-	var mi := MeshInstance3D.new()
-	mi.name = "MonteProcedural"
-	mi.mesh = b.commit(null, mats.nest_soil)
+	var crumbs := MeshInstance3D.new()
+	crumbs.name = "Torroes"
+	crumbs.mesh = b.commit(null, mats.nest_soil)
+	crumbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	crumbs.visibility_range_end = 35.0
+	mi.add_child(crumbs)
 	return mi
 
 

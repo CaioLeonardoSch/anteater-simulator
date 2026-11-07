@@ -24,8 +24,13 @@ const FIELD_SCENT_SHADER := preload("res://shaders/ant_field_scent.gdshader")
 const TRAIL := 0
 const ROAM := 1
 ## Faixas de distância de cada camada (malha detalhada perto, mínima longe).
-const LOD_BANDS := [Vector2(0.0, 4.0), Vector2(4.0, 9.5), Vector2(9.5, 22.0), Vector2(22.0, 40.0),
+## A formiga (15 cm) tem uns 40 pixels a 2,5 m, 25 a 6 m e 12 a 13 m (tela
+## de 1080 linhas): a malha detalhada só vale bem de perto.
+const LOD_BANDS := [Vector2(0.0, 2.5), Vector2(2.5, 6.0), Vector2(6.0, 13.0), Vector2(13.0, 40.0),
 	Vector2(40.0, 100000.0)]
+## Sombra das formigas das duas primeiras faixas (até 6 m): a da 1ª com a
+## malha bem simples e a da 2ª com a mínima (aí a sombra é um risquinho).
+const SHADOW_LODS := [2, 3]
 const DRAW_DIST := 95.0
 ## Números por formiga no buffer da MultiMesh (12 da transformação, 4 da cor, 4 extras).
 const STRIDE := 20
@@ -46,8 +51,6 @@ const ROAM_HIDE_RHO := 0.15
 const SORT_MARGIN := 1.5
 const SORT_EVERY := 0.25
 const SORT_MOVE := 1.0
-## Malha da sombra das formigas de perto.
-const SHADOW_LOD := 2
 ## Quantas camadas (as de perto) são separadas.
 const NEAR_LODS := 3
 ## Diferença máxima de altura entre a câmera e as formigas (a faixa é medida
@@ -76,10 +79,10 @@ class Chunk extends RefCounted:
 	var sorted_at := -INF
 	var sorted_cam := Vector3.INF
 	var near_on := false
-	## Sombra das formigas de perto, feita com uma malha simples (a sombra é
-	## pequena; a malha detalhada só aparece na imagem).
-	var shadow_mm: MultiMesh
-	var shadow_mmi: MultiMeshInstance3D
+	## Sombra das formigas de perto (camadas 0 e 1), feita com malhas simples
+	## (a sombra é pequena; a malha detalhada só aparece na imagem).
+	var shadow_mms: Array[MultiMesh] = []
+	var shadow_mmis: Array[MultiMeshInstance3D] = []
 
 
 var world
@@ -257,7 +260,7 @@ func _add_roam_chunk(code: int, home: Vector2, reach: float, n: int, rng: Random
 		ch.buf[o + 14] = tint
 		ch.buf[o + 15] = 1.0
 	var y: float = world.ground_height(home.x, home.y)
-	var ext := Vector3(reach + 0.6, 3.0, reach + 0.6)
+	var ext := Vector3(reach + 0.6, maxf(3.0, reach * 0.5), reach + 0.6)
 	_finish_chunk(ch, AABB(Vector3(home.x, y, home.y) - ext, ext * 2.0))
 
 
@@ -285,21 +288,22 @@ func _finish_chunk(ch: Chunk, box: AABB) -> void:
 		add_child(mmi)
 		ch.mms.append(mm)
 		ch.mmis.append(mmi)
-	var smm := MultiMesh.new()
-	smm.transform_format = MultiMesh.TRANSFORM_3D
-	smm.use_colors = true
-	smm.use_custom_data = true
-	smm.mesh = _meshes[SHADOW_LOD]
-	smm.custom_aabb = box
-	var smmi := MultiMeshInstance3D.new()
-	smmi.multimesh = smm
-	smmi.material_override = _mats[ch.kind]
-	smmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
-	smmi.set_instance_shader_parameter("lod_band", LOD_BANDS[0])
-	smmi.visible = false
-	add_child(smmi)
-	ch.shadow_mm = smm
-	ch.shadow_mmi = smmi
+	for k in SHADOW_LODS.size():
+		var smm := MultiMesh.new()
+		smm.transform_format = MultiMesh.TRANSFORM_3D
+		smm.use_colors = true
+		smm.use_custom_data = true
+		smm.mesh = _meshes[SHADOW_LODS[k]]
+		smm.custom_aabb = box
+		var smmi := MultiMeshInstance3D.new()
+		smmi.multimesh = smm
+		smmi.material_override = _mats[ch.kind]
+		smmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		smmi.set_instance_shader_parameter("lod_band", LOD_BANDS[k])
+		smmi.visible = false
+		add_child(smmi)
+		ch.shadow_mms.append(smm)
+		ch.shadow_mmis.append(smmi)
 	chunks.append(ch)
 
 
@@ -344,6 +348,7 @@ func _sort_near(ch: Chunk) -> void:
 	var lists: Array[PackedInt32Array] = []
 	for lod in NEAR_LODS:
 		lists.append(PackedInt32Array())
+
 	var b := ch.buf
 	for i in ch.count:
 		var o := i * STRIDE
@@ -367,11 +372,11 @@ func _sort_near(ch: Chunk) -> void:
 		if idx.size() > 0:
 			mm.buffer = nb
 		ch.mmis[lod].visible = idx.size() > 0
-		if lod == 0:
-			ch.shadow_mm.instance_count = idx.size()
+		if lod < ch.shadow_mms.size():
+			ch.shadow_mms[lod].instance_count = idx.size()
 			if idx.size() > 0:
-				ch.shadow_mm.buffer = nb
-			ch.shadow_mmi.visible = idx.size() > 0
+				ch.shadow_mms[lod].buffer = nb
+			ch.shadow_mmis[lod].visible = idx.size() > 0
 
 
 func _clear_near(ch: Chunk) -> void:
@@ -379,8 +384,9 @@ func _clear_near(ch: Chunk) -> void:
 	for lod in NEAR_LODS:
 		ch.mms[lod].instance_count = 0
 		ch.mmis[lod].visible = false
-	ch.shadow_mm.instance_count = 0
-	ch.shadow_mmi.visible = false
+	for k in ch.shadow_mms.size():
+		ch.shadow_mms[k].instance_count = 0
+		ch.shadow_mmis[k].visible = false
 
 
 # ------------------------------------------------------------------ A conta

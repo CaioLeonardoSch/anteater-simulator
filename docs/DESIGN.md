@@ -152,13 +152,17 @@ buscamos, no espírito delas:
 
 - **Trilhas:** formigas andam pelo mapa entre os ninhos e os arbustos, em
   filas cheias, indo e voltando sem parar. Você lambe as que estão de passagem.
-- **Passeios:** mais de um terço das formigas sai das câmaras espalhadas pelo
-  campo, dá uma volta (até uns 5 m) e entra de novo. Elas contam para o
-  formigueiro dono da câmara.
+- **Passeios:** mais da metade das formigas soltas sai das câmaras espalhadas
+  pelo campo, dá uma volta longa (até uns 12 m) e entra de novo. Elas contam
+  para o formigueiro dono da câmara.
 - **Ninhos com câmaras:** cada ninho tem câmaras internas. Você cava com as
   Garras e esvazia uma por uma, com a satisfação de terminar de arrumar uma
   prateleira. Ao abrir, as moradoras **saem correndo** e fogem quando você chega
-  perto (como as das trilhas); depois voltam para a câmara. Algumas câmaras
+  perto (como as das trilhas). Com a câmara aberta, elas não voltam para ela:
+  cada uma vai para um canto da região em volta (4 a 13 m) e fica andando por
+  lá; as que ainda estavam no túnel saem e vão direto para o seu canto (no
+  buraco da rainha, a corte fica com ela). Tontas, ao acordar perto do
+  tamanduá, continuam fugindo de medo. Algumas câmaras
   ficam **sozinhas no meio do campo**, longe das trilhas: o Faro ajuda a achá-las.
 - Depois de abrir uma câmara, **as garras descansam** (25 s no começo).
 - **Buracos maiores pedem mais Cavar:** o Cavar abre as câmaras pequenas (dos
@@ -222,7 +226,7 @@ dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**).
 | | Rapidez | nível 1 (30 · 1 mil: descanso de 15 s) · nível 2 (80 · 8 mil: descanso de 5 s e cava na metade do tempo) |
 | | Fundura | nível 1 (60 · 3 mil: abre as câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
 | **Patas** | começo | Fôlego nível 1 (20: estamina máxima de 50 para 100). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (60 · 3 mil: +50% sobre andar) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta) |
+| | Corrida | nível 1 (60 · 3 mil: corre 25% mais rápido) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta) |
 | | Respiro | níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
 | | Passada | níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
 | | Fôlego | nível 2 (50 · 3 mil: estamina máxima 150) · nível 3 (80 · 13 mil: 200) |
@@ -305,7 +309,9 @@ Feito, seguindo as decisões:
    do faro** (vermelho, ciano, magenta ou branco), **Dicas** (Todas, Poucas ou
    Nenhuma), sensibilidade do controle, **mostrar a interface (HUD)**, **trocar
    as teclas**, Correr e Cavar como segurar ou apertar uma vez, e volumes de
-   música, efeitos e ambiente. **F11** ou **Alt+Enter** alternam a tela cheia.
+   música, efeitos e ambiente. **F11** ou **Alt+Enter** alternam a tela cheia;
+   **F3** mostra o medidor de desempenho (FPS, tempo da placa de vídeo,
+   triângulos).
 10. **Pausa de verdade:** na pausa e na árvore de habilidades, as formigas
    param.
 11. **Penhascos** em volta da clareira, que são o fim do mapa, com muitas
@@ -366,8 +372,10 @@ Ainda a ajustar:
   o robô de testes). Como referência: num teste automático da segunda rodada, um
   robô de mira perfeita terminou a colônia (então com 3200 formigas) em cerca
   de 19 minutos.
-- **Desempenho:** os 44 000 insetos foram testados só num servidor sem placa
-  de vídeo; falta medir num PC de verdade.
+- **Desempenho:** a medição de 07/11/2026 (servidor sem placa de vídeo, que
+  conta o que é desenhado) mostrou onde ia o trabalho e levou às mudanças da
+  tabela do histórico. Falta medir num PC de verdade com o medidor do jogo
+  (**F3**).
 - **Economia das habilidades:** a pesquisa de 05/11/2026
   ([`pesquisa-habilidades.md`](pesquisa-habilidades.md)) mediu com o bot o
   tempo de cada compra (seção 5): o bot limpa a clareira em 81–84 minutos, com
@@ -645,3 +653,9 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 06/11/2026 | Textura dos paredões de arenito | Faixas pintadas por vértice e manchas lisas, com manchas verdes no meio da parede | Estampa feita no Blender (4 m, 2048 px, com relevo): camadas horizontais de espessuras diferentes, fendas verticais que dividem em blocos com bordas vivas, buraquinhos e manchas de ferro. As camadas ficam sempre na horizontal e sobem e descem devagar ao longo do paredão; o topo usa a estampa do chão puxada para o verde, e o verde saiu das paredes. As faixas pintadas por vértice continuam por cima. Velocidade igual (≈135 quadros por segundo) |
 | 06/11/2026 | Textura das pedras | Cinza liso com líquen amarelo forte por cima, com cara de esponja | A mesma rocha dos paredões (estampa de arenito com camadas mais finas, rachaduras e relevo), um pouco mais apagada, com poucas manchas de líquen claro, mais nas faces de cima. Velocidade praticamente igual (≈131 quadros por segundo) |
 | 06/11/2026 | Textura dos cupinzeiros | Laranja saturado e liso, com cara de massinha | Estampa de barro seco feita no Blender (1 m, 1024 px, com relevo): granulado, caneluras verticais da chuva, rachaduras finas e furinhos; cor mais apagada. Usa o mesmo shader dos paredões, que mantém os sulcos sempre em pé. Velocidade igual (≈130 quadros por segundo) |
+| 07/11/2026 | Andar | 3,3 m/s | 2,8 m/s (15% mais lento; correr acompanha) |
+| 07/11/2026 | Formigas soltas | 25% nas trilhas e 25% passeando até 5,5 m das câmaras do campo | 20% nas trilhas e 35% passeando até 12 m (as moradoras ficam com 45%) |
+| 07/11/2026 | Câmara aberta | As moradoras fugiam e voltavam para andar em cima da câmara; as tontas acordavam e voltavam ao normal | Elas se espalham pela região em volta e ficam por lá; as tontas, ao acordar perto do tamanduá, saem fugindo |
+| 07/11/2026 | Farejar | Sem Precisão, só um número no canto da tela | A bússola aponta o maior grupo farejado desde o Farejar |
+| 07/11/2026 | Árvore de habilidades | O 1º nó do Bocado ficava em cima do 1º do Fôlego | Ramos da Língua e das Patas mais afastados, e os de 4 linhas um pouco mais fechados |
+| 07/11/2026 | Desempenho (placa de vídeo) | No Ultra, 4,8–7,7 milhões de triângulos por quadro na imagem e 2,0–2,7 milhões na sombra. As formigas de longe tinham 68–114 triângulos e a malha detalhada (3500) ia até 4 m. As tanajuras usavam sempre a malha detalhada, com sombra. O chão inteiro e os torrões dos formigueiros faziam sombra, e o MSAA 4x pesava 40% do quadro | Formigas com 5 malhas (2 600 / 880 / 220 / 30 / 12 triângulos, trocando a 2,5, 6, 13 e 40 m) e sombras com malhas simples. Tanajuras simples a partir de 9,5 m. Sombra do chão numa grade 4x mais grossa. Torrões sem sombra e só até 35 m. Capim leve nos blocos de longe. Árvores, pedras e montes com versões automáticas para longe, e folhas com mipmaps. Ultra com MSAA 2x + SMAA. Resultado: 1,8–3,1 milhões na imagem e 0,26–0,54 milhão na sombra, e 40–48% menos tempo de desenho na mesma máquina de teste. Medidor no jogo (F3) |

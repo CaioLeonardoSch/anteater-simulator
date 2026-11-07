@@ -16,7 +16,10 @@ const FPS_LIMITS := [0, 30, 60, 120, 144, 165, 240]
 const RENDER_SCALES := [1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
 const SHADOW_NAMES := ["Baixa", "Média", "Alta", "Ultra"]
 const GRASS_NAMES := ["Pouco", "Médio", "Muito", "Máximo"]
-const AA_NAMES := ["Desligado", "FXAA", "MSAA 2x", "MSAA 4x", "TAA"]
+## (Novas opções entram no fim para não mudar o que já está salvo.) SMAA: filtro
+## de bordas nítido; junto com o MSAA 2x custa bem menos que o MSAA 4x e
+## suaviza quase igual.
+const AA_NAMES := ["Desligado", "FXAA", "MSAA 2x", "MSAA 4x", "TAA", "SMAA", "MSAA 2x + SMAA"]
 ## Cor do faro: precisa contrastar com o cerrado (dourado e vermelho de terra).
 const SNIFF_COLOR_NAMES := ["Vermelho", "Ciano", "Magenta", "Branco"]
 const SNIFF_COLORS := [Color(1.0, 0.16, 0.12), Color(0.2, 0.95, 1.0), Color(1.0, 0.25, 0.85), Color(1.0, 1.0, 1.0)]
@@ -33,7 +36,7 @@ const PRESETS := [
 	{"shadow_quality": 2, "grass_quality": 2, "ssao": true, "ssil": false, "volumetric_fog": false,
 		"glow": true, "antialiasing": 2, "render_scale": 1.0},
 	{"shadow_quality": 3, "grass_quality": 3, "ssao": true, "ssil": true, "volumetric_fog": true,
-		"glow": true, "antialiasing": 3, "render_scale": 1.0},
+		"glow": true, "antialiasing": 6, "render_scale": 1.0},
 ]
 const GRAPHICS_KEYS := ["shadow_quality", "grass_quality", "ssao", "ssil", "volumetric_fog", "glow",
 	"antialiasing", "render_scale"]
@@ -95,6 +98,9 @@ var run_toggle: bool = false
 var dig_toggle: bool = false
 ## Mostrar a interface durante o jogo (desligar é bom para fotos).
 var show_hud: bool = true
+## Mostra no canto da tela o FPS e quanto tempo o processador e a placa de
+## vídeo levam por quadro (para medir o desempenho). F3 liga e desliga.
+var show_perf: bool = false
 
 # Estatísticas da versão de teste (ver Telemetry).
 ## Mandar as estatísticas das partidas para o formulário do Caio.
@@ -132,6 +138,7 @@ func _ready() -> void:
 			window_mode = 0
 			window_size = Vector2i(1600, 900)
 	apply_window()
+	_build_perf_overlay()
 	apply_audio()
 
 
@@ -351,10 +358,14 @@ func load_settings() -> void:
 		_pick_default_quality()
 		return
 	graphics_quality = clampi(int(cfg.get_value("video", "quality", graphics_quality)), 0, CUSTOM)
+	# Com um preset escolhido valem os valores dele (assim, quando um preset muda
+	# numa versão nova, quem usa ele recebe a mudança). Só a Personalizada lê
+	# item por item.
 	if graphics_quality < CUSTOM:
 		_apply_preset_values(graphics_quality)
-	for key in GRAPHICS_KEYS:
-		set(key, cfg.get_value("graphics", key, get(key)))
+	else:
+		for key in GRAPHICS_KEYS:
+			set(key, cfg.get_value("graphics", key, get(key)))
 	shadow_quality = clampi(shadow_quality, 0, 3)
 	grass_quality = clampi(grass_quality, 0, 3)
 	antialiasing = clampi(antialiasing, 0, AA_NAMES.size() - 1)
@@ -384,6 +395,7 @@ func load_settings() -> void:
 	run_toggle = bool(cfg.get_value("input", "run_toggle", run_toggle))
 	dig_toggle = bool(cfg.get_value("input", "dig_toggle", dig_toggle))
 	show_hud = bool(cfg.get_value("game", "show_hud", show_hud))
+	show_perf = bool(cfg.get_value("video", "show_perf", show_perf))
 	send_stats = bool(cfg.get_value("stats", "send", send_stats))
 	stats_asked = bool(cfg.get_value("stats", "asked", stats_asked))
 	nickname = String(cfg.get_value("stats", "nickname", nickname))
@@ -443,6 +455,7 @@ func save_settings() -> void:
 	cfg.set_value("input", "run_toggle", run_toggle)
 	cfg.set_value("input", "dig_toggle", dig_toggle)
 	cfg.set_value("game", "show_hud", show_hud)
+	cfg.set_value("video", "show_perf", show_perf)
 	cfg.set_value("stats", "send", send_stats)
 	cfg.set_value("stats", "asked", stats_asked)
 	cfg.set_value("stats", "nickname", nickname)
@@ -479,6 +492,7 @@ func set_value(key: String, value) -> void:
 	save_settings()
 	apply_window()
 	apply_audio()
+	_update_perf_overlay()
 	changed.emit()
 
 
@@ -579,3 +593,60 @@ func grass_density() -> float:
 
 func grass_view_distance() -> float:
 	return [28.0, 38.0, 50.0, 64.0][grass_quality]
+
+
+# ------------------------------------------------------- Medidor de desempenho
+
+var _perf_layer: CanvasLayer
+var _perf_label: Label
+var _perf_acc := 0.0
+var _perf_frames := 0
+var _perf_cpu := 0.0
+var _perf_gpu := 0.0
+
+
+func _build_perf_overlay() -> void:
+	_perf_layer = CanvasLayer.new()
+	_perf_layer.layer = 128
+	add_child(_perf_layer)
+	_perf_label = Label.new()
+	_perf_label.position = Vector2(12, 8)
+	_perf_label.add_theme_font_size_override("font_size", 16)
+	_perf_label.add_theme_color_override("font_color", Color(1, 1, 0.85))
+	_perf_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	_perf_label.add_theme_constant_override("outline_size", 5)
+	_perf_layer.add_child(_perf_label)
+	_update_perf_overlay()
+
+
+func _update_perf_overlay() -> void:
+	if _perf_layer == null:
+		return
+	_perf_layer.visible = show_perf
+	set_process(show_perf)
+	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), show_perf)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3:
+		set_value("show_perf", not show_perf)
+		get_viewport().set_input_as_handled()
+
+
+func _process(delta: float) -> void:
+	var vp := get_viewport().get_viewport_rid()
+	_perf_acc += delta
+	_perf_frames += 1
+	_perf_cpu += RenderingServer.viewport_get_measured_render_time_cpu(vp) + RenderingServer.get_frame_setup_time_cpu()
+	_perf_gpu += RenderingServer.viewport_get_measured_render_time_gpu(vp)
+	if _perf_acc < 0.5:
+		return
+	var n := float(_perf_frames)
+	var tris := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)
+	var calls := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+	_perf_label.text = "%d FPS   quadro %.1f ms   placa de vídeo %.1f ms   desenho %.1f ms\n%.2f milhões de triângulos   %d chamadas" % [
+		roundi(n / _perf_acc), _perf_acc * 1000.0 / n, _perf_gpu / n, _perf_cpu / n, tris / 1000000.0, calls]
+	_perf_acc = 0.0
+	_perf_frames = 0
+	_perf_cpu = 0.0
+	_perf_gpu = 0.0

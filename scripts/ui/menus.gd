@@ -562,6 +562,7 @@ func _build_settings() -> Control:
 	for f in Settings.FPS_LIMITS:
 		fps_names.append("Sem limite" if f == 0 else str(f))
 	_add_option(g, "max_fps", "Limite de FPS", fps_names, Settings.FPS_LIMITS)
+	_add_check(g, "show_perf", "Mostrar FPS e desempenho (F3)")
 	# Gráficos
 	g = _settings_page(stack)
 	_add_option(g, "graphics_quality", "Qualidade", Settings.QUALITY_NAMES)

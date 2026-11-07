@@ -30,7 +30,11 @@ void vertex() {
 void fragment() {
 	vec4 leaf = texture(leaf_tex, UV);
 	if (use_texture > 0.5) {
-		ALPHA = leaf.a;
+		// Com mipmaps (versões menores da textura para longe) o recorte das folhas
+		// afinaria com a distância: compensa a transparência pelo nível usado.
+		vec2 tp = UV * vec2(textureSize(leaf_tex, 0));
+		float mip = max(0.0, 0.5 * log2(max(dot(dFdx(tp), dFdx(tp)), dot(dFdy(tp), dFdy(tp)))));
+		ALPHA = leaf.a * (1.0 + mip * 0.25);
 		ALPHA_SCISSOR_THRESHOLD = alpha_cut;
 	}
 	float n = texture(noise_tex, wpos.xz * 0.31 + vec2(wpos.y * 0.13, -wpos.y * 0.11)).r;

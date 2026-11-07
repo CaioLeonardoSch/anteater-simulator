@@ -15,13 +15,24 @@ const AntField := preload("res://scripts/ants/ant_field.gd")
 const SCENT_SHADER := preload("res://shaders/ant_scent.gdshader")
 
 const CAPACITY := 4096
-## Distâncias em que as formigas trocam de malha: detalhada (com sombra) até a
-## 1ª, depois simples, bem simples e mínima (até DRAW_DIST).
-const LOD_DISTS := [4.0, 9.5, 22.0]
+## Distâncias em que as formigas trocam de malha: detalhada até a 1ª, depois
+## simples, bem simples e mínima (até DRAW_DIST). Operárias até a 2ª fazem sombra.
+const LOD_DISTS := [2.5, 6.0, 13.0]
 const DRAW_DIST := 80.0
 ## Camadas de desenho (uma MultiMesh cada).
 const LAYER_QUEEN := 4
 const LAYER_TANAJURA := 5
+## Tanajuras longe (malha simples, sem sombra).
+const LAYER_TANAJURA_FAR := 6
+const LAYER_NAMES := ["Workers0", "Workers1", "Workers2", "Workers3", "Queens", "Tanajuras", "TanajurasFar"]
+## Camadas que fazem sombra. A sombra é desenhada por uma cópia da camada com a
+## malha "bem simples" (LOD 2): na sombra, que é pequena e borrada, ninguém vê
+## a diferença, e a sombra é desenhada até 4 vezes por quadro (uma por faixa).
+## Operárias: as de perto fazem sombra com a malha bem simples, e as da 2ª
+## camada com a mínima (de 2,5 a 6 m a sombra é um risquinho).
+const SHADOW_LAYERS := [0, 1, LAYER_QUEEN, LAYER_TANAJURA]
+## Até onde a tanajura usa a malha detalhada (e faz sombra).
+const TANAJURA_NEAR := 9.5
 ## Formigas a menos disto acompanham a inclinação do chão.
 const TILT_DIST := 30.0
 ## Moradoras de câmaras longe do tamanduá: simuladas 1 vez a cada 4 passos
@@ -32,6 +43,10 @@ const STRIDE := 20
 ## De quantos em quantos passos as formigas de campo conferem se o tamanduá
 ## está perto.
 const FLEE_CHECK_EVERY := 3
+## Tonta que acorda a menos disso do tamanduá sai fugindo (m).
+const WAKE_FLEE_DIST := 9.0
+## Até onde as moradoras de uma câmara aberta se espalham (m, mínimo e máximo).
+const DISPERSE_REACH := Vector2(4.0, 13.0)
 ## Quanto tempo a formiga "na mira" fica com o enxame antes de voltar ao campo.
 const GHOST_TIME := 1.2
 
@@ -99,7 +114,11 @@ var pull_target := Vector3.INF
 var _mm: Array[MultiMesh] = []
 var _mmi: Array[MultiMeshInstance3D] = []
 var _buf: Array[PackedFloat32Array] = []
-var _counts := PackedInt32Array([0, 0, 0, 0, 0, 0])
+var _counts := PackedInt32Array([0, 0, 0, 0, 0, 0, 0])
+## Cópias das camadas que fazem sombra (só sombra, malha simples).
+var _shadow_mm: Array[MultiMesh] = []
+var _shadow_of: Array[int] = []
+
 var _scent_mat: ShaderMaterial
 var _time := 0.0
 var cam_pos := Vector3.ZERO:
@@ -140,33 +159,44 @@ func setup(w, col) -> void:
 	add_child(field)
 	_scent_mat = ShaderMaterial.new()
 	_scent_mat.shader = SCENT_SHADER
-	# 0..3 operárias (de perto para longe), 4 rainha, 5 tanajura
+	# 0..3 operárias (de perto para longe), 4 rainha, 5 tanajura perto, 6 tanajura longe
 	var meshes: Array[Mesh] = []
 	for lod in 4:
 		meshes.append(AntMeshBuilder.build("worker", lod))
 	meshes.append(AntMeshBuilder.build("queen", 0))
 	meshes.append(AntMeshBuilder.build("tanajura", 0))
-	var caps := [1200, 2000, CAPACITY, CAPACITY, 16, 60]
-	for k in 6:
-		var mm := MultiMesh.new()
-		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.use_colors = true
-		mm.use_custom_data = true
-		mm.mesh = meshes[k]
-		mm.instance_count = caps[k]
-		mm.visible_instance_count = 0
-		mm.custom_aabb = AABB(Vector3(-90, -20, -90), Vector3(180, 60, 180))
-		var mmi := MultiMeshInstance3D.new()
-		mmi.name = ["Workers0", "Workers1", "Workers2", "Workers3", "Queens", "Tanajuras"][k]
-		mmi.multimesh = mm
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if k in [0, LAYER_QUEEN, LAYER_TANAJURA] \
-			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(mmi)
+	meshes.append(AntMeshBuilder.build("tanajura", 2))
+	var shadow_mesh := {0: meshes[2], 1: meshes[3], LAYER_QUEEN: AntMeshBuilder.build("queen", 2), LAYER_TANAJURA: meshes[6]}
+	var caps := [1200, 2000, CAPACITY, CAPACITY, 16, 60, 60]
+	for k in caps.size():
+		var mmi := _new_layer(LAYER_NAMES[k], meshes[k], caps[k], GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+		_mm.append(mmi.multimesh)
+		_mmi.append(mmi)
 		var buf := PackedFloat32Array()
 		buf.resize(caps[k] * STRIDE)
-		_mm.append(mm)
-		_mmi.append(mmi)
 		_buf.append(buf)
+	for k in SHADOW_LAYERS:
+		var smmi := _new_layer(LAYER_NAMES[k] + "Shadow", shadow_mesh[k], caps[k],
+			GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY)
+		_shadow_mm.append(smmi.multimesh)
+		_shadow_of.append(k)
+
+
+func _new_layer(layer_name: String, mesh: Mesh, cap: int, shadow: int) -> MultiMeshInstance3D:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.use_custom_data = true
+	mm.mesh = mesh
+	mm.instance_count = cap
+	mm.visible_instance_count = 0
+	mm.custom_aabb = AABB(Vector3(-90, -20, -90), Vector3(180, 60, 180))
+	var mmi := MultiMeshInstance3D.new()
+	mmi.name = layer_name
+	mmi.multimesh = mm
+	mmi.cast_shadow = shadow
+	add_child(mmi)
+	return mmi
 
 
 func _take_slot() -> int:
@@ -569,6 +599,11 @@ func _update_stunned(i: int, delta: float) -> void:
 			var p2 := Vector2(p.x, p.z) + Vector2(to.x, to.z) / d * minf(2.6 * delta, d)
 			pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
 	if timer[i] <= 0.0:
+		# Acordou perto do tamanduá: continua fugindo de medo.
+		var tp2 := Vector2(threat_pos.x, threat_pos.z)
+		if kind[i] != QUEEN and Vector2(pos[i].x, pos[i].z).distance_to(tp2) < WAKE_FLEE_DIST:
+			_start_flee(i, tp2)
+			return
 		if home[i] >= 0:
 			# Longe da câmara (puxada pelo Terremoto ou tonta no meio da fuga): volta andando.
 			var off := Vector2(pos[i].x - anchor[i].x, pos[i].z - anchor[i].z)
@@ -579,6 +614,46 @@ func _update_stunned(i: int, delta: float) -> void:
 				vel[i] = -off.normalized() * speed[i]
 		else:
 			_start_return(i)
+
+
+## Câmara aberta (menos o buraco da rainha): as moradoras não voltam para ela.
+## Cada uma escolhe um canto da região em volta e passa a andar por lá.
+## `instant` = já põe cada uma no seu canto (ao carregar um jogo salvo).
+func disperse_home(home_code: int, center: Vector2, instant: bool = false) -> void:
+	for i in CAPACITY:
+		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN:
+			continue
+		disperse(i, center, instant)
+
+
+func disperse(i: int, center: Vector2, instant: bool = false) -> void:
+	var spot := _spread_spot(center)
+	anchor[i] = Vector3(spot.x, randf_range(1.2, 2.4), spot.y)
+	dir[i] = 0.0
+	lateral[i] = 0.0
+	if instant:
+		pos[i] = Vector3(spot.x, world.ground_height(spot.x, spot.y), spot.y)
+		mode[i] = Mode.CHAMBER
+	elif mode[i] == Mode.CHAMBER:
+		mode[i] = Mode.RETURN
+
+
+## Um ponto a DISPERSE_REACH metros da câmara, fora das lagoas e dentro do campo.
+func _spread_spot(center: Vector2) -> Vector2:
+	var best := center
+	for k in 8:
+		var p := center + Vector2.RIGHT.rotated(randf() * TAU) * randf_range(DISPERSE_REACH.x, DISPERSE_REACH.y)
+		if p.length() > world.walk_limit(p) - 1.5:
+			continue
+		var wet := false
+		for w in world.ponds:
+			if p.distance_to(Vector2(w.x, w.y)) < w.z + 1.0:
+				wet = true
+				break
+		if not wet:
+			return p
+		best = p
+	return best
 
 
 ## Câmara recém-aberta: as moradoras saem correndo para longe do tamanduá.
@@ -860,7 +935,7 @@ func set_scent_overlay(enabled: bool) -> void:
 func set_sniff_color(c: Color) -> void:
 	if _scent_mat:
 		_scent_mat.set_shader_parameter("tint", c)
-	for k in [0, 1, 2, 3, LAYER_TANAJURA]:
+	for k in [0, 1, 2, 3, LAYER_TANAJURA, LAYER_TANAJURA_FAR]:
 		if k < _mmi.size():
 			_mmi[k].set_instance_shader_parameter("glow_color", c)
 	field.set_sniff_color(c)
@@ -940,6 +1015,7 @@ func _process(delta: float) -> void:
 	var lod1 := float(LOD_DISTS[1]) * LOD_DISTS[1]
 	var lod2 := float(LOD_DISTS[2]) * LOD_DISTS[2]
 	var far2 := DRAW_DIST * DRAW_DIST
+	var tan_near2 := TANAJURA_NEAR * TANAJURA_NEAR
 	var tilt2 := TILT_DIST * TILT_DIST
 	var chamber_far2 := CHAMBER_DRAW_DIST * CHAMBER_DRAW_DIST
 	var buzz_d2 := BUZZ_DIST * BUZZ_DIST
@@ -959,7 +1035,7 @@ func _process(delta: float) -> void:
 		if k == QUEEN:
 			layer = LAYER_QUEEN
 		elif k == TANAJURA:
-			layer = LAYER_TANAJURA
+			layer = LAYER_TANAJURA if d2 < tan_near2 else LAYER_TANAJURA_FAR
 		elif d2 >= lod2:
 			layer = 3
 		elif d2 >= lod1:
@@ -1018,3 +1094,7 @@ func _process(delta: float) -> void:
 	for layer in _mm.size():
 		_mm[layer].buffer = _buf[layer]
 		_mm[layer].visible_instance_count = _counts[layer]
+	for j in _shadow_mm.size():
+		var layer := _shadow_of[j]
+		_shadow_mm[j].buffer = _buf[layer]
+		_shadow_mm[j].visible_instance_count = _counts[layer]

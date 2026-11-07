@@ -676,7 +676,7 @@ escolhe o resto.
 |---|---|---|
 | **Desde o começo** | O começo da Língua, das Garras e das Patas, e o nível 1 de todas as linhas: Bocado, Destreza, Comprimento, Mira, Rapidez, Força, Fundura, Respiro, Passada, Fôlego e Corrida | 532 |
 | **Marco 1: primeiro formigueiro limpo** | Bocado 2, Mira 2, Respiro 2, Passada 2 | 370 |
-| **Marco 2: metade dos formigueiros limpos** | Destreza 2, Força 2, Tremor 1, Fundura 2 (a rainha) | 480 |
+| **Marco 2: metade dos insetos da área comidos** | Destreza 2, Força 2, Tremor 1, Fundura 2 (a rainha) | 480 |
 | **Marco 3: 75% dos insetos da área comidos** | **Farejar, de presente**, e Alcance 1 à venda | 60 |
 | **Fica para a área 2 em diante** | Rapidez 2, Comprimento 2, Bocado 3 e 4, Destreza 3, Mira 3, Tremor 2 e 3, Fôlego 2, Corrida 2 e 3, Alcance 2 e 3, Precisão, Escalada e Cauda | — |
 
@@ -686,14 +686,14 @@ exatamente isso. Na área 2, maior e mais fechada, ele passa a ser essencial.
 Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
 ("O faro despertou").
 
-**Por que formigueiros como marcos.**
-- Eles já aparecem no canto da tela, um losango por formigueiro, e são
-  resultado do que o jogador fez.
+**Os marcos.**
+- O 1º é um formigueiro limpo: ele aparece no canto da tela, um losango por
+  formigueiro, e é resultado do que o jogador fez. Os formigueiros pequenos
+  perto da caverna têm poucas moradoras passeando, então ele chega cedo.
+- O 2º e o 3º são a metade e 75% dos insetos da área. Limpar formigueiros
+  inteiros pode demorar, porque as moradoras passeiam longe deles.
 - Cada marco mostra um cartão, como "Formigueiro limpo · 4 habilidades novas
   na árvore".
-- O risco é limpar um formigueiro inteiro demorar, porque as moradoras passeiam
-  longe dele. Se o bot mostrar isso, o marco 2 passa a ser "metade dos insetos
-  da área".
 
 **Na árvore:** o que é de outra área aparece com cadeado e "Área 2". O que
 espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
@@ -726,15 +726,13 @@ espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
 - **Área 4** (dentro do cupinzeiro gigante): habilidades novas do fim, a
   definir.
 
-### A decidir
+### Decidido pelo Caio (07/11/2026)
 
-1. **Farejar:** de presente no marco 3 (proposto) ou à venda?
-2. **Marco 2:** metade dos formigueiros limpos (proposto) ou metade dos
-   insetos da área?
-3. **Redistribuir pontos de graça:** continua? Com escolhas que pesam mais,
-   uma opção é cobrar um pouco, ou só deixar redistribuir entre uma área e
-   outra. A proposta é **continuar de graça**: a escolha é sobre o foco, e
-   não é para castigar quem errou.
+1. **Farejar:** de presente no marco 3.
+2. **Marco 2:** metade dos insetos da área.
+3. **Redistribuir pontos:** continua de graça.
+
+Ainda não é para mexer no jogo: a proposta segue em estudo.
 
 ### Depois de aprovar
 

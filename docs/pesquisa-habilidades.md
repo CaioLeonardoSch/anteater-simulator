@@ -488,6 +488,111 @@ dos insetos, como planejado.
 Lembrando: o bot não usa o Faro e não planeja o caminho, então os minutos
 servem para comparar as árvores, não como o tempo de um jogador.
 
+## 9. Proposta: nós com vários cliques (07/11/2026, para aprovar)
+
+Vem da primeira jogatina do Caio com 1 inseto por lambida (versão 0.1.2,
+46 minutos, 21 419 insetos). O que os números dele mostram:
+
+- **Começo parado.** Nos primeiros 13 minutos foram só 3 compras: comendo 1
+  inseto por lambida, a trava de 1 000 só abriu aos 13:46.
+- **Fim com pontos sobrando.** Depois dos 32 minutos, os pontos foram de 157
+  para 416 sem ter o que comprar: as travas seguravam.
+- **Pedidos:** upgrades menores entre os que existem (vários cliques num nó
+  antes de abrir o seguinte), revisar as travas, Bocado 2 → 3 → 5 mais cedo,
+  Respiro 3 → 5 → 7, separar o alcance da velocidade da língua, Mira mais útil,
+  Farejar mais para frente e Destreza nível 1 menos forte.
+
+### Como fica
+
+- **Cada nó tem de 1 a 3 cliques.** Cada clique é uma melhora pequena e
+  barata, mostrada com bolinhas em volta do nó (●●○) e o "antes → depois" de
+  sempre. O nó seguinte da linha só abre quando o anterior estiver completo
+  (e a trava dele tiver aberto).
+- **Os mesmos 40 nós**, agora com **75 cliques** (hoje são 40 compras). A
+  árvore continua do mesmo tamanho na tela.
+- **Nove travas** (eram cinco): **200, 500, 1 000, 2 000, 3 000, 5 000, 8 000,
+  13 000 e 21 000** insetos. As primeiras chegam em poucos minutos.
+- **A Língua ganha uma linha:** Bocado (quantos por lambida), Destreza (só a
+  velocidade), **Comprimento** (só o alcance) e Mira.
+- **Farejar só abre com 3 000 insetos.**
+- **Total: 4 227 pontos (96% dos 4 400).** Hoje são 3 825.
+
+### Os nós
+
+| Ramo | Nó | Trava | Cliques (preço de cada) | O que cada clique dá |
+|---|---|---|---|---|
+| Língua | Lambida Contínua | — | 15 | segurar para lamber |
+| | Bocado 1 | 200 | 8 · 12 · 16 | 2 → 3 → 5 insetos por lambida |
+| | Bocado 2 | 2 000 | 30 · 40 · 50 | 8 → 11 → 15 |
+| | Bocado 3 | 8 000 | 70 · 90 | 20 → 25 |
+| | Bocado 4 | 21 000 | 160 · 200 | 32 → 40 |
+| | Destreza 1 | 500 | 10 · 14 · 18 | 1,4 → 1,6 → 1,8 → 2,0 lambidas por segundo |
+| | Destreza 2 | 5 000 | 50 · 60 · 70 | 2,4 → 2,8 → 3,2 |
+| | Destreza 3 | 21 000 | 260 | 4,4 |
+| | Comprimento 1 | 1 000 | 16 · 20 · 24 | língua de 3,0 → 3,3 → 3,6 → 3,9 m |
+| | Comprimento 2 | 8 000 | 60 · 80 | 4,2 → 4,5 m |
+| | Mira 1 | 200 | 12 | a língua vai atrás do inseto; área da mira de 15° (hoje 10°) |
+| | Mira 2 | 3 000 | 25 · 30 · 35 | área de 18° → 21° → 25° |
+| | Mira 3 | 13 000 | 110 | a ponta gruda num raio 70% maior |
+| Garras | Cavar | — | 25 | abre câmaras pequenas; descanso de 25 s |
+| | Rapidez 1 | 1 000 | 12 · 16 · 20 | descanso de 20 → 16 → 12 s |
+| | Rapidez 2 | 8 000 | 40 · 50 · 60 | 9 → 7 → 5 s; no último, cava na metade do tempo |
+| | Força 1 | 2 000 | 25 · 35 | moradoras tontas por 1,5 → 2,5 s |
+| | Força 2 | 8 000 | 40 · 50 | 3,2 → 4 s |
+| | Tremor 1 | 5 000 | 90 | libera o Tremor (recarga de 21 s) |
+| | Tremor 2 | 13 000 | 45 · 55 · 65 | recarga de 18 → 15 → 12 s |
+| | Tremor 3 | 21 000 | 300 | Terremoto (recarga de 7 s) |
+| | Fundura 1 | 3 000 | 60 | câmaras grandes |
+| | Fundura 2 | 13 000 | 120 | o monte da rainha |
+| Patas | Fôlego | — | 10 | estamina de 50 → 75 |
+| | Fôlego 1 | 1 000 | 12 · 16 · 20 | 100 → 125 → 150 |
+| | Fôlego 2 | 13 000 | 50 · 60 | 175 → 200 |
+| | Respiro 1 | 200 | 8 · 12 | a estamina volta 3 → 4 → 5 por segundo |
+| | Respiro 2 | 3 000 | 30 · 40 | 6 → 7 por segundo |
+| | Passada 1 | 500 | 8 · 12 · 16 | correndo gasta 10 → 9 → 8 → 7 por segundo |
+| | Passada 2 | 5 000 | 40 · 50 | 6 → 5 por segundo |
+| | Corrida 1 | 2 000 | 25 · 35 | corre +10% · +10% mais rápido |
+| | Corrida 2 | 13 000 | 90 | lamber correndo |
+| | Corrida 3 | 21 000 | 250 | correr não assusta |
+| Faro | Farejar | 3 000 | 25 | fareja a 10 m; a bússola aponta o maior grupo |
+| | Alcance 1 | 3 000 | 15 · 20 · 25 | fareja a 13 → 16 → 20 m |
+| | Alcance 2 | 8 000 | 55 · 70 | 26 → 34 m; no último, a bússola conta os formigueiros |
+| | Alcance 3 | 21 000 | 220 | 50 m e marca as rainhas |
+| | Precisão 1 | 5 000 | 45 | nuvem de cheiro |
+| | Precisão 2 | 8 000 | 75 | insetos nítidos atrás do capim |
+| | Precisão 3 | 13 000 | 200 | mostra as câmaras fechadas |
+
+### Por trava
+
+| Trava | Nós que abrem | Cliques | Soma dos preços | Soma até aqui | Pontos quando a próxima trava abre |
+|---|---|---|---|---|---|
+| começo | 3 | 3 | 50 | 50 | 20 |
+| 200 | 3 | 6 | 68 | 118 | 50 |
+| 500 | 2 | 6 | 78 | 196 | 100 |
+| 1 000 | 3 | 9 | 156 | 352 | 200 |
+| 2 000 | 3 | 7 | 240 | 592 | 300 |
+| 3 000 | 5 | 10 | 305 | 897 | 500 |
+| 5 000 | 4 | 7 | 405 | 1 302 | 800 |
+| 8 000 | 6 | 12 | 740 | 2 042 | 1 300 |
+| 13 000 | 6 | 9 | 795 | 2 837 | 2 100 |
+| 21 000 | 5 | 6 | 1 390 | 4 227 | 4 400 (fim) |
+
+Desta vez, cada trava abre mais coisa do que dá para pagar até a próxima.
+Ou seja, quase sempre tem algo para comprar, e o que segura é o ponto, não
+a trava. As travas servem para pôr ordem (o forte fica para o fim), não para
+fazer esperar. Os preços são um ponto de partida: depois de feito, o bot
+roda de novo para acertar.
+
+### Em aberto
+
+- **Assustar os insetos.** Hoje eles só fogem quando você chega a 1 m
+  (parado) ou 1,9 m (andando), e a língua já alcança 3 m. Por isso alcance
+  maior não faz diferença para assustar. Sugestão: fugirem a uns 2,5 m
+  andando, para o Comprimento valer a pena.
+- **Jogos salvos.** Os nós mudam de nome e de preço. Ao abrir um jogo salvo
+  antigo, os pontos gastos voltam (como no "Redistribuir pontos"), com um
+  aviso.
+
 ## Fontes
 
 - Anthony Pecorella, "The Math of Idle Games",

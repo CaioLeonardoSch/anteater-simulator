@@ -6,6 +6,7 @@ const FOLIAGE := preload("res://shaders/foliage.gdshader")
 const GRASS := preload("res://shaders/grass.gdshader")
 const TERRAIN := preload("res://shaders/terrain.gdshader")
 const ARENITO := preload("res://shaders/arenito.gdshader")
+const CASCA := preload("res://shaders/casca.gdshader")
 const FLOWER := preload("res://shaders/flower.gdshader")
 const LEAF_TEX := preload("res://assets/textures/leaf_cluster.png")
 const FLOWER_TEX := preload("res://assets/textures/flower_cluster.png")
@@ -19,6 +20,8 @@ const ARENITO_COR := preload("res://assets/textures/arenito/cor.png")
 const ARENITO_RELEVO := preload("res://assets/textures/arenito/relevo.png")
 const BARRO_COR := preload("res://assets/textures/barro/cor.png")
 const BARRO_RELEVO := preload("res://assets/textures/barro/relevo.png")
+const CASCA_COR := preload("res://assets/textures/casca/cor.png")
+const CASCA_RELEVO := preload("res://assets/textures/casca/relevo.png")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -63,17 +66,27 @@ func _init() -> void:
 
 	flower = _shader(FLOWER)
 
-	bark = _surface(Color(0.30, 0.24, 0.20), Color(0.55, 0.47, 0.39), Color(0.62, 0.62, 0.42))
-	bark.set_shader_parameter("noise_scale", 2.0)
-	bark.set_shader_parameter("detail_scale", 9.0)
-	bark.set_shader_parameter("streak_amount", 0.45)
-	bark.set_shader_parameter("streak_scale", 14.0)
-	bark.set_shader_parameter("accent_amount", 0.35)
-	bark.set_shader_parameter("accent_threshold", 0.72)
-	bark.set_shader_parameter("roughness_value", 0.95)
+	# Casca das árvores e galhos: cortiça grossa e rachada feita no Blender, presa
+	# a cada galho.
+	bark = _shader(CASCA)
+	bark.set_shader_parameter("noise_tex", noise_tex)
+	bark.set_shader_parameter("casca_cor", CASCA_COR)
+	bark.set_shader_parameter("casca_relevo", CASCA_RELEVO)
+	bark.set_shader_parameter("color_a", Color(0.30, 0.25, 0.21))
+	bark.set_shader_parameter("color_b", Color(0.42, 0.36, 0.30))
+	bark.set_shader_parameter("around_repeats", 2.0)
+	bark.set_shader_parameter("length_tile", 0.8)
+	bark.set_shader_parameter("detail_amount", 0.8)
+	bark.set_shader_parameter("relief_strength", 1.4)
 
-	log_bark = bark.duplicate()
-	log_bark.set_shader_parameter("accent_color", Color(0.42, 0.52, 0.22))
+	# Troncos caídos: ainda a casca lisa antiga, até ganharem a deles.
+	log_bark = _surface(Color(0.30, 0.24, 0.20), Color(0.55, 0.47, 0.39), Color(0.42, 0.52, 0.22))
+	log_bark.set_shader_parameter("noise_scale", 2.0)
+	log_bark.set_shader_parameter("detail_scale", 9.0)
+	log_bark.set_shader_parameter("streak_amount", 0.45)
+	log_bark.set_shader_parameter("streak_scale", 14.0)
+	log_bark.set_shader_parameter("accent_threshold", 0.72)
+	log_bark.set_shader_parameter("roughness_value", 0.95)
 	log_bark.set_shader_parameter("accent_amount", 0.6)
 	log_bark.set_shader_parameter("accent_up_bias", 0.4)
 

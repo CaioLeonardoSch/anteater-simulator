@@ -191,7 +191,7 @@ o que for feito nos cupinzeiros).
 | Paredões de arenito | feito em 06/11/2026: `assets/textures/arenito/`, feita por `tools/blender_arenito.py`; shader `shaders/arenito.gdshader` (material `arenito`) |
 | Pedras | feito em 06/11/2026: mesma estampa dos paredões (`assets/textures/arenito/`) no shader `shaders/arenito.gdshader`, com líquen em manchas (`lichen_amount`) e topo mais suave (`top_detail`) |
 | Cupinzeiros | feito em 06/11/2026: `assets/textures/barro/`, feita por `tools/blender_barro.py`; mesmo shader dos paredões (`shaders/arenito.gdshader`, material `clay`) |
-| Casca das árvores | a fazer |
+| Casca das árvores | feito em 07/11/2026: `assets/textures/casca/`, feita por `tools/blender_casca.py`; shader próprio (`shaders/casca.gdshader`, material `bark`), com a estampa presa a cada galho |
 | Troncos caídos | a fazer |
 | Formigueiros e câmaras | a fazer |
 | Lagoas | a fazer |

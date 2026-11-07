@@ -6,6 +6,7 @@ const FOLIAGE := preload("res://shaders/foliage.gdshader")
 const GRASS := preload("res://shaders/grass.gdshader")
 const TERRAIN := preload("res://shaders/terrain.gdshader")
 const ARENITO := preload("res://shaders/arenito.gdshader")
+const CASCA := preload("res://shaders/casca.gdshader")
 const FLOWER := preload("res://shaders/flower.gdshader")
 const LEAF_TEX := preload("res://assets/textures/leaf_cluster.png")
 const FLOWER_TEX := preload("res://assets/textures/flower_cluster.png")
@@ -19,6 +20,14 @@ const ARENITO_COR := preload("res://assets/textures/arenito/cor.png")
 const ARENITO_RELEVO := preload("res://assets/textures/arenito/relevo.png")
 const BARRO_COR := preload("res://assets/textures/barro/cor.png")
 const BARRO_RELEVO := preload("res://assets/textures/barro/relevo.png")
+const CASCA_COR := preload("res://assets/textures/casca/cor.png")
+const CASCA_RELEVO := preload("res://assets/textures/casca/relevo.png")
+const FORMIGUEIRO := preload("res://shaders/formigueiro.gdshader")
+const TERRA_COR := preload("res://assets/textures/terra/cor.png")
+const TERRA_RELEVO := preload("res://assets/textures/terra/relevo.png")
+const CAVA_COR := preload("res://assets/textures/cava/cor.png")
+const CAVA_RELEVO := preload("res://assets/textures/cava/relevo.png")
+const AGUA := preload("res://shaders/agua.gdshader")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -43,6 +52,8 @@ var cliff: ShaderMaterial
 var arenito: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
+var nest_fungus: ShaderMaterial
+var water: ShaderMaterial
 
 
 func _init() -> void:
@@ -63,19 +74,38 @@ func _init() -> void:
 
 	flower = _shader(FLOWER)
 
-	bark = _surface(Color(0.30, 0.24, 0.20), Color(0.55, 0.47, 0.39), Color(0.62, 0.62, 0.42))
-	bark.set_shader_parameter("noise_scale", 2.0)
-	bark.set_shader_parameter("detail_scale", 9.0)
-	bark.set_shader_parameter("streak_amount", 0.45)
-	bark.set_shader_parameter("streak_scale", 14.0)
-	bark.set_shader_parameter("accent_amount", 0.35)
-	bark.set_shader_parameter("accent_threshold", 0.72)
-	bark.set_shader_parameter("roughness_value", 0.95)
+	# Casca das árvores e galhos: cortiça grossa e rachada feita no Blender, presa
+	# a cada galho.
+	bark = _shader(CASCA)
+	bark.set_shader_parameter("noise_tex", noise_tex)
+	bark.set_shader_parameter("casca_cor", CASCA_COR)
+	bark.set_shader_parameter("casca_relevo", CASCA_RELEVO)
+	bark.set_shader_parameter("color_a", Color(0.30, 0.25, 0.21))
+	bark.set_shader_parameter("color_b", Color(0.42, 0.36, 0.30))
+	bark.set_shader_parameter("around_repeats", 2.0)
+	bark.set_shader_parameter("length_tile", 0.8)
+	bark.set_shader_parameter("detail_amount", 0.8)
+	bark.set_shader_parameter("relief_strength", 1.4)
 
-	log_bark = bark.duplicate()
-	log_bark.set_shader_parameter("accent_color", Color(0.42, 0.52, 0.22))
-	log_bark.set_shader_parameter("accent_amount", 0.6)
-	log_bark.set_shader_parameter("accent_up_bias", 0.4)
+	# Troncos caídos: a mesma cortiça, mais escura e gasta, com falhas mostrando a
+	# madeira cinza, musgo só embaixo e as pontas quebradas com anéis.
+	log_bark = _shader(CASCA)
+	log_bark.set_shader_parameter("noise_tex", noise_tex)
+	log_bark.set_shader_parameter("casca_cor", CASCA_COR)
+	log_bark.set_shader_parameter("casca_relevo", CASCA_RELEVO)
+	log_bark.set_shader_parameter("color_a", Color(0.29, 0.24, 0.20))
+	log_bark.set_shader_parameter("color_b", Color(0.40, 0.34, 0.28))
+	log_bark.set_shader_parameter("bare_color", Color(0.58, 0.52, 0.43))
+	log_bark.set_shader_parameter("around_repeats", 3.0)
+	log_bark.set_shader_parameter("length_tile", 0.8)
+	log_bark.set_shader_parameter("uv_per_meter", 0.5)
+	log_bark.set_shader_parameter("detail_amount", 0.85)
+	log_bark.set_shader_parameter("relief_strength", 1.4)
+	log_bark.set_shader_parameter("bare_amount", 1.0)
+	log_bark.set_shader_parameter("moss_amount", 0.9)
+	log_bark.set_shader_parameter("moss_color", Color(0.25, 0.30, 0.14))
+	log_bark.set_shader_parameter("wood_light", Color(0.60, 0.50, 0.38))
+	log_bark.set_shader_parameter("wood_dark", Color(0.40, 0.31, 0.23))
 
 	leaves_core = _foliage(Color(0.13, 0.24, 0.09), Color(0.36, 0.52, 0.17), Color(0.78, 0.74, 0.32), false)
 	leaves_cards = _foliage(Color(0.13, 0.24, 0.09), Color(0.40, 0.56, 0.18), Color(0.86, 0.78, 0.34), true)
@@ -164,19 +194,30 @@ func _init() -> void:
 	arenito.set_shader_parameter("topo_cor", SOLO_COR)
 	arenito.set_shader_parameter("topo_relevo", SOLO_RELEVO)
 
-	nest_soil = _surface(Color(0.46, 0.26, 0.16), Color(0.64, 0.42, 0.28), Color(0.80, 0.62, 0.46))
-	nest_soil.set_shader_parameter("noise_scale", 3.0)
-	nest_soil.set_shader_parameter("detail_scale", 14.0)
-	nest_soil.set_shader_parameter("accent_amount", 0.2)
-	nest_soil.set_shader_parameter("roughness_value", 0.97)
-	nest_soil.set_shader_parameter("specular_value", 0.15)
-	nest_soil.set_shader_parameter("rim_amount", 0.0)
+	# Formigueiros: grãozinhos de terra fofa feitos no Blender; nos buracos
+	# (olheiros, câmaras abertas, buraco da rainha) a terra recém-cavada.
+	nest_soil = _shader(FORMIGUEIRO)
+	nest_soil.set_shader_parameter("noise_tex", noise_tex)
+	nest_soil.set_shader_parameter("terra_cor", TERRA_COR)
+	nest_soil.set_shader_parameter("terra_relevo", TERRA_RELEVO)
+	nest_soil.set_shader_parameter("cava_cor", CAVA_COR)
+	nest_soil.set_shader_parameter("cava_relevo", CAVA_RELEVO)
+	nest_soil.set_shader_parameter("color_a", Color(0.48, 0.30, 0.20))
+	nest_soil.set_shader_parameter("color_b", Color(0.62, 0.42, 0.30))
 	# Terra fofa e mais clara que tampa as câmaras (dá para ver de longe).
 	nest_cap = nest_soil.duplicate()
-	nest_cap.set_shader_parameter("color_a", Color(0.70, 0.50, 0.34))
-	nest_cap.set_shader_parameter("color_b", Color(0.90, 0.72, 0.52))
-	nest_cap.set_shader_parameter("accent_color", Color(0.96, 0.84, 0.64))
-	nest_soil.set_shader_parameter("accent_threshold", 0.7)
+	nest_cap.set_shader_parameter("color_a", Color(0.70, 0.52, 0.38))
+	nest_cap.set_shader_parameter("color_b", Color(0.86, 0.70, 0.52))
+	nest_cap.set_shader_parameter("dug_amount", 0.0)
+	# Jardim de fungo das saúvas nas câmaras abertas: esponja clara.
+	nest_fungus = nest_soil.duplicate()
+	nest_fungus.set_shader_parameter("fungus_mode", true)
+	# Água das lagoas: ondinhas de um ruído em forma de relevo (sem emenda).
+	var ripple := _make_noise(256, 0.035, 3, 23)
+	ripple.as_normal_map = true
+	ripple.bump_strength = 3.0
+	water = _shader(AGUA)
+	water.set_shader_parameter("ripple_tex", ripple)
 
 
 func _make_noise(size: int, freq: float, octaves: int, seed_value: int) -> NoiseTexture2D:

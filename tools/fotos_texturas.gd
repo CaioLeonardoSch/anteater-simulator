@@ -8,8 +8,8 @@ extends Node
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/depois --so=chao,pedra
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
-## cupinzeiro, pedra, tronco, formigueiro, chao, capim, lagoa, penhasco, paredao,
-## caverna, trilha.
+## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
+## caverna, trilha, camara, camara_funda, camara_campo, cratera.
 
 var main
 var out_dir := "user://fotos"
@@ -49,9 +49,80 @@ func _ready() -> void:
 			continue
 		await _look(n.global_position, j[2], j[3])
 		await _shot(j[0])
+	if _wanted("tronco_ponta"):
+		# De frente para uma ponta quebrada do tronco caído (a madeira à mostra).
+		var n := _find(mats.log_bark)
+		if n:
+			var half: float = n.get_meta("radius", 2.0)
+			var axis := n.global_transform.basis.x.normalized()
+			var tip := n.global_transform * Vector3(-half, 0.2, 0.0)
+			var from := tip - axis * 1.5 + n.global_transform.basis.z.normalized() * 0.5
+			var d := tip - from
+			p.place_at(Vector2(from.x, from.z), atan2(-d.x, -d.z))
+			await get_tree().physics_frame
+			var aim: Vector3 = tip - p.camera.global_position
+			p.pitch = clampf(asin(aim.normalized().y), -1.3, 1.3)
+			await _shot("tronco_ponta")
 	if _wanted("formigueiro"):
 		await _look(main.world.nests[0].global_position, 4.0, 0.2)
 		await _shot("formigueiro")
+	if _wanted("formigueiro_grande"):
+		for nest in main.world.nests:
+			if nest.big:
+				await _look(nest.global_position, nest.radius + 3.0, 0.3)
+				await _shot("formigueiro_grande")
+				break
+	# Câmaras abertas de cada nível: rasa (formigueiro pequeno), funda
+	# (formigueiro grande) e a do campo (longe dos montes).
+	for job in [["camara", false], ["camara_funda", true]]:
+		if not _wanted(job[0]):
+			continue
+		for nest in main.world.nests:
+			if nest.big != job[1]:
+				continue
+			var ci := _first_mound_chamber(nest)
+			if ci < 0:
+				continue
+			var c = nest.chambers[ci]
+			main.colony.open_chamber(nest, ci, true)
+			# Do lado de cima do monte, olhando para dentro dela.
+			var cp: Vector3 = nest.chamber_world_pos(c)
+			var out2: Vector2 = Vector2(cp.x, cp.z) - nest.center2
+			out2 = out2.normalized() if out2.length() > 0.1 else Vector2(1, 0)
+			await _look_from(Vector2(cp.x, cp.z) - out2 * 1.0, cp)
+			await _shot(job[0])
+			break
+	if _wanted("camara_campo"):
+		var done := false
+		for nest in main.world.nests:
+			for ci in nest.chambers.size():
+				var c = nest.chambers[ci]
+				if not c.satellite or not _clear(c.pos2):
+					continue
+				main.colony.open_chamber(nest, ci, true)
+				var cp: Vector3 = nest.chamber_world_pos(c)
+				var away: Vector2 = (-c.pos2).normalized()
+				await _look_from(c.pos2 + away * 1.4, cp)
+				await _shot("camara_campo")
+				done = true
+				break
+			if done:
+				break
+	if _wanted("cratera"):
+		# O monte grande desmanchado (Escavação Real): o buraco da rainha.
+		for nest in main.world.nests:
+			if not nest.big:
+				continue
+			for ci in nest.chambers.size():
+				if nest.chambers[ci].royal:
+					main.colony.open_chamber(nest, ci, true)
+					break
+			# Da borda do buraco, olhando para o fundo.
+			var gp: Vector3 = nest.global_position
+			var d2 := (-Vector2(gp.x, gp.z)).normalized()
+			await _look_from(Vector2(gp.x, gp.z) + d2 * nest.radius * 0.95, gp)
+			await _shot("cratera")
+			break
 	if _wanted("chao"):
 		p.place_at(Vector2(6, 6), 0.8)
 		await get_tree().physics_frame
@@ -68,6 +139,15 @@ func _ready() -> void:
 		await _look(lagoa.global_transform * aabb.get_center(), aabb.size.x * 0.5 + 3.0, 0.0)
 		p.pitch = -0.35
 		await _shot("lagoa")
+	if _wanted("lagoa_beira") and not main.world.pond_shapes.is_empty():
+		# Na beira, olhando para a água rasa e a lama (de onde o tamanduá bebe).
+		var l: Vector3 = main.world.pond_shapes[0][0]
+		var c2 := Vector2(l.x, l.y)
+		var dir := (-c2).normalized() if c2.length() > 1.0 else Vector2(1, 0)
+		var edge := c2 + dir * l.z * 0.75
+		var gy: float = main.world.terrain.get_height(edge.x, edge.y)
+		await _look_from(c2 + dir * (l.z + 1.6), Vector3(edge.x, gy, edge.y))
+		await _shot("lagoa_beira")
 	if _wanted("penhasco"):
 		var gp: Vector3 = main.world.giant_mound.global_position
 		var dir := Vector2(gp.x, gp.z).normalized()
@@ -104,6 +184,15 @@ func _ready() -> void:
 			await _shot("trilha")
 	print("[fotos] prontas em ", ProjectSettings.globalize_path(out_dir))
 	get_tree().quit()
+
+
+## Primeira câmara do monte que não é a da rainha (ou -1).
+func _first_mound_chamber(nest) -> int:
+	for ci in nest.chambers.size():
+		var c = nest.chambers[ci]
+		if not c.royal and not c.satellite:
+			return ci
+	return -1
 
 
 func _wanted(name: String) -> bool:
@@ -163,6 +252,16 @@ func _look(target: Vector3, dist: float, aim_y: float) -> void:
 	await get_tree().physics_frame
 	var cam: Vector3 = p.camera.global_position
 	var aim := Vector3(target.x, target.y + aim_y, target.z) - cam
+	p.pitch = clampf(asin(aim.normalized().y), -1.3, 1.3)
+
+
+## Põe o tamanduá no ponto `from2`, olhando para `target`.
+func _look_from(from2: Vector2, target: Vector3) -> void:
+	var p = main.player
+	var d := Vector3(target.x - from2.x, 0, target.z - from2.y)
+	p.place_at(from2, atan2(-d.x, -d.z))
+	await get_tree().physics_frame
+	var aim: Vector3 = target - p.camera.global_position
 	p.pitch = clampf(asin(aim.normalized().y), -1.3, 1.3)
 
 

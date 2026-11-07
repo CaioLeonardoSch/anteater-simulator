@@ -269,10 +269,17 @@ static func build_log(rng: RandomNumberGenerator, mats) -> Node3D:
 		var t := float(i) / 6.0
 		pts.append(Vector3(lerpf(-length * 0.5, length * 0.5, t), radius * 0.85 + sin(t * PI) * 0.05, sin(t * 3.0) * 0.18))
 		radii.append(radius * (1.0 - t * 0.25))
-	b.add_tube(pts, radii, 12, true, true, 0.5)
+	# UV2.x = 1 nas pontas quebradas (madeira à mostra); 0 na casca.
+	b.use_uv2 = true
+	var tube := b.vertex_count()
+	b.add_tube(pts, radii, 12, false, false, 0.5)
+	add_log_end(b, rng, tube, 12, pts[0], (pts[0] - pts[1]).normalized(), radii[0], true)
+	add_log_end(b, rng, tube + 6 * 13, 12, pts[6], (pts[6] - pts[5]).normalized(), radii[6], false)
 	# Galho quebrado.
-	b.add_tube(PackedVector3Array([pts[3], pts[3] + Vector3(0.2, 0.45, 0.3), pts[3] + Vector3(0.3, 0.8, 0.5)]),
-		PackedFloat32Array([radius * 0.45, radius * 0.3, radius * 0.18]), 8, false, true)
+	var bpts := PackedVector3Array([pts[3], pts[3] + Vector3(0.2, 0.45, 0.3), pts[3] + Vector3(0.3, 0.8, 0.5)])
+	var branch := b.vertex_count()
+	b.add_tube(bpts, PackedFloat32Array([radius * 0.45, radius * 0.3, radius * 0.18]), 8, false, false, 0.5)
+	add_log_end(b, rng, branch + 2 * 9, 8, bpts[2], (bpts[2] - bpts[1]).normalized(), radius * 0.18, false)
 	var root := Node3D.new()
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit(null, mats.log_bark)
@@ -289,6 +296,36 @@ static func build_log(rng: RandomNumberGenerator, mats) -> Node3D:
 	root.add_child(body)
 	root.set_meta("radius", length * 0.5)
 	return root
+
+
+## Ponta quebrada de tronco: um disco de madeira à mostra (UV em volta do
+## centro, para os anéis) com o miolo um pouco afundado e a beira lascada.
+## `ring` é o primeiro vértice do anel da ponta do tubo.
+static func add_log_end(b: MeshBuilder, rng: RandomNumberGenerator, ring: int, sides: int,
+		center: Vector3, dir: Vector3, radius: float, flip: bool) -> void:
+	b.uv2 = Vector2(1, 0)
+	var outer := PackedInt32Array()
+	var inner := PackedInt32Array()
+	for s in sides + 1:
+		var a := TAU * float(s) / sides
+		var p := b.verts[ring + s]
+		var uv := Vector2(0.5 + 0.5 * cos(a), 0.5 + 0.5 * sin(a))
+		outer.append(b.add_vertex(p, dir, uv))
+		# Anel de dentro: lascas que saem ou afundam um pouco.
+		var jag := rng.randf_range(-0.12, 0.18) * radius if s < sides else 0.0
+		if s == sides:
+			jag = (b.verts[inner[0]] - (center + (b.verts[ring] - center) * 0.6)).dot(dir)
+		var q := center + (p - center) * 0.6 + dir * jag
+		inner.append(b.add_vertex(q, dir, Vector2(0.5 + 0.3 * cos(a), 0.5 + 0.3 * sin(a))))
+	var mid := b.add_vertex(center - dir * radius * 0.08, dir, Vector2(0.5, 0.5))
+	for s in sides:
+		if flip:
+			b.add_quad(outer[s + 1], outer[s], inner[s], inner[s + 1])
+			b.add_tri(mid, inner[s + 1], inner[s])
+		else:
+			b.add_quad(outer[s], outer[s + 1], inner[s + 1], inner[s])
+			b.add_tri(mid, inner[s], inner[s + 1])
+	b.uv2 = Vector2.ZERO
 
 
 ## Tufo de capim: várias folhas curvas e afinando, com COLOR.r = altura.

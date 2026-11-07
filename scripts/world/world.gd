@@ -372,18 +372,19 @@ func _dig_pond(lobes: Array[Vector3]) -> void:
 	for l in lobes:
 		terrain.add_dip(l.x, l.y, l.z, clampf(0.35 + l.z * 0.13, 0.5, 0.95))
 		terrain.mask_paint(l.x, l.y, l.z + 0.5, 1, 1.0)
+		# Lama molhada na beira (canal 3 da máscara, só para a cor do chão).
+		terrain.mask_paint(l.x, l.y, l.z + 1.1, 3, 1.0)
 		ponds.append(l)
 	pond_shapes.append(lobes)
 
 
 func _build_pond_water() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.albedo_color = Color.WHITE
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.3
-	mat.metallic_specular = 0.3
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var mat: ShaderMaterial = mats.water
+	# O reflexo do paredão usa a distância média dele.
+	var r := 0.0
+	for i in 16:
+		r += cliffs.radius_at(TAU * i / 16.0)
+	mat.set_shader_parameter("cliff_radius", r / 16.0)
 	for lobes in pond_shapes:
 		_build_one_pond(lobes, mat)
 
@@ -465,11 +466,20 @@ func _build_exit_log() -> void:
 			var t := float(i) / 5.0
 			pts.append(Vector3(-side * t * (length * 0.5 - 0.06), radius * 0.85 + sin(t * PI) * 0.06, sin(t * 2.6 + side) * 0.12))
 			radii.append(radius * lerpf(1.0, 0.86, t) * (1.0 if side < 0.0 else 0.94))
-		b.add_tube(pts, radii, 14, true, true, 0.5)
+		# Pontas com a madeira à mostra (sorteio próprio, para não mexer no resto).
+		var lr := RandomNumberGenerator.new()
+		lr.seed = 7 + int(side)
+		b.use_uv2 = true
+		var tube := b.vertex_count()
+		b.add_tube(pts, radii, 14, false, false, 0.5)
+		Props.add_log_end(b, lr, tube, 14, pts[0], (pts[0] - pts[1]).normalized(), radii[0], true)
+		Props.add_log_end(b, lr, tube + 5 * 15, 14, pts[5], (pts[5] - pts[4]).normalized(), radii[5], false)
 		# Toco de galho quebrado.
 		var stub := pts[2] + Vector3(0, radius * 0.6, 0)
-		b.add_tube(PackedVector3Array([stub, stub + Vector3(0.1, 0.55, 0.25), stub + Vector3(0.2, 0.95, 0.35)]),
-			PackedFloat32Array([radius * 0.32, radius * 0.22, radius * 0.12]), 8, false, true)
+		var spts := PackedVector3Array([stub, stub + Vector3(0.1, 0.55, 0.25), stub + Vector3(0.2, 0.95, 0.35)])
+		var branch := b.vertex_count()
+		b.add_tube(spts, PackedFloat32Array([radius * 0.32, radius * 0.22, radius * 0.12]), 8, false, false, 0.5)
+		Props.add_log_end(b, lr, branch + 2 * 9, 8, spts[2], (spts[2] - spts[1]).normalized(), radius * 0.12, false)
 		var mi := MeshInstance3D.new()
 		mi.mesh = b.commit(null, mats.log_bark)
 		pivot.add_child(mi)
@@ -841,8 +851,13 @@ func _apply_day() -> void:
 	sun.light_energy = lerpf(1.85, 1.25, p)
 	env.ambient_light_energy = lerpf(1.05, 0.85, p)
 	sky_mat.set_shader_parameter("horizon_color", Color(1.0, 0.70, 0.45).lerp(Color(1.0, 0.52, 0.42), p))
-	sky_mat.set_shader_parameter("mid_color", Color(0.66, 0.62, 0.74).lerp(Color(0.62, 0.45, 0.66), p))
-	sky_mat.set_shader_parameter("zenith_color", Color(0.26, 0.36, 0.62).lerp(Color(0.18, 0.20, 0.45), p))
+	var mid := Color(0.66, 0.62, 0.74).lerp(Color(0.62, 0.45, 0.66), p)
+	var zenith := Color(0.26, 0.36, 0.62).lerp(Color(0.18, 0.20, 0.45), p)
+	sky_mat.set_shader_parameter("mid_color", mid)
+	sky_mat.set_shader_parameter("zenith_color", zenith)
+	# A água das lagoas reflete o mesmo céu.
+	mats.water.set_shader_parameter("sky_low", mid)
+	mats.water.set_shader_parameter("sky_high", zenith)
 	sky_mat.set_shader_parameter("sun_glow_color", Color(1.0, 0.6, 0.3).lerp(Color(1.0, 0.42, 0.25), p))
 	env.fog_light_color = Color(0.86, 0.66, 0.52).lerp(Color(0.8, 0.5, 0.48), p)
 	if giant_mound:

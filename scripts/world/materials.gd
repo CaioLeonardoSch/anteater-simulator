@@ -22,6 +22,11 @@ const BARRO_COR := preload("res://assets/textures/barro/cor.png")
 const BARRO_RELEVO := preload("res://assets/textures/barro/relevo.png")
 const CASCA_COR := preload("res://assets/textures/casca/cor.png")
 const CASCA_RELEVO := preload("res://assets/textures/casca/relevo.png")
+const FORMIGUEIRO := preload("res://shaders/formigueiro.gdshader")
+const TERRA_COR := preload("res://assets/textures/terra/cor.png")
+const TERRA_RELEVO := preload("res://assets/textures/terra/relevo.png")
+const CAVA_COR := preload("res://assets/textures/cava/cor.png")
+const CAVA_RELEVO := preload("res://assets/textures/cava/relevo.png")
 
 var noise_tex: NoiseTexture2D
 var cloud_noise: NoiseTexture2D
@@ -46,6 +51,7 @@ var cliff: ShaderMaterial
 var arenito: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
+var nest_fungus: ShaderMaterial
 
 
 func _init() -> void:
@@ -186,19 +192,24 @@ func _init() -> void:
 	arenito.set_shader_parameter("topo_cor", SOLO_COR)
 	arenito.set_shader_parameter("topo_relevo", SOLO_RELEVO)
 
-	nest_soil = _surface(Color(0.46, 0.26, 0.16), Color(0.64, 0.42, 0.28), Color(0.80, 0.62, 0.46))
-	nest_soil.set_shader_parameter("noise_scale", 3.0)
-	nest_soil.set_shader_parameter("detail_scale", 14.0)
-	nest_soil.set_shader_parameter("accent_amount", 0.2)
-	nest_soil.set_shader_parameter("roughness_value", 0.97)
-	nest_soil.set_shader_parameter("specular_value", 0.15)
-	nest_soil.set_shader_parameter("rim_amount", 0.0)
+	# Formigueiros: grãozinhos de terra fofa feitos no Blender; nos buracos
+	# (olheiros, câmaras abertas, buraco da rainha) a terra recém-cavada.
+	nest_soil = _shader(FORMIGUEIRO)
+	nest_soil.set_shader_parameter("noise_tex", noise_tex)
+	nest_soil.set_shader_parameter("terra_cor", TERRA_COR)
+	nest_soil.set_shader_parameter("terra_relevo", TERRA_RELEVO)
+	nest_soil.set_shader_parameter("cava_cor", CAVA_COR)
+	nest_soil.set_shader_parameter("cava_relevo", CAVA_RELEVO)
+	nest_soil.set_shader_parameter("color_a", Color(0.48, 0.30, 0.20))
+	nest_soil.set_shader_parameter("color_b", Color(0.62, 0.42, 0.30))
 	# Terra fofa e mais clara que tampa as câmaras (dá para ver de longe).
 	nest_cap = nest_soil.duplicate()
-	nest_cap.set_shader_parameter("color_a", Color(0.70, 0.50, 0.34))
-	nest_cap.set_shader_parameter("color_b", Color(0.90, 0.72, 0.52))
-	nest_cap.set_shader_parameter("accent_color", Color(0.96, 0.84, 0.64))
-	nest_soil.set_shader_parameter("accent_threshold", 0.7)
+	nest_cap.set_shader_parameter("color_a", Color(0.70, 0.52, 0.38))
+	nest_cap.set_shader_parameter("color_b", Color(0.86, 0.70, 0.52))
+	nest_cap.set_shader_parameter("dug_amount", 0.0)
+	# Jardim de fungo das saúvas nas câmaras abertas: esponja clara.
+	nest_fungus = nest_soil.duplicate()
+	nest_fungus.set_shader_parameter("fungus_mode", true)
 
 
 func _make_noise(size: int, freq: float, octaves: int, seed_value: int) -> NoiseTexture2D:

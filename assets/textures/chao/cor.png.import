@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvp6ih3csc0ca"
 path.bptc="res://.godot/imported/cor.png-1a5663c39c1651ee353cfa8a9613d0bb.bptc.ctex"
+path.astc="res://.godot/imported/cor.png-1a5663c39c1651ee353cfa8a9613d0bb.astc.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/chao/cor.png"
-dest_files=["res://.godot/imported/cor.png-1a5663c39c1651ee353cfa8a9613d0bb.bptc.ctex"]
+dest_files=["res://.godot/imported/cor.png-1a5663c39c1651ee353cfa8a9613d0bb.bptc.ctex", "res://.godot/imported/cor.png-1a5663c39c1651ee353cfa8a9613d0bb.astc.ctex"]
 
 [params]
 

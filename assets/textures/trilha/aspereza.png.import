@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cc4h86158gm7v"
 path.s3tc="res://.godot/imported/aspereza.png-fe221620f4257f5c87cd8db5f47860ef.s3tc.ctex"
+path.etc2="res://.godot/imported/aspereza.png-fe221620f4257f5c87cd8db5f47860ef.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/trilha/aspereza.png"
-dest_files=["res://.godot/imported/aspereza.png-fe221620f4257f5c87cd8db5f47860ef.s3tc.ctex"]
+dest_files=["res://.godot/imported/aspereza.png-fe221620f4257f5c87cd8db5f47860ef.s3tc.ctex", "res://.godot/imported/aspereza.png-fe221620f4257f5c87cd8db5f47860ef.etc2.ctex"]
 
 [params]
 

@@ -197,20 +197,29 @@ Na primeira vez que abre, ele explica e pergunta se pode; não vai nome, e-mail
 nem arquivos. Como funciona e como criar o formulário:
 [`docs/estatisticas-dos-testes.md`](docs/estatisticas-dos-testes.md).
 
-### Versão para Windows (para mandar aos amigos)
+### Versão para Windows e Mac (para mandar aos amigos)
 
-O GitHub gera o jogo para Windows sozinho: na aba **Actions**, escolha
-**Versão para Windows** › **Run workflow**, escreva o número da versão (por
-exemplo `0.1.1`) e clique no botão verde. Em uns 3 minutos, o
-`AnteaterSimulator-0.1.1-windows.zip` aparece em **Releases** (na lateral
-direita da página do repositório), com as instruções para quem vai jogar. É
-só mandar o link dessa página. Por enquanto fica só a versão mais nova: ao
-publicar uma, a automação apaga as anteriores. O número escolhido aparece no menu ("Versão de
-teste 0.1.1") e nas estatísticas, para saber qual versão cada amigo jogou.
+O GitHub gera o jogo para Windows e para Mac sozinho: na aba **Actions**,
+escolha **Versão para Windows e Mac** › **Run workflow**, escreva o número da
+versão (por exemplo `0.1.2`) e clique no botão verde. Em uns 5 minutos, o
+`AnteaterSimulator-0.1.2-windows.zip` e o `AnteaterSimulator-0.1.2-mac.zip`
+aparecem em **Releases** (na lateral direita da página do repositório), com as
+instruções para quem vai jogar. É só mandar o link dessa página. Por enquanto
+fica só a versão mais nova: ao publicar uma, a automação apaga as anteriores.
+O número escolhido aparece no menu ("Versão de teste 0.1.2") e nas
+estatísticas, para saber qual versão cada amigo jogou.
+
+A versão do Mac roda nos Macs com chip Apple e nos com Intel. Como não tem a
+assinatura da Apple (que é paga), na primeira vez o Mac pede para liberar o
+jogo em **Ajustes do Sistema › Privacidade e Segurança › Abrir Mesmo Assim**.
+Para ela funcionar nos chips da Apple, o projeto prepara as texturas também no
+formato desses chips (opção **Import ETC2 ASTC** do `project.godot`); a versão
+do Windows leva só o formato dela.
 
 A configuração de exportação fica em `export_presets.cfg` e a automação em
-`.github/workflows/windows.yml`. Para gerar à mão no Godot: **Projeto ›
-Exportar › Windows** (precisa dos modelos de exportação 4.7.2 instalados).
+`.github/workflows/versao.yml`. Para gerar à mão no Godot: **Projeto ›
+Exportar › Windows** ou **macOS** (precisa dos modelos de exportação 4.7.2
+instalados).
 
 ### Tela e gráficos
 

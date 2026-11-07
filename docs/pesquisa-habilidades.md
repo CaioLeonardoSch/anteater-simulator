@@ -629,6 +629,122 @@ ritmo, não o relógio.
 Por isso os preços ficaram como na proposta. O próximo ajuste deve vir da
 jogatina do Caio com a árvore nova (a telemetria anota cada clique comprado).
 
+## 11. Proposta: as 4 áreas, marcos no lugar das travas e a área 1 menor (07/11/2026, para aprovar)
+
+### O que o Caio decidiu
+
+- **Formigas por área:** área 1 com 10 mil, área 2 com 30 mil, área 3 com 60
+  mil e área 4 com até 100 mil.
+- **Demo (área 1) de 20 a 30 minutos.** O jogo completo pode crescer com o
+  conteúdo novo das outras áreas.
+- **Travas novas:** cada área tem um **teto** do que dá para comprar, e
+  **marcos** no caminho destravam habilidades (mesmo sem pontos para
+  comprá-las na hora). As travas por insetos comidos saem.
+- **Na área 1 não dá para comprar tudo:** sobra escolha, e o jogador decide
+  onde focar. No fim do jogo dá para comprar tudo.
+- **O Faro abre no fim da área 1.**
+- **A área 1 pode diminuir.**
+
+### Pontos por área
+
+Continua 10 insetos = 1 ponto. A coluna "à venda" é o que a árvore oferece
+até o fim daquela área, somando as anteriores.
+
+| Área | Insetos | Pontos | Pontos até aqui | À venda até aqui | Dá para comprar |
+|---|---|---|---|---|---|
+| 1 | 10 mil | 1 000 | 1 000 | ~1 450 | ~70% |
+| 2 | 30 mil | 3 000 | 4 000 | ~5 300 | ~75% |
+| 3 | 60 mil | 6 000 | 10 000 | ~11 800 | ~85% |
+| 4 | até 100 mil | 10 000 | 20 000 | ~19 500 | tudo, com um pouco sobrando |
+
+- **Os pontos que sobram passam para a área seguinte.**
+- **Falta conteúdo para as áreas 2 a 4.** A árvore de hoje custa 4 227 pontos
+  (4 927 com Escalada e Cauda). Para o jogo inteiro, faltam uns 14 500 pontos
+  em habilidades ou níveis novos.
+- **Os preços precisam subir de área para área.** O tamanduá forte ganha muito
+  mais pontos por minuto: com 40 insetos por lambida, cada lambida vale até 4
+  pontos. Para manter o ritmo de uma compra a cada 40 a 60 s, as habilidades
+  das áreas 3 e 4 custam bem mais que as da área 1.
+
+### Área 1: o que fica à venda
+
+Com os preços de hoje, a área 1 oferece cerca de **1 450 pontos** em
+habilidades, e o jogador ganha **1 000**. Então ele compra perto de 70% e
+escolhe o resto.
+
+| Quando abre | Habilidades | Preço total |
+|---|---|---|
+| **Desde o começo** | O começo da Língua, das Garras e das Patas, e o nível 1 de todas as linhas: Bocado, Destreza, Comprimento, Mira, Rapidez, Força, Fundura, Respiro, Passada, Fôlego e Corrida | 532 |
+| **Marco 1: primeiro formigueiro limpo** | Bocado 2, Mira 2, Respiro 2, Passada 2 | 370 |
+| **Marco 2: metade dos formigueiros limpos** | Destreza 2, Força 2, Tremor 1, Fundura 2 (a rainha) | 480 |
+| **Marco 3: 75% dos insetos da área comidos** | **Farejar, de presente**, e Alcance 1 à venda | 60 |
+| **Fica para a área 2 em diante** | Rapidez 2, Comprimento 2, Bocado 3 e 4, Destreza 3, Mira 3, Tremor 2 e 3, Fôlego 2, Corrida 2 e 3, Alcance 2 e 3, Precisão, Escalada e Cauda | — |
+
+**Por que o Faro aos 75%.** Os últimos insetos de uma área são os
+espalhados e escondidos, que dão mais trabalho de achar. O Faro resolve
+exatamente isso. Na área 2, maior e mais fechada, ele passa a ser essencial.
+Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
+("O faro despertou").
+
+**Por que formigueiros como marcos.**
+- Eles já aparecem no canto da tela, um losango por formigueiro, e são
+  resultado do que o jogador fez.
+- Cada marco mostra um cartão, como "Formigueiro limpo · 4 habilidades novas
+  na árvore".
+- O risco é limpar um formigueiro inteiro demorar, porque as moradoras passeiam
+  longe dele. Se o bot mostrar isso, o marco 2 passa a ser "metade dos insetos
+  da área".
+
+**Na árvore:** o que é de outra área aparece com cadeado e "Área 2". O que
+espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
+
+### Área 1 menor
+
+| | Hoje | Proposta |
+|---|---|---|
+| Tamanho | ~120 m de ponta a ponta | ~80 m (perto da metade da área de hoje) |
+| Formigueiros | 18 | 8: 5 pequenos, 2 médios e 1 grande com a rainha |
+| Câmaras | 116 (48 no meio do campo) | ~45 |
+| Insetos | 44 000 | 10 000 (~1 250 por formigueiro; hoje ~2 400) |
+
+- A caverna do começo, os penhascos, as lagoas, o cupinzeiro gigante lá longe
+  e o tronco na saída continuam.
+- O campo fica um pouco menos cheio que hoje, mas as trilhas e a volta dos
+  formigueiros continuam cheias.
+- Na primeira jogatina do Caio, o ritmo foi de uns 465 insetos por minuto.
+  Com 10 mil insetos e um começo mais rápido, a área 1 deve durar **20 a 30
+  minutos**.
+
+### Áreas 2 a 4 (por enquanto, só no papel)
+
+- **Área 2** (mata densa, formiga das árvores): os níveis 2 e 3 das linhas,
+  Precisão, Comprimento 2, Lamber correndo (Corrida 2) e a Escalada, aberta
+  por um marco ("chegou à mata"). Mais habilidades novas, ligadas às árvores.
+- **Área 3** (cupins, em volta do cupinzeiro gigante): as pontas fortes de
+  hoje (Bocado 4, Destreza 3, Terremoto, Corrida 3, Alcance 3), a Cauda
+  Preênsil e habilidades novas para cupinzeiros.
+- **Área 4** (dentro do cupinzeiro gigante): habilidades novas do fim, a
+  definir.
+
+### A decidir
+
+1. **Farejar:** de presente no marco 3 (proposto) ou à venda?
+2. **Marco 2:** metade dos formigueiros limpos (proposto) ou metade dos
+   insetos da área?
+3. **Redistribuir pontos de graça:** continua? Com escolhas que pesam mais,
+   uma opção é cobrar um pouco, ou só deixar redistribuir entre uma área e
+   outra. A proposta é **continuar de graça**: a escolha é sobre o foco, e
+   não é para castigar quem errou.
+
+### Depois de aprovar
+
+1. Diminuir a área 1: 8 formigueiros e 10 mil insetos.
+2. Trocar as travas por áreas e marcos, com os avisos e os cadeados novos na
+   árvore.
+3. Rodar o bot na área 1 para acertar os preços e o ritmo, comparando com a
+   sua próxima jogatina.
+4. Áreas 2 a 4: continuam só no papel até a demo estar fechada.
+
 ## Fontes
 
 - Anthony Pecorella, "The Math of Idle Games",

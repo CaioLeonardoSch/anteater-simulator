@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bghmkryileu46"
 path.bptc="res://.godot/imported/cor.png-1467f28845e55a9c89cf30d1715c5d06.bptc.ctex"
+path.astc="res://.godot/imported/cor.png-1467f28845e55a9c89cf30d1715c5d06.astc.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/barro/cor.png"
-dest_files=["res://.godot/imported/cor.png-1467f28845e55a9c89cf30d1715c5d06.bptc.ctex"]
+dest_files=["res://.godot/imported/cor.png-1467f28845e55a9c89cf30d1715c5d06.bptc.ctex", "res://.godot/imported/cor.png-1467f28845e55a9c89cf30d1715c5d06.astc.ctex"]
 
 [params]
 

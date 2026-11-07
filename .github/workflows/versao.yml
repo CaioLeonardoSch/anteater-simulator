@@ -1,12 +1,13 @@
-# Gera a versão para Windows (um .zip com o AnteaterSimulator.exe) e publica
-# numa página de "Releases" do GitHub, pronta para mandar aos amigos.
+# Gera as versões para Windows (um .zip com o AnteaterSimulator.exe) e para Mac
+# (um .zip com o "Anteater Simulator.app", para Macs com chip Apple ou Intel) e
+# publica numa página de "Releases" do GitHub, pronta para mandar aos amigos.
 #
-# Como usar: aba "Actions" › "Versão para Windows" › "Run workflow", escolha a
+# Como usar: aba "Actions" › "Versão para Windows e Mac" › "Run workflow", escolha a
 # branch, escreva o número da versão (por exemplo 0.1.1) e clique no botão verde.
-# Em uns 3 minutos o .zip aparece em "Releases" (lado direito da página do
+# Em uns 5 minutos os .zip aparecem em "Releases" (lado direito da página do
 # repositório), e as versões anteriores são apagadas (fica só a mais nova).
 # Também roda sozinho ao enviar uma tag "v0.1.1".
-name: Versão para Windows
+name: Versão para Windows e Mac
 
 on:
   workflow_dispatch:
@@ -25,7 +26,7 @@ env:
   GODOT: "4.7.2"
 
 jobs:
-  windows:
+  versao:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,9 +48,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/godot
-          key: godot-${{ env.GODOT }}-windows
+          key: godot-${{ env.GODOT }}-windows-mac
 
-      - name: Baixa o Godot e o molde do Windows
+      - name: Baixa o Godot e os moldes do Windows e do Mac
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ~/godot && cd ~/godot
@@ -57,10 +58,10 @@ jobs:
           curl -fsSL -o godot.zip "$URL/Godot_v${GODOT}-stable_linux.x86_64.zip"
           unzip -q godot.zip && mv "Godot_v${GODOT}-stable_linux.x86_64" godot && rm godot.zip
           curl -fsSL -o moldes.tpz "$URL/Godot_v${GODOT}-stable_export_templates.tpz"
-          unzip -q -j moldes.tpz templates/windows_release_x86_64.exe templates/version.txt -d moldes
+          unzip -q -j moldes.tpz templates/windows_release_x86_64.exe templates/macos.zip templates/version.txt -d moldes
           rm moldes.tpz
 
-      - name: Instala o molde
+      - name: Instala os moldes
         run: |
           D="$HOME/.local/share/godot/export_templates/${GODOT}.stable"
           mkdir -p "$D" && cp ~/godot/moldes/* "$D/"
@@ -76,11 +77,19 @@ jobs:
           cd build && zip -q "../AnteaterSimulator-${VERSAO}-windows.zip" AnteaterSimulator.exe
           ls -la ..
 
-      - name: Guarda o .zip nesta execução
+      # Universal: roda nos Macs com chip Apple e nos com Intel. Sem certificado
+      # da Apple (é pago), vai com assinatura simples ("ad-hoc").
+      - name: Exporta para Mac
+        run: |
+          ~/godot/godot --headless --path . --export-release "macOS" "AnteaterSimulator-${VERSAO}-mac.zip"
+          test -s "AnteaterSimulator-${VERSAO}-mac.zip"
+          unzip -l "AnteaterSimulator-${VERSAO}-mac.zip"
+
+      - name: Guarda os .zip nesta execução
         uses: actions/upload-artifact@v4
         with:
-          name: AnteaterSimulator-${{ env.VERSAO }}-windows
-          path: AnteaterSimulator-${{ env.VERSAO }}-windows.zip
+          name: AnteaterSimulator-${{ env.VERSAO }}
+          path: AnteaterSimulator-${{ env.VERSAO }}-*.zip
 
       - name: Publica em Releases
         uses: softprops/action-gh-release@v2
@@ -89,11 +98,13 @@ jobs:
           target_commitish: ${{ github.sha }}
           name: Anteater Simulator ${{ env.VERSAO }} (versão de teste)
           prerelease: true
-          files: AnteaterSimulator-${{ env.VERSAO }}-windows.zip
+          files: |
+            AnteaterSimulator-${{ env.VERSAO }}-windows.zip
+            AnteaterSimulator-${{ env.VERSAO }}-mac.zip
           body: |
-            Versão de teste para Windows (64 bits).
+            Versão de teste para Windows (64 bits) e Mac (chip Apple ou Intel).
 
-            **Como jogar**
+            **Como jogar no Windows**
             1. Baixe o arquivo `AnteaterSimulator-${{ env.VERSAO }}-windows.zip` abaixo, em "Assets".
             2. Clique com o botão direito no .zip › **Extrair tudo**.
             3. Abra o `AnteaterSimulator.exe`.
@@ -101,6 +112,19 @@ jobs:
             O Windows pode avisar "O Windows protegeu o computador" (o jogo não tem
             assinatura digital, que é paga). Clique em **Mais informações** ›
             **Executar assim mesmo**.
+
+            **Como jogar no Mac**
+            1. Baixe o arquivo `AnteaterSimulator-${{ env.VERSAO }}-mac.zip` abaixo, em "Assets".
+            2. Dê dois cliques no .zip (o Mac abre sozinho) e arraste o
+               **Anteater Simulator** para a pasta **Aplicativos**.
+            3. Abra o jogo. O Mac vai avisar que não conseguiu verificar o app (o jogo
+               não tem a assinatura da Apple, que é paga). Clique em **OK**.
+            4. Abra **Ajustes do Sistema › Privacidade e Segurança**, role até o fim e
+               clique em **Abrir Mesmo Assim** ao lado do Anteater Simulator.
+               Confirme com a senha do Mac. Só precisa fazer isso na primeira vez.
+
+            Se o Mac disser que o app "está danificado", abra o **Terminal** e rode
+            `xattr -cr "/Applications/Anteater Simulator.app"`, depois abra de novo.
 
             Na primeira vez, o jogo pergunta se pode mandar as estatísticas da partida
             (tempo, insetos, compras, placa de vídeo e FPS; nada de nome ou e-mail).

@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://bji02cv01f6nr"
 path.bptc="res://.godot/imported/cor.png-55a22e57b485102621adf6bfb9baaf7a.bptc.ctex"
+path.astc="res://.godot/imported/cor.png-55a22e57b485102621adf6bfb9baaf7a.astc.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/textures/arenito/cor.png"
-dest_files=["res://.godot/imported/cor.png-55a22e57b485102621adf6bfb9baaf7a.bptc.ctex"]
+dest_files=["res://.godot/imported/cor.png-55a22e57b485102621adf6bfb9baaf7a.bptc.ctex", "res://.godot/imported/cor.png-55a22e57b485102621adf6bfb9baaf7a.astc.ctex"]
 
 [params]
 

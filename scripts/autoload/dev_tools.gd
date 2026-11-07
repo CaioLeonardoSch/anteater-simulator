@@ -15,7 +15,7 @@ extends Node
 ##   --physics-scale              com --timescale, roda a física mais vezes por
 ##                                segundo (o mesmo passo de 1/60 s do jogo normal)
 ##   --give=N                     começa com N formigas comidas
-##   --buy=id1,id2                compra upgrades no início
+##   --buy=id1,id2:2              compra upgrades no início (id:N = só N cliques)
 ##   --timescale=K                acelera o tempo do jogo
 ##   --pose=x,z,yaw,pitch         posiciona o jogador
 ##   --open=N|all                 abre as câmaras do formigueiro N (ou de todos)

@@ -4,9 +4,11 @@ extends Control
 ## Escalada + Cauda) saem do centro, onde ficam os pontos. Cada habilidade é um
 ## círculo com ícone, e as ligações acendem em dourado conforme você aprende.
 ## Passe o mouse (ou o controle) numa habilidade para ver o que ela faz; clique
-## para aprender. Cada 10 formigas comidas valem 1 ponto e cada habilidade tem o seu
-## preço; as linhas de um ramo não se excluem. O que ainda não existe no jogo
-## aparece com cadeado. Dá para redistribuir os pontos de graça.
+## para aprender. Cada 10 formigas comidas valem 1 ponto. Cada habilidade tem de
+## 1 a 3 cliques (bolinhas em volta dela), cada um com o seu preço; a seguinte
+## da linha abre com todos os cliques da anterior. As linhas de um ramo não se
+## excluem. O que ainda não existe no jogo aparece com cadeado. Dá para
+## redistribuir os pontos de graça.
 
 signal closed
 
@@ -15,11 +17,11 @@ const Glyphs := preload("res://scripts/ui/glyphs.gd")
 
 ## Direção de cada ramo, em graus (0 = direita, 90 = para baixo), na ordem de
 ## GameState.BRANCHES.
-const BRANCH_ANGLE := [-147.0, -30.0, 147.0, 30.0, 90.0]
+const BRANCH_ANGLE := [-144.0, -30.0, 144.0, 30.0, 90.0]
 ## Abertura entre as linhas de um ramo (os de 4 linhas, um pouco mais
 ## fechados, para não encostar nos vizinhos).
 const LINE_SPREAD := 19.0
-const LINE_SPREAD_4 := 17.0
+const LINE_SPREAD_4 := 16.0
 ## Distância do centro até a 1ª habilidade do ramo, e de um nível para o outro.
 const ROOT_DIST := 165.0
 const ROW_STEP := 74.0
@@ -274,6 +276,10 @@ func _show_tip(id: String) -> void:
 	var where: String = branch.name
 	if int(u.col) >= 0 and branch.lines.size() > 1:
 		where += " · linha de %s" % branch.lines[u.col]
+	var ranks := GameState.max_rank(id)
+	var rank := GameState.rank(id)
+	if ranks > 1:
+		where += " · %d de %d cliques" % [rank, ranks]
 	_tip_where.text = where
 	_tip_desc.text = u.desc
 	for c in _tip_stats.get_children():
@@ -288,27 +294,33 @@ func _show_tip(id: String) -> void:
 		val.add_theme_font_override("font", UiTheme.display_bold_font())
 		_tip_stats.add_child(val)
 	var pts := GameState.points_available()
-	var cost: int = u.cost
+	var cost := GameState.cost_of(id)
 	var col := UiTheme.SAND
 	var text := ""
+	# "Custa 12 pontos" ou, com vários cliques, "O 2º clique custa 12 pontos".
+	var price := "Custa %d pontos" % cost
+	if ranks > 1:
+		price = "O %dº clique custa %d pontos" % [rank + 1, cost]
 	match GameState.upgrade_state(id):
 		2:
-			text = "Aprendida."
+			text = "Aprendida." if ranks == 1 else "Completa: %d de %d cliques." % [ranks, ranks]
 			col = UiTheme.GOLD
 		3:
-			text = "Custa %d pontos · ainda não disponível." % cost
+			text = "%s · ainda não disponível." % price
 		4:
 			var gate := GameState.gate_of(id)
-			text = "Abre com %s insetos comidos (faltam %s) · custa %d pontos." % [
-				_thousands(gate), _thousands(gate - GameState.ants_eaten), cost]
+			text = "Abre com %s insetos comidos (faltam %s) · %s." % [
+				_thousands(gate), _thousands(gate - GameState.ants_eaten), price.to_lower()]
 		0:
-			text = "Custa %d pontos." % cost
+			var need := GameState.missing_requirements(id)
+			var prev: String = GameState.get_upgrade(need[0]).name if not need.is_empty() else ""
+			text = "Abre depois de todos os cliques de %s · %s." % [prev, price.to_lower()]
 		_:
 			if pts >= cost:
-				text = "Custa %d pontos · clique para aprender." % cost
+				text = "%s · clique para aprender." % price
 				col = branch.color.lightened(0.3)
 			else:
-				text = "Custa %d pontos · faltam %d insetos." % [cost, GameState.ants_needed(cost)]
+				text = "%s · faltam %d insetos." % [price, GameState.ants_needed(cost)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true
@@ -582,6 +594,11 @@ class SkillNode extends Button:
 				halo = 0.55
 				halo_col = UT.GOLD
 			1:
+				if GameState.has(id):
+					# Já tem alguns cliques: o disco ganha a cor do ramo.
+					disc = color.darkened(0.62)
+					ring = Color(UT.GOLD, 0.7)
+					glyph_col = color.lightened(0.1)
 				if can:
 					# Dá para aprender agora: anel claro pulsando (o dourado é só
 					# para as aprendidas).
@@ -615,12 +632,14 @@ class SkillNode extends Button:
 				draw_circle(c + Vector2(cos(a), sin(a)) * (radius + 5.5), 3.0, ring)
 		if hot:
 			draw_arc(c, radius + (10.0 if root else 6.5), 0, TAU, 56, Color(1.0, 0.96, 0.8, 0.95), 2.0, true)
+		_rank_pips(c, state)
 		if state == 3:
 			_padlock(c)
 		elif state == 4:
 			# Travada até comer mais insetos: cadeado e "8 mil" embaixo.
 			_padlock(c)
-			_label_below(c, "%d mil" % (GameState.gate_of(id) / 1000), Color(0.72, 0.64, 0.55, 0.85))
+			var gate := GameState.gate_of(id)
+			_label_below(c, ("%d mil" % (gate / 1000)) if gate >= 1000 else str(gate), Color(0.72, 0.64, 0.55, 0.85))
 		elif state != 2:
 			# Preço embaixo.
 			var font: Font = UT.display_bold_font()
@@ -634,6 +653,26 @@ class SkillNode extends Button:
 			draw_style_box(sb, rect)
 			var tc := color.lightened(0.3) if can else Color(0.75, 0.66, 0.56, 0.9 if state == 1 else 0.6)
 			draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, tc)
+
+	## Bolinhas em cima do círculo, uma por clique: cheias (douradas) as
+	## compradas, vazias as que faltam. Só nas habilidades de 2 ou 3 cliques.
+	func _rank_pips(c: Vector2, state: int) -> void:
+		var n := GameState.max_rank(id)
+		if n < 2:
+			return
+		var have := GameState.rank(id)
+		var dist := radius + 9.0
+		var step := 0.4
+		for k in n:
+			var a := -PI * 0.5 + (k - (n - 1) * 0.5) * step
+			var p := c + Vector2(cos(a), sin(a)) * dist
+			draw_circle(p, 5.2, Color(0.02, 0.012, 0.01))
+			if k < have:
+				draw_circle(p, 3.8, UT.GOLD)
+				draw_circle(p - Vector2(1.0, 1.0), 1.3, Color(1.0, 0.96, 0.82))
+			else:
+				var dim := Color(0.55, 0.47, 0.38, 0.9) if state == 1 else Color(0.36, 0.3, 0.25, 0.8)
+				draw_arc(p, 3.3, 0, TAU, 14, dim, 1.4, true)
 
 	func _label_below(c: Vector2, txt: String, tc: Color) -> void:
 		var font: Font = UT.display_bold_font()

@@ -5,7 +5,7 @@ extends RefCounted
 ## Ícone da 1ª habilidade de cada ramo e de cada linha dele (na ordem de
 ## GameState.BRANCHES).
 const BRANCH_GLYPHS := [
-	["tongue", "ant", "bolt", "cross"],
+	["tongue", "ant", "bolt", "reach", "cross"],
 	["claws", "dizzy", "burst", "clock", "pit"],
 	["paw", "chevrons", "wind", "steps", "heart"],
 	["nose", "rings", "eye"],
@@ -66,6 +66,18 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 					Vector2(0.5, -0.16), Vector2(0.05, -0.16)]:
 				poly.append(c + p * s)
 			ci.draw_colored_polygon(poly, col)
+		"reach":
+			# Seta para os dois lados com marcas de régua (alcance da língua).
+			var a := c + Vector2(-0.85, 0.1) * s
+			var b := c + Vector2(0.85, 0.1) * s
+			ci.draw_line(a, b, col, s * 0.15, true)
+			for e in [[a, 1.0], [b, -1.0]]:
+				var p: Vector2 = e[0]
+				var k: float = e[1]
+				ci.draw_colored_polygon(PackedVector2Array([p, p + Vector2(0.38 * k, -0.3) * s,
+					p + Vector2(0.38 * k, 0.3) * s]), col)
+			for x in [-0.3, 0.0, 0.3]:
+				ci.draw_line(c + Vector2(x, -0.42) * s, c + Vector2(x, -0.12) * s, col, s * 0.11, true)
 		"cross":
 			ci.draw_arc(c, s * 0.58, 0, TAU, 32, col, s * 0.13, true)
 			for k in 4:

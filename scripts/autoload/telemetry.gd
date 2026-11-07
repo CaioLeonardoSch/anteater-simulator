@@ -67,7 +67,10 @@ func _ready() -> void:
 			Settings.save_settings()
 	GameState.upgrade_purchased.connect(func(id):
 		var u := GameState.get_upgrade(id)
-		log_event("compra", "%s (%d)" % [u.get("name", id), int(u.get("cost", 0))]))
+		var r := GameState.rank(id)
+		var costs: Array = u.get("costs", [0])
+		log_event("compra", "%s %d/%d (%d)" % [u.get("name", id), r, costs.size(),
+			int(costs[clampi(r - 1, 0, costs.size() - 1)])]))
 	GameState.gate_opened.connect(func(g): log_event("trava", "%d insetos" % g))
 	GameState.skills_reset.connect(func(): log_event("redistribuiu", ""))
 	GameState.level_completed.connect(func(_t):
@@ -259,15 +262,14 @@ func _stats() -> String:
 	var total := 0
 	for u in GameState.UPGRADES:
 		if GameState.region_required(u.id).is_empty():
-			total += 1
-			if GameState.has(u.id):
-				skills += 1
+			total += GameState.max_rank(u.id)
+			skills += GameState.rank(u.id)
 	var licks := GameState.stat("licks")
 	var aim := "—" if licks <= 0.0 else "%d%%" % int(round(GameState.stat("licks_hit") / licks * 100.0))
 	return "\n".join([
 		"Modo: %s" % ("contra o relógio" if GameState.mode == GameState.MODE_CLOCK else "normal"),
 		"Clareira limpa: %s" % ("sim" if GameState.completed else "não"),
-		"Habilidades: %d de %d · pontos gastos %d · sobrando %d" % [skills, total, GameState.points_spent,
+		"Habilidades: %d de %d cliques · pontos gastos %d · sobrando %d" % [skills, total, GameState.points_spent,
 			GameState.points_available()],
 		"Formigueiros limpos: %d · câmaras abertas: %d" % [int(GameState.stat("nests_cleaned")),
 			int(GameState.stat("chambers_opened"))],

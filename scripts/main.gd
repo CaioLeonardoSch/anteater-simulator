@@ -262,7 +262,9 @@ func _start_play() -> void:
 		GameState.combo = 0
 		GameState.best_combo = 0
 	for id in DevTools.buy:
-		GameState.grant(id)
+		# "id:2" = só os 2 primeiros cliques.
+		var parts := id.split(":")
+		GameState.grant(parts[0], int(parts[1]) if parts.size() > 1 else 0)
 	if DevTools.pose.size() >= 4:
 		player.place_at(Vector2(DevTools.pose[0], DevTools.pose[1]), deg_to_rad(DevTools.pose[2]))
 		player.pitch = deg_to_rad(DevTools.pose[3])
@@ -300,6 +302,12 @@ func _continue_game() -> void:
 	player.pitch = float(p.get("pitch", -0.12))
 	_begin_playing()
 	Telemetry.start_session("continuou")
+	if GameState.skills_refunded:
+		# Jogo salvo de antes da árvore com cliques: os pontos voltaram.
+		GameState.skills_refunded = false
+		hud.big_note("Árvore nova", "Seus pontos voltaram: aprenda de novo na árvore [%s]"
+			% Settings.key_label("skill_tree").to_upper(), 7.0, "lock")
+		save_game()
 	if GameState.completed:
 		# A clareira já estava limpa: o tronco da saída continua esperando as garras.
 		world.exit_breakable = true
@@ -472,11 +480,13 @@ func _bot_buy() -> void:
 			continue
 		if not GameState.can_buy(id):
 			return
+		var cost := GameState.cost_of(id)
 		GameState.buy(id)
 		_bot_turn += 1
 		var u := GameState.get_upgrade(id)
-		print("[bot] comprou %s com %d formigas comidas" % [id, GameState.ants_eaten])
-		_bot_write("compra", "%s;%s;%d" % [id, u.name, GameState.cost_of(id)])
+		print("[bot] comprou %s (%d/%d) com %d formigas comidas" % [id, GameState.rank(id),
+			GameState.max_rank(id), GameState.ants_eaten])
+		_bot_write("compra", "%s;%s %d/%d;%d" % [id, u.name, GameState.rank(id), GameState.max_rank(id), cost])
 
 
 ## A próxima habilidade do ramo para o bot: requisitos prontos, sem área trancada,
@@ -485,7 +495,7 @@ func _bot_next(branch: int) -> String:
 	var best := ""
 	var best_key := Vector2(INF, INF)
 	for u in GameState.UPGRADES:
-		if u.branch != branch or GameState.has(u.id) or GameState.upgrade_state(u.id) != 1:
+		if u.branch != branch or GameState.complete(u.id) or GameState.upgrade_state(u.id) != 1:
 			continue
 		var key := Vector2(_bot_depth(u.id), GameState.cost_of(u.id))
 		if key.x < best_key.x or (key.x == best_key.x and key.y < best_key.y):
@@ -506,7 +516,7 @@ func _bot_write(what: String, detail: String = "") -> void:
 	if _bot_log == null:
 		return
 	_bot_log.store_line("%.1f;%d;%d;%d;%d;%d;%s;%s" % [GameState.elapsed, GameState.ants_eaten,
-		colony.nests_cleaned(), GameState.points_available(), GameState.purchased.size(),
+		colony.nests_cleaned(), GameState.points_available(), GameState.clicks_total(),
 		int(GameState.stat("tremors")), what, detail])
 	_bot_log.flush()
 

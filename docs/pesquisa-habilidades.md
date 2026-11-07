@@ -488,7 +488,7 @@ dos insetos, como planejado.
 Lembrando: o bot não usa o Faro e não planeja o caminho, então os minutos
 servem para comparar as árvores, não como o tempo de um jogador.
 
-## 9. Proposta: nós com vários cliques (07/11/2026, para aprovar)
+## 9. Nós com vários cliques (07/11/2026, aprovada e feita)
 
 Vem da primeira jogatina do Caio com 1 inseto por lambida (versão 0.1.2,
 46 minutos, 21 419 insetos). O que os números dele mostram:
@@ -583,15 +583,51 @@ a trava. As travas servem para pôr ordem (o forte fica para o fim), não para
 fazer esperar. Os preços são um ponto de partida: depois de feito, o bot
 roda de novo para acertar.
 
-### Em aberto
+### Decidido junto
 
-- **Assustar os insetos.** Hoje eles só fogem quando você chega a 1 m
-  (parado) ou 1,9 m (andando), e a língua já alcança 3 m. Por isso alcance
-  maior não faz diferença para assustar. Sugestão: fugirem a uns 2,5 m
-  andando, para o Comprimento valer a pena.
-- **Jogos salvos.** Os nós mudam de nome e de preço. Ao abrir um jogo salvo
-  antigo, os pontos gastos voltam (como no "Redistribuir pontos"), com um
-  aviso.
+- **Assustar os insetos.** Eles fugiam a 1 m de você parado e a 1,9 m
+  andando, e a língua já alcançava 3 m: alcance maior não fazia diferença.
+  Agora fogem a **2,5 m andando** (1 m parado, como antes), e correndo um
+  pouco mais longe que antes (a conta mudou de ×1,8 para ×1,5 para não
+  exagerar). Assim o Comprimento vale a pena.
+- **Jogos salvos.** Os nós mudaram de nome e de preço. Ao abrir um jogo
+  salvo antigo, os pontos gastos voltam (como no "Redistribuir pontos"), com
+  o aviso "Árvore nova · Seus pontos voltaram" na tela.
+
+### Como ficou no jogo
+
+- Na árvore, as bolinhas ficam em cima do círculo (cheias = compradas). O
+  quadro da habilidade mostra "2 de 3 cliques", o "antes → depois" só do
+  próximo clique e "O 3º clique custa 18 pontos". Uma habilidade com alguns
+  cliques já ganha a cor do ramo; completa, fica dourada.
+- Os ramos da Língua e das Patas ficaram um pouco mais afastados (a Língua
+  agora tem 4 linhas), e a linha de Comprimento tem um ícone novo (uma régua
+  com setas).
+- O cartão "Aprendida" vira "Clique 2 de 3" e "Completa".
+
+## 10. Bot com a árvore de cliques (07/11/2026)
+
+O bot jogou a partida inteira com a árvore nova, comprando em rodízio entre
+os ramos (sempre o clique mais barato do nível mais baixo de cada ramo). Ele
+come bem mais devagar que uma pessoa (10 000 insetos em 67 minutos; o Caio
+comeu 21 419 em 46), então os minutos abaixo esticam o jogo: importa o
+ritmo, não o relógio.
+
+- **Comprou os 75 cliques** e terminou a clareira com 173 pontos sobrando.
+- **Uma compra a cada 1 min 42 s** (a mediana). No ritmo de uma pessoa, fica
+  perto de uma a cada 40 s.
+- Cliques comprados: 3 até 10 min, 13 até 20, 22 até 30, 40 até 60 e 61 até
+  120 minutos (de jogo do bot).
+- **As esperas mais longas são as pontas caras** (Alcance 3, Tremor 3,
+  Precisão 3, Corrida 3: de 5 a 11 minutos juntando pontos), como planejado.
+  Em quase todas as travas sobravam menos de 30 pontos: o que segura é o
+  ponto, não a trava.
+- **Fugir a 2,5 m andando não atrapalhou:** um segundo bot, com a distância
+  antiga (1,9 m), comeu no mesmo ritmo (9 056 insetos em 60 min, contra
+  9 265 com a regra nova).
+
+Por isso os preços ficaram como na proposta. O próximo ajuste deve vir da
+jogatina do Caio com a árvore nova (a telemetria anota cada clique comprado).
 
 ## Fontes
 

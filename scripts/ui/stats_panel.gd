@@ -73,13 +73,13 @@ func _run_rows() -> Array:
 		for c in n.chambers:
 			if c.opened:
 				opened += 1
+	# Cliques comprados na árvore (cada habilidade tem de 1 a 3).
 	var skills := 0
 	var skills_total := 0
 	for u in GameState.UPGRADES:
 		if GameState.region_required(u.id).is_empty():
-			skills_total += 1
-			if GameState.has(u.id):
-				skills += 1
+			skills_total += GameState.max_rank(u.id)
+			skills += GameState.rank(u.id)
 	return [
 		["Modo", "Contra o relógio" if clock else "Normal"],
 		["Tempo de jogo", GameState.format_clock(GameState.elapsed) if clock else GameState.format_time(GameState.elapsed)],
@@ -89,7 +89,7 @@ func _run_rows() -> Array:
 		["Rainhas comidas", "%d de %d" % [GameState.queens_eaten, queens]],
 		["Tanajuras comidas", _n(GameState.tanajuras_eaten)],
 		["Maior combo", "%s insetos" % _n(GameState.best_combo)],
-		["Habilidades", "%d de %d" % [skills, skills_total]],
+		["Habilidades", "%d de %d cliques" % [skills, skills_total]],
 		["Pontos gastos", _n(GameState.points_spent)],
 	]
 

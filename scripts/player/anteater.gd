@@ -309,7 +309,10 @@ func _physics_process(delta: float) -> void:
 		if running:
 			GameState.count("run_time", delta)
 	swarm.threat_pos = global_position
-	swarm.flee_radius = (1.0 + clampf(spd / maxf(GameState.walk_speed(), 0.1), 0.0, 2.0) * 0.9) \
+	# Os insetos fogem a 1 m de você parado, a 2,5 m andando e mais longe
+	# correndo (a língua alcança 3 m ou mais com Comprimento).
+	var pace := spd / maxf(GameState.walk_speed(), 0.1)
+	swarm.flee_radius = (1.0 + clampf(pace, 0.0, 1.0) * 1.5 + clampf(pace - 1.0, 0.0, 1.0) * 0.9) \
 		* GameState.flee_multiplier(running)
 	_update_aim()
 	_update_tongue(delta)
@@ -924,9 +927,9 @@ func _bot_update(delta: float) -> void:
 	if moving:
 		if Vector2(move_goal.x - global_position.x, move_goal.z - global_position.z).length() > 0.25:
 			_bot_input = Vector2(0, -1)
-			# Correr assusta os insetos (menos com o Galope Silencioso): sem ele,
-			# só corre para longe; com ele, corre até perto do alvo.
-			_bot_run = dist > (3.0 if GameState.has("patas_galope") else 9.0)
+			# Correr assusta os insetos (menos com Corrida nível 3): sem ela,
+			# só corre para longe; com ela, corre até perto do alvo.
+			_bot_run = dist > (3.0 if GameState.has("patas_corrida_3") else 9.0)
 			_bot_unstuck(delta)
 		# Já ao alcance da língua: lambe andando (ou correndo, com Lamber Correndo).
 		if not to_chamber and dist <= reach and (not _bot_run or GameState.can_lick_running()):

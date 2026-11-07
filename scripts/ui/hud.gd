@@ -484,12 +484,13 @@ func _refresh_points() -> void:
 		_next_cost.visible = false
 	else:
 		_next_row.visible = true
-		_next_bar.value = clampf(float(pts) / float(goal.cost), 0.0, 1.0)
+		var goal_cost := GameState.cost_of(goal.id)
+		_next_bar.value = clampf(float(pts) / float(goal_cost), 0.0, 1.0)
 		_next_icon.kind = Glyphs.for_upgrade(goal)
 		_next_icon.color = GameState.BRANCHES[goal.branch].color
 		_next_icon.visible = true
 		_next_icon.queue_redraw()
-		_next_cost.text = str(goal.cost)
+		_next_cost.text = str(goal_cost)
 		_next_cost.visible = true
 	_next_bar.queue_redraw()
 	_badge.visible = n > 0
@@ -512,7 +513,11 @@ func _on_purchased(id: String) -> void:
 	if u.is_empty():
 		return
 	var bc: Color = GameState.BRANCHES[u.branch].color
-	_cards.push("learned:" + id, {"title": u.name, "sub": "Aprendida", "icon": Glyphs.for_upgrade(u),
+	var ranks := GameState.max_rank(id)
+	var sub := "Aprendida"
+	if ranks > 1:
+		sub = "Completa" if GameState.complete(id) else "Clique %d de %d" % [GameState.rank(id), ranks]
+	_cards.push("learned:" + id, {"title": u.name, "sub": sub, "icon": Glyphs.for_upgrade(u),
 		"icon_col": bc.lightened(0.35), "icon_bg": bc.darkened(0.72), "ring": UiTheme.GOLD,
 		"value_col": UiTheme.GOLD})
 
@@ -523,7 +528,7 @@ func _on_gate_opened(insects: int) -> void:
 	for u in GameState.UPGRADES:
 		if GameState.gate_of(u.id) == insects:
 			n += 1
-	_cards.push("gate:%d" % insects, {"title": "Novas habilidades", "sub": "%d na árvore  ·  %d mil insetos" % [n, insects / 1000],
+	_cards.push("gate:%d" % insects, {"title": "Novas habilidades", "sub": "%d na árvore  ·  %s insetos" % [n, ("%d mil" % (insects / 1000)) if insects >= 1000 else str(insects)],
 		"icon": "lock", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD, "ring": UiTheme.GOLD,
 		"value_col": UiTheme.GOLD})
 	Sfx.play("point", -2.0)

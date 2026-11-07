@@ -102,10 +102,11 @@ buscamos, no espírito delas:
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
 - **44 000 insetos** (eram 1000, depois 3200, depois 32 000), cada um andando
   sozinho: **10 insetos comidos = 1 ponto**, 4 400 pontos no jogo inteiro. A
-  árvore custa **3 825 pontos** (87%), e cada habilidade tem uma **trava**: só
-  abre depois de comer 1 000, 3 000, 8 000, 13 000 ou 21 000 insetos (o começo
-  de cada ramo abre já). As contas estão em
-  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 7.
+  árvore tem 40 habilidades com **75 cliques** e custa **4 227 pontos** (96%),
+  e cada habilidade tem uma **trava**: só abre depois de comer 200, 500, 1 000,
+  2 000, 3 000, 5 000, 8 000, 13 000 ou 21 000 insetos (o começo de cada ramo
+  abre já, menos o Farejar, com 3 000). As contas estão em
+  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 9.
 
 ### O mapa: 4 áreas (esboço de 02/11/2026)
 
@@ -166,20 +167,20 @@ buscamos, no espírito delas:
   ficam **sozinhas no meio do campo**, longe das trilhas: o Faro ajuda a achá-las.
 - Depois de abrir uma câmara, **as garras descansam** (25 s no começo).
 - **Buracos maiores pedem mais Cavar:** o Cavar abre as câmaras pequenas (dos
-  formigueiros pequenos e as do campo); o **Cavar Fundo** abre as câmaras
-  grandes, dos formigueiros grandes (de tampa mais escura); e a **Escavação
-  Real** desmancha o monte da rainha.
+  formigueiros pequenos e as do campo); a **Fundura nível 1** abre as câmaras
+  grandes, dos formigueiros grandes (de tampa mais escura); e a **Fundura
+  nível 2** desmancha o monte da rainha.
 - **Cada formiga é uma só** (não há grupos): **10 formigas comidas = 1 ponto**.
   A **língua** começa **lenta** (1,4 lambida por segundo), com **um clique por
   lambida**, pegando **uma** formiga. A linha de Destreza a deixa mais rápida
-  (Língua Comprida e Saliva Grudenta, +25% cada; Língua Turbo, 2x). A primeira
-  habilidade (**Lambida Contínua**, 25 pontos)
-  deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez:
-  5, 15, 25 e 40 formigas.
+  (até 4,4 lambidas por segundo) e a de Comprimento, mais longa (de 3 m até
+  4,5 m). A primeira habilidade (**Lambida Contínua**, 15 pontos)
+  deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez,
+  um pouco a cada clique: 2, 3, 5, 8... até 40 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
-  estiver perto da ponta. A **Mira nível 1** (30 pontos) faz a língua ir
-  sozinha atrás da formiga mais perto da mira, e a **Mira Ampla** (60) deixa
-  essa área 25% maior.
+  estiver perto da ponta. A **Mira nível 1** (12 pontos) faz a língua ir
+  sozinha atrás da formiga mais perto da mira, e a **Mira nível 2** deixa
+  essa área maior a cada clique.
 - **O fim:** a região está limpa quando não sobra nenhum inseto, nem nas trilhas
   nem dentro dos ninhos.
 
@@ -203,8 +204,8 @@ lambida, cavar, escalar) também são comprados assim. Dá para redistribuir os
 pontos de graça.
 
 Cada ramo começa com uma habilidade e depois se divide em **linhas que não se
-excluem** (dá para seguir todas): duas em cada ramo, e três na Língua e nas
-Garras.
+excluem** (dá para seguir todas): duas no Faro e quatro na Língua, nas Garras
+e nas Patas.
 
 **A árvore tem cara de constelação**, inspirada na árvore passiva de Path of
 Exile (só no visual, sem aquele tamanho todo): os 5 ramos saem do centro, onde
@@ -214,25 +215,31 @@ faz aparecem ao passar o mouse (ou o controle). Ela **não abre sozinha**: quand
 dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**). O
 **TAB** abre primeiro o **mapa**; a árvore fica na aba ao lado.
 
-| Habilidade | Linha | Níveis (preço · trava em insetos comidos) |
+Cada habilidade tem de **1 a 3 cliques**, mostrados com bolinhas em volta do
+círculo (●●○). Cada clique é uma melhora pequena, com o seu preço; a próxima
+habilidade da linha só abre com todos os cliques da anterior (e a trava dela
+aberta). Entre parênteses: o preço de cada clique e a trava em insetos comidos.
+
+| Habilidade | Linha | Níveis (preço de cada clique · trava em insetos comidos) |
 |---|---|---|
-| **Língua** | começo | Lambida Contínua (25: segurar para lamber) |
-| | Bocado | nível 1 (40 · 1 mil: até 5 insetos por lambida) · nível 2 (80 · 3 mil: até 15) · nível 3 (120 · 13 mil: até 25) · nível 4 (320 · 21 mil: até 40) |
-| | Destreza | nível 1 (70 · 3 mil: +50% de alcance) · nível 2 (90 · 8 mil: gruda num raio 70% maior) · nível 3 (300 · 21 mil: 2x mais rápida) |
-| | Mira | nível 1 (30 · 1 mil: a língua vai atrás do inseto mais perto da mira; sem ela, vai reta) · nível 2 (60 · 3 mil: essa área fica 25% maior) |
-| **Garras** | começo | Cavar (35: abre as câmaras pequenas; depois as garras descansam 25 s) |
-| | Força | nível 1 (55 · 3 mil: as moradoras ficam tontas por 2,5 s ao abrir) · nível 2 (50 · 8 mil: tontas por 4 s) |
-| | Tremor (sai de Força nível 1) | nível 1 (100 · 8 mil: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (100 · 13 mil: recarga de 14 s) · nível 3 (330 · 21 mil: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
-| | Rapidez | nível 1 (30 · 1 mil: descanso de 15 s) · nível 2 (80 · 8 mil: descanso de 5 s e cava na metade do tempo) |
+| **Língua** | começo | Lambida Contínua (15: segurar para lamber) |
+| | Bocado | nível 1 (8, 12, 16 · 200: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · 2 mil: 8 → 11 → 15, e a ponta gruda num raio maior) · nível 3 (70, 90 · 8 mil: 20 → 25) · nível 4 (160, 200 · 21 mil: 32 → 40) |
+| | Destreza | só a velocidade: nível 1 (10, 14, 18 · 500: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · 5 mil: 2,4 → 2,8 → 3,2) · nível 3 (260 · 21 mil: 4,4) |
+| | Comprimento | só o alcance: nível 1 (16, 20, 24 · 1 mil: 3,3 → 3,6 → 3,9 m; era 3) · nível 2 (60, 80 · 8 mil: 4,2 → 4,5 m) |
+| | Mira | nível 1 (12 · 200: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 10° para 15°) · nível 2 (25, 30, 35 · 3 mil: 18° → 21° → 25°) · nível 3 (110 · 13 mil: a ponta gruda num raio 70% maior) |
+| **Garras** | começo | Cavar (25: abre as câmaras pequenas; depois as garras descansam 25 s) |
+| | Força | nível 1 (25, 35 · 2 mil: moradoras tontas por 1,5 → 2,5 s ao abrir) · nível 2 (40, 50 · 8 mil: 3,2 → 4 s) |
+| | Tremor (sai de Força nível 1) | nível 1 (90 · 5 mil: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (45, 55, 65 · 13 mil: recarga de 18 → 15 → 12 s) · nível 3 (300 · 21 mil: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
+| | Rapidez | nível 1 (12, 16, 20 · 1 mil: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · 8 mil: 9 → 7 → 5 s; no último clique, cava na metade do tempo) |
 | | Fundura | nível 1 (60 · 3 mil: abre as câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
-| **Patas** | começo | Fôlego nível 1 (20: estamina máxima de 50 para 100). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (60 · 3 mil: corre 25% mais rápido) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta) |
-| | Respiro | níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): a estamina volta 3 → 4,5 → 6 → 7 por segundo |
-| | Passada | níveis 1 a 3 (30 · 1 mil, 60 · 8 mil, 70 · 13 mil): correndo gasta 10 → 8 → 6,5 → 5 por segundo |
-| | Fôlego | nível 2 (50 · 3 mil: estamina máxima 150) · nível 3 (80 · 13 mil: 200) |
-| **Faro** | começo | Farejar (20: diz quantas formigas há a até 10 m, até 100 delas, e a distância da mais perto) |
-| | Alcance | nível 1 (40 · 1 mil: 16 m, 250 formigas) · nível 2 (70 · 8 mil: 24 m, 500) · nível 3 (100 · 13 mil: 34 m, 1000, e quanto falta em cada formigueiro) · nível 4 (260 · 21 mil: 50 m, 2000, e as rainhas). Cada nível também recarrega mais rápido (10 s → 6 s) |
-| | Precisão | nível 1 (50 · 3 mil: nuvem borrada onde estão) · nível 2 (80 · 13 mil: as formigas brilham nítidas) · nível 3 (240 · 21 mil: colunas de cheiro nas câmaras fechadas) |
+| **Patas** | começo | Fôlego (10: estamina máxima de 50 para 75). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
+| | Corrida | nível 1 (25, 35 · 2 mil: +10% e mais 10% de velocidade correndo) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta) |
+| | Respiro | nível 1 (8, 12 · 200: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · 3 mil: 6 → 7) |
+| | Passada | nível 1 (8, 12, 16 · 500: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · 5 mil: 6 → 5) |
+| | Fôlego | nível 1 (12, 16, 20 · 1 mil: 100 → 125 → 150) · nível 2 (50, 60 · 13 mil: 175 → 200) |
+| **Faro** | começo | Farejar (25 · 3 mil: diz quantos insetos há a até 10 m, até 100 deles, e a distância do mais perto; a bússola aponta o maior grupo) |
+| | Alcance | nível 1 (15, 20, 25 · 3 mil: 13 → 16 → 20 m; 160 → 250 → 400 insetos) · nível 2 (55, 70 · 8 mil: 26 → 34 m; 600 → 1000; no último clique, quanto falta em cada formigueiro) · nível 3 (220 · 21 mil: 50 m, 2000, e as rainhas). Cada clique também recarrega mais rápido (10 s → 6 s) |
+| | Precisão | nível 1 (45 · 5 mil: nuvem borrada onde estão) · nível 2 (75 · 8 mil: os insetos brilham nítidos) · nível 3 (200 · 13 mil: colunas de cheiro nas câmaras fechadas) |
 | **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400): ainda não feitas, aparecem com cadeado |
 
 **Habilidades por região:** a **Escalada + Cauda** aparece na árvore desde o
@@ -258,7 +265,7 @@ Feito, seguindo as decisões:
    **saem correndo**; elas fogem quando você chega perto e depois voltam para
    casa. Até 40 ficam à vista (120 no buraco da rainha); as outras saem do
    túnel conforme você come. Depois de cavar, as garras descansam. As câmaras
-   grandes, de tampa mais escura, pedem **Cavar Fundo**.
+   grandes, de tampa mais escura, pedem **Fundura nível 1**.
 2. **Dá para subir nos formigueiros** e olhar dentro das câmaras lá de cima.
 3. **Rainha** no fundo dos 7 formigueiros grandes: a tampa dela fica no topo do
    monte, e só **Fundura nível 2** (Garras) a abre. Aí o **monte inteiro some** e fica
@@ -280,7 +287,7 @@ Feito, seguindo as decisões:
    cuidar dela, e depois ela volta para o caminho dela. Uma formiga em cada
    16 000 usa um **chapéu de Natal**.
 5. **Soldados:** saíram. A **tanajura** continua.
-6. **As 5 habilidades, com 40 níveis**, cada um com seu preço (seção 3), numa
+6. **As 5 habilidades, com 40 níveis e 75 cliques**, cada clique com seu preço (seção 3), numa
    árvore com **cara de constelação** que não abre sozinha. A língua começa
    **lenta** (1,4 lambida por segundo, acelerando com a linha de Destreza), com
    um clique por lambida, e vai **reta** até aprender a Mira nível 1; correndo
@@ -659,3 +666,6 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 07/11/2026 | Farejar | Sem Precisão, só um número no canto da tela | A bússola aponta o maior grupo farejado desde o Farejar |
 | 07/11/2026 | Árvore de habilidades | O 1º nó do Bocado ficava em cima do 1º do Fôlego | Ramos da Língua e das Patas mais afastados, e os de 4 linhas um pouco mais fechados |
 | 07/11/2026 | Desempenho (placa de vídeo) | No Ultra, 4,8–7,7 milhões de triângulos por quadro na imagem e 2,0–2,7 milhões na sombra. As formigas de longe tinham 68–114 triângulos e a malha detalhada (3500) ia até 4 m. As tanajuras usavam sempre a malha detalhada, com sombra. O chão inteiro e os torrões dos formigueiros faziam sombra, e o MSAA 4x pesava 40% do quadro | Formigas com 5 malhas (2 600 / 880 / 220 / 30 / 12 triângulos, trocando a 2,5, 6, 13 e 40 m) e sombras com malhas simples. Tanajuras simples a partir de 9,5 m. Sombra do chão numa grade 4x mais grossa. Torrões sem sombra e só até 35 m. Capim leve nos blocos de longe. Árvores, pedras e montes com versões automáticas para longe, e folhas com mipmaps. Ultra com MSAA 2x + SMAA. Resultado: 1,8–3,1 milhões na imagem e 0,26–0,54 milhão na sombra, e 40–48% menos tempo de desenho na mesma máquina de teste. Medidor no jogo (F3) |
+| 07/11/2026 | Árvore de habilidades | 40 habilidades, uma compra cada; cinco travas (1 000 a 21 000 insetos); 3 825 pontos. No 1º teste do Caio, só 3 compras nos primeiros 13 minutos, e pontos sobrando no fim | As mesmas 40, agora com 1 a 3 cliques cada (75 cliques, bolinhas em volta do círculo); nove travas (200, 500, 1 000, 2 000, 3 000, 5 000, 8 000, 13 000 e 21 000); 4 227 pontos (96%). A Língua ganhou a linha de Comprimento (o alcance saiu da Destreza), a Mira ganhou um 3º nível (o raio da ponta, que era da Destreza), e o Farejar só abre com 3 000 insetos |
+| 07/11/2026 | Insetos fogem | A 1 m de você parado e 1,9 m andando (a língua alcança 3 m); correndo, ×1,8 | 1 m parado e 2,5 m andando; correndo, ×1,5 (fica perto do que era) |
+| 07/11/2026 | Jogos salvos antigos | Abriam com as habilidades compradas | As habilidades mudaram: os pontos voltam, com o aviso "Árvore nova" |

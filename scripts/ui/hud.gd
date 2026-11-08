@@ -1718,8 +1718,8 @@ class CounterMock extends Control:
 			"c":
 				var y := 52.0
 				var x := 30.0
-				Glyphs.paint(self, "ant", Vector2(x + 12, y - 9), 24.0, UT.PALE)
-				x += 32.0
+				Glyphs.paint(self, "ant", Vector2(x + 10, y - 10), 15.0, UT.PALE)
+				x += 30.0
 				x += _num(Vector2(x, y), str(eaten), 28, UT.PALE)
 				x += 30.0
 				if can:

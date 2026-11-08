@@ -726,3 +726,7 @@ acertar a duração com testes.
 | 08/11/2026 | Barra de habilidades | Mostrava todas, com cadeado nas que faltavam | Só as aprendidas, na ordem Lamber, Cavar, Farejar e Tremor |
 | 08/11/2026 | Pulo | Só o Tremor pulava (no `Espaço`) | `Espaço` pula sempre (subir nas pedras, sair dos buracos); o Tremor foi para o `X` (`B` no controle) |
 | 08/11/2026 | Susto ao comer | Todas as formigas a até 2 m da que foi comida fugiam, na velocidade normal de fuga | Só as que estão a até 1,5 m, e cada uma tem 20% de chance de fugir, a 60% da velocidade normal |
+| 08/11/2026 | Velocidade das formigas | Trilha 0,7 m/s, passeio 0,5 m/s | As duas a 0,7 m/s (as moradoras das câmaras continuam a 0,32 m/s) |
+| 08/11/2026 | Susto com tontas | Comer uma formiga tonta podia assustar as vizinhas | Com formiga tonta a até 1,5 m, ninguém se assusta |
+| 08/11/2026 | Cavar | Funcionava perto da câmara olhando para qualquer lado | Só a câmara para onde a mira aponta (e ao alcance das garras) |
+| 08/11/2026 | Cogumelos | Sumiam 90 s e voltavam em 2 s; ao carregar o jogo, todos voltavam | Nascem de novo na hora, pequeninos, e crescem em 3 min; o jogo salvo guarda o tamanho |

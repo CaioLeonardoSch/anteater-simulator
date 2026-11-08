@@ -72,7 +72,7 @@ tela, a resolução e a qualidade gráfica.
 | Correr (gasta estamina) | `Shift` | clicar o analógico esquerdo |
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar* | `Q` ou clique direito | `LT` |
-| Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
+| Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto, olhando para ela | `X` |
 | Pular (subir nas pedras, sair dos buracos) | `Espaço` | `A` |
 | Tremor* (pulo que atordoa) | `X` | `B` |
 | Mapa, habilidades e estatísticas | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
@@ -129,7 +129,7 @@ uma vez".
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
   fechadas, e 12 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
   passeiam em volta contam para o formigueiro dono da câmara). Com **Cavar**
-  (Garras), segure `E` perto de uma para abri-la: as moradoras **saem
+  (Garras), segure `E` perto de uma, olhando para ela, para abri-la: as moradoras **saem
   correndo** e, alguns segundos depois, voltam a passear até 5 m da câmara
   (por cima do monte também); fogem quando você chega perto. Até 40
   ficam à vista; as outras saem do túnel conforme você come. Depois de cavar,
@@ -150,8 +150,10 @@ uma vez".
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega perto: a 2 m de você parado, a 2,5 m
-  andando e mais longe ainda correndo. Quando você come uma, cada uma das que
-  estão a até 1,5 m dela tem 20% de chance de sair correndo, mais devagar. Chegue devagar e lamba de longe (a
+  andando e mais longe ainda correndo. As da trilha e as que passeiam andam na
+  mesma velocidade (0,7 m/s); as moradoras das câmaras, mais devagar. Quando você come uma, cada uma das que
+  estão a até 1,5 m dela tem 20% de chance de sair correndo, mais devagar
+  (perto de formigas tontas, ninguém se assusta). Chegue devagar e lamba de longe (a
   língua alcança 1 m, e mais com Comprimento).
   Correndo também não dá para lamber, até aprender **Corrida nível 2**.
 - **Faro:** primeiro só diz quantas formigas há por perto e a que distância
@@ -164,6 +166,9 @@ uma vez".
 - **Tanajuras** (douradas, voando, batendo as asas de vez em quando quando estão perto)
   ativam o **Frenesi**: língua mais rápida e mais longa por 6 s. Cada tanajura
   ou cogumelo comido com o Frenesi ligado soma 3 s.
+- **Cogumelos** (grupinhos laranja ao pé de árvores, troncos e arbustos) também
+  dão o Frenesi. Comido, o grupinho nasce de novo no mesmo lugar, pequenino, e
+  leva 3 minutos para crescer e poder ser comido de novo (o jogo salvo lembra).
 - **Progresso:** formigueiro limpo ganha flores, e um losango por formigueiro
   no canto da tela mostra quantos faltam.
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim

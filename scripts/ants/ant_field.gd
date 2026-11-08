@@ -40,7 +40,8 @@ const HEIGHT_RES := 256
 const HEIGHT_SIZE := 160.0
 const WORKER_SIZE := 0.15
 const TRAIL_SPEED := 0.7
-const ROAM_SPEED := 0.5
+## Igual à da trilha.
+const ROAM_SPEED := TRAIL_SPEED
 ## Chance de uma formiga aparecer de chapéu de Natal (0,00625%).
 const HAT_CHANCE := 0.0000625
 ## Some no buraco (trilha: perto do olheiro; passeio: perto da câmara).

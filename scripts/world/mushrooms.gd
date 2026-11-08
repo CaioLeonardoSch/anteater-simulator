@@ -1,7 +1,8 @@
 extends Node3D
 ## Cogumelos: grupinhos laranja-dourados ao pé de árvores, troncos, arbustos e
 ## cupinzeiros. A língua pega um grupinho inteiro e ele dá o Frenesi, como a
-## tanajura. Depois de um tempo o grupinho nasce de novo no mesmo lugar.
+## tanajura. Comido, nasce de novo no mesmo lugar, pequenino, e vai crescendo
+## devagar (GROW_TIME); só dá para comer quando está inteiro.
 ## Usa um gerador só seu: o resto do mapa não muda de lugar.
 
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
@@ -11,10 +12,10 @@ const SEED := 4417
 const COUNT := 14
 ## Distância mínima entre dois grupinhos (m).
 const SPACING := 7.0
-## Tempo até um grupinho comido nascer de novo (s).
-const REGROW := 90.0
-## Quanto tempo leva crescendo de novo (s).
-const GROW_TIME := 2.0
+## Quanto tempo leva crescendo de novo, de pequenino a inteiro (s).
+const GROW_TIME := 180.0
+## Tamanho do grupinho logo depois de comido (fração do inteiro).
+const SPROUT := 0.15
 ## Raio do grupinho para a língua pegar (somado ao raio da lambida).
 const REACH := 0.24
 ## Altura do meio do grupinho (onde a língua encosta).
@@ -23,8 +24,6 @@ const CENTER_Y := 0.13
 ## Posição de cada grupinho no chão.
 var spots: Array[Vector3] = []
 var nodes: Array[MeshInstance3D] = []
-## 0 = no lugar; > 0 = comido, segundos até nascer de novo.
-var regrow_left := PackedFloat32Array()
 ## Crescendo de novo: 0..1 (1 = inteiro).
 var grow := PackedFloat32Array()
 ## Grupinho preso na língua (ou -1).
@@ -71,8 +70,6 @@ func build(world) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		nodes.append(mi)
-	regrow_left.resize(spots.size())
-	regrow_left.fill(0.0)
 	grow.resize(spots.size())
 	grow.fill(1.0)
 
@@ -147,21 +144,17 @@ func _cluster_mesh(rng: RandomNumberGenerator, n: int, mat: Material) -> ArrayMe
 
 func _process(delta: float) -> void:
 	for i in spots.size():
-		if regrow_left[i] > 0.0:
-			regrow_left[i] -= delta
-			if regrow_left[i] <= 0.0:
-				regrow_left[i] = 0.0
-				grow[i] = 0.0
-				nodes[i].position = spots[i] - Vector3(0, 0.01, 0)
-				nodes[i].visible = true
-		elif grow[i] < 1.0 and i != carried:
+		if grow[i] < 1.0 and i != carried:
 			grow[i] = minf(grow[i] + delta / GROW_TIME, 1.0)
-			var s := ease(grow[i], 0.4)
-			nodes[i].scale = Vector3.ONE * maxf(s, 0.01)
+			_show_size(i)
+
+
+func _show_size(i: int) -> void:
+	nodes[i].scale = Vector3.ONE * lerpf(SPROUT, 1.0, grow[i])
 
 
 func is_ready(i: int) -> bool:
-	return regrow_left[i] <= 0.0 and grow[i] >= 1.0 and i != carried
+	return grow[i] >= 1.0 and i != carried
 
 
 func center(i: int) -> Vector3:
@@ -212,10 +205,21 @@ func carry(i: int, at: Vector3, shrink: float) -> void:
 	nodes[i].scale = Vector3.ONE * shrink
 
 
-## Engolido: some e nasce de novo depois de REGROW segundos.
+## Engolido: nasce de novo no mesmo lugar, pequenino.
 func eat(i: int) -> void:
 	if carried == i:
 		carried = -1
-	nodes[i].visible = false
-	nodes[i].scale = Vector3.ONE
-	regrow_left[i] = REGROW
+	nodes[i].position = spots[i] - Vector3(0, 0.01, 0)
+	grow[i] = 0.0
+	_show_size(i)
+
+
+## Para o jogo salvo: quanto cada grupinho já cresceu.
+func to_save() -> Array:
+	return Array(grow)
+
+
+func from_save(data: Array) -> void:
+	for i in mini(data.size(), spots.size()):
+		grow[i] = clampf(float(data[i]), 0.0, 1.0)
+		_show_size(i)

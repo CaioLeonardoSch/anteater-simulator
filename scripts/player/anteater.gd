@@ -101,6 +101,10 @@ var near_nest = null
 var dig_nest = null
 var dig_chamber := -1
 const DIG_REACH := 1.4
+## Folga em volta da câmara para a mira contar (m).
+const DIG_AIM_MARGIN := 0.35
+## Até onde a mira procura o chão (m).
+const DIG_AIM_RANGE := 4.5
 var arm_anim := 0.0
 var _dig_swipe := 0.0
 var _dig_sound := 0.0
@@ -409,6 +413,21 @@ func _run_held(input: Vector2) -> bool:
 
 ## Cavar com "Cavar: Apertar": um toque começa e as garras seguem até abrir
 ## (ou até você se afastar, ou apertar de novo).
+## Onde a mira encosta no chão (ou nos montes), até DIG_AIM_RANGE; senão Vector2.INF.
+func _aim_ground() -> Vector2:
+	if camera == null:
+		return Vector2.INF
+	var from := camera.global_position
+	var dir := -camera.global_basis.z
+	var t := 0.0
+	while t < DIG_AIM_RANGE:
+		t += 0.08
+		var p := from + dir * t
+		if p.y <= world.ground_height(p.x, p.z):
+			return Vector2(p.x, p.z)
+	return Vector2.INF
+
+
 func _update_dig_latch() -> void:
 	if not Settings.dig_toggle:
 		_dig_latch = false
@@ -698,13 +717,16 @@ func _update_abilities(delta: float) -> void:
 	var prev_chamber := dig_chamber
 	dig_nest = null
 	dig_chamber = -1
-	var best_reach := DIG_REACH
-	for n in world.nests:
-		var ci: int = n.closed_chamber_near(p2, best_reach)
-		if ci >= 0:
-			dig_nest = n
-			dig_chamber = ci
-			best_reach = n.chambers[ci].edge_distance(p2)
+	# Só a câmara para onde a mira aponta (e que está ao alcance das garras).
+	var aim := _aim_ground()
+	if aim != Vector2.INF:
+		var best_aim := DIG_AIM_MARGIN
+		for n in world.nests:
+			var ci: int = n.closed_chamber_near(aim, best_aim)
+			if ci >= 0 and n.chambers[ci].edge_distance(p2) < DIG_REACH:
+				dig_nest = n
+				dig_chamber = ci
+				best_aim = n.chambers[ci].edge_distance(aim)
 	if prev_nest != null and (prev_nest != dig_nest or prev_chamber != dig_chamber):
 		prev_nest.reset_dig(prev_chamber)
 		dig_progress = 0.0
@@ -927,7 +949,8 @@ func _bot_update(delta: float) -> void:
 	var flat_d := maxf(Vector2(to.x, to.z).length(), 0.01)
 	var want_yaw := atan2(-to.x, -to.z)
 	yaw = lerp_angle(yaw, want_yaw, minf(delta * 6.0, 1.0))
-	var want_pitch := atan2(to.y, flat_d) if not moving else -0.15
+	# Indo cavar, olha para a câmara (as garras só cavam onde a mira aponta).
+	var want_pitch := atan2(to.y, flat_d) if (not moving or to_chamber) else -0.15
 	pitch = lerpf(pitch, clampf(want_pitch, deg_to_rad(-70.0), deg_to_rad(30.0)), minf(delta * 6.0, 1.0))
 	if moving:
 		if Vector2(move_goal.x - global_position.x, move_goal.z - global_position.z).length() > 0.25:

@@ -300,6 +300,7 @@ func _continue_game() -> void:
 	GameState.from_save(data.get("state", {}))
 	colony.from_save(data.get("colony", {}))
 	exploration.from_save(String(data.get("explored", "")))
+	world.mushrooms.from_save(data.get("mushrooms", []))
 	var p: Dictionary = data.get("player", {})
 	player.place_at(Vector2(float(p.get("x", world.player_start.x)), float(p.get("z", world.player_start.y))),
 		float(p.get("yaw", world.player_start_yaw)))
@@ -342,6 +343,7 @@ func save_game() -> void:
 		"colony": colony.to_save(),
 		"player": {"x": gp.x, "z": gp.z, "yaw": player.yaw, "pitch": player.pitch},
 		"explored": exploration.to_save(),
+		"mushrooms": world.mushrooms.to_save(),
 	})
 	if hud:
 		hud.show_saved()

@@ -432,6 +432,10 @@ func _physics_process(delta: float) -> void:
 func scare(at: Vector3, radius: float) -> void:
 	var from := Vector2(at.x, at.z)
 	var r2 := radius * radius
+	# Com formigas tontas por perto ninguém se assusta (comer as tontas é seguro).
+	for i in CAPACITY:
+		if alive[i] != 0 and mode[i] == Mode.STUNNED and Vector2(pos[i].x, pos[i].z).distance_squared_to(from) < r2:
+			return
 	var found: Array[Vector4] = []
 	field.gather(at, radius, found)
 	for f in found:

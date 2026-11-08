@@ -34,7 +34,8 @@ acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
 ronca: hora de comer. A clareira tem uns 50 m de ponta a ponta, **10 000
 insetos**, cada um andando sozinho, e **8 formigueiros**. Um quarto anda em
 fila pelas trilhas de terra, um quarto passeia pelo campo em volta das câmaras
-espalhadas pelo mapa, e a metade mora nas **câmaras**, que você abre cavando.
+espalhadas pelo mapa (sobem nas pedras, nos troncos caídos e um pouco nos
+troncos das árvores), e a metade mora nas **câmaras**, que você abre cavando.
 Perto da caverna ficam os 5 formigueiros pequenos; os 2 médios e o grande,
 do lado da saída, que guarda a **rainha** bem no fundo. Um **objetivo** no
 canto da tela diz o que fazer, um de cada vez, e um losango voa até o lugar
@@ -72,7 +73,8 @@ tela, a resolução e a qualidade gráfica.
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar* | `Q` ou clique direito | `LT` |
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
-| Tremor* (pulo) | `Espaço` | `A` |
+| Pular (subir nas pedras, sair dos buracos) | `Espaço` | `A` |
+| Tremor* (pulo que atordoa) | `X` | `B` |
 | Mapa, habilidades e estatísticas | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
 | Mostrar o objetivo de novo | `F` | `Y` |
 | Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
@@ -87,7 +89,8 @@ uma vez".
 
 - **Interface no estilo "Constelação"** (o mesmo da árvore de habilidades):
   painéis com moldura dourada, as formigas comidas num medalhão e as habilidades
-  em círculos. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
+  em círculos, embaixo: só as que você já aprendeu, na ordem Lamber, Cavar,
+  Farejar e Tremor. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
   frente mostra a distância e as câmaras dele (as verdes já estão limpas).
 - **Pouco texto na tela:** conquistas viram **cartões** no canto direito (câmara
   limpa, formigueiro limpo, rainha, Frenesi, habilidade aprendida); as **dicas**
@@ -166,8 +169,9 @@ uma vez".
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
   do mapa). Você começa numa caverna no pé deles, e uma trilha de terra leva até
   o formigueiro mais perto. O cupinzeiro gigante aparece lá longe, por cima dos
-  penhascos. É sempre o mesmo fim de tarde, e há quatro lagoas de enfeite, de
-  formas irregulares. O alto
+  penhascos. É sempre o mesmo fim de tarde, e há uma lagoa de forma irregular,
+  com um tronco caído entrando na água: uma fila de formigas anda por cima
+  dele até perto de onde a água toca. O alto
   dos penhascos é cheio de árvores, e depois da passagem para a próxima área
   uma rampa sobe para uma mata fechada.
 - **Árvore de habilidades** (`Tab`, aba ao lado do mapa): uma constelação, com

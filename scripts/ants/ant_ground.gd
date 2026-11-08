@@ -5,8 +5,13 @@ extends RefCounted
 ## - Arbustos, árvores e cupinzeiros: as formigas dão a volta. O caminho que
 ##   passaria por dentro é empurrado para um anel em volta (o desvio vai nos
 ##   canais R e G); bem no meio (canal A), a formiga some embaixo das folhas.
+## - Árvores em pé: perto do tronco, a formiga encosta nele e sobe (quanto mais
+##   o caminho dela entraria no tronco, mais alto ela vai), até antes da
+##   primeira forquilha, longe das folhas. Outra textura (trunk_texture) diz,
+##   em volta de cada tronco, onde fica o pé dele e qual é; trunk_data guarda
+##   os pontos de cada tronco.
 ## Uma textura cobre a clareira; a placa de vídeo (ant_field.gdshaderinc) e
-## o jogo (sample) leem a mesma coisa.
+## o jogo (sample, climb) leem a mesma coisa.
 
 ## Lado do quadrado coberto (m, centrado na origem) e texels por lado.
 const SIZE := 64.0
@@ -16,12 +21,25 @@ const CELL := SIZE / RES
 const AROUND := 0.6
 ## Até este raio as formigas contornam; maior que isso (lagoas) nem chegam perto.
 const MAX_BLOCK := 2.5
+## Troncos: até onde (m, além da casca) o caminho é puxado para o tronco, de
+## onde a formiga começa a subir e até que altura (m acima do pé) ela sobe.
+const CLIMB_OUT := 2.5
+const CLIMB_IN := 1.0
+const CLIMB_MAX := 1.4
+## Pontos de cada tronco (o tubo do tronco tem 7) + 1 texel de números.
+const TRUNK_PTS := 7
 
 var texture: ImageTexture
 ## RGBA de cada texel, em sequência (para o jogo ler sem a placa de vídeo).
 var _data := PackedFloat32Array()
 ## Só a altura (canal B), para a conta rápida de extra_height.
 var _h := PackedFloat32Array()
+var trunk_texture: ImageTexture
+var trunk_data: ImageTexture
+## Tronco de cada texel (-1 = nenhum) e os troncos: {c, r, pts, radii, fmax}.
+var _trunk_idx := PackedInt32Array()
+var _trunks: Array[Dictionary] = []
+var _world
 
 
 func build(world) -> void:
@@ -55,6 +73,8 @@ func build(world) -> void:
 			var k := (y * RES + x) * 4
 			img.set_pixel(x, y, Color(_data[k], _data[k + 1], _data[k + 2], _data[k + 3]))
 	texture = ImageTexture.create_from_image(img)
+	_world = world
+	_build_trunks(veg.trees)
 
 
 ## (desvio x, desvio z, altura acima do chão, escondida 0..1) num ponto do chão.
@@ -216,3 +236,101 @@ func _add_block(c: Vector2, r: float) -> void:
 			_data[k + 1] += moved.y - p.y
 			if d < outer * 0.3:
 				_data[k + 3] = 1.0
+
+
+func _build_trunks(trees: Array) -> void:
+	_trunk_idx.resize(RES * RES)
+	_trunk_idx.fill(-1)
+	var zone := PackedFloat32Array()
+	zone.resize(RES * RES * 4)
+	zone.fill(0.0)
+	for tree in trees:
+		var local: PackedVector3Array = tree.get_meta("trunk_pts", PackedVector3Array())
+		var radii: PackedFloat32Array = tree.get_meta("trunk_radii", PackedFloat32Array())
+		if local.size() != TRUNK_PTS or radii.size() != TRUNK_PTS:
+			continue
+		var xf := _world_xf(tree)
+		var pts := PackedVector3Array()
+		for q in local:
+			pts.append(xf * q)
+		var scale: float = xf.basis.get_scale().x
+		var rr := PackedFloat32Array()
+		for r in radii:
+			rr.append(r * scale)
+		var c := Vector2(pts[0].x, pts[0].z)
+		var base: float = _world.ground_height(c.x, c.y)
+		# Até onde sobe: CLIMB_MAX acima do pé, no máximo 70% do tronco.
+		var fmax := (TRUNK_PTS - 1) * 0.7
+		for k in TRUNK_PTS - 1:
+			if pts[k + 1].y - base >= CLIMB_MAX:
+				fmax = minf(fmax, k + clampf((base + CLIMB_MAX - pts[k].y) / maxf(pts[k + 1].y - pts[k].y, 0.01), 0.0, 1.0))
+				break
+		var idx := _trunks.size()
+		_trunks.append({"c": c, "r": rr[0], "pts": pts, "radii": rr, "fmax": fmax})
+		var reach: float = rr[0] + CLIMB_OUT + 2.0 * CELL
+		var rx := _texel_range(c.x - reach, c.x + reach)
+		var rz := _texel_range(c.y - reach, c.y + reach)
+		for z in range(rz.x, rz.y + 1):
+			for x in range(rx.x, rx.y + 1):
+				var p := _texel_pos(x, z)
+				if p.distance_to(c) > reach:
+					continue
+				var k := z * RES + x
+				_trunk_idx[k] = idx
+				zone[k * 4] = c.x - p.x
+				zone[k * 4 + 1] = c.y - p.y
+				zone[k * 4 + 2] = float(idx)
+				zone[k * 4 + 3] = 1.0
+	var img := Image.create(RES, RES, false, Image.FORMAT_RGBAF)
+	for y in RES:
+		for x in RES:
+			var k := (y * RES + x) * 4
+			if zone[k + 3] > 0.0:
+				img.set_pixel(x, y, Color(zone[k], zone[k + 1], zone[k + 2], zone[k + 3]))
+	trunk_texture = ImageTexture.create_from_image(img)
+	var data := Image.create(TRUNK_PTS + 1, maxi(_trunks.size(), 1), false, Image.FORMAT_RGBAF)
+	for i in _trunks.size():
+		var t: Dictionary = _trunks[i]
+		for k in TRUNK_PTS:
+			var q: Vector3 = t.pts[k]
+			data.set_pixel(k, i, Color(q.x, q.y, q.z, t.radii[k]))
+		data.set_pixel(TRUNK_PTS, i, Color(t.fmax, t.r, CLIMB_OUT, CLIMB_IN))
+	trunk_data = ImageTexture.create_from_image(data)
+
+
+## Perto de um tronco: Vector4(x, y, z, 1) onde a formiga fica (no chão,
+## chegando, ou no tronco, subindo); Vector4(.., 2) escondida (atravessando o
+## meio, lá em cima); Vector4(.., 0) longe de troncos.
+func climb(raw: Vector2) -> Vector4:
+	var x := int((raw.x + SIZE * 0.5) / CELL)
+	var z := int((raw.y + SIZE * 0.5) / CELL)
+	if x < 0 or z < 0 or x >= RES or z >= RES:
+		return Vector4.ZERO
+	var idx := _trunk_idx[z * RES + x]
+	if idx < 0:
+		return Vector4.ZERO
+	var t: Dictionary = _trunks[idx]
+	var c: Vector2 = t.c
+	var r: float = t.r
+	var off := raw - c
+	var d := off.length()
+	var outer := r + CLIMB_OUT
+	var inner := r + CLIMB_IN
+	if d >= outer:
+		return Vector4.ZERO
+	if d < 0.05:
+		return Vector4(raw.x, 0.0, raw.y, 2.0)
+	var n := off / d
+	if d >= inner:
+		# Chegando: o caminho encolhe até encostar no tronco.
+		var q := c + n * (r + (d - inner) / (outer - inner) * (outer - r))
+		return Vector4(q.x, _world.ground_height(q.x, q.y) + extra_height(q), q.y, 1.0)
+	# Subindo: quanto mais para dentro, mais alto.
+	var f: float = (1.0 - (d / inner) * (d / inner)) * float(t.fmax)
+	var k := mini(int(f), TRUNK_PTS - 2)
+	var u := f - k
+	var a: Vector3 = t.pts[k].lerp(t.pts[k + 1], u)
+	var ra: float = lerpf(t.radii[k], t.radii[k + 1], u)
+	var p := Vector3(a.x + n.x * ra, a.y, a.z + n.y * ra)
+	p.y = maxf(p.y, _world.ground_height(p.x, p.z))
+	return Vector4(p.x, p.y, p.z, 1.0)

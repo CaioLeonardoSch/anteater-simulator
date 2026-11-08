@@ -138,7 +138,7 @@ const UPGRADES := [
 		"desc": "As moradoras ficam tontas por mais tempo."},
 	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [90], "unlock": 2, "requires": ["garras_forca_1"],
 		"name": "Tremor nível 1",
-		"desc": "[Espaço] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
+		"desc": "[X] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
 	{"id": "garras_tremor_2", "branch": 1, "col": 1, "row": 3, "costs": [45, 55, 65], "unlock": AREA2, "requires": ["garras_tremor_1"],
 		"name": "Tremor nível 2",
 		"desc": "O Tremor recarrega mais rápido: 18, 15 e 12 s."},

@@ -30,6 +30,8 @@ const SCARE_RADIUS := 2.0
 ## Olhar para cima e para baixo: quase na vertical (90° certinho vira a câmera).
 const PITCH_MAX := deg_to_rad(89.0)
 const GRAVITY := 20.0
+## Pulo normal (uns 95 cm de altura).
+const JUMP_SPEED := 6.2
 
 enum Tongue { IDLE, OUT, BACK }
 
@@ -86,6 +88,8 @@ var dig_cd := 0.0
 var near_exit := false
 var exit_progress := 0.0
 var _jump_request := false
+## Velocidade do pulo pedido (o pulo normal ou o do Tremor).
+var _jump_speed := 0.0
 var _stomp_pending := false
 var _air_time := 0.0
 var pull_time := 0.0
@@ -282,8 +286,8 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		velocity.y = -0.5
 		if _jump_request:
-			# Pulo do Tremor: a pancada vem quando ele cai de volta no chão.
-			velocity.y = GameState.tremor_jump_speed()
+			# Pulo (o do Tremor: a pancada vem quando ele cai de volta no chão).
+			velocity.y = _jump_speed
 	else:
 		velocity.y -= GRAVITY * delta
 	_jump_request = false
@@ -745,6 +749,11 @@ func _update_abilities(delta: float) -> void:
 			exit_broken.emit()
 	else:
 		exit_progress = maxf(exit_progress - delta * 2.0, 0.0)
+	# Pulo: sobe nas pedras e sai dos buracos que cavou.
+	if controls_enabled and Input.is_action_just_pressed("jump") and is_on_floor() and not _is_digging():
+		_jump_request = true
+		_jump_speed = JUMP_SPEED
+		Sfx.play("step", -8.0, 0.85)
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
 	if bot and GameState.can_tremor() and tremor_cd <= 0.0:
 		# Tremor quando vale a pena: um bolo de insetos em volta, ou o alvo
@@ -802,6 +811,7 @@ func do_sniff() -> void:
 func do_tremor() -> void:
 	tremor_cd = GameState.tremor_cooldown()
 	_jump_request = true
+	_jump_speed = GameState.tremor_jump_speed()
 	_stomp_pending = true
 	GameState.count("tremors")
 	Sfx.play("step", -4.0, 0.7)

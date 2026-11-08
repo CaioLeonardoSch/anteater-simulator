@@ -47,6 +47,8 @@ var cave_path := PackedVector2Array()
 ## Tronco caído que fecha a passagem para a área 2.
 var mushrooms: Mushrooms
 var exit_log: Node3D
+## Tronco caído entrando na lagoa (as formigas andam por cima).
+var pond_log: Node3D
 ## A clareira está 100% limpa: o tronco já pode ser quebrado.
 var exit_breakable := false
 ## O tronco foi quebrado (a passagem está aberta).
@@ -180,6 +182,7 @@ func build() -> void:
 		nest.ground = ground_height
 		add_child(nest)
 		nest.build(_rng, mats)
+	_build_pond_log()
 	# Arbustos onde as saúvas cortam folhas.
 	for f in food_sources:
 		var size := _rng.randf_range(1.0, 1.25)
@@ -193,6 +196,8 @@ func build() -> void:
 	vegetation.name = "Vegetation"
 	add_child(vegetation)
 	vegetation.build(self, _rng)
+	if pond_log != null:
+		vegetation.logs.append(pond_log)
 	for f in food_sources:
 		vegetation.obstacles.append(Vector3(f.x, f.y, 0.7))
 		vegetation.blockers.append(Vector3(f.x, f.y, 1.1))
@@ -365,7 +370,7 @@ func _dig_pond(lobes: Array[Vector3]) -> void:
 	for l in lobes:
 		terrain.add_flat_zone(l.x, l.y, l.z * 1.8, level)
 	for l in lobes:
-		terrain.add_dip(l.x, l.y, l.z, clampf(0.35 + l.z * 0.13, 0.5, 0.95))
+		terrain.add_dip(l.x, l.y, l.z, clampf(0.6 + l.z * 0.2, 0.8, 1.4))
 		terrain.mask_paint(l.x, l.y, l.z + 0.5, 1, 1.0)
 		# Lama molhada na beira (canal 3 da máscara, só para a cor do chão).
 		terrain.mask_paint(l.x, l.y, l.z + 1.1, 3, 1.0)
@@ -384,9 +389,172 @@ func _build_pond_water() -> void:
 		_build_one_pond(lobes, mat)
 
 
-## A água de uma lagoa: o contorno é a união dos lobos (alisada), mais clara e
-## transparente na beira (raso) e escura no meio (fundo).
-func _build_one_pond(lobes: Array, mat: Material) -> void:
+const POND_LOG_LEN := 4.2
+## Quanto do tronco fica em terra (m, da ponta até a beira da água).
+const POND_LOG_LAND := 1.5
+
+
+## Tronco caído com a ponta dentro da lagoa e uma trilha curta de formigas
+## que sai da trilha mais perto, sobe na ponta de terra e anda por cima dele
+## até perto de onde a água toca. Tem um sorteio próprio (o resto do mapa não muda).
+func _build_pond_log() -> void:
+	if pond_shapes.is_empty():
+		return
+	var lobes: Array = pond_shapes[0]
+	var c := Vector2(lobes[0].x, lobes[0].y)
+	var radial := _pond_radial(lobes)
+	var level := _pond_level(c, radial)
+	var segs := radial.size()
+	# Cada direção da beira, com o ponto de trilha mais perto de onde as
+	# formigas chegam no tronco.
+	var options: Array = []
+	for j in segs:
+		var out := Vector2.RIGHT.rotated(TAU * j / segs)
+		var shore := c + out * radial[j]
+		var land := shore + out * POND_LOG_LAND
+		var tip := shore - out * (POND_LOG_LEN - POND_LOG_LAND)
+		if _pond_depth_at(tip, lobes) < 0.6 or not _log_spot_clear(land) or not _log_spot_clear(land + out * 0.5):
+			continue
+		for ti in trails.trails.size():
+			var t = trails.trails[ti]
+			if t.small:
+				continue
+			var bi := -1
+			var bd := INF
+			for i in range(12, t.points.size() - 4, 2):
+				var dd: float = t.points[i].distance_to(land)
+				if dd < bd:
+					bd = dd
+					bi = i
+			if bi >= 0 and bd < 14.0:
+				options.append([bd, out, land, ti, bi])
+	options.sort_custom(func(a, b): return a[0] < b[0])
+	for o in options:
+		var out: Vector2 = o[1]
+		var land: Vector2 = o[2]
+		var t = trails.trails[o[3]]
+		var bi: int = o[4]
+		var approach := land + out * 0.6
+		var ctrl := PackedVector2Array([t.points[bi - 4], t.points[bi], approach, land, land - out])
+		var path := PackedVector2Array()
+		for i in range(1, ctrl.size() - 2):
+			var steps := maxi(2, int(ctrl[i].distance_to(ctrl[i + 1]) / 0.25))
+			for k in steps:
+				path.append(_catmull(ctrl[i - 1], ctrl[i], ctrl[i + 1], ctrl[i + 2], float(k) / steps))
+		if not _branch_clear(path, nests[t.nest]):
+			continue
+		_place_pond_log(t, bi, path, out, land, level)
+		return
+	push_warning("O tronco da lagoa não coube.")
+
+
+## Fundura da lagoa num ponto (m até a beira do lobo mais fundo; < 0 = fora).
+func _pond_depth_at(p: Vector2, lobes: Array) -> float:
+	var best := -INF
+	for l in lobes:
+		best = maxf(best, l.z - p.distance_to(Vector2(l.x, l.y)))
+	return best
+
+
+## A ponta de terra do tronco não cai em cima de nada.
+func _log_spot_clear(p: Vector2) -> bool:
+	if trails.distance_to_trails(p) < 1.2 or near_cave_path(p, 1.5):
+		return false
+	if p.length() > walk_limit(p) - 1.5:
+		return false
+	for n in nests:
+		if p.distance_to(n.center2) < n.radius + 1.5:
+			return false
+	for f in food_sources:
+		if p.distance_to(f) < 2.2:
+			return false
+	for q in satellite_spots:
+		if p.distance_to(q) < 2.2:
+			return false
+	return true
+
+
+## O caminho até o tronco não passa por formigueiro, arbusto, câmara ou água.
+func _branch_clear(pts: PackedVector2Array, own: Nest) -> bool:
+	for q in pts:
+		for n in nests:
+			if q.distance_to(n.center2) < n.radius + (0.3 if n == own else 1.2):
+				return false
+		for f in food_sources:
+			if q.distance_to(f) < 1.8:
+				return false
+		for c in satellite_spots:
+			if q.distance_to(c) < 1.8:
+				return false
+		for w in ponds:
+			if q.distance_to(Vector2(w.x, w.y)) < w.z + 0.3:
+				return false
+		if near_cave_path(q, 0.6):
+			return false
+	return true
+
+
+func _place_pond_log(t, bi: int, path: PackedVector2Array, out: Vector2, land: Vector2, level: float) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED + 53
+	var node := Props.build_log(rng, mats, POND_LOG_LEN, false)
+	node.name = "TroncoDaLagoa"
+	var pts: PackedVector3Array = node.get_meta("tube_pts")
+	var radii: PackedFloat32Array = node.get_meta("tube_radii")
+	var into := -out
+	# A ponta de terra deitada no chão; a outra afunda um pouco na água.
+	var base_land := terrain.get_height(land.x, land.y) - 0.04
+	var base_tip := level - 0.06 - (pts[pts.size() - 1].y + radii[radii.size() - 1])
+	var tilt := asin(clampf((base_land - base_tip) / POND_LOG_LEN, -0.4, 0.4))
+	var mid := land + into * POND_LOG_LEN * 0.5
+	node.basis = Basis(Vector3.UP, atan2(-into.y, into.x)) * Basis(Vector3.BACK, -tilt)
+	node.position = Vector3(mid.x, (base_land + base_tip) * 0.5, mid.y)
+	add_child(node)
+	pond_log = node
+	# Por cima do tronco, da ponta de terra até perto de onde a água toca.
+	var xf := node.global_transform if node.is_inside_tree() else node.transform
+	var top2 := PackedVector2Array()
+	var top_y := PackedFloat32Array()
+	for i in pts.size() - 1:
+		for k in 8:
+			var f := k / 8.0
+			var q: Vector3 = xf * pts[i].lerp(pts[i + 1], f)
+			var y := q.y + lerpf(radii[i], radii[i + 1], f) * 0.97
+			if y < level + 0.04:
+				break
+			top2.append(Vector2(q.x, q.z))
+			top_y.append(y)
+		if not top_y.is_empty() and top_y[top_y.size() - 1] < level + 0.06:
+			break
+	# Para um pouco antes da água.
+	var keep := top2.size()
+	var back := 0.0
+	while keep > 2 and back < 0.35:
+		keep -= 1
+		back += top2[keep].distance_to(top2[keep - 1])
+	var dense := PackedVector2Array()
+	var lift := PackedFloat32Array()
+	for i in bi + 1:
+		dense.append(t.points[i])
+		lift.append(-INF)
+	for q in path:
+		dense.append(q)
+		lift.append(-INF)
+	for i in keep:
+		dense.append(top2[i])
+		lift.append(top_y[i])
+	var branch = trails.add_path(dense, lift, t.nest, -1)
+	branch.small = true
+	branch.spread = 0.05
+	branch.leaves = 0.0
+	nests[t.nest].trail_ids.append(trails.trails.size() - 1)
+	for q in path:
+		terrain.mask_paint(q.x, q.y, 0.45, 0, 0.8)
+
+
+## Contorno da lagoa: a distância do centro (o 1º lobo) até a beira, em 72
+## direções, alisada onde dois lobos se encontram.
+func _pond_radial(lobes: Array) -> PackedFloat32Array:
 	var c := Vector2(lobes[0].x, lobes[0].y)
 	var segs := 72
 	var radial := PackedFloat32Array()
@@ -402,18 +570,31 @@ func _build_one_pond(lobes: Array, mat: Material) -> void:
 			if disc >= 0.0:
 				best = maxf(best, t + sqrt(disc))
 		radial[j] = best
-	# Alisa as quinas onde dois lobos se encontram.
 	for _pass in 3:
 		var sm := radial.duplicate()
 		for j in segs:
 			sm[j] = (radial[(j + segs - 1) % segs] + radial[j] * 2.0 + radial[(j + 1) % segs]) * 0.25
 		radial = sm
-	# Nível da água um pouco abaixo da beira mais baixa (a água nunca sobe no capim).
+	return radial
+
+
+## Nível da água um pouco abaixo da beira mais baixa (a água nunca sobe no capim).
+func _pond_level(c: Vector2, radial: PackedFloat32Array) -> float:
+	var segs := radial.size()
 	var level := INF
 	for j in segs:
 		var q := c + Vector2.RIGHT.rotated(TAU * j / segs) * radial[j] * 0.93
 		level = minf(level, terrain.get_height(q.x, q.y))
-	level -= 0.06
+	return level - 0.06
+
+
+## A água de uma lagoa: o contorno é a união dos lobos (alisada), mais clara e
+## transparente na beira (raso) e escura no meio (fundo).
+func _build_one_pond(lobes: Array, mat: Material) -> void:
+	var c := Vector2(lobes[0].x, lobes[0].y)
+	var radial := _pond_radial(lobes)
+	var segs := radial.size()
+	var level := _pond_level(c, radial)
 	var deep := Color(0.035, 0.12, 0.13, 0.95)
 	var mid := Color(0.07, 0.19, 0.18, 0.88)
 	var shore := Color(0.22, 0.26, 0.17, 0.45)

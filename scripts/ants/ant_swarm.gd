@@ -142,7 +142,9 @@ func setup(w, col) -> void:
 	world = w
 	colony = col
 	trails = w.trails.trails
-	obstacles = w.vegetation.blockers
+	obstacles = w.vegetation.blockers.duplicate()
+	for t in w.vegetation.trees:
+		obstacles.append(Vector3(t.position.x, t.position.z, w.vegetation.TRUNK))
 	for arr in [alive, kind, mode, carry]:
 		arr.resize(CAPACITY)
 		arr.fill(0)

@@ -352,8 +352,8 @@ func _build_abilities() -> void:
 	var b: Array = GameState.BRANCHES
 	var defs := [
 		{"key": Settings.key_label("lick"), "action": "lick", "name": "Lamber", "kind": "lick", "glyph": "tongue", "tint": b[0].color, "primary": true},
-		{"key": Settings.key_label("sniff"), "action": "sniff", "name": "Farejar", "kind": "sniff", "glyph": "nose", "tint": b[3].color, "primary": false},
 		{"key": Settings.key_label("dig"), "action": "dig", "name": "Cavar", "kind": "dig", "glyph": "claws", "tint": b[1].color, "primary": false},
+		{"key": Settings.key_label("sniff"), "action": "sniff", "name": "Farejar", "kind": "sniff", "glyph": "nose", "tint": b[3].color, "primary": false},
 		{"key": Settings.key_label("tremor"), "action": "tremor", "name": "Tremor", "kind": "tremor", "glyph": "burst", "tint": b[1].color, "primary": false},
 	]
 	for d in defs:
@@ -407,6 +407,8 @@ func _process(delta: float) -> void:
 				a.locked = not GameState.can_tremor()
 				a.seconds = player.tremor_cd
 				a.cooldown = player.tremor_cd / GameState.tremor_cooldown() if player.tremor_cd > 0.0 else 0.0
+		# Só aparece depois de aprender.
+		a.visible = not a.locked
 		a.queue_redraw()
 	_update_hints(delta)
 	if _big_time > 0.0:

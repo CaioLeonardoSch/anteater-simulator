@@ -117,7 +117,7 @@ var player_id: String = ""
 const REBINDABLE := [
 	["move_forward", "Andar para a frente"], ["move_back", "Andar para trás"],
 	["move_left", "Andar para a esquerda"], ["move_right", "Andar para a direita"],
-	["run", "Correr"], ["lick", "Lamber"], ["sniff", "Farejar"], ["dig", "Cavar"],
+	["run", "Correr"], ["jump", "Pular"], ["lick", "Lamber"], ["sniff", "Farejar"], ["dig", "Cavar"],
 	["tremor", "Tremor"], ["skill_tree", "Mapa e habilidades"], ["objective", "Mostrar o objetivo"],
 	["pause", "Pausa"],
 ]
@@ -159,7 +159,8 @@ func _setup_input_map() -> void:
 	_bind_keys("run", [KEY_SHIFT])
 	_bind_keys("sniff", [KEY_Q])
 	_bind_keys("dig", [KEY_E])
-	_bind_keys("tremor", [KEY_SPACE])
+	_bind_keys("jump", [KEY_SPACE])
+	_bind_keys("tremor", [KEY_X])
 	_bind_keys("skill_tree", [KEY_TAB, KEY_T])
 	_bind_keys("objective", [KEY_F])
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
@@ -174,7 +175,8 @@ func _setup_input_map() -> void:
 	_bind_axis("sniff", JOY_AXIS_TRIGGER_LEFT, 1.0)
 	_bind_joy("run", JOY_BUTTON_LEFT_STICK)
 	_bind_joy("dig", JOY_BUTTON_X)
-	_bind_joy("tremor", JOY_BUTTON_A)
+	_bind_joy("jump", JOY_BUTTON_A)
+	_bind_joy("tremor", JOY_BUTTON_B)
 	_bind_joy("skill_tree", JOY_BUTTON_BACK)
 	_bind_joy("objective", JOY_BUTTON_Y)
 	_bind_joy("pause", JOY_BUTTON_START)

@@ -721,3 +721,7 @@ acertar a duração com testes.
 | 08/11/2026 | Frenesi | Comer outra tanajura ou cogumelo com o Frenesi ligado voltava o tempo para 6 s | Com o Frenesi ligado, cada tanajura ou cogumelo comido soma 3 s ao que falta (2 tanajuras de uma vez faltando 4 s: 10 s). A barra do card usa a duração total |
 | 08/11/2026 | Câmara aberta | As moradoras fugiam e iam morar num canto da região, de 4 a 13 m da câmara | Correm alguns segundos e voltam a passear até 5 m da câmara, por cima do monte também, contornando arbustos e lagoas |
 | 08/11/2026 | Formigas que passeiam | Atravessavam pedras, arbustos e árvores | Sobem e andam por cima das pedras (e troncos caídos); dão a volta rente nos troncos das árvores, nos arbustos (por fora das folhas) e nos cupinzeiros |
+| 08/11/2026 | Troncos das árvores | As formigas que passeiam davam a volta nas árvores | Algumas sobem um pouco o tronco (até 1,4 m) e descem de volta |
+| 08/11/2026 | Lagoa | 8 m e rasa (0,5 a 0,95 m de fundo) | 10 m e mais funda (0,8 a 1,4 m). Um tronco caído entra na água, e uma trilha curta (poucas formigas, sem tanajura) sai da trilha mais perto e anda por cima dele até perto da água |
+| 08/11/2026 | Barra de habilidades | Mostrava todas, com cadeado nas que faltavam | Só as aprendidas, na ordem Lamber, Cavar, Farejar e Tremor |
+| 08/11/2026 | Pulo | Só o Tremor pulava (no `Espaço`) | `Espaço` pula sempre (subir nas pedras, sair dos buracos); o Tremor foi para o `X` (`B` no controle) |

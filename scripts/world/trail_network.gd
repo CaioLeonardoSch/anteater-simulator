@@ -13,11 +13,21 @@ class Trail extends RefCounted:
 	var food := 0
 	## Altura do chão em cada ponto (para inclinar os grupos de formigas).
 	var heights := PackedFloat32Array()
+	## Altura fixa (de cima de um tronco) em cada ponto; -INF = no chão.
+	var lift := PackedFloat32Array()
+	## Quanto as formigas se espalham para os lados (m).
+	var spread := 0.22
+	## Chance de voltar carregando folha.
+	var leaves := 0.6
+	## Trilha curta, de passeio (poucas formigas e nenhuma tanajura).
+	var small := false
 
 	func bake_heights(world) -> void:
 		heights.resize(points.size())
 		for i in points.size():
 			heights[i] = world.ground_height(points[i].x, points[i].y)
+			if i < lift.size():
+				heights[i] = maxf(heights[i], lift[i])
 
 	## Quanto a trilha sobe por metro (no sentido de s), medido em 1 m.
 	func slope_at(s: float) -> float:
@@ -94,19 +104,34 @@ func add_trail(a: Vector2, b: Vector2, nest_index: int, food_index: int, rng: Ra
 			dense.append(0.5 * ((2.0 * p1) + (-p0 + p2) * t + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
 				+ (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3))
 	dense.append(ctrl[ctrl.size() - 1])
+	return add_path(dense, PackedFloat32Array(), nest_index, food_index)
+
+
+## Trilha que segue um caminho pronto. `lift` (opcional, um por ponto do
+## caminho) é a altura fixa de cima de um tronco; -INF = no chão.
+func add_path(dense: PackedVector2Array, lift: PackedFloat32Array, nest_index: int, food_index: int) -> Trail:
 	# Reamostragem em passos iguais.
 	var trail := Trail.new()
 	trail.nest = nest_index
 	trail.food = food_index
+	var lifted := not lift.is_empty()
 	trail.points.append(dense[0])
+	if lifted:
+		trail.lift.append(lift[0])
 	var carry := 0.0
 	for i in dense.size() - 1:
 		var p := dense[i]
 		var q := dense[i + 1]
 		var seg := p.distance_to(q)
+		if seg < 1e-5:
+			continue
 		var pos := STEP - carry
 		while pos <= seg:
 			trail.points.append(p.lerp(q, pos / seg))
+			if lifted:
+				var a := lift[i]
+				var b := lift[i + 1]
+				trail.lift.append(lerpf(a, b, pos / seg) if a > -INF and b > -INF else maxf(a, b) if pos / seg > 0.5 else a)
 			pos += STEP
 		carry = seg - (pos - STEP)
 	trail.length = (trail.points.size() - 1) * STEP

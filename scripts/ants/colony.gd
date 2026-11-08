@@ -23,6 +23,8 @@ const TRAIL_SHARE := 0.2
 const ROAM_SHARE := 0.35
 ## Tanajuras em cada trilha (contam como formigas da trilha).
 const TANAJURAS_PER_TRAIL := 2
+## Formigas na trilha do tronco da lagoa.
+const SMALL_TRAIL_ANTS := 90
 const ROYAL_WEIGHT := 1.7
 ## Câmaras no meio do campo guardam menos moradoras.
 const SATELLITE_WEIGHT := 0.6
@@ -88,12 +90,21 @@ func _distribute() -> void:
 		n.cleaned = false
 		# Trilhas.
 		var on_trails := int(round(share * TRAIL_SHARE)) if not n.trail_ids.is_empty() else 0
+		# Trilhas curtas (a do tronco da lagoa): poucas formigas, sem tanajura.
+		var big_ids: Array[int] = []
+		var rest := on_trails
+		for ti in n.trail_ids:
+			if trails[ti].small:
+				trail_left[ti] = mini(SMALL_TRAIL_ANTS, on_trails / 4)
+				rest -= trail_left[ti]
+			else:
+				big_ids.append(ti)
 		var given := 0
-		for j in n.trail_ids.size():
-			var ti: int = n.trail_ids[j]
-			var m: int = on_trails / n.trail_ids.size()
-			if j == n.trail_ids.size() - 1:
-				m = on_trails - given
+		for j in big_ids.size():
+			var ti: int = big_ids[j]
+			var m: int = rest / big_ids.size()
+			if j == big_ids.size() - 1:
+				m = rest - given
 			given += m
 			tanajuras_left[ti] = mini(TANAJURAS_PER_TRAIL, m)
 			trail_left[ti] = m - tanajuras_left[ti]

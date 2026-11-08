@@ -6,7 +6,7 @@ extends Node3D
 const Props := preload("res://scripts/world/props.gd")
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
-## Raio do tronco das árvores em pé, para as formigas passarem rente.
+## Raio do tronco das árvores em pé, para as formigas que fogem desviarem.
 const TRUNK := 0.3
 
 ## Obstáculos circulares: Vector3(x, z, raio).
@@ -16,6 +16,8 @@ var obstacles: Array[Vector3] = []
 var rocks: Array[Node3D] = []
 var logs: Array[Node3D] = []
 var blockers: Array[Vector3] = []
+## Árvores em pé: as formigas sobem no tronco.
+var trees: Array[Node3D] = []
 var landmarks: Array[Dictionary] = []
 
 
@@ -36,7 +38,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			tree = Props.build_tree(geo, mats, kind, 1.0, origin, ground)
 		_put(tree, origin, rng)
 		obstacles.append(Vector3(pos.x, pos.y, 0.6))
-		blockers.append(Vector3(pos.x, pos.y, TRUNK))
+		trees.append(tree)
 		landmarks.append({"name": "Ipê", "pos": pos})
 	# Árvores retorcidas do cerrado: muitas perto dos penhascos, poucas no meio.
 	for i in 12:
@@ -50,7 +52,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			tree = Props.build_tree(geo, mats, "cerrado", 1.0, origin, ground)
 		_put(tree, origin, rng)
 		obstacles.append(Vector3(pos.x, pos.y, 0.5))
-		blockers.append(Vector3(pos.x, pos.y, TRUNK))
+		trees.append(tree)
 	# Cupinzeiros, alguns em grupos.
 	for _i in 4:
 		var pos := _find_spot(world, rng, 4.0, 23.0, 2.2, 3.0, 1.2)
@@ -160,7 +162,7 @@ func _build_edges(world) -> void:
 			tree = Props.build_tree(geo, mats, "cerrado", 0.85, origin, ground)
 		_put(tree, origin, rng)
 		obstacles.append(Vector3(pos.x, pos.y, 0.5))
-		blockers.append(Vector3(pos.x, pos.y, TRUNK))
+		trees.append(tree)
 	# Alto dos penhascos: mais um anel de árvores, bem mais cheio.
 	for _i in 56:
 		var a := rng.randf() * TAU

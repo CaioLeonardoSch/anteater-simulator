@@ -134,6 +134,8 @@ func build(w, trail_counts: Array, roams: Array, rng: RandomNumberGenerator) -> 
 			mat.set_shader_parameter("height_size", HEIGHT_SIZE)
 			mat.set_shader_parameter("props_tex", ground.texture)
 			mat.set_shader_parameter("props_size", AntGround.SIZE)
+			mat.set_shader_parameter("trunk_tex", ground.trunk_texture)
+			mat.set_shader_parameter("trunk_data", ground.trunk_data)
 			mat.set_shader_parameter("trail_step", TrailNetwork.STEP)
 		_mats.append(m)
 		_scent_mats.append(s)
@@ -218,10 +220,10 @@ func _add_trail_chunk(ti: int, t, n: int, rng: RandomNumberGenerator) -> void:
 		ch.buf[o + 1] = length
 		ch.buf[o + 2] = rng.randf()
 		ch.buf[o + 3] = speed / (2.0 * length)
-		ch.buf[o + 4] = rng.randf_range(-0.22, 0.22)
+		ch.buf[o + 4] = rng.randf_range(-t.spread, t.spread)
 		ch.buf[o + 5] = WORKER_SIZE * rng.randf_range(0.92, 1.08)
 		ch.buf[o + 6] = float(rng.randi() % 1024)
-		ch.buf[o + 7] = _flags(rng, 0.6)
+		ch.buf[o + 7] = _flags(rng, t.leaves)
 		ch.buf[o + 8] = 1.0
 		ch.buf[o + 9] = 0.0
 		ch.buf[o + 10] = speed
@@ -436,7 +438,17 @@ func ant_state(ch: Chunk, i: int, even_hidden: bool = false) -> Vector4:
 	var raw := Vector2(b[o], b[o + 1]) + d * rho
 	var dth := b[o + 11] + 0.22 * 12.566 * cos(w)
 	var dp := d * reach * PI * cos(PI * u) + Vector2(-d.y, d.x) * rho * dth
-	# Contorna arbustos e árvores; sobe nas pedras e troncos.
+	# Sobe nos troncos das árvores.
+	var cl := ground.climb(raw)
+	if cl.w > 1.5:
+		return Vector4(0, 0, 0, INF)
+	if cl.w > 0.5:
+		var nx := ground.climb(raw + dp.normalized() * 0.05)
+		var mv := Vector2(nx.x - cl.x, nx.z - cl.z)
+		if nx.w < 0.5 or nx.w > 1.5 or mv.length_squared() < 1e-8:
+			mv = dp
+		return Vector4(cl.x, cl.y, cl.z, atan2(-mv.x, -mv.y))
+	# Contorna arbustos; sobe nas pedras e troncos caídos.
 	var p2 := ground.warp(raw)
 	if p2 == Vector2.INF:
 		return Vector4(0, 0, 0, INF)
@@ -470,7 +482,13 @@ func ant_xz(ch: Chunk, i: int) -> Vector2:
 	if rho < ROAM_HIDE_RHO:
 		return Vector2.INF
 	var th := b[o + 10] + cyc * 2.39996 + (u - 0.5) * b[o + 11] + 0.22 * sin(u * 12.566 + seed * 0.05)
-	return ground.warp(Vector2(b[o] + cos(th) * rho, b[o + 1] + sin(th) * rho))
+	var raw := Vector2(b[o] + cos(th) * rho, b[o + 1] + sin(th) * rho)
+	var cl := ground.climb(raw)
+	if cl.w > 1.5:
+		return Vector2.INF
+	if cl.w > 0.5:
+		return Vector2(cl.x, cl.z)
+	return ground.warp(raw)
 
 
 ## Formigas de campo (vivas e fora do buraco) a menos de `radius` (no chão)

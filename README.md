@@ -341,7 +341,8 @@ Opções de teste (depois de `--` na linha de comando do Godot):
 godot --path . -- --start=play --autoplay --timescale=4 --stats
 ```
 
-`--start=play|map|tree|settings|howto` pula o menu (`map` e `tree` já abrem a
+`--hide=Grass+Swarm` esconde esses nós aos 4 s (para medir o desenho com
+`--stats`) · `--start=play|map|tree|settings|howto` pula o menu (`map` e `tree` já abrem a
 tela do TAB) · `--autoplay` um bot joga sozinho e compra as habilidades em
 rodízio entre os ramos · `--botlog=arquivo.csv` o bot anota cada compra, cada
 formigueiro limpo e o progresso a cada 30 s, e fecha no fim · `--physics-scale`

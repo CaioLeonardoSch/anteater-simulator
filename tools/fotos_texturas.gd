@@ -10,7 +10,8 @@ extends Node
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
-## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol, formigas, tanajura.
+## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol, formigas, tanajura,
+## cupinzeiro_gigante.
 
 var main
 var out_dir := "user://fotos"
@@ -197,6 +198,21 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		p.pitch = 0.05
 		await _shot("penhasco")
+	if _wanted("cupinzeiro_gigante"):
+		# De binóculo: do mesmo lugar do penhasco, com a câmera fechada no
+		# cupinzeiro lá longe (a lente volta ao normal depois).
+		var gp: Vector3 = main.world.giant_mound.global_position
+		var dir := Vector2(gp.x, gp.z).normalized()
+		p.place_at(dir * 40.0, atan2(-dir.x, -dir.y))
+		await get_tree().physics_frame
+		var aim: Vector3 = gp + Vector3(0, 230, 0) - p.camera.global_position
+		p.pitch = asin(aim.normalized().y)
+		var fov0: float = Settings.fov
+		Settings.fov = 22.0
+		p.camera.fov = 22.0
+		await _shot("cupinzeiro_gigante")
+		Settings.fov = fov0
+		p.camera.fov = fov0
 	if _wanted("paredao"):
 		# De perto, a 5 m do pé do paredão, longe da caverna e da passagem.
 		var a := 0.6

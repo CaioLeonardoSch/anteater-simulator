@@ -3,8 +3,10 @@
 05/11/2026. Pesquisa pedida na revisão de qualidade de vida (ponto 5). Junta o
 que outros jogos e autores de game design dizem com as contas da demo como ela
 está hoje. As recomendações estão na seção 4, em ordem de impacto. As seções 5 e 6
-trazem a simulação com o bot e a proposta de reformulação da economia. Nada
-daqui foi implementado: é material para decidir.
+trazem a simulação com o bot e a proposta de reformulação da economia. As
+propostas aprovadas foram feitas no jogo: a árvore de cliques (seção 9), as
+áreas e os marcos (seção 11) e o tutorial por objetivos (seção 12), em
+08/11/2026. A seção 13 traz o bot na área 1 nova.
 
 ## 1. Como a demo funciona hoje (os números)
 
@@ -629,7 +631,7 @@ ritmo, não o relógio.
 Por isso os preços ficaram como na proposta. O próximo ajuste deve vir da
 jogatina do Caio com a árvore nova (a telemetria anota cada clique comprado).
 
-## 11. Proposta: as 4 áreas, marcos no lugar das travas e a área 1 menor (07/11/2026, para aprovar)
+## 11. As 4 áreas, marcos no lugar das travas e a área 1 menor (07/11/2026; feito em 08/11/2026)
 
 ### O que o Caio decidiu
 
@@ -809,18 +811,20 @@ espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
 2. **Marco 2:** metade dos insetos da área.
 3. **Redistribuir pontos:** continua de graça.
 
-Ainda não é para mexer no jogo: a proposta segue em estudo.
+### Feito em 08/11/2026
 
-### Depois de aprovar
+1. **Área 1 menor:** uns 50 m, 8 formigueiros (5 pequenos, 2 médios e 1
+   grande com a rainha), 40 câmaras (12 no meio do campo), 10 000 insetos e
+   uma lagoa só.
+2. **Marcos no lugar das travas:** o primeiro formigueiro limpo, metade e 80%
+   (com o Farejar de presente), um cartão grande na tela a cada marco e, na
+   árvore, o cadeado com "Formigueiro", "Metade", "80%" ou "Área 2" embaixo.
+   Redistribuir continua de graça, e o presente não sai.
+3. **Jogos salvos antigos não abrem** (o mapa e as travas mudaram).
+4. **Bot na área 1:** seção 13.
+5. Áreas 2 a 4: continuam só no papel até a demo estar fechada.
 
-1. Diminuir a área 1: 8 formigueiros e 10 mil insetos.
-2. Trocar as travas por áreas e marcos, com os avisos e os cadeados novos na
-   árvore.
-3. Rodar o bot na área 1 para acertar os preços e o ritmo, comparando com a
-   sua próxima jogatina.
-4. Áreas 2 a 4: continuam só no papel até a demo estar fechada.
-
-## 12. Proposta: tutorial guiado por objetivos (08/11/2026, só anotado)
+## 12. Tutorial guiado por objetivos (08/11/2026; feito no mesmo dia)
 
 A ideia do Caio: uma lista de objetivos, um de cada vez, com um marcador e um
 texto curto dizendo o que fazer. Assim os marcos da seção 11 ficam naturais e
@@ -857,7 +861,7 @@ o jogador sempre sabe para onde ir.
   curto, e a bússola mostra o rumo.
 - **Tecla para reacender:** depois que o losango some, uma tecla faz ele voar
   de novo do cartão até o alvo. É uma tecla nova, separada do Faro (decidido
-  pelo Caio em 08/11). Sugestão: **R**, que está livre e fica ao lado do
+  pelo Caio em 08/11). A tecla é **F** (escolha do Caio), livre e ao lado do
   WASD; dá para trocar em Configurações.
 
 ### A sequência da área 1
@@ -888,8 +892,21 @@ o jogador sempre sabe para onde ir.
 3. O losango voa pelo ar, numa leve curva, como parte da tela.
 4. Tem uma tecla para reacender o losango depois que ele some.
 
-Ainda não é para mexer no jogo. A sugestão é fazer o tutorial junto com as
-áreas e os marcos, para os marcos já nascerem como objetivos.
+### Como ficou no jogo (08/11/2026)
+
+- A sequência tem 10 passos: andar, comer um inseto, comer 200, aprender uma
+  habilidade, abrir uma câmara (o losango vai na câmara pequena mais perto),
+  limpar um formigueiro (vai no formigueiro pequeno que dá menos trabalho,
+  somando o que falta e a distância), comer metade, desmanchar a rainha, comer
+  todos (com "Aos 80%, um presente." embaixo) e quebrar o tronco.
+- O "Corra (Shift)" não virou objetivo: a dica de correr embaixo da tela já
+  faz isso.
+- O losango voa em 1,25 s, fica 9 s pulsando com a distância e some em 1,5 s.
+  A tecla **F** (ou Y no controle) faz ele voar de novo; dá para trocar em
+  Configurações → Controles.
+- A telemetria anota cada objetivo cumprido ("objetivo") e cada marco
+  ("marco").
+- O código está em `scripts/ui/objectives.gd`.
 
 ## Fontes
 

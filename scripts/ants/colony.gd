@@ -27,7 +27,7 @@ const ROYAL_WEIGHT := 1.7
 ## Câmaras no meio do campo guardam menos moradoras.
 const SATELLITE_WEIGHT := 0.6
 ## Até onde as passeadoras vão (m), longe da câmara delas.
-const ROAM_REACH := 12.0
+const ROAM_REACH := 8.0
 const ROAM_REACH_MIN := 2.2
 
 var swarm
@@ -75,12 +75,12 @@ func _distribute() -> void:
 	for n in nests:
 		if n.big:
 			queens += 1
-		total_w += 1.75 if n.big else 1.0
+		total_w += n.share_weight()
 	var workers: int = GameState.GOAL - queens * QUEEN_VALUE
 	var assigned := 0
 	for k in nests.size():
 		var n = nests[k]
-		var share := int(round(workers * (1.75 if n.big else 1.0) / total_w))
+		var share := int(round(workers * n.share_weight() / total_w))
 		if k == nests.size() - 1:
 			share = workers - assigned
 		assigned += share

@@ -85,6 +85,8 @@ var radius := 1.8
 var height := 0.62
 var center2 := Vector2.ZERO
 var big := false
+## Formigueiro médio: câmaras grandes (Fundura 1), sem rainha.
+var medium := false
 ## Direções (no plano xz) das trilhas que saem daqui.
 var trail_dirs: Array[Vector2] = []
 var trail_ids: Array[int] = []
@@ -115,13 +117,14 @@ var _lobes: Array[Vector4] = []
 var _olheiros: Array[Vector3] = []
 
 
-func setup(i: int, nest_name: String, pos2: Vector2, r: float, h: float, is_big: bool) -> void:
+func setup(i: int, nest_name: String, pos2: Vector2, r: float, h: float, is_big: bool, is_medium: bool = false) -> void:
 	index = i
 	display_name = nest_name
 	center2 = pos2
 	radius = r
 	height = h
 	big = is_big
+	medium = is_medium and not is_big
 	hole_distance = radius * 0.7
 	_noise.seed = 100 + i
 	_noise.frequency = 0.9
@@ -223,12 +226,18 @@ func _pit_offset(c: Chamber, lp: Vector2) -> float:
 	return y
 
 
+## Quanto dos insetos da colônia este formigueiro guarda (pequeno = 1).
+func share_weight() -> float:
+	return 1.75 if big else (1.4 if medium else 1.0)
+
+
 func hole_position(trail_dir: Vector2) -> Vector2:
 	return center2 + trail_dir * hole_distance
 
 
 ## Escolhe onde ficam as câmaras, longe dos olheiros das trilhas.
-## Grandes: a rainha no topo do monte + 4 câmaras grandes. Pequenos: 3.
+## Grandes: a rainha no topo do monte + 4 câmaras grandes. Médios: 4 câmaras
+## grandes. Pequenos: 3 pequenas.
 func plan_chambers(rng: RandomNumberGenerator) -> void:
 	chambers.clear()
 	if big:
@@ -240,8 +249,9 @@ func plan_chambers(rng: RandomNumberGenerator) -> void:
 		royal.pit_radius = radius * 0.62
 		royal.local = Vector2.ZERO
 		chambers.append(royal)
-	var count := 4 if big else 3
-	var dist := radius * (0.56 if big else 0.43)
+	var large := big or medium
+	var count := 4 if large else 3
+	var dist := radius * (0.56 if big else (0.5 if medium else 0.43))
 	var best_angles: Array[float] = []
 	var best_score := -INF
 	for _attempt in 24:
@@ -259,8 +269,8 @@ func plan_chambers(rng: RandomNumberGenerator) -> void:
 			best_angles = angles
 	for a in best_angles:
 		var c := Chamber.new()
-		c.size_class = LARGE if big else SMALL
-		c.radius = rng.randf_range(0.52, 0.6) if big else rng.randf_range(0.48, 0.56)
+		c.size_class = LARGE if large else SMALL
+		c.radius = rng.randf_range(0.52, 0.6) if large else rng.randf_range(0.48, 0.56)
 		c.local = Vector2(cos(a), sin(a)) * dist
 		chambers.append(c)
 	for c in chambers:

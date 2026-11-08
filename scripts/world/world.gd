@@ -20,7 +20,6 @@ const ModelLibrary := preload("res://scripts/model_library.gd")
 const SKY_SHADER := preload("res://shaders/sky_dusk.gdshader")
 
 const SEED := 20261102
-const PLAY_RADIUS := 60.0
 
 var mats: Materials
 var terrain: Terrain
@@ -69,49 +68,36 @@ var _nest_grid_n := 0
 var _grass_quality_built := -1
 var _shadow_atlas := 0
 
-## 18 formigueiros espalhados pelo mapa inteiro (8 num anel por fora, 4 no
-## meio e 6 nos vãos entre eles), para cada pedaço do mapa ter o seu. Perto
-## da caverna (o começo) ficam os pequenos, sem rainha, que Cavar já abre; os
-## grandes ("big"), com a rainha, ficam do lado da saída para a área 2.
+## 8 formigueiros numa clareira de ~50 m: 5 pequenos ("small", câmaras que
+## Cavar já abre) perto da caverna (o começo), 2 médios ("medium", câmaras
+## grandes, que pedem Fundura 1) e o grande ("big", com a rainha, que pede
+## Fundura 2) do lado da saída para a área 2.
 const NEST_LAYOUT := [
-	{"name": "Formigueiro Norte", "pos": Vector2(4, -42), "big": false},
-	{"name": "Formigueiro Nordeste", "pos": Vector2(32, -30), "big": false},
-	{"name": "Formigueiro Leste", "pos": Vector2(44, 2), "big": false},
-	{"name": "Formigueiro Sudeste", "pos": Vector2(28, 36), "big": false},
-	{"name": "Formigueiro Sul", "pos": Vector2(-2, 46), "big": false},
-	{"name": "Formigueiro Sudoeste", "pos": Vector2(-32, 30), "big": true},
-	{"name": "Formigueiro Oeste", "pos": Vector2(-45, -6), "big": true},
-	{"name": "Formigueiro Noroeste", "pos": Vector2(-26, -36), "big": true},
-	{"name": "Formigueiro Centro-Nordeste", "pos": Vector2(11, -7), "big": false},
-	{"name": "Formigueiro Centro-Sudeste", "pos": Vector2(7, 12), "big": false},
-	{"name": "Formigueiro Centro-Sudoeste", "pos": Vector2(-12, 7), "big": true},
-	{"name": "Formigueiro Centro-Noroeste", "pos": Vector2(-7, -12), "big": true},
-	{"name": "Formigueiro Oés-Sudoeste", "pos": Vector2(-44, 14), "big": true},
-	{"name": "Formigueiro Lés-Sudeste", "pos": Vector2(41, 21), "big": false},
-	{"name": "Formigueiro Oés-Noroeste", "pos": Vector2(-40, -24), "big": true},
-	{"name": "Formigueiro Centro-Sul", "pos": Vector2(-3, 27), "big": false},
-	{"name": "Formigueiro Lés-Nordeste", "pos": Vector2(44, -16), "big": false},
-	{"name": "Formigueiro Centro-Norte", "pos": Vector2(6, -24), "big": false},
+	{"name": "Formigueiro Leste", "pos": Vector2(14, 3), "kind": "small"},
+	{"name": "Formigueiro Nordeste", "pos": Vector2(9, -11), "kind": "small"},
+	{"name": "Formigueiro Sudeste", "pos": Vector2(6, 14), "kind": "small"},
+	{"name": "Formigueiro Norte", "pos": Vector2(-3, -18), "kind": "small"},
+	{"name": "Formigueiro do Centro", "pos": Vector2(2, 1), "kind": "small"},
+	{"name": "Formigueiro Noroeste", "pos": Vector2(-9, -8), "kind": "medium"},
+	{"name": "Formigueiro Sul", "pos": Vector2(-6, 17), "kind": "medium"},
+	{"name": "Formigueiro da Rainha", "pos": Vector2(-15, 2), "kind": "big"},
 ]
 ## Arbustos onde as saúvas cortam folhas.
 const FOOD_LAYOUT := [
-	Vector2(-9, -24), Vector2(18, -20), Vector2(26, 4), Vector2(12, 24),
-	Vector2(-14, 22), Vector2(-26, -2)]
+	Vector2(10, -3), Vector2(-1, 9), Vector2(-15, -5), Vector2(2, -12), Vector2(-10, 10)]
 ## Trilhas: [formigueiro, arbusto].
-const LINKS := [[0, 0], [0, 1], [1, 1], [2, 2], [2, 1], [3, 3], [3, 2], [4, 3], [4, 4],
-	[5, 4], [5, 5], [6, 5], [7, 0], [7, 5],
-	[8, 1], [8, 2], [9, 3], [9, 2], [10, 4], [10, 5], [11, 0], [11, 5],
-	[12, 5], [12, 4], [13, 2], [13, 3], [14, 5], [14, 0], [15, 4], [15, 3],
-	[16, 1], [16, 2], [17, 1], [17, 0]]
+const LINKS := [[0, 0], [1, 0], [1, 3], [2, 1], [3, 3], [4, 0], [4, 1],
+	[5, 2], [5, 3], [6, 1], [6, 4], [7, 2], [7, 4]]
 ## Grade que diz qual formigueiro (se algum) cobre cada pedaço do mapa.
 const NEST_GRID_CELL := 2.0
 ## Câmaras sozinhas no meio do campo, longe das trilhas (as formigas saem
 ## delas para passear).
-const SATELLITE_COUNT := 48
-const SATELLITES_PER_NEST := 3
-const SATELLITE_SPACING := 7.5
-## Trilha onde o jogador começa (formigueiro Leste -> arbusto 2), olhando para o sol.
-const START_LINK := [2, 2]
+const SATELLITE_COUNT := 12
+const SATELLITES_PER_NEST := 2
+const SATELLITE_SPACING := 6.0
+## Trilha de referência para espalhar as câmaras do campo (formigueiro Leste ->
+## arbusto 0).
+const START_LINK := [0, 0]
 
 
 func build() -> void:
@@ -123,10 +109,10 @@ func build() -> void:
 	for i in NEST_LAYOUT.size():
 		var nest: Nest = Nest.new()
 		nest.name = "Nest%d" % i
-		var big: bool = NEST_LAYOUT[i].big
-		var r := _rng.randf_range(3.3, 3.6) if big else _rng.randf_range(2.4, 2.75)
-		var h := _rng.randf_range(1.0, 1.12) if big else _rng.randf_range(0.76, 0.88)
-		nest.setup(i, NEST_LAYOUT[i].name, NEST_LAYOUT[i].pos, r, h, big)
+		var kind: String = NEST_LAYOUT[i].kind
+		var r: float = {"small": _rng.randf_range(2.4, 2.75), "medium": _rng.randf_range(2.9, 3.15), "big": _rng.randf_range(3.3, 3.6)}[kind]
+		var h: float = {"small": _rng.randf_range(0.76, 0.88), "medium": _rng.randf_range(0.88, 0.98), "big": _rng.randf_range(1.0, 1.12)}[kind]
+		nest.setup(i, NEST_LAYOUT[i].name, NEST_LAYOUT[i].pos, r, h, kind == "big", kind == "medium")
 		nests.append(nest)
 		spots.append(Vector3(nest.center2.x, nest.center2.y, r * 2.0 + 0.4))
 	_build_nest_grid()
@@ -303,23 +289,23 @@ func near_cave_path(p: Vector2, dist: float) -> bool:
 	return false
 
 
-## Lagoas de enfeite, de forma natural: cada uma é um punhado de círculos que se
-## sobrepõem (lobos), de tamanhos diferentes e espalhadas pelo mapa, longe das
-## trilhas, dos formigueiros, das câmaras, da caverna e da passagem.
+## Lagoa de enfeite (uma só, na clareira pequena), de forma natural: um punhado
+## de círculos que se sobrepõem (lobos), longe das trilhas, dos formigueiros,
+## das câmaras, da caverna e da passagem.
 ## `ponds` guarda cada lobo (x, z, raio): quem desvia da água trata cada lobo
 ## como um círculo. `pond_shapes` guarda os lobos de cada lagoa.
 func _plan_ponds() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = SEED + 31
 	# Tamanho de cada lagoa (m, de uma ponta à outra, mais ou menos).
-	for size in [15.0, 11.0, 8.0, 6.0]:
+	for size in [8.0]:
 		var placed := false
 		var r: float = size * 0.5
 		for attempt in 600:
 			if attempt > 0 and attempt % 150 == 0:
 				r *= 0.85
 			var a := rng.randf() * TAU
-			var c := Vector2(cos(a), sin(a)) * rng.randf_range(10.0, 52.0)
+			var c := Vector2(cos(a), sin(a)) * rng.randf_range(4.0, 22.0)
 			var lobes: Array[Vector3] = [Vector3(c.x, c.y, r * rng.randf_range(0.55, 0.68))]
 			var n := rng.randi_range(2, 4)
 			var dir0 := rng.randf() * TAU
@@ -340,20 +326,20 @@ func _pond_fits(lobes: Array[Vector3]) -> bool:
 	for l in lobes:
 		var p := Vector2(l.x, l.y)
 		var lr := l.z
-		if trails.distance_to_trails(p) < lr + 2.6:
+		if trails.distance_to_trails(p) < lr + 1.8:
 			return false
-		if p.distance_to(cliffs.cave_mouth()) < lr + 14.0 or p.distance_to(cliffs.exit_center(0.0)) < lr + 14.0:
+		if p.distance_to(cliffs.cave_mouth()) < lr + 8.0 or p.distance_to(cliffs.exit_center(0.0)) < lr + 8.0:
 			return false
-		if p.length() > walk_limit(p) - lr - 3.0:
+		if p.length() > walk_limit(p) - lr - 2.0:
 			return false
 		for nest in nests:
-			if p.distance_to(nest.center2) < nest.radius + lr + 3.5:
+			if p.distance_to(nest.center2) < nest.radius + lr + 2.5:
 				return false
 		for f in food_sources:
-			if p.distance_to(f) < lr + 3.5:
+			if p.distance_to(f) < lr + 2.5:
 				return false
 		for q in satellite_spots:
-			if p.distance_to(q) < lr + 3.5:
+			if p.distance_to(q) < lr + 2.5:
 				return false
 		for w in ponds:
 			if p.distance_to(Vector2(w.x, w.y)) < lr + w.z + 9.0:
@@ -570,18 +556,18 @@ func _plan_satellites() -> void:
 		var best_d := -INF
 		for _cand in 40:
 			var a := _rng.randf() * TAU
-			var r := sqrt(_rng.randf_range(8.0 * 8.0, 54.0 * 54.0))
+			var r := sqrt(_rng.randf_range(5.0 * 5.0, 22.0 * 22.0))
 			var p := Vector2(cos(a), sin(a)) * r
-			if p.length() > walk_limit(p) - 4.0:
+			if p.length() > walk_limit(p) - 3.0:
 				continue
-			if trails.distance_to_trails(p) < 3.5 or p.distance_to(player_start) < 7.0:
+			if trails.distance_to_trails(p) < 2.6 or p.distance_to(player_start) < 4.0:
 				# (player_start aqui ainda é o ponto antigo, ao lado da trilha)
 				continue
 			var d := INF
 			for n in nests:
-				d = minf(d, p.distance_to(n.center2) - n.radius - 4.5)
+				d = minf(d, p.distance_to(n.center2) - n.radius - 3.2)
 			for f in food_sources:
-				d = minf(d, p.distance_to(f) - 4.0)
+				d = minf(d, p.distance_to(f) - 3.0)
 			if d < 0.0:
 				continue
 			for q in satellite_spots:

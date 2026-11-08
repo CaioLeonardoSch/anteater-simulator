@@ -19,7 +19,7 @@ Cada envio é uma resposta do formulário, com 10 campos:
 | insetos | Insetos comidos |
 | computador | Placa de vídeo, processador, memória, sistema, tela, qualidade gráfica e o FPS médio (e o pior, e quanto tempo ficou abaixo de 30) |
 | estatisticas | Os números da tela de Estatísticas: habilidades, pontos, formigueiros, câmaras, rainhas, linguadas e acerto, faro, tremores, distância, tempo correndo, parciais |
-| registro | A linha do tempo: cada compra (com o preço), cada trava, cada formigueiro limpo, quando redistribuiu os pontos, e o progresso a cada 2 minutos |
+| registro | A linha do tempo: cada compra (com o preço), cada marco, cada objetivo cumprido, cada formigueiro limpo, quando redistribuiu os pontos, e o progresso a cada 2 minutos |
 
 **Quando manda:** a cada 10 minutos de jogo, ao voltar para o menu, ao fechar o
 jogo, ao recomeçar do zero e quando a clareira fica limpa. Cada envio leva tudo

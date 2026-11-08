@@ -6,7 +6,8 @@ extends Node3D
 const Props := preload("res://scripts/world/props.gd")
 
 const CHUNK := 16.0
-const EXTENT := 78.0
+## Até onde vai o capim: a clareira e a passagem para a área 2.
+const EXTENT := 44.0
 ## Blocos com o centro além disto (m) usam a touceira leve. O capim de perto
 ## some aos ~26 m; o de longe vai até o fim da vista (64 m no Ultra).
 const LITE_NEAR := 14.0

@@ -10,8 +10,8 @@ signal ants_eaten_changed(total: int, delta: int)
 ## Uma habilidade que ainda não dava para comprar agora cabe nos pontos.
 signal upgrade_affordable(id: String)
 signal upgrade_purchased(id: String)
-## Comeu insetos o bastante para abrir mais habilidades (uma das GATES).
-signal gate_opened(insects: int)
+## Chegou num marco da área (1, 2 ou 3): mais habilidades abrem na árvore.
+signal marco_reached(index: int)
 signal skills_reset
 signal level_completed(time_sec: float)
 signal frenzy_changed(active: bool)
@@ -25,7 +25,7 @@ signal achievement_unlocked(id: String)
 const Achievements := preload("res://scripts/achievements.gd")
 
 ## Formigas da colônia do Cerrado (cada rainha conta como 200).
-const GOAL := 44000
+const GOAL := 10000
 ## Formigas comidas para ganhar 1 ponto.
 const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
@@ -36,9 +36,9 @@ const OLD_SAVE_PATH := "user://jogo_salvo.json"
 ## Quantos jogos salvos dá para ter.
 const SLOTS := 3
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
-const SAVE_VERSION := 7
-## Saves da versão 6 ainda abrem (as habilidades eram outras: os pontos voltam).
-const SAVE_VERSIONS_OK := [6, 7]
+## Versão 8: a área 1 ficou menor (8 formigueiros), então os saves antigos não abrem.
+const SAVE_VERSION := 8
+const SAVE_VERSIONS_OK := [8]
 ## Modos de jogo. Contra o relógio é o speedrun: cronômetro na tela, tempos
 ## parciais e um recorde só dele. O tempo só corre com o jogo rodando (pausa,
 ## mapa e habilidades param o relógio), então dá para comparar jogos.
@@ -54,20 +54,31 @@ const BRANCHES := [
 	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Tremor", "Rapidez", "Fundura"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Corrida", "Respiro", "Passada", "Fôlego"]},
 	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
-	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Floresta"},
+	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Área 2"},
 ]
 
-## Travas: cada habilidade (menos o começo de cada ramo) só abre depois de comer
-## um tanto de insetos ("gate"). Cada trava abre mais do que dá para pagar até a
-## próxima: o que segura é o ponto, não a trava; as travas só põem ordem (o
-## forte fica para o fim). Ver docs/pesquisa-habilidades.md, seção 9.
-const GATES := [200, 500, 1000, 2000, 3000, 5000, 8000, 13000, 21000]
+## Marcos da área 1 (no lugar das travas por insetos). Cada habilidade diz
+## quando abre ("unlock"): sem a chave, desde o começo; 1, 2 ou 3, no marco;
+## AREA2, só na área 2 (não abre na demo). Ver docs/pesquisa-habilidades.md,
+## seções 11 e 12.
+##   1: limpar o primeiro formigueiro.
+##   2: comer metade dos insetos da área.
+##   3: comer 80% dos insetos da área (o Farejar vem de presente).
+const MARCOS := [
+	{"index": 1, "title": "Formigueiro limpo", "short": "Formigueiro"},
+	{"index": 2, "title": "Metade da clareira", "short": "Metade", "share": 0.5},
+	{"index": 3, "title": "O faro despertou", "short": "80%", "share": 0.8},
+]
+const AREA2 := 9
+## Habilidades que um marco dá de presente (não gastam pontos e ficam ao
+## redistribuir).
+const MARCO_GIFTS := {3: ["faro_farejar"]}
 
 ## Cada habilidade (nó): ramo, posição na árvore (col -1 = topo do ramo,
 ## centralizado; 0..3 = linhas da esquerda para a direita), o preço de cada
-## clique ("costs": 1 a 3 cliques; cada clique é uma melhora pequena), o que
-## precisa estar completo antes e a trava. O nó seguinte da linha só abre com o
-## anterior completo.
+## clique ("costs": 1 a 3 cliques; cada clique é uma melhora pequena), quando
+## abre ("unlock", veja MARCOS) e o que precisa estar completo antes. O nó
+## seguinte da linha só abre com o anterior completo.
 const UPGRADES := [
 	# Língua: Lambida Contínua abre as linhas de Bocado (quantos por lambida),
 	# Destreza (lambidas por segundo), Comprimento (alcance) e Mira (a língua ir
@@ -75,40 +86,40 @@ const UPGRADES := [
 	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "costs": [15], "requires": [],
 		"name": "Lambida Contínua",
 		"desc": "Segure o botão para lamber sem parar."},
-	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "costs": [8, 12, 16], "requires": ["lingua_segurar"], "gate": 200,
+	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "costs": [8, 12, 16], "requires": ["lingua_segurar"],
 		"name": "Bocado nível 1",
 		"desc": "Cada lambida pega mais insetos perto da ponta da língua: 2, depois 3, depois 5."},
-	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "costs": [30, 40, 50], "requires": ["lingua_bocado_1"], "gate": 2000,
+	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "costs": [30, 40, 50], "unlock": 1, "requires": ["lingua_bocado_1"],
 		"name": "Bocado nível 2",
 		"desc": "8, 11 e 15 insetos por lambida, e a ponta gruda num raio um pouco maior."},
-	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "costs": [70, 90], "requires": ["lingua_bocado_2"], "gate": 8000,
+	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "costs": [70, 90], "unlock": AREA2, "requires": ["lingua_bocado_2"],
 		"name": "Bocado nível 3",
 		"desc": "20 e 25 insetos por lambida."},
-	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "costs": [160, 200], "requires": ["lingua_bocado_3"], "gate": 21000,
+	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "costs": [160, 200], "unlock": AREA2, "requires": ["lingua_bocado_3"],
 		"name": "Bocado nível 4",
 		"desc": "32 e 40 insetos por lambida."},
-	{"id": "lingua_destreza_1", "branch": 0, "col": 1, "row": 1, "costs": [10, 14, 18], "requires": ["lingua_segurar"], "gate": 500,
+	{"id": "lingua_destreza_1", "branch": 0, "col": 1, "row": 1, "costs": [10, 14, 18], "requires": ["lingua_segurar"],
 		"name": "Destreza nível 1",
 		"desc": "A língua lambe um pouco mais rápido a cada clique."},
-	{"id": "lingua_destreza_2", "branch": 0, "col": 1, "row": 2, "costs": [50, 60, 70], "requires": ["lingua_destreza_1"], "gate": 5000,
+	{"id": "lingua_destreza_2", "branch": 0, "col": 1, "row": 2, "costs": [50, 60, 70], "unlock": 2, "requires": ["lingua_destreza_1"],
 		"name": "Destreza nível 2",
 		"desc": "A língua lambe ainda mais rápido."},
-	{"id": "lingua_destreza_3", "branch": 0, "col": 1, "row": 3, "costs": [260], "requires": ["lingua_destreza_2"], "gate": 21000,
+	{"id": "lingua_destreza_3", "branch": 0, "col": 1, "row": 3, "costs": [260], "unlock": AREA2, "requires": ["lingua_destreza_2"],
 		"name": "Destreza nível 3",
 		"desc": "A língua lambe muito mais rápido."},
-	{"id": "lingua_comprimento_1", "branch": 0, "col": 2, "row": 1, "costs": [16, 20, 24], "requires": ["lingua_segurar"], "gate": 1000,
+	{"id": "lingua_comprimento_1", "branch": 0, "col": 2, "row": 1, "costs": [16, 20, 24], "requires": ["lingua_segurar"],
 		"name": "Comprimento nível 1",
 		"desc": "A língua alcança mais longe: 3,3, depois 3,6, depois 3,9 m."},
-	{"id": "lingua_comprimento_2", "branch": 0, "col": 2, "row": 2, "costs": [60, 80], "requires": ["lingua_comprimento_1"], "gate": 8000,
+	{"id": "lingua_comprimento_2", "branch": 0, "col": 2, "row": 2, "costs": [60, 80], "unlock": AREA2, "requires": ["lingua_comprimento_1"],
 		"name": "Comprimento nível 2",
 		"desc": "A língua alcança 4,2 e depois 4,5 m."},
-	{"id": "lingua_mira_1", "branch": 0, "col": 3, "row": 1, "costs": [12], "requires": ["lingua_segurar"], "gate": 200,
+	{"id": "lingua_mira_1", "branch": 0, "col": 3, "row": 1, "costs": [12], "requires": ["lingua_segurar"],
 		"name": "Mira nível 1",
 		"desc": "A língua vai sozinha atrás do inseto mais perto da mira, e a área da mira fica maior."},
-	{"id": "lingua_mira_2", "branch": 0, "col": 3, "row": 2, "costs": [25, 30, 35], "requires": ["lingua_mira_1"], "gate": 3000,
+	{"id": "lingua_mira_2", "branch": 0, "col": 3, "row": 2, "costs": [25, 30, 35], "unlock": 1, "requires": ["lingua_mira_1"],
 		"name": "Mira nível 2",
 		"desc": "A área da mira em que a língua procura insetos fica maior a cada clique."},
-	{"id": "lingua_mira_3", "branch": 0, "col": 3, "row": 3, "costs": [110], "requires": ["lingua_mira_2"], "gate": 13000,
+	{"id": "lingua_mira_3", "branch": 0, "col": 3, "row": 3, "costs": [110], "unlock": AREA2, "requires": ["lingua_mira_2"],
 		"name": "Mira nível 3",
 		"desc": "A ponta da língua gruda num raio 70% maior."},
 	# Garras: Cavar abre as linhas de Força (moradoras tontas), de Rapidez (o
@@ -117,31 +128,31 @@ const UPGRADES := [
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "costs": [25], "requires": [],
 		"name": "Cavar",
 		"desc": "Segure [E] perto de uma câmara pequena fechada para abri-la. Depois, as garras descansam 25 s."},
-	{"id": "garras_forca_1", "branch": 1, "col": 0, "row": 1, "costs": [25, 35], "requires": ["garras_cavar"], "gate": 2000,
+	{"id": "garras_forca_1", "branch": 1, "col": 0, "row": 1, "costs": [25, 35], "requires": ["garras_cavar"],
 		"name": "Força nível 1",
 		"desc": "Abrir uma câmara deixa as moradoras tontas: elas não fogem logo."},
-	{"id": "garras_forca_2", "branch": 1, "col": 0, "row": 2, "costs": [40, 50], "requires": ["garras_forca_1"], "gate": 8000,
+	{"id": "garras_forca_2", "branch": 1, "col": 0, "row": 2, "costs": [40, 50], "unlock": 2, "requires": ["garras_forca_1"],
 		"name": "Força nível 2",
 		"desc": "As moradoras ficam tontas por mais tempo."},
-	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [90], "requires": ["garras_forca_1"], "gate": 5000,
+	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [90], "unlock": 2, "requires": ["garras_forca_1"],
 		"name": "Tremor nível 1",
 		"desc": "[Espaço] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
-	{"id": "garras_tremor_2", "branch": 1, "col": 1, "row": 3, "costs": [45, 55, 65], "requires": ["garras_tremor_1"], "gate": 13000,
+	{"id": "garras_tremor_2", "branch": 1, "col": 1, "row": 3, "costs": [45, 55, 65], "unlock": AREA2, "requires": ["garras_tremor_1"],
 		"name": "Tremor nível 2",
 		"desc": "O Tremor recarrega mais rápido: 18, 15 e 12 s."},
-	{"id": "garras_tremor_3", "branch": 1, "col": 1, "row": 4, "costs": [300], "requires": ["garras_tremor_2"], "gate": 21000,
+	{"id": "garras_tremor_3", "branch": 1, "col": 1, "row": 4, "costs": [300], "unlock": AREA2, "requires": ["garras_tremor_2"],
 		"name": "Tremor nível 3",
 		"desc": "Vira Terremoto: pulo mais alto, tremor quase 2x maior, os insetos tontos são puxados para a sua boca, e recarrega em só 7 s."},
-	{"id": "garras_rapidez_1", "branch": 1, "col": 2, "row": 1, "costs": [12, 16, 20], "requires": ["garras_cavar"], "gate": 1000,
+	{"id": "garras_rapidez_1", "branch": 1, "col": 2, "row": 1, "costs": [12, 16, 20], "requires": ["garras_cavar"],
 		"name": "Rapidez nível 1",
 		"desc": "As garras descansam menos depois de cavar."},
-	{"id": "garras_rapidez_2", "branch": 1, "col": 2, "row": 2, "costs": [40, 50, 60], "requires": ["garras_rapidez_1"], "gate": 8000,
+	{"id": "garras_rapidez_2", "branch": 1, "col": 2, "row": 2, "costs": [40, 50, 60], "unlock": AREA2, "requires": ["garras_rapidez_1"],
 		"name": "Rapidez nível 2",
 		"desc": "Descanso ainda menor; no último clique, a câmara abre na metade do tempo."},
-	{"id": "garras_fundura_1", "branch": 1, "col": 3, "row": 1, "costs": [60], "requires": ["garras_cavar"], "gate": 3000,
+	{"id": "garras_fundura_1", "branch": 1, "col": 3, "row": 1, "costs": [60], "requires": ["garras_cavar"],
 		"name": "Fundura nível 1",
 		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
-	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "requires": ["garras_fundura_1"], "gate": 13000,
+	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "unlock": 2, "requires": ["garras_fundura_1"],
 		"name": "Fundura nível 2",
 		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
 	# Patas: correr existe desde o começo, gastando estamina. Fôlego abre as
@@ -151,53 +162,53 @@ const UPGRADES := [
 	{"id": "patas_folego", "branch": 2, "col": -1, "row": 0, "costs": [10], "requires": [],
 		"name": "Fôlego",
 		"desc": "Estamina máxima de 50 para 75."},
-	{"id": "patas_folego_1", "branch": 2, "col": 3, "row": 1, "costs": [12, 16, 20], "requires": ["patas_folego"], "gate": 1000,
+	{"id": "patas_folego_1", "branch": 2, "col": 3, "row": 1, "costs": [12, 16, 20], "requires": ["patas_folego"],
 		"name": "Fôlego nível 1",
 		"desc": "Estamina máxima de 100, depois 125, depois 150."},
-	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 2, "costs": [50, 60], "requires": ["patas_folego_1"], "gate": 13000,
+	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 2, "costs": [50, 60], "unlock": AREA2, "requires": ["patas_folego_1"],
 		"name": "Fôlego nível 2",
 		"desc": "Estamina máxima de 175 e depois 200."},
-	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "costs": [8, 12, 16], "requires": ["patas_folego"], "gate": 500,
+	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "costs": [8, 12, 16], "requires": ["patas_folego"],
 		"name": "Passada nível 1",
 		"desc": "Correndo, gasta menos estamina."},
-	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "costs": [40, 50], "requires": ["patas_passada_1"], "gate": 5000,
+	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "costs": [40, 50], "unlock": 1, "requires": ["patas_passada_1"],
 		"name": "Passada nível 2",
 		"desc": "Correndo, gasta ainda menos estamina: metade do começo."},
-	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "costs": [8, 12], "requires": ["patas_folego"], "gate": 200,
+	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "costs": [8, 12], "requires": ["patas_folego"],
 		"name": "Respiro nível 1",
 		"desc": "A estamina volta mais rápido."},
-	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "costs": [30, 40], "requires": ["patas_respiro_1"], "gate": 3000,
+	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "costs": [30, 40], "unlock": 1, "requires": ["patas_respiro_1"],
 		"name": "Respiro nível 2",
 		"desc": "A estamina volta ainda mais rápido: mais que o dobro do começo."},
-	{"id": "patas_corrida_1", "branch": 2, "col": 0, "row": 1, "costs": [25, 35], "requires": ["patas_folego"], "gate": 2000,
+	{"id": "patas_corrida_1", "branch": 2, "col": 0, "row": 1, "costs": [25, 35], "requires": ["patas_folego"],
 		"name": "Corrida nível 1",
 		"desc": "Corre mais rápido a cada clique."},
-	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "requires": ["patas_corrida_1"], "gate": 13000,
+	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "unlock": AREA2, "requires": ["patas_corrida_1"],
 		"name": "Corrida nível 2",
 		"desc": "Dá para lamber enquanto corre."},
-	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "requires": ["patas_corrida_2"], "gate": 21000,
+	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "unlock": AREA2, "requires": ["patas_corrida_2"],
 		"name": "Corrida nível 3",
 		"desc": "Correndo, você não assusta mais os insetos."},
 	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
-	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "costs": [25], "requires": [], "gate": 3000,
+	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "costs": [25], "unlock": 3, "requires": [],
 		"name": "Farejar",
 		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles), a que distância está o mais perto, e a bússola aponta o maior grupo. Recarrega em 10 s."},
-	{"id": "faro_alcance_1", "branch": 3, "col": 0, "row": 1, "costs": [15, 20, 25], "requires": ["faro_farejar"], "gate": 3000,
+	{"id": "faro_alcance_1", "branch": 3, "col": 0, "row": 1, "costs": [15, 20, 25], "unlock": 3, "requires": ["faro_farejar"],
 		"name": "Alcance nível 1",
 		"desc": "Fareja mais longe e mais insetos, e recarrega mais rápido."},
-	{"id": "faro_alcance_2", "branch": 3, "col": 0, "row": 2, "costs": [55, 70], "requires": ["faro_alcance_1"], "gate": 8000,
+	{"id": "faro_alcance_2", "branch": 3, "col": 0, "row": 2, "costs": [55, 70], "unlock": AREA2, "requires": ["faro_alcance_1"],
 		"name": "Alcance nível 2",
 		"desc": "Fareja ainda mais longe; no último clique, a bússola mostra quanto falta em cada formigueiro."},
-	{"id": "faro_alcance_3", "branch": 3, "col": 0, "row": 3, "costs": [220], "requires": ["faro_alcance_2"], "gate": 21000,
+	{"id": "faro_alcance_3", "branch": 3, "col": 0, "row": 3, "costs": [220], "unlock": AREA2, "requires": ["faro_alcance_2"],
 		"name": "Alcance nível 3",
 		"desc": "Fareja até 50 m e até 2000 insetos, e marca as rainhas na bússola."},
-	{"id": "faro_precisao_1", "branch": 3, "col": 1, "row": 1, "costs": [45], "requires": ["faro_farejar"], "gate": 5000,
+	{"id": "faro_precisao_1", "branch": 3, "col": 1, "row": 1, "costs": [45], "unlock": AREA2, "requires": ["faro_farejar"],
 		"name": "Precisão nível 1",
 		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão os insetos farejados."},
-	{"id": "faro_precisao_2", "branch": 3, "col": 1, "row": 2, "costs": [75], "requires": ["faro_precisao_1"], "gate": 8000,
+	{"id": "faro_precisao_2", "branch": 3, "col": 1, "row": 2, "costs": [75], "unlock": AREA2, "requires": ["faro_precisao_1"],
 		"name": "Precisão nível 2",
 		"desc": "Os insetos farejados brilham nítidos, mesmo atrás do capim."},
-	{"id": "faro_precisao_3", "branch": 3, "col": 1, "row": 3, "costs": [200], "requires": ["faro_precisao_2"], "gate": 13000,
+	{"id": "faro_precisao_3", "branch": 3, "col": 1, "row": 3, "costs": [200], "unlock": AREA2, "requires": ["faro_precisao_2"],
 		"name": "Precisão nível 3",
 		"desc": "Farejar também mostra as câmaras fechadas por perto (até no meio do campo), com uma coluna de cheiro."},
 	# Escalada + Cauda (ainda não feita: aparece com cadeado)
@@ -216,6 +227,12 @@ var ants_eaten: int = 0
 var points_spent: int = 0
 ## Habilidades compradas: id -> quantos cliques (1 até max_rank).
 var purchased: Dictionary = {}
+## Marcos já alcançados neste jogo (1, 2, 3) e as habilidades ganhas de
+## presente neles.
+var marcos: Array[int] = []
+## Objetivo guiado atual (índice em objectives.gd, STEPS).
+var objective := 0
+var gifted: Array[String] = []
 ## O jogo salvo aberto era de antes dos nós com cliques: os pontos voltaram
 ## (o HUD avisa uma vez e desliga).
 var skills_refunded := false
@@ -263,6 +280,9 @@ func reset_run() -> void:
 	ants_eaten = 0
 	points_spent = 0
 	purchased.clear()
+	marcos.clear()
+	gifted.clear()
+	objective = 0
 	elapsed = 0.0
 	completed = false
 	combo = 0
@@ -310,9 +330,9 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	ants_eaten += count
 	lifetime["eaten"] = int(lifetime.get("eaten", 0)) + count
 	_check_splits(before)
-	for g in GATES:
-		if before < g and ants_eaten >= g:
-			gate_opened.emit(g)
+	for m in MARCOS:
+		if m.has("share") and ants_eaten >= marco_insects(m.index):
+			reach_marco(m.index)
 	_facts_dirty = true
 	combo += count
 	combo_timer = 2.5
@@ -480,10 +500,75 @@ func total_cost(id: String) -> int:
 func _spent_on(ranks: Dictionary) -> int:
 	var t := 0
 	for id in ranks:
+		if gifted.has(String(id)):
+			continue
 		var costs: Array = get_upgrade(String(id)).get("costs", [])
 		for k in mini(int(ranks[id]), costs.size()):
 			t += int(costs[k])
 	return t
+
+
+## Quantos insetos comidos o marco 2 ou 3 pede (0 para o marco 1).
+func marco_insects(index: int) -> int:
+	for m in MARCOS:
+		if m.index == index and m.has("share"):
+			return int(round(GOAL * float(m.share)))
+	return 0
+
+
+func get_marco(index: int) -> Dictionary:
+	for m in MARCOS:
+		if m.index == index:
+			return m
+	return {}
+
+
+## Chegou no marco: guarda, dá os presentes e avisa (uma vez só).
+func reach_marco(index: int) -> void:
+	if marcos.has(index) or get_marco(index).is_empty():
+		return
+	marcos.append(index)
+	for id in MARCO_GIFTS.get(index, []):
+		if not gifted.has(id):
+			gifted.append(id)
+		purchased[id] = max_rank(id)
+	_check_affordable(false)
+	marco_reached.emit(index)
+	for id in MARCO_GIFTS.get(index, []):
+		upgrade_purchased.emit(id)
+
+
+## Habilidades que o marco `index` abre na árvore.
+func marco_unlocks(index: int) -> Array[String]:
+	var ids: Array[String] = []
+	for u in UPGRADES:
+		if unlock_of(u.id) == index:
+			ids.append(u.id)
+	return ids
+
+
+## Quando a habilidade abre: 0 = desde o começo, 1..3 = marco, AREA2.
+func unlock_of(id: String) -> int:
+	return int(get_upgrade(id).get("unlock", 0))
+
+
+## Ganha de presente num marco (não custa pontos).
+func is_gift(id: String) -> bool:
+	for k in MARCO_GIFTS:
+		if (MARCO_GIFTS[k] as Array).has(id):
+			return true
+	return false
+
+
+## Texto curto embaixo do cadeado na árvore ("Formigueiro", "Metade", "80%"
+## ou "Área 2"; vazio no ramo da Escalada, que já diz no nome do ramo).
+func lock_label(id: String) -> String:
+	var u := unlock_of(id)
+	if u == AREA2:
+		return "Área 2"
+	if not region_required(id).is_empty():
+		return ""
+	return String(get_marco(u).get("short", ""))
 
 
 ## Região necessária para comprar (vazio = disponível em qualquer lugar).
@@ -491,6 +576,8 @@ func region_required(id: String) -> String:
 	var u := get_upgrade(id)
 	if u.is_empty():
 		return ""
+	if int(u.get("unlock", 0)) == AREA2 and not regions_reached.has("Área 2"):
+		return "Área 2"
 	var region: String = BRANCHES[u.branch].get("region", "")
 	if region.is_empty() or regions_reached.has(region):
 		return ""
@@ -506,14 +593,8 @@ func missing_requirements(id: String) -> Array[String]:
 	return missing
 
 
-## Quantos insetos é preciso ter comido para esta habilidade abrir (0 = já abre).
-func gate_of(id: String) -> int:
-	return int(get_upgrade(id).get("gate", 0))
-
-
 ## 0 = falta completar outra antes, 1 = disponível (dá para dar mais um clique),
-## 2 = completa, 3 = região ainda não alcançada, 4 = travada até comer
-## gate_of(id) insetos
+## 2 = completa, 3 = de outra área (Área 2), 4 = espera um marco desta área
 func upgrade_state(id: String) -> int:
 	if complete(id):
 		return 2
@@ -522,7 +603,8 @@ func upgrade_state(id: String) -> int:
 		return 0
 	if not region_required(id).is_empty():
 		return 3
-	if ants_eaten < gate_of(id):
+	var m := unlock_of(id)
+	if m > 0 and not marcos.has(m):
 		return 4
 	if not missing_requirements(id).is_empty():
 		return 0
@@ -555,6 +637,8 @@ func grant(id: String, ranks: int = 0) -> void:
 ## Devolve todos os pontos para distribuir de novo (de graça).
 func respec() -> void:
 	purchased.clear()
+	for id in gifted:
+		purchased[id] = max_rank(id)
 	points_spent = 0
 	_check_affordable(false)
 	skills_reset.emit()
@@ -918,6 +1002,7 @@ func to_save() -> Dictionary:
 		"purchased": purchased.duplicate(), "elapsed": elapsed, "best_combo": best_combo,
 		"tanajuras_eaten": tanajuras_eaten, "queens_eaten": queens_eaten,
 		"regions_reached": regions_reached, "completed": completed,
+		"marcos": marcos.duplicate(), "gifted": gifted.duplicate(), "objective": objective,
 		"marker": [marker.x, marker.y] if marker != Vector2.INF else [],
 		"mode": mode, "splits": splits.duplicate(), "stats": stats.duplicate(), "run_id": run_id,
 	}
@@ -928,6 +1013,13 @@ func from_save(d: Dictionary) -> void:
 	purchased.clear()
 	points_spent = 0
 	skills_refunded = false
+	marcos.clear()
+	for m in d.get("marcos", []):
+		marcos.append(int(m))
+	gifted.clear()
+	for g in d.get("gifted", []):
+		gifted.append(String(g))
+	objective = int(d.get("objective", 0))
 	var saved = d.get("purchased", {})
 	if saved is Dictionary:
 		for id in saved:

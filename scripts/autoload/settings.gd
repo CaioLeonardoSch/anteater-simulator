@@ -118,7 +118,8 @@ const REBINDABLE := [
 	["move_forward", "Andar para a frente"], ["move_back", "Andar para trás"],
 	["move_left", "Andar para a esquerda"], ["move_right", "Andar para a direita"],
 	["run", "Correr"], ["lick", "Lamber"], ["sniff", "Farejar"], ["dig", "Cavar"],
-	["tremor", "Tremor"], ["skill_tree", "Mapa e habilidades"], ["pause", "Pausa"],
+	["tremor", "Tremor"], ["skill_tree", "Mapa e habilidades"], ["objective", "Mostrar o objetivo"],
+	["pause", "Pausa"],
 ]
 ## Teclas de cada ação (texto: "k123" = tecla física, "m1" = botão do mouse).
 var bindings := {}
@@ -160,6 +161,7 @@ func _setup_input_map() -> void:
 	_bind_keys("dig", [KEY_E])
 	_bind_keys("tremor", [KEY_SPACE])
 	_bind_keys("skill_tree", [KEY_TAB, KEY_T])
+	_bind_keys("objective", [KEY_F])
 	_bind_keys("pause", [KEY_ESCAPE, KEY_P])
 	_bind_mouse("lick", MOUSE_BUTTON_LEFT)
 	_bind_mouse("sniff", MOUSE_BUTTON_RIGHT)
@@ -174,6 +176,7 @@ func _setup_input_map() -> void:
 	_bind_joy("dig", JOY_BUTTON_X)
 	_bind_joy("tremor", JOY_BUTTON_A)
 	_bind_joy("skill_tree", JOY_BUTTON_BACK)
+	_bind_joy("objective", JOY_BUTTON_Y)
 	_bind_joy("pause", JOY_BUTTON_START)
 	for a in ["look_left", "look_right", "look_up", "look_down"]:
 		_ensure_action(a)

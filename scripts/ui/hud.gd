@@ -8,6 +8,7 @@ extends Control
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Glyphs := preload("res://scripts/ui/glyphs.gd")
 const NestScript := preload("res://scripts/world/nest.gd")
+const Objectives := preload("res://scripts/ui/objectives.gd")
 
 ## Cor do Frenesi (asas de tanajura).
 const FRENZY := Color("f0a65a")
@@ -33,6 +34,9 @@ var _nest_pips: Pips
 var _badge: PanelContainer
 var _badge_count: Label
 var _compass: Compass
+## Objetivos guiados: o cartão (embaixo do painel de pontos) e o losango.
+var objectives: Objectives
+var _counter_col: VBoxContainer
 var _crosshair: Crosshair
 var _cards: CardStack
 var _hint: HintRow
@@ -95,12 +99,13 @@ func setup(p, sw, col, w) -> void:
 	colony.chamber_cleaned.connect(_on_chamber_cleaned)
 	colony.nest_cleaned.connect(_on_nest_cleaned)
 	colony.queen_eaten.connect(_on_queen_eaten)
+	objectives.setup(p, w, col, _compass)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	GameState.upgrade_affordable.connect(_on_affordable)
 	GameState.skills_reset.connect(_refresh_points)
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
-	GameState.gate_opened.connect(_on_gate_opened)
+	GameState.marco_reached.connect(_on_marco_reached)
 	GameState.split_reached.connect(_on_split)
 	Settings.changed.connect(_refresh_keys)
 	_on_eaten_changed(GameState.ants_eaten, 0)
@@ -148,6 +153,9 @@ func _ready() -> void:
 	_save = SaveIcon.new()
 	add_child(_save)
 	_place(_save, Control.PRESET_BOTTOM_RIGHT, Vector2(-50, -48), Vector2(28, 28))
+	objectives = Objectives.new()
+	add_child(objectives)
+	_counter_col.add_child(objectives.card)
 	_popups = Control.new()
 	_popups.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -179,6 +187,7 @@ func _build_counter() -> void:
 	_medallion.sub = "de %d" % GameState.GOAL
 	add_child(_medallion)
 	var col := VBoxContainer.new()
+	_counter_col = col
 	col.position = Vector2(152, 24)
 	col.add_theme_constant_override("separation", 12)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -522,15 +531,20 @@ func _on_purchased(id: String) -> void:
 		"value_col": UiTheme.GOLD})
 
 
-## Comeu insetos o bastante para abrir mais habilidades na árvore.
-func _on_gate_opened(insects: int) -> void:
-	var n := 0
-	for u in GameState.UPGRADES:
-		if GameState.gate_of(u.id) == insects:
-			n += 1
-	_cards.push("gate:%d" % insects, {"title": "Novas habilidades", "sub": "%d na árvore  ·  %s insetos" % [n, ("%d mil" % (insects / 1000)) if insects >= 1000 else str(insects)],
-		"icon": "lock", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD, "ring": UiTheme.GOLD,
-		"value_col": UiTheme.GOLD})
+## Chegou num marco da área: aviso grande no meio da tela com o que abriu.
+func _on_marco_reached(index: int) -> void:
+	var m := GameState.get_marco(index)
+	var opened := 0
+	for id in GameState.marco_unlocks(index):
+		if not GameState.is_gift(id):
+			opened += 1
+	var tree_key := Settings.key_label("skill_tree").to_upper()
+	var sub := "%d %s na árvore [%s]" % [opened, "habilidade nova" if opened == 1 else "habilidades novas", tree_key]
+	var icon := "lock"
+	if index == 3:
+		sub = "Farejar de presente [%s]  ·  %s" % [Settings.key_label("sniff").to_upper(), sub]
+		icon = "nose"
+	big_note(String(m.title), sub, 6.0, icon)
 	Sfx.play("point", -2.0)
 
 
@@ -649,8 +663,6 @@ func _closed_on_mound(nest) -> int:
 ## Dicas de controle (só com Dicas: Todas), cada uma até você usar.
 func _tutorial_hint() -> Array:
 	var parts: Array = []
-	if not Settings.hint_learned("move"):
-		parts += [{"key": Settings.move_keys_label()}, {"text": "Andar"}, {"gap": 16.0}]
 	if GameState.can_run() and not Settings.hint_learned("run"):
 		parts += [{"key": Settings.key_label("run")}, {"text": "Correr"}, {"gap": 16.0}]
 	if not Settings.hint_learned("map"):
@@ -1256,6 +1268,8 @@ class Compass extends Control:
 	var player
 	var world
 	var sniff_target := Vector3.INF
+	## Onde fica o objetivo guiado (INF = nenhum): um losango na faixa.
+	var objective := Vector3.INF
 	var sniff_until := 0.0
 	var nests_until := 0.0
 	var queens_until := 0.0
@@ -1445,6 +1459,15 @@ class Compass extends Control:
 			# Chegou: o marcador some sozinho.
 			if md < 2.5:
 				GameState.marker = Vector2.INF
+		# Objetivo guiado: losango na faixa (na ponta, se estiver fora dela).
+		if objective != Vector3.INF:
+			var ox := clampf(_x_for(_yaw_to(objective)), b.position.x + 12.0, b.end.x - 12.0)
+			var oy := b.get_center().y
+			var op := 0.8 + 0.2 * sin(now * 4.0)
+			draw_colored_polygon(PackedVector2Array([Vector2(ox, oy - 10.0), Vector2(ox + 7.0, oy),
+				Vector2(ox, oy + 10.0), Vector2(ox - 7.0, oy)]), Color(UT.PALE, op))
+			draw_colored_polygon(PackedVector2Array([Vector2(ox, oy - 4.5), Vector2(ox + 3.2, oy),
+				Vector2(ox, oy + 4.5), Vector2(ox - 3.2, oy)]), Color(UT.GOLD, op))
 		# Faro: câmaras e o rumo das formigas, dentro da faixa.
 		var scent: Color = Settings.sniff_color()
 		if now < sniff_until:

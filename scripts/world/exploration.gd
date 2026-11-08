@@ -6,11 +6,11 @@ extends Node
 ## Lado da imagem (pixels) e da área que ela cobre (metros), com o centro da
 ## clareira no meio.
 const SIZE := 128
-const WORLD_SIZE := 150.0
+const WORLD_SIZE := 72.0
 ## Raio que fica conhecido em volta do tamanduá (m).
-const RADIUS := 11.0
+const RADIUS := 8.0
 ## Só a clareira (dentro dos paredões) conta para a porcentagem explorada.
-const AREA_RADIUS := 62.0
+const AREA_RADIUS := 26.0
 
 var player
 var image: Image

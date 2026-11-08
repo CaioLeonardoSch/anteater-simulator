@@ -34,7 +34,8 @@ acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
 ronca: hora de comer. A clareira tem uns 50 m de ponta a ponta, **10 000
 insetos**, cada um andando sozinho, e **8 formigueiros**. Um quarto anda em
 fila pelas trilhas de terra, um quarto passeia pelo campo em volta das câmaras
-espalhadas pelo mapa, e a metade mora nas **câmaras**, que você abre cavando.
+espalhadas pelo mapa (sobem nas pedras, nos troncos caídos e um pouco nos
+troncos das árvores), e a metade mora nas **câmaras**, que você abre cavando.
 Perto da caverna ficam os 5 formigueiros pequenos; os 2 médios e o grande,
 do lado da saída, que guarda a **rainha** bem no fundo. Um **objetivo** no
 canto da tela diz o que fazer, um de cada vez, e um losango voa até o lugar
@@ -72,7 +73,8 @@ tela, a resolução e a qualidade gráfica.
 | **Lamber** | clique esquerdo (segure, com Lambida Contínua*) | `RT` |
 | Farejar* | `Q` ou clique direito | `LT` |
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
-| Tremor* (pulo) | `Espaço` | `A` |
+| Pular (subir nas pedras, sair dos buracos) | `Espaço` | `A` |
+| Tremor* (pulo que atordoa) | `X` | `B` |
 | Mapa, habilidades e estatísticas | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
 | Mostrar o objetivo de novo | `F` | `Y` |
 | Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
@@ -87,7 +89,8 @@ uma vez".
 
 - **Interface no estilo "Constelação"** (o mesmo da árvore de habilidades):
   painéis com moldura dourada, as formigas comidas num medalhão e as habilidades
-  em círculos. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
+  em círculos, embaixo: só as que você já aprendeu, na ordem Lamber, Cavar,
+  Farejar e Tremor. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
   frente mostra a distância e as câmaras dele (as verdes já estão limpas).
 - **Pouco texto na tela:** conquistas viram **cartões** no canto direito (câmara
   limpa, formigueiro limpo, rainha, Frenesi, habilidade aprendida); as **dicas**
@@ -127,7 +130,8 @@ uma vez".
   fechadas, e 12 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
   passeiam em volta contam para o formigueiro dono da câmara). Com **Cavar**
   (Garras), segure `E` perto de uma para abri-la: as moradoras **saem
-  correndo**, fogem quando você chega perto e depois voltam para casa. Até 40
+  correndo** e, alguns segundos depois, voltam a passear até 5 m da câmara
+  (por cima do monte também); fogem quando você chega perto. Até 40
   ficam à vista; as outras saem do túnel conforme você come. Depois de cavar,
   as garras descansam (25 s no começo). As câmaras grandes, de tampa mais
   escura, pedem **Fundura nível 1**.
@@ -141,12 +145,14 @@ uma vez".
   de Bocado aumenta até 40). Uma tanajura voando no caminho para a
   língua, e a ponta vai atrás dela se ela fugir. A linha
   de Destreza a deixa mais rápida, e a de Comprimento, mais longa. Com **Mira nível 1**, ela vai sozinha atrás da formiga mais perto
-  da mira (com um contorno verde suave); a **Mira nível 2** aumenta essa área.
+  da mira (com um contorno verde suave) e acompanha o inseto; a **Mira nível 2**
+  aumenta essa área (6° → 11° → 16° → 22°). Sem Mira, a língua vai reta.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
-- **Formigas fogem** quando você chega perto: a 1 m de você parado, a 2,5 m
-  andando e mais longe ainda correndo. Chegue devagar e lamba de longe (a
-  língua alcança 3 m, e mais com Comprimento).
+- **Formigas fogem** quando você chega perto: a 2 m de você parado, a 2,5 m
+  andando e mais longe ainda correndo. Quando você come uma, as que estão a
+  até 2 m dela também saem correndo. Chegue devagar e lamba de longe (a
+  língua alcança 1 m, e mais com Comprimento).
   Correndo também não dá para lamber, até aprender **Corrida nível 2**.
 - **Faro:** primeiro só diz quantas formigas há por perto e a que distância
   está a mais perto. Com Precisão, mostra uma nuvem borrada onde elas estão e
@@ -156,14 +162,16 @@ uma vez".
   em Configurações → Jogo.
 - **Tremor:** um pulo; ao cair, as formigas em volta ficam tontas.
 - **Tanajuras** (douradas, voando, batendo as asas de vez em quando quando estão perto)
-  ativam o **Frenesi**: língua mais rápida e mais longa por 6 s.
+  ativam o **Frenesi**: língua mais rápida e mais longa por 6 s. Cada tanajura
+  ou cogumelo comido com o Frenesi ligado soma 3 s.
 - **Progresso:** formigueiro limpo ganha flores, e um losango por formigueiro
   no canto da tela mostra quantos faltam.
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
   do mapa). Você começa numa caverna no pé deles, e uma trilha de terra leva até
   o formigueiro mais perto. O cupinzeiro gigante aparece lá longe, por cima dos
-  penhascos. É sempre o mesmo fim de tarde, e há quatro lagoas de enfeite, de
-  formas irregulares. O alto
+  penhascos. É sempre o mesmo fim de tarde, e há uma lagoa de forma irregular,
+  com um tronco caído entrando na água: uma fila de formigas anda por cima
+  dele até perto de onde a água toca. O alto
   dos penhascos é cheio de árvores, e depois da passagem para a próxima área
   uma rampa sobe para uma mata fechada.
 - **Árvore de habilidades** (`Tab`, aba ao lado do mapa): uma constelação, com
@@ -192,7 +200,7 @@ não abriu aparece só com o cadeado.
 
 | Habilidade | Níveis (preço de cada clique · quando abre) |
 |---|---|
-| **Língua** | Lambida Contínua (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40); **Destreza** · nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4); **Comprimento** · nível 1 (16, 20, 24: língua de 3,3 → 3,6 → 3,9 m; era 3) · nível 2 (60, 80 · Área 2: 4,2 → 4,5 m); **Mira** · nível 1 (12: a língua vai atrás do inseto mais perto da mira, e a área da mira passa de 10° para 15°) · nível 2 (25, 30, 35 · Formigueiro: 18° → 21° → 25°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
+| **Língua** | Lambida Contínua (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40); **Destreza** · nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4); **Comprimento** · nível 1 (16, 20, 24: língua de 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m); **Mira** · nível 1 (12: a língua vai atrás do inseto mais perto da mira, numa área de 6°, e o acompanha) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
 | **Garras** | Cavar (25: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s) · nível 2 (40, 50 · Metade: 3,2 → 4 s); **Tremor** (sai de Força nível 1) · nível 1 (90 · Metade: libera o Tremor, recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto, 7 s); **Rapidez** · nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo); **Fundura** · nível 1 (60: câmaras grandes) · nível 2 (120 · Metade: desmancha o monte da rainha) |
 | **Patas** | Fôlego (10: estamina máxima de 50 para 75), e depois quatro linhas: **Corrida** · nível 1 (25, 35: corre 10% e mais 10% mais rápido) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: correr não assusta); **Respiro** · nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7); **Passada** · nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5); **Fôlego** · nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
 | **Faro** | Farejar (de presente no marco 80%: quantos insetos há a até 10 m; a bússola aponta o maior grupo), e depois: **Alcance** · nível 1 (15, 20, 25 · 80%: 13 → 16 → 20 m) · nível 2 (55, 70 · Área 2: 26 → 34 m; no último clique, a bússola mostra quanto falta em cada formigueiro) · nível 3 (220 · Área 2: 50 m e as rainhas); **Precisão** · nível 1 (45 · Área 2: nuvem) · nível 2 (75 · Área 2: insetos brilhando) · nível 3 (200 · Área 2: câmaras) |

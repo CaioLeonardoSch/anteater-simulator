@@ -17,6 +17,15 @@
 uniform sampler2D trail_tex : filter_nearest, repeat_disable;
 uniform sampler2D height_tex : filter_linear, repeat_disable;
 uniform float height_size = 160.0;
+// Pedras e troncos (sobem) e arbustos (contornam): ant_ground.gd.
+// RG desvio, B altura acima do chão, A escondida embaixo das folhas.
+uniform sampler2D props_tex : filter_linear, repeat_disable;
+uniform float props_size = 64.0;
+// Troncos das árvores (a formiga sobe): em volta de cada um, RG = do ponto até
+// o pé do tronco, B = qual tronco, A = 1. trunk_data: 7 pontos do tronco
+// (xyz, raio) e um texel com (até onde sobe, raio do pé, alcance, começo da subida).
+uniform sampler2D trunk_tex : filter_linear, repeat_disable;
+uniform sampler2D trunk_data : filter_nearest, repeat_disable;
 uniform float trail_step = 0.25;
 uniform int field_kind = 0;
 // Relógio das formigas e a câmera do jogador (para o nível de detalhe).
@@ -27,6 +36,65 @@ instance uniform vec2 lod_band = vec2(0.0, 100000.0);
 
 float field_ground(vec2 p) {
 	return texture(height_tex, p / height_size + 0.5).r;
+}
+
+vec4 field_props(vec2 p) {
+	vec2 uv = p / props_size + 0.5;
+	if (uv.x <= 0.0 || uv.y <= 0.0 || uv.x >= 1.0 || uv.y >= 1.0) {
+		return vec4(0.0);
+	}
+	return texture(props_tex, uv);
+}
+
+float field_surface(vec2 p) {
+	return field_ground(p) + field_props(p).b;
+}
+
+// Perto de um tronco: 1 = a formiga fica em `p` (chegando ou subindo), com
+// `side` = para fora do tronco e `lift` = quanto já subiu (m); 2 = escondida
+// (atravessando o meio, lá em cima); 0 = longe de troncos.
+int field_climb(vec2 raw, out vec3 p, out vec3 side, out float lift) {
+	p = vec3(0.0);
+	side = vec3(0.0, 1.0, 0.0);
+	lift = 0.0;
+	vec2 uv = raw / props_size + 0.5;
+	if (uv.x <= 0.0 || uv.y <= 0.0 || uv.x >= 1.0 || uv.y >= 1.0) {
+		return 0;
+	}
+	vec4 tk = texture(trunk_tex, uv);
+	if (tk.a < 0.999) {
+		return 0;
+	}
+	int ti = int(tk.b + 0.5);
+	vec4 meta = texelFetch(trunk_data, ivec2(7, ti), 0);
+	float r = meta.g;
+	vec2 off = -tk.rg;
+	float d = length(off);
+	float outer = r + meta.b;
+	float inner = r + meta.a;
+	if (d >= outer) {
+		return 0;
+	}
+	if (d < 0.05) {
+		return 2;
+	}
+	vec2 n = off / d;
+	vec2 c = raw + tk.rg;
+	if (d >= inner) {
+		vec2 q = c + n * (r + (d - inner) / (outer - inner) * (outer - r));
+		p = vec3(q.x, field_ground(q) + field_props(q).b, q.y);
+		return 1;
+	}
+	float f = (1.0 - (d / inner) * (d / inner)) * meta.r;
+	int k = min(int(f), 5);
+	float u = f - float(k);
+	vec4 a = mix(texelFetch(trunk_data, ivec2(k, ti), 0), texelFetch(trunk_data, ivec2(k + 1, ti), 0), u);
+	vec2 q = a.xz + n * a.w;
+	float g = field_ground(q);
+	p = vec3(q.x, max(a.y, g), q.y);
+	lift = p.y - g;
+	side = vec3(n.x, 0.0, n.y);
+	return 1;
 }
 
 vec3 field_trail_point(int row, int i) {
@@ -94,21 +162,53 @@ float field_ant(mat4 m, mat4 view, vec4 c0, vec4 c1, inout vec3 vtx, inout vec3 
 		float th = f10 + cyc * 2.39996 + (u - 0.5) * f11 + 0.22 * sin(w);
 		float rho = reach * sin(3.14159265 * u);
 		vec2 d = vec2(cos(th), sin(th));
-		vec2 p2 = vec2(f0, f1) + d * rho;
+		vec2 raw = vec2(f0, f1) + d * rho;
 		float dth = f11 + 0.22 * 12.566 * cos(w);
 		vec2 dp = d * reach * 3.14159265 * cos(3.14159265 * u) + vec2(-d.y, d.x) * rho * dth;
 		vec2 fw = normalize(dp + vec2(1e-5, 0.0));
-		float e = 0.3;
-		float hx = field_ground(p2 + vec2(e, 0.0)) - field_ground(p2 - vec2(e, 0.0));
-		float hz = field_ground(p2 + vec2(0.0, e)) - field_ground(p2 - vec2(0.0, e));
+		vec3 cp;
+		vec3 cside;
+		float clift;
+		int cl = field_climb(raw, cp, cside, clift);
+		vec2 fw0 = fw;
+		// Contorna arbustos (e some embaixo das folhas, no miolo).
+		vec4 pr = field_props(raw);
+		vec2 p2 = raw + pr.rg;
+		vec2 q = raw + fw * 0.05;
+		q += field_props(q).rg;
+		if (distance(q, p2) > 1e-4) {
+			fw = normalize(q - p2);
+		}
+		// Sobe nas pedras e troncos.
+		float e = 0.15;
+		float hx = field_surface(p2 + vec2(e, 0.0)) - field_surface(p2 - vec2(e, 0.0));
+		float hz = field_surface(p2 + vec2(0.0, e)) - field_surface(p2 - vec2(0.0, e));
 		up = normalize(vec3(-hx, 2.0 * e, -hz));
-		pos = vec3(p2.x, field_ground(p2), p2.y);
+		pos = vec3(p2.x, field_surface(p2), p2.y);
 		fwd = vec3(fw.x, 0.0, fw.y);
 		carry = u > 0.5 ? leaf : 0.0;
-		hidden = rho < 0.15;
+		hidden = rho < 0.15 || pr.a > 0.5;
+		if (cl > 0) {
+			// Sobe no tronco: de pé no chão até chegar, depois de lado no tronco.
+			hidden = rho < 0.15 || cl == 2;
+			vec3 cp2;
+			vec3 cs2;
+			float cl2;
+			int nx = field_climb(raw + fw0 * 0.05, cp2, cs2, cl2);
+			vec3 mv = cp2 - cp;
+			if (nx == 1 && dot(mv, mv) > 1e-8) {
+				fwd = normalize(mv);
+			}
+			up = normalize(mix(up, cside, smoothstep(0.0, 0.12, clift)));
+			pos = cp;
+		}
 		gait = t * 0.55 / (size * 0.32) + seed;
 	}
-	vec3 F = normalize(fwd - up * dot(fwd, up));
+	vec3 Fr = fwd - up * dot(fwd, up);
+	if (dot(Fr, Fr) < 1e-6) {
+		Fr = cross(up, vec3(0.0, 0.0, 1.0));
+	}
+	vec3 F = normalize(Fr);
 	vec3 X = cross(F, up);
 	vec3 Z = -F;
 	vec3 v = vtx;

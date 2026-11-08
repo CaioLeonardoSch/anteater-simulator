@@ -534,7 +534,7 @@ Vem da primeira jogatina do Caio com 1 inseto por lambida (versão 0.1.2,
 | | Comprimento 1 | 1 000 | 16 · 20 · 24 | língua de 3,0 → 3,3 → 3,6 → 3,9 m |
 | | Comprimento 2 | 8 000 | 60 · 80 | 4,2 → 4,5 m |
 | | Mira 1 | 200 | 12 | a língua vai atrás do inseto; área da mira de 15° (hoje 10°) |
-| | Mira 2 | 3 000 | 25 · 30 · 35 | área de 18° → 21° → 25° |
+| | Mira 2 | 3 000 | 25 · 30 · 35 | área de 11° → 16° → 22° |
 | | Mira 3 | 13 000 | 110 | a ponta gruda num raio 70% maior |
 | Garras | Cavar | — | 25 | abre câmaras pequenas; descanso de 25 s |
 | | Rapidez 1 | 1 000 | 12 · 16 · 20 | descanso de 20 → 16 → 12 s |
@@ -694,7 +694,7 @@ efeito de todos os cliques daquela habilidade.
 | Língua | Lambida Contínua | 1 | 15 | Segurar o botão para lamber sem parar |
 | Língua | Bocado 1 | 3 | 8 + 12 + 16 = 36 | 2, 3 e 5 insetos por lambida |
 | Língua | Destreza 1 | 3 | 10 + 14 + 18 = 42 | Lambe um pouco mais rápido |
-| Língua | Comprimento 1 | 3 | 16 + 20 + 24 = 60 | Alcance de 3,3, 3,6 e 3,9 m |
+| Língua | Comprimento 1 | 3 | 16 + 20 + 24 = 60 | Alcance de 1,5, 2 e 2,5 m (começa em 1 m; até 08/11 era 3,3, 3,6 e 3,9) |
 | Língua | Mira 1 | 1 | 12 | A língua vai sozinha atrás do inseto e a mira fica maior |
 | Garras | Cavar | 1 | 25 | Abre as câmaras pequenas (E) |
 | Garras | Força 1 | 2 | 25 + 35 = 60 | As moradoras ficam tontas e não fogem logo |

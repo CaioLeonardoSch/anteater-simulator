@@ -30,6 +30,8 @@ const GOAL := 10000
 const ANTS_PER_POINT := 10
 ## Quanto dura o Frenesi (depois de comer uma tanajura ou um cogumelo), em segundos.
 const FRENZY_TIME := 6.0
+## Segundos a mais por tanajura ou cogumelo comido com o Frenesi já ligado.
+const FRENZY_EXTRA := 3.0
 const RECORD_PATH := "user://save.cfg"
 ## Versões antigas tinham um jogo salvo só: ele vira o jogo 1.
 const OLD_SAVE_PATH := "user://jogo_salvo.json"
@@ -115,7 +117,7 @@ const UPGRADES := [
 		"desc": "A língua alcança 4,2 e depois 4,5 m."},
 	{"id": "lingua_mira_1", "branch": 0, "col": 3, "row": 1, "costs": [12], "requires": ["lingua_segurar"],
 		"name": "Mira nível 1",
-		"desc": "A língua vai sozinha atrás do inseto mais perto da mira, e a área da mira fica maior."},
+		"desc": "A língua vai sozinha atrás do inseto mais perto da mira."},
 	{"id": "lingua_mira_2", "branch": 0, "col": 3, "row": 2, "costs": [25, 30, 35], "unlock": 1, "requires": ["lingua_mira_1"],
 		"name": "Mira nível 2",
 		"desc": "A área da mira em que a língua procura insetos fica maior a cada clique."},
@@ -136,7 +138,7 @@ const UPGRADES := [
 		"desc": "As moradoras ficam tontas por mais tempo."},
 	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [90], "unlock": 2, "requires": ["garras_forca_1"],
 		"name": "Tremor nível 1",
-		"desc": "[Espaço] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
+		"desc": "[X] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
 	{"id": "garras_tremor_2", "branch": 1, "col": 1, "row": 3, "costs": [45, 55, 65], "unlock": AREA2, "requires": ["garras_tremor_1"],
 		"name": "Tremor nível 2",
 		"desc": "O Tremor recarrega mais rápido: 18, 15 e 12 s."},
@@ -243,6 +245,8 @@ var combo: int = 0
 var best_combo: int = 0
 var combo_timer: float = 0.0
 var frenzy_time: float = 0.0
+## Duração cheia do Frenesi atual (para a barra do card), com os acréscimos.
+var frenzy_full: float = FRENZY_TIME
 var best_time: float = 0.0
 var tanajuras_eaten: int = 0
 ## O jogo salvo em uso (1 a SLOTS).
@@ -321,10 +325,18 @@ func _process(delta: float) -> void:
 			frenzy_changed.emit(false)
 
 
-## Liga (ou renova) o Frenesi: tanajura ou cogumelo.
-func start_frenzy() -> void:
+## Liga o Frenesi (tanajura ou cogumelo). Se já está ligado, cada um que
+## você come soma 3 s ao que falta; comendo vários de uma vez para ligar, o
+## primeiro liga e os outros somam.
+func start_frenzy(n: int = 1) -> void:
+	if n <= 0:
+		return
 	var was_active := frenzy_time > 0.0
-	frenzy_time = FRENZY_TIME
+	if was_active:
+		frenzy_time += FRENZY_EXTRA * n
+	else:
+		frenzy_time = FRENZY_TIME + FRENZY_EXTRA * (n - 1)
+	frenzy_full = maxf(frenzy_time, FRENZY_TIME)
 	if not was_active:
 		frenzy_changed.emit(true)
 
@@ -356,7 +368,7 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	queens_eaten += queens
 	if tanajuras > 0:
 		tanajuras_eaten += tanajuras
-		start_frenzy()
+		start_frenzy(tanajuras)
 	ants_eaten_changed.emit(ants_eaten, count)
 	_check_affordable(true)
 	if ants_eaten >= GOAL:
@@ -713,7 +725,7 @@ func lick_capacity() -> int:
 
 ## Alcance da língua (linha de Comprimento).
 func tongue_range() -> float:
-	var r: float = _by_clicks([3.0, 3.3, 3.6, 3.9, 4.2, 4.5], COMPRIMENTO)
+	var r: float = _by_clicks([1.0, 1.5, 2.0, 2.5, 3.0, 3.5], COMPRIMENTO)
 	if frenzy_active():
 		r *= 1.25
 	return r
@@ -727,7 +739,7 @@ func tongue_tracking() -> bool:
 ## Abertura (graus, do centro até a borda) da área da mira em que a língua
 ## procura insetos.
 func aim_cone_deg() -> float:
-	return _by_clicks([10.0, 15.0, 18.0, 21.0, 25.0], MIRA_AREA)
+	return _by_clicks([0.0, 6.0, 11.0, 16.0, 22.0], MIRA_AREA)
 
 
 ## Raio em que a ponta da língua gruda: cresce com os nós de Bocado completos
@@ -949,7 +961,7 @@ func _stat_snapshot() -> Array:
 		["Lambidas por segundo", _num(lick_rate(), 2)],
 		["Alcance da língua", _num(tongue_range(), 1) + " m"],
 		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
-		["Área da mira", _num(aim_cone_deg(), 1) + "°"],
+		["Área da mira", (_num(aim_cone_deg(), 0) + "°") if tongue_tracking() else ""],
 		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
 		["Estamina máxima", _num(stamina_max(), 0)],
 		["Gasto correndo", _num(stamina_drain(), 1) + " por segundo"],

@@ -25,7 +25,13 @@ const TONGUE_SHADER := preload("res://shaders/tongue.gdshader")
 const VIEW_SCALE := 0.25
 ## Altura dos olhos: alto o bastante para ver por cima do capim baixo.
 const EYE_HEIGHT := 0.72
+## Raio em volta do ponto onde a língua pega um inseto: os outros ali fogem.
+const SCARE_RADIUS := 2.0
+## Olhar para cima e para baixo: quase na vertical (90° certinho vira a câmera).
+const PITCH_MAX := deg_to_rad(89.0)
 const GRAVITY := 20.0
+## Pulo normal (uns 95 cm de altura).
+const JUMP_SPEED := 6.2
 
 enum Tongue { IDLE, OUT, BACK }
 
@@ -82,6 +88,8 @@ var dig_cd := 0.0
 var near_exit := false
 var exit_progress := 0.0
 var _jump_request := false
+## Velocidade do pulo pedido (o pulo normal ou o do Tremor).
+var _jump_speed := 0.0
 var _stomp_pending := false
 var _air_time := 0.0
 var pull_time := 0.0
@@ -237,7 +245,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var rel: Vector2 = event.relative
 		yaw -= rel.x * sens
 		pitch -= rel.y * sens * (-1.0 if Settings.invert_y else 1.0)
-		pitch = clampf(pitch, deg_to_rad(-75.0), deg_to_rad(40.0))
+		pitch = clampf(pitch, -PITCH_MAX, PITCH_MAX)
 		_sway += rel * 0.00035
 
 
@@ -256,7 +264,7 @@ func _physics_process(delta: float) -> void:
 		var gs := Settings.gamepad_sensitivity
 		yaw -= look.x * delta * 2.6 * gs
 		var inv := -1.0 if Settings.invert_y else 1.0
-		pitch = clampf(pitch - look.y * delta * 2.0 * gs * inv, deg_to_rad(-75.0), deg_to_rad(40.0))
+		pitch = clampf(pitch - look.y * delta * 2.0 * gs * inv, -PITCH_MAX, PITCH_MAX)
 	elif bot:
 		_bot_update(delta)
 		input = _bot_input
@@ -278,8 +286,8 @@ func _physics_process(delta: float) -> void:
 	if is_on_floor():
 		velocity.y = -0.5
 		if _jump_request:
-			# Pulo do Tremor: a pancada vem quando ele cai de volta no chão.
-			velocity.y = GameState.tremor_jump_speed()
+			# Pulo (o do Tremor: a pancada vem quando ele cai de volta no chão).
+			velocity.y = _jump_speed
 	else:
 		velocity.y -= GRAVITY * delta
 	_jump_request = false
@@ -314,10 +322,10 @@ func _physics_process(delta: float) -> void:
 		if running:
 			GameState.count("run_time", delta)
 	swarm.threat_pos = global_position
-	# Os insetos fogem a 1 m de você parado, a 2,5 m andando e mais longe
-	# correndo (a língua alcança 3 m ou mais com Comprimento).
+	# Os insetos fogem a 2 m de você parado, a 2,5 m andando e mais longe
+	# correndo (a língua alcança 1 m, até 3,5 m com Comprimento).
 	var pace := spd / maxf(GameState.walk_speed(), 0.1)
-	swarm.flee_radius = (1.0 + clampf(pace, 0.0, 1.0) * 1.5 + clampf(pace - 1.0, 0.0, 1.0) * 0.9) \
+	swarm.flee_radius = (2.0 + clampf(pace, 0.0, 1.0) * 0.5 + clampf(pace - 1.0, 0.0, 1.0) * 0.9) \
 		* GameState.flee_multiplier(running)
 	_update_aim()
 	_update_tongue(delta)
@@ -474,7 +482,7 @@ func _update_tongue(delta: float) -> void:
 	match t_state:
 		Tongue.OUT:
 			t_time += delta
-			# A tanajura foge rápido: a ponta vai atrás dela até alcançar.
+			# Com Mira, a ponta vai atrás do inseto até alcançar.
 			if t_follow >= 0 and swarm.alive[t_follow] == 1 and swarm.mode[t_follow] != swarm.Mode.STUCK:
 				t_target = swarm.body_point(t_follow)
 			var k := clampf(t_time / t_dur_out, 0.0, 1.0)
@@ -499,12 +507,15 @@ func _start_flick() -> void:
 	t_dur_out = period * 0.36
 	t_dur_back = period * 0.5
 	var target := _straight_target()
-	t_follow = _path_tanajura
-	# Língua Certeira: a ponta vai atrás da formiga mais perto da mira.
+	# Sem Mira, a língua vai reta. Com Mira, vai atrás do inseto mais perto
+	# da mira (ou da tanajura no caminho) e o acompanha.
+	t_follow = -1
 	var ant := _tracked_ant()
 	if ant >= 0:
-		target = swarm.pos[ant] + Vector3(0, 0.02, 0)
-		t_follow = ant if swarm.kind[ant] == swarm.TANAJURA else -1
+		target = swarm.body_point(ant)
+		t_follow = ant
+	elif GameState.tongue_tracking():
+		t_follow = _path_tanajura
 	t_target = target
 	t_state = Tongue.OUT
 	t_time = 0.0
@@ -585,6 +596,8 @@ func _capture() -> void:
 	if t_stuck.size() > 0:
 		GameState.count("licks_hit")
 		Sfx.play("slurp", -4.0, 1.0, 0.1)
+		# As vizinhas da que foi pega saem correndo.
+		swarm.scare(t_target, SCARE_RADIUS)
 
 
 func _carry_stuck() -> void:
@@ -736,6 +749,11 @@ func _update_abilities(delta: float) -> void:
 			exit_broken.emit()
 	else:
 		exit_progress = maxf(exit_progress - delta * 2.0, 0.0)
+	# Pulo: sobe nas pedras e sai dos buracos que cavou.
+	if controls_enabled and Input.is_action_just_pressed("jump") and is_on_floor() and not _is_digging():
+		_jump_request = true
+		_jump_speed = JUMP_SPEED
+		Sfx.play("step", -8.0, 0.85)
 	var want_tremor := controls_enabled and Input.is_action_just_pressed("tremor")
 	if bot and GameState.can_tremor() and tremor_cd <= 0.0:
 		# Tremor quando vale a pena: um bolo de insetos em volta, ou o alvo
@@ -793,6 +811,7 @@ func do_sniff() -> void:
 func do_tremor() -> void:
 	tremor_cd = GameState.tremor_cooldown()
 	_jump_request = true
+	_jump_speed = GameState.tremor_jump_speed()
 	_stomp_pending = true
 	GameState.count("tremors")
 	Sfx.play("step", -4.0, 0.7)

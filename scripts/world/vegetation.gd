@@ -6,9 +6,18 @@ extends Node3D
 const Props := preload("res://scripts/world/props.gd")
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
+## Raio do tronco das árvores em pé, para as formigas que fogem desviarem.
+const TRUNK := 0.3
 
 ## Obstáculos circulares: Vector3(x, z, raio).
 var obstacles: Array[Vector3] = []
+## Para as formigas: pedras e troncos caídos (elas sobem por cima) e o que elas
+## contornam (Vector3(x, z, raio): arbustos, árvores, cupinzeiros, lagoas).
+var rocks: Array[Node3D] = []
+var logs: Array[Node3D] = []
+var blockers: Array[Vector3] = []
+## Árvores em pé: as formigas sobem no tronco.
+var trees: Array[Node3D] = []
 var landmarks: Array[Dictionary] = []
 
 
@@ -29,6 +38,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			tree = Props.build_tree(geo, mats, kind, 1.0, origin, ground)
 		_put(tree, origin, rng)
 		obstacles.append(Vector3(pos.x, pos.y, 0.6))
+		trees.append(tree)
 		landmarks.append({"name": "Ipê", "pos": pos})
 	# Árvores retorcidas do cerrado: muitas perto dos penhascos, poucas no meio.
 	for i in 12:
@@ -42,6 +52,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			tree = Props.build_tree(geo, mats, "cerrado", 1.0, origin, ground)
 		_put(tree, origin, rng)
 		obstacles.append(Vector3(pos.x, pos.y, 0.5))
+		trees.append(tree)
 	# Cupinzeiros, alguns em grupos.
 	for _i in 4:
 		var pos := _find_spot(world, rng, 4.0, 23.0, 2.2, 3.0, 1.2)
@@ -61,6 +72,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 				r = mound.get_meta("radius", 0.8)
 			_put(mound, Vector3(p.x, _min_height(terrain, p, r) - 0.08, p.y), rng)
 			obstacles.append(Vector3(p.x, p.y, r))
+			blockers.append(Vector3(p.x, p.y, r))
 	# Pedras (as últimas caíram dos penhascos e ficam no pé deles).
 	for i in 16:
 		var size := rng.randf_range(0.35, 1.3) if i < 8 else rng.randf_range(0.8, 2.0)
@@ -73,6 +85,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			rock = Props.build_rock(geo, mats, size)
 		_put(rock, Vector3(pos.x, _min_height(terrain, pos, size) - size * 0.12, pos.y), rng)
 		obstacles.append(Vector3(pos.x, pos.y, size * 0.9))
+		rocks.append(rock)
 	# Arbustos decorativos (mais perto das bordas).
 	for i in 12:
 		var size := rng.randf_range(0.6, 1.2)
@@ -85,6 +98,8 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			shrub = Props.build_shrub(geo, mats, size)
 		_put(shrub, Vector3(pos.x, terrain.get_height(pos.x, pos.y) - 0.04, pos.y), rng)
 		obstacles.append(Vector3(pos.x, pos.y, size * 0.55))
+		# As folhas vão além do miolo: as formigas passam por fora delas.
+		blockers.append(Vector3(pos.x, pos.y, size))
 	# Troncos caídos.
 	for _i in 2:
 		var pos := _find_spot(world, rng, 6.0, 22.0, 2.8, 3.0, 2.0)
@@ -96,6 +111,7 @@ func build(world, rng: RandomNumberGenerator) -> void:
 			log_node = Props.build_log(geo, mats)
 		_put(log_node, Vector3(pos.x, terrain.get_height(pos.x, pos.y) - 0.05, pos.y), rng)
 		obstacles.append(Vector3(pos.x, pos.y, 1.2))
+		logs.append(log_node)
 	# Árvores no topo dos penhascos (aparecem por cima da beirada).
 	var cliffs = world.cliffs
 	for i in 64:
@@ -146,6 +162,7 @@ func _build_edges(world) -> void:
 			tree = Props.build_tree(geo, mats, "cerrado", 0.85, origin, ground)
 		_put(tree, origin, rng)
 		obstacles.append(Vector3(pos.x, pos.y, 0.5))
+		trees.append(tree)
 	# Alto dos penhascos: mais um anel de árvores, bem mais cheio.
 	for _i in 56:
 		var a := rng.randf() * TAU

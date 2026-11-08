@@ -82,6 +82,10 @@ static func _grow(bark: MeshBuilder, core: MeshBuilder, cards: MeshBuilder, rng:
 		radii.append(lerpf(radius, radius * 0.62, float(i + 1) / steps))
 	var sides := 12 if depth == 0 else (9 if depth == 1 else 7)
 	bark.add_tube(pts, radii, sides, false, depth == max_depth, 0.6)
+	if depth == 0:
+		# O tronco (até a primeira forquilha), para as formigas subirem nele.
+		p["trunk_pts"] = pts
+		p["trunk_radii"] = radii
 	var leafless: bool = p.get("leafless", false)
 	if depth >= max_depth:
 		var csize: float = p.get("canopy", 1.2) * rng.randf_range(0.8, 1.2)
@@ -141,6 +145,8 @@ static func build_tree(rng: RandomNumberGenerator, mats, kind: String = "cerrado
 		core.commit(mesh, core_mat)
 	cards.commit(mesh, cards_mat)
 	var root := Node3D.new()
+	root.set_meta("trunk_pts", p.get("trunk_pts", PackedVector3Array()))
+	root.set_meta("trunk_radii", p.get("trunk_radii", PackedFloat32Array()))
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	root.add_child(mi)
@@ -259,9 +265,10 @@ static func build_shrub(rng: RandomNumberGenerator, mats, size: float, collider:
 	return root
 
 
-static func build_log(rng: RandomNumberGenerator, mats) -> Node3D:
+static func build_log(rng: RandomNumberGenerator, mats, length: float = -1.0, branch_stub: bool = true) -> Node3D:
 	var b := MeshBuilder.new()
-	var length := rng.randf_range(2.5, 4.5)
+	if length <= 0.0:
+		length = rng.randf_range(2.5, 4.5)
 	var radius := rng.randf_range(0.16, 0.26)
 	var pts := PackedVector3Array()
 	var radii := PackedFloat32Array()
@@ -275,12 +282,18 @@ static func build_log(rng: RandomNumberGenerator, mats) -> Node3D:
 	b.add_tube(pts, radii, 12, false, false, 0.5)
 	add_log_end(b, rng, tube, 12, pts[0], (pts[0] - pts[1]).normalized(), radii[0], true)
 	add_log_end(b, rng, tube + 6 * 13, 12, pts[6], (pts[6] - pts[5]).normalized(), radii[6], false)
-	# Galho quebrado.
-	var bpts := PackedVector3Array([pts[3], pts[3] + Vector3(0.2, 0.45, 0.3), pts[3] + Vector3(0.3, 0.8, 0.5)])
+	# Galho quebrado (para o lado, quando as formigas andam por cima).
+	var bdir := Vector3(0.2, 0.45, 0.3) if branch_stub else Vector3(0.1, 0.22, 0.55)
+	var bpts := PackedVector3Array([pts[2], pts[2] + bdir, pts[2] + bdir * 1.7])
+	if branch_stub:
+		bpts = PackedVector3Array([pts[3], pts[3] + bdir, pts[3] + Vector3(0.3, 0.8, 0.5)])
 	var branch := b.vertex_count()
 	b.add_tube(bpts, PackedFloat32Array([radius * 0.45, radius * 0.3, radius * 0.18]), 8, false, false, 0.5)
 	add_log_end(b, rng, branch + 2 * 9, 8, bpts[2], (bpts[2] - bpts[1]).normalized(), radius * 0.18, false)
 	var root := Node3D.new()
+	# O tubo do tronco (sem o galho), para as formigas andarem por cima.
+	root.set_meta("tube_pts", pts)
+	root.set_meta("tube_radii", radii)
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit(null, mats.log_bark)
 	root.add_child(mi)

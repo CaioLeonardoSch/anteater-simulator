@@ -45,8 +45,9 @@ const STRIDE := 20
 const FLEE_CHECK_EVERY := 3
 ## Tonta que acorda a menos disso do tamanduá sai fugindo (m).
 const WAKE_FLEE_DIST := 9.0
-## Até onde as moradoras de uma câmara aberta se espalham (m, mínimo e máximo).
-const DISPERSE_REACH := Vector2(4.0, 13.0)
+## Câmara aberta: depois de fugir, as moradoras passeiam até esta distância
+## dela (m), por cima do monte também.
+const WANDER_RADIUS := 5.0
 ## Quanto tempo a formiga "na mira" fica com o enxame antes de voltar ao campo.
 const GHOST_TIME := 1.2
 
@@ -129,11 +130,21 @@ var cam_pos := Vector3.ZERO:
 var _found: Array[Vector4] = []
 
 
+## Chão das formigas: o terreno e, por cima, as pedras e troncos caídos.
+func _surface(x: float, z: float) -> float:
+	var y: float = world.ground_height(x, z)
+	if field != null and field.ground != null:
+		y += field.ground.extra_height(Vector2(x, z))
+	return y
+
+
 func setup(w, col) -> void:
 	world = w
 	colony = col
 	trails = w.trails.trails
-	obstacles = w.vegetation.obstacles
+	obstacles = w.vegetation.blockers.duplicate()
+	for t in w.vegetation.trees:
+		obstacles.append(Vector3(t.position.x, t.position.z, w.vegetation.TRUNK))
 	for arr in [alive, kind, mode, carry]:
 		arr.resize(CAPACITY)
 		arr.fill(0)
@@ -236,7 +247,7 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 	speed[i] = SPEED[ant_kind] * randf_range(0.85, 1.15)
 	var t = trails[trail_index]
 	var p2: Vector2 = t.point_at(at_s) + t.side_at(at_s) * lat
-	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
 	return i
 
 
@@ -265,7 +276,7 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 		if half_len > 0.0:
 			p2 += Vector2(cos(axis), sin(axis)) * half_len * randf_range(-1.0, 1.0) * (0.35 if from_tunnel else 0.9)
 	vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
-	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
 	return i
 
@@ -412,6 +423,26 @@ func _physics_process(delta: float) -> void:
 				pass
 
 
+## Uma formiga foi pega: as outras num raio em volta do ponto saem correndo.
+func scare(at: Vector3, radius: float) -> void:
+	var from := Vector2(at.x, at.z)
+	var r2 := radius * radius
+	var found: Array[Vector4] = []
+	field.gather(at, radius, found)
+	for f in found:
+		var j := take_from_field(int(f.x), int(f.y), Mode.FLEE)
+		if j >= 0:
+			_start_flee(j, from)
+	for i in CAPACITY:
+		if alive[i] == 0 or kind[i] == QUEEN:
+			continue
+		var m := mode[i]
+		if m != Mode.TRAIL and m != Mode.RETURN and m != Mode.CHAMBER and m != Mode.GHOST:
+			continue
+		if Vector2(pos[i].x, pos[i].z).distance_squared_to(from) < r2:
+			_start_flee(i, from)
+
+
 func _start_flee(i: int, from: Vector2) -> void:
 	var p2 := Vector2(pos[i].x, pos[i].z)
 	var away := (p2 - from)
@@ -439,7 +470,7 @@ func _update_trail(i: int, delta: float) -> void:
 	var lat := lateral[i] + sin(_time * 1.3 + rnd[i] * 40.0) * 0.03
 	var p2: Vector2 = t.point_at(ns) + t.side_at(ns) * lat
 	var fwd: Vector2 = t.dir_at(ns) * dir[i]
-	var y: float = world.ground_height(p2.x, p2.y)
+	var y: float = _surface(p2.x, p2.y)
 	if kind[i] == TANAJURA:
 		y += 0.35 + sin(_time * 2.2 + rnd[i] * 9.0) * 0.12
 	pos[i] = Vector3(p2.x, y, p2.y)
@@ -451,7 +482,7 @@ func _update_free(i: int, delta: float) -> void:
 	var v := vel[i]
 	v = v.rotated(randf_range(-2.0, 2.0) * delta)
 	var p2 := Vector2(pos[i].x, pos[i].z) + v * delta
-	# Desvia de pedras, troncos e cupinzeiros.
+	# Contorna arbustos, árvores, cupinzeiros e lagoas (pedras e troncos ela sobe).
 	for o in obstacles:
 		var dx := p2.x - o.x
 		var dz := p2.y - o.y
@@ -466,7 +497,7 @@ func _update_free(i: int, delta: float) -> void:
 		p2 = p2.normalized() * limit
 		v = -v
 	vel[i] = v
-	var y: float = world.ground_height(p2.x, p2.y)
+	var y: float = _surface(p2.x, p2.y)
 	if kind[i] == TANAJURA:
 		y += 0.45 + sin(_time * 3.0 + rnd[i] * 9.0) * 0.15
 	pos[i] = Vector3(p2.x, y, p2.y)
@@ -509,7 +540,7 @@ func _update_return(i: int, delta: float) -> void:
 		return
 	var v := to / dist * sp
 	p2 += v * delta
-	var y: float = world.ground_height(p2.x, p2.y)
+	var y: float = _surface(p2.x, p2.y)
 	if kind[i] == TANAJURA:
 		y += 0.4
 	pos[i] = Vector3(p2.x, y, p2.y)
@@ -535,7 +566,7 @@ func _update_homing(i: int, delta: float) -> void:
 	var sp := maxf(speed[i] * 2.4, 0.75)
 	var v := to / dist * sp
 	p2 += v * delta
-	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
 	yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * 10.0, 1.0))
 	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32)
 
@@ -573,7 +604,10 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 	p2 += v * delta
 	# Num buraco comprido, o "centro" é o ponto do eixo dele mais perto da formiga.
 	var half := lateral[i]
-	if half > 0.0:
+	if half < 0.0:
+		# Passeando em volta de uma câmara aberta: contorna arbustos e lagoas.
+		p2 = _push_out(p2)
+	elif half > 0.0:
 		var ax := Vector2(cos(dir[i]), sin(dir[i]))
 		center += ax * clampf((p2 - center).dot(ax), -half, half)
 	var off := p2 - center
@@ -582,7 +616,7 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 		p2 = center + n * limit
 		v = v.bounce(n) * 0.8
 	vel[i] = v
-	pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
 	if v.length_squared() > 0.000001:
 		yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * (2.0 if queen else 8.0), 1.0))
 	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
@@ -597,7 +631,7 @@ func _update_stunned(i: int, delta: float) -> void:
 		var d := to.length()
 		if d > 0.35:
 			var p2 := Vector2(p.x, p.z) + Vector2(to.x, to.z) / d * minf(2.6 * delta, d)
-			pos[i] = Vector3(p2.x, world.ground_height(p2.x, p2.y), p2.y)
+			pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
 	if timer[i] <= 0.0:
 		# Acordou perto do tamanduá: continua fugindo de medo.
 		var tp2 := Vector2(threat_pos.x, threat_pos.z)
@@ -616,9 +650,9 @@ func _update_stunned(i: int, delta: float) -> void:
 			_start_return(i)
 
 
-## Câmara aberta (menos o buraco da rainha): as moradoras não voltam para ela.
-## Cada uma escolhe um canto da região em volta e passa a andar por lá.
-## `instant` = já põe cada uma no seu canto (ao carregar um jogo salvo).
+## Câmara aberta (menos o buraco da rainha): as moradoras não voltam para
+## dentro; passam a passear em volta dela, até WANDER_RADIUS.
+## `instant` = já põe cada uma num ponto da volta (ao carregar um jogo salvo).
 func disperse_home(home_code: int, center: Vector2, instant: bool = false) -> void:
 	for i in CAPACITY:
 		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN:
@@ -627,33 +661,25 @@ func disperse_home(home_code: int, center: Vector2, instant: bool = false) -> vo
 
 
 func disperse(i: int, center: Vector2, instant: bool = false) -> void:
-	var spot := _spread_spot(center)
-	anchor[i] = Vector3(spot.x, randf_range(1.2, 2.4), spot.y)
+	# Em _update_chamber, o limite é 90% do raio guardado.
+	anchor[i] = Vector3(center.x, WANDER_RADIUS / 0.9, center.y)
 	dir[i] = 0.0
-	lateral[i] = 0.0
+	lateral[i] = -1.0
 	if instant:
-		pos[i] = Vector3(spot.x, world.ground_height(spot.x, spot.y), spot.y)
+		var spot := center + Vector2.RIGHT.rotated(randf() * TAU) * WANDER_RADIUS * sqrt(randf())
+		pos[i] = Vector3(spot.x, _surface(spot.x, spot.y), spot.y)
 		mode[i] = Mode.CHAMBER
-	elif mode[i] == Mode.CHAMBER:
-		mode[i] = Mode.RETURN
 
 
-## Um ponto a DISPERSE_REACH metros da câmara, fora das lagoas e dentro do campo.
-func _spread_spot(center: Vector2) -> Vector2:
-	var best := center
-	for k in 8:
-		var p := center + Vector2.RIGHT.rotated(randf() * TAU) * randf_range(DISPERSE_REACH.x, DISPERSE_REACH.y)
-		if p.length() > world.walk_limit(p) - 1.5:
-			continue
-		var wet := false
-		for w in world.ponds:
-			if p.distance_to(Vector2(w.x, w.y)) < w.z + 1.0:
-				wet = true
-				break
-		if not wet:
-			return p
-		best = p
-	return best
+## Empurra o ponto para fora de arbustos, árvores, cupinzeiros e lagoas.
+func _push_out(p2: Vector2) -> Vector2:
+	for o in obstacles:
+		var off := p2 - Vector2(o.x, o.y)
+		var rr := o.z + 0.1
+		var dd := off.length_squared()
+		if dd < rr * rr and dd > 0.000001:
+			p2 = Vector2(o.x, o.y) + off / sqrt(dd) * rr
+	return p2
 
 
 ## Câmara recém-aberta: as moradoras saem correndo para longe do tamanduá.
@@ -705,7 +731,7 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 			mode[i] = Mode.STUNNED
 			timer[i] = duration * randf_range(0.9, 1.15)
 			if kind[i] == TANAJURA:
-				pos[i].y = world.ground_height(pos[i].x, pos[i].z)
+				pos[i].y = _surface(pos[i].x, pos[i].z)
 			n += 1
 	return n
 
@@ -975,8 +1001,8 @@ func densest_point(around: Vector3, max_dist: float) -> Vector3:
 ## Chão inclinado embaixo da formiga: o "para cima" segue a normal do chão.
 func _ground_basis(p: Vector3, a: float) -> Basis:
 	var e := 0.25
-	var hx: float = world.ground_height(p.x + e, p.z) - world.ground_height(p.x - e, p.z)
-	var hz: float = world.ground_height(p.x, p.z + e) - world.ground_height(p.x, p.z - e)
+	var hx: float = _surface(p.x + e, p.z) - _surface(p.x - e, p.z)
+	var hz: float = _surface(p.x, p.z + e) - _surface(p.x, p.z - e)
 	var up := Vector3(-hx, 2.0 * e, -hz).normalized()
 	var fwd := Vector3(-sin(a), 0.0, -cos(a))
 	fwd = (fwd - up * fwd.dot(up)).normalized()

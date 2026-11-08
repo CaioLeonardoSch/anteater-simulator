@@ -114,6 +114,50 @@ class Canvas:
         s = np.clip(s - mid + lat, 0, 1)
         self.put(sl, cov, s, tone, dry)
 
+    def trumpet(self, base, angle, length, width, tone, light_side):
+        """Flor de ipê vista de lado: cálice no raminho, tubo fino que abre numa
+        boca de 5 lobos franzidos."""
+        d = np.array([np.cos(angle), np.sin(angle)])
+        n = np.array([-d[1], d[0]])
+        tip = np.array(base) + d * length
+        sl = self._box(base, tip, width)
+        px = self.xx[sl] - base[0]
+        py = self.yy[sl] - base[1]
+        u = (px * d[0] + py * d[1]) / length
+        v = px * n[0] + py * n[1]
+        uc = np.clip(u, 0, 1)
+        half = width * 0.5 * (0.14 + 0.86 * np.clip((uc - 0.05) / 0.95, 0, 1) ** 1.4)
+        rel = np.clip(np.abs(v) / np.maximum(half, 1e-5), 0, 1)
+        # Boca recortada em lobos (a borda da trombeta não é reta).
+        u_end = 1.0 - 0.09 * (0.5 + 0.5 * np.cos(v / (width * 0.5) * np.pi * 2.5))
+        cov = (np.clip((half - np.abs(v)) * self.size * 1.2, 0, 1)
+               * np.clip((u_end - u) * length * self.size * 1.2, 0, 1) * (u > 0))
+        s = 0.58 + 0.3 * uc + 0.14 * np.sign(v) * light_side * rel
+        # Dobras ao longo do tubo e a beira da boca mais clara.
+        fold = np.clip(np.cos(rel * np.pi * 2.5), 0, 1) ** 6 * (uc < 0.8)
+        s = s - 0.12 * fold + 0.1 * np.clip((uc - 0.78) / 0.1, 0, 1)
+        dry = np.clip((0.17 - uc) / 0.05, 0, 1)
+        self.put(sl, cov, np.clip(s, 0, 1), tone, dry)
+
+    def bloom(self, c, r, rot, tone):
+        """Flor de ipê vista de frente: 5 lobos franzidos, garganta escura com
+        riscos (os guias de néctar)."""
+        sl = self._box(c, c, r * 1.2)
+        px = self.xx[sl] - c[0]
+        py = self.yy[sl] - c[1]
+        dist = np.hypot(px, py)
+        th = np.arctan2(py, px) + rot
+        lobe = np.abs(np.cos(2.5 * th))
+        rr = r * (0.72 + 0.28 * lobe ** 0.7) + r * 0.04 * np.sin(14 * th + rot * 3)
+        cov = np.clip((rr - dist) * self.size * 1.2, 0, 1)
+        rho = np.clip(dist / np.maximum(rr, 1e-5), 0, 1)
+        s = 0.5 + 0.45 * np.clip((rho - 0.15) / 0.6, 0, 1)
+        s = np.where(rho < 0.2, 0.46 + 0.6 * rho, s)
+        guide = np.clip(np.cos(th * 15), 0, 1) ** 8 * (rho > 0.15) * (rho < 0.6)
+        crease = (1 - lobe) ** 4 * (rho > 0.3)
+        s = s - 0.12 * guide - 0.08 * crease + 0.08 * np.clip((rho - 0.85) / 0.15, 0, 1)
+        self.put(sl, cov, np.clip(s, 0, 1), tone, 0.0)
+
     def rgba(self):
         out = np.zeros((self.size, self.size, 4), np.float32)
         out[..., 0] = self.shade
@@ -183,35 +227,35 @@ def shrub_cluster():
 
 
 def flower_cluster():
-    size = 256
+    # Flores de ipê: cachos de flores em trombeta na ponta de raminhos. Umas de
+    # lado (tubo que abre numa boca de 5 lobos franzidos), outras de frente
+    # (boca aberta com a garganta escura e riscadinha). Canais como nas folhas:
+    # R = sombreamento (garganta escura), G = tom de cada flor, B = raminho e cálice.
+    size = 512
     rng = np.random.default_rng(7)
     cv = Canvas(size)
-    xx, yy = cv.xx, cv.yy
-    shade = np.zeros((size, size), np.float32)
-    alpha = np.zeros((size, size), np.float32)
-    for _ in range(16):
-        cx, cy = rng.uniform(0.18, 0.82, 2)
-        r = rng.uniform(0.07, 0.12)
-        rot = rng.uniform(0, np.pi * 2)
-        px = xx - cx
-        py = yy - cy
-        ang = np.arctan2(py, px) + rot
-        dist = np.sqrt(px * px + py * py)
-        petal = r * (0.62 + 0.38 * np.abs(np.cos(ang * 2.5)))
-        inside = dist < petal
-        edge = np.clip((petal - dist) * size * 0.8, 0, 1) * inside
-        s = 0.55 + 0.45 * (dist / np.maximum(petal, 1e-4))
-        throat = np.exp(-(dist / (r * 0.28)) ** 2) * 0.45
-        s = np.clip(s - throat, 0, 1)
-        upd = edge > alpha * 0.98
-        shade[upd] = s[upd]
-        alpha[upd] = np.maximum(alpha[upd], edge[upd])
-    rgba = np.zeros((size, size, 4), np.float32)
-    rgba[..., 0] = shade
-    rgba[..., 1] = shade
-    rgba[..., 2] = shade
-    rgba[..., 3] = alpha
-    return (np.clip(rgba, 0, 1) * 255).astype(np.uint8)
+    for _ in range(11):
+        cx = rng.uniform(0.2, 0.8)
+        cy = rng.uniform(0.16, 0.72)
+        # Raminho chegando no cacho, vindo de baixo (a base do cartão).
+        bx = cx + rng.uniform(-0.06, 0.06)
+        cv.twig((bx, min(cy + rng.uniform(0.1, 0.16), 0.97)), (cx, cy), 0.006)
+        n = rng.integers(6, 10)
+        base_ang = rng.uniform(0, np.pi * 2)
+        for k in range(n):
+            a = base_ang + np.pi * 2 * k / n + rng.uniform(-0.35, 0.35)
+            tone = rng.uniform(0.15, 0.85)
+            if rng.random() < 0.62:
+                ln = rng.uniform(0.12, 0.16)
+                cv.trumpet((cx, cy), a, ln, ln * rng.uniform(0.62, 0.78), tone, rng.integers(0, 2) * 2 - 1)
+            else:
+                r = rng.uniform(0.06, 0.08)
+                off = rng.uniform(0.05, 0.09)
+                c = (cx + np.cos(a) * off, cy + np.sin(a) * off)
+                if min(c) - r < 0.02 or max(c) + r > 0.98:
+                    continue
+                cv.bloom(c, r, rng.uniform(0, np.pi * 2), tone)
+    return cv.rgba()
 
 
 def main(argv):

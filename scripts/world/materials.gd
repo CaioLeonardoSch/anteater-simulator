@@ -132,9 +132,17 @@ func _init() -> void:
 	shrub_cards.set_shader_parameter("dry_amount", 1.0)
 	shrub_cards.set_shader_parameter("dry_color", Color(0.58, 0.45, 0.28))
 	ipe_core = _foliage(Color(0.62, 0.36, 0.06), Color(0.95, 0.72, 0.12), Color(1.0, 0.90, 0.40), false, FLOWER_TEX)
-	ipe_cards = _foliage(Color(0.70, 0.42, 0.06), Color(1.0, 0.78, 0.16), Color(1.0, 0.93, 0.48), true, FLOWER_TEX)
+	ipe_cards = _foliage(Color(0.82, 0.44, 0.05), Color(1.0, 0.8, 0.12), Color(1.0, 0.94, 0.46), true, FLOWER_TEX)
 	ipe_roxo_core = _foliage(Color(0.40, 0.16, 0.32), Color(0.80, 0.42, 0.66), Color(0.98, 0.72, 0.86), false, FLOWER_TEX)
-	ipe_roxo_cards = _foliage(Color(0.45, 0.18, 0.36), Color(0.88, 0.48, 0.72), Color(1.0, 0.78, 0.90), true, FLOWER_TEX)
+	ipe_roxo_cards = _foliage(Color(0.44, 0.17, 0.4), Color(0.86, 0.46, 0.76), Color(1.0, 0.8, 0.93), true, FLOWER_TEX)
+	# Cachos de flores em trombeta: tom de cada flor, raminho marrom e garganta escura.
+	for m in [ipe_cards, ipe_roxo_cards]:
+		m.set_shader_parameter("tone_amount", 0.5)
+		m.set_shader_parameter("dry_amount", 1.0)
+		m.set_shader_parameter("dry_color", Color(0.34, 0.24, 0.16))
+		m.set_shader_parameter("flower_amount", 1.0)
+		m.set_shader_parameter("backlight_amount", 0.9)
+	ipe_roxo_cards.set_shader_parameter("throat_color", Color(0.32, 0.08, 0.22))
 	ipe_ground = ipe_cards.duplicate()
 	ipe_ground.set_shader_parameter("sway", 0.0)
 

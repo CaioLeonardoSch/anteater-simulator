@@ -7,7 +7,7 @@ extends Node
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/antes
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/depois --so=chao,pedra
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
-## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
+## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, ipe_perto, ipe_roxo, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
 ## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol, formigas, tanajura,
@@ -37,6 +37,8 @@ func _ready() -> void:
 		["arvore", mats.bark, 3.2, 1.6],
 		["copa", mats.leaves_cards, 4.5, 3.2],
 		["ipe", mats.ipe_cards, 10.0, 3.0],
+		["ipe_perto", mats.ipe_cards, 4.0, 3.6],
+		["ipe_roxo", mats.ipe_roxo_cards, 10.0, 3.0],
 		["arbusto", mats.shrub_cards, 2.2, 0.5],
 		["cupinzeiro", mats.clay, 2.4, 0.7],
 		["pedra", mats.rock, 2.0, 0.3],

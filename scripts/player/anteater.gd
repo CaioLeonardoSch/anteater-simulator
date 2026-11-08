@@ -26,7 +26,7 @@ const VIEW_SCALE := 0.25
 ## Altura dos olhos: alto o bastante para ver por cima do capim baixo.
 const EYE_HEIGHT := 0.72
 ## Raio em volta do ponto onde a língua pega um inseto: os outros ali fogem.
-const SCARE_RADIUS := 2.0
+const SCARE_RADIUS := 1.5
 ## Olhar para cima e para baixo: quase na vertical (90° certinho vira a câmera).
 const PITCH_MAX := deg_to_rad(89.0)
 const GRAVITY := 20.0

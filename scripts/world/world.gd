@@ -195,8 +195,10 @@ func build() -> void:
 	vegetation.build(self, _rng)
 	for f in food_sources:
 		vegetation.obstacles.append(Vector3(f.x, f.y, 0.7))
+		vegetation.blockers.append(Vector3(f.x, f.y, 1.1))
 	for w in ponds:
 		vegetation.obstacles.append(w)
+		vegetation.blockers.append(w)
 	_build_pond_water()
 	_build_exit_log()
 	mushrooms = Mushrooms.new()

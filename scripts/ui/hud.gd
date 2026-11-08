@@ -1089,7 +1089,7 @@ class CardStack extends Control:
 			var c: Card = cards[i]
 			if c.frenzy and not c.leaving and GameState.frenzy_time > 0.0:
 				c.life = GameState.frenzy_time + 0.6
-				c.bar = GameState.frenzy_time / GameState.FRENZY_TIME
+				c.bar = GameState.frenzy_time / GameState.frenzy_full
 				c.value = "%d s" % int(ceil(GameState.frenzy_time))
 			c.life -= delta
 			if c.life <= 0.0:

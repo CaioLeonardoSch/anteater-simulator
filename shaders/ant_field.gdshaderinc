@@ -17,6 +17,10 @@
 uniform sampler2D trail_tex : filter_nearest, repeat_disable;
 uniform sampler2D height_tex : filter_linear, repeat_disable;
 uniform float height_size = 160.0;
+// Pedras e troncos (sobem) e arbustos (contornam): ant_ground.gd.
+// RG desvio, B altura acima do chão, A escondida embaixo das folhas.
+uniform sampler2D props_tex : filter_linear, repeat_disable;
+uniform float props_size = 64.0;
 uniform float trail_step = 0.25;
 uniform int field_kind = 0;
 // Relógio das formigas e a câmera do jogador (para o nível de detalhe).
@@ -27,6 +31,18 @@ instance uniform vec2 lod_band = vec2(0.0, 100000.0);
 
 float field_ground(vec2 p) {
 	return texture(height_tex, p / height_size + 0.5).r;
+}
+
+vec4 field_props(vec2 p) {
+	vec2 uv = p / props_size + 0.5;
+	if (uv.x <= 0.0 || uv.y <= 0.0 || uv.x >= 1.0 || uv.y >= 1.0) {
+		return vec4(0.0);
+	}
+	return texture(props_tex, uv);
+}
+
+float field_surface(vec2 p) {
+	return field_ground(p) + field_props(p).b;
 }
 
 vec3 field_trail_point(int row, int i) {
@@ -94,18 +110,27 @@ float field_ant(mat4 m, mat4 view, vec4 c0, vec4 c1, inout vec3 vtx, inout vec3 
 		float th = f10 + cyc * 2.39996 + (u - 0.5) * f11 + 0.22 * sin(w);
 		float rho = reach * sin(3.14159265 * u);
 		vec2 d = vec2(cos(th), sin(th));
-		vec2 p2 = vec2(f0, f1) + d * rho;
+		vec2 raw = vec2(f0, f1) + d * rho;
 		float dth = f11 + 0.22 * 12.566 * cos(w);
 		vec2 dp = d * reach * 3.14159265 * cos(3.14159265 * u) + vec2(-d.y, d.x) * rho * dth;
 		vec2 fw = normalize(dp + vec2(1e-5, 0.0));
-		float e = 0.3;
-		float hx = field_ground(p2 + vec2(e, 0.0)) - field_ground(p2 - vec2(e, 0.0));
-		float hz = field_ground(p2 + vec2(0.0, e)) - field_ground(p2 - vec2(0.0, e));
+		// Contorna arbustos e árvores (e some embaixo das folhas, no miolo).
+		vec4 pr = field_props(raw);
+		vec2 p2 = raw + pr.rg;
+		vec2 q = raw + fw * 0.05;
+		q += field_props(q).rg;
+		if (distance(q, p2) > 1e-4) {
+			fw = normalize(q - p2);
+		}
+		// Sobe nas pedras e troncos.
+		float e = 0.15;
+		float hx = field_surface(p2 + vec2(e, 0.0)) - field_surface(p2 - vec2(e, 0.0));
+		float hz = field_surface(p2 + vec2(0.0, e)) - field_surface(p2 - vec2(0.0, e));
 		up = normalize(vec3(-hx, 2.0 * e, -hz));
-		pos = vec3(p2.x, field_ground(p2), p2.y);
+		pos = vec3(p2.x, field_surface(p2), p2.y);
 		fwd = vec3(fw.x, 0.0, fw.y);
 		carry = u > 0.5 ? leaf : 0.0;
-		hidden = rho < 0.15;
+		hidden = rho < 0.15 || pr.a > 0.5;
 		gait = t * 0.55 / (size * 0.32) + seed;
 	}
 	vec3 F = normalize(fwd - up * dot(fwd, up));

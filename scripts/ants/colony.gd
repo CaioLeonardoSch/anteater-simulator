@@ -287,7 +287,7 @@ func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> in
 	elif not instant:
 		# Sem Garras Fortes, as moradoras saem correndo para longe.
 		swarm.scatter_home(code)
-	# Câmara aberta: as moradoras não voltam para ela, se espalham pela região
+	# Câmara aberta: as moradoras não voltam para dentro, passeiam em volta dela
 	# (no buraco da rainha, a corte fica com ela).
 	if not c.royal:
 		swarm.disperse_home(code, c.pos2, instant)

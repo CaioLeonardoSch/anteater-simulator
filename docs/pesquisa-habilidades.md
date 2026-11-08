@@ -534,7 +534,7 @@ Vem da primeira jogatina do Caio com 1 inseto por lambida (versão 0.1.2,
 | | Comprimento 1 | 1 000 | 16 · 20 · 24 | língua de 3,0 → 3,3 → 3,6 → 3,9 m |
 | | Comprimento 2 | 8 000 | 60 · 80 | 4,2 → 4,5 m |
 | | Mira 1 | 200 | 12 | a língua vai atrás do inseto; área da mira de 15° (hoje 10°) |
-| | Mira 2 | 3 000 | 25 · 30 · 35 | área de 18° → 21° → 25° |
+| | Mira 2 | 3 000 | 25 · 30 · 35 | área de 11° → 16° → 22° |
 | | Mira 3 | 13 000 | 110 | a ponta gruda num raio 70% maior |
 | Garras | Cavar | — | 25 | abre câmaras pequenas; descanso de 25 s |
 | | Rapidez 1 | 1 000 | 12 · 16 · 20 | descanso de 20 → 16 → 12 s |

@@ -183,8 +183,8 @@ buscamos, no espírito delas:
   um pouco a cada clique: 2, 3, 5, 8... até 40 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
   estiver perto da ponta. A **Mira nível 1** (12 pontos) faz a língua ir
-  sozinha atrás da formiga mais perto da mira, e a **Mira nível 2** deixa
-  essa área maior a cada clique.
+  sozinha atrás da formiga mais perto da mira (área de 6°) e acompanhá-la, e a
+  **Mira nível 2** deixa essa área maior a cada clique (11° → 16° → 22°).
 - **O fim:** a região está limpa quando não sobra nenhum inseto, nem nas trilhas
   nem dentro dos ninhos.
 
@@ -235,7 +235,7 @@ ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
 | | Bocado | nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15, e a ponta gruda num raio maior) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40) |
 | | Destreza | só a velocidade: nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4) |
 | | Comprimento | só o alcance: nível 1 (16, 20, 24: 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m) |
-| | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 10° para 15°) · nível 2 (25, 30, 35 · Formigueiro: 18° → 21° → 25°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
+| | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 6°, e a ponta acompanha o inseto) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
 | **Garras** | começo | Cavar (25: abre as câmaras pequenas; depois as garras descansam 25 s) |
 | | Força | nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s ao abrir) · nível 2 (40, 50 · Metade: 3,2 → 4 s) |
 | | Tremor (sai de Força nível 1) | nível 1 (90 · Metade: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: recarga de 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
@@ -717,3 +717,7 @@ acertar a duração com testes.
 | 08/11/2026 | Insetos fogem | 1 m de você parado | 2 m parado (2,5 m andando, igual); quando uma formiga é comida, as que estão a até 2 m dela fogem |
 | 08/11/2026 | Olhar para cima e para baixo | Limite de 75° para baixo e 40° para cima | Sem limite (até quase reto para cima ou para baixo) |
 | 08/11/2026 | Mapa: zoom e arrastar | Longe do zoom máximo, o centro era puxado para o meio do mapa: o ponto embaixo do mouse fugia ao dar zoom e o arraste andava menos que o mouse. O botão direito também arrastava | O ponto embaixo do mouse fica parado no zoom, o mapa acompanha o mouse ao arrastar e para na borda (com folga). Arrasta com o botão esquerdo ou o do meio; o direito só põe o marcador |
+| 08/11/2026 | Mira | Mesmo sem Mira, a língua ia atrás da tanajura no caminho. Com Mira 1, a área já era de 15° (com a língua de 1 a 2,5 m, quase igual ao raio da ponta) e a Mira 2 só subia para 18°, 21°, 25°: não dava para sentir | Sem Mira, a língua vai reta e não acompanha nada. Mira 1: área de 6°, e a ponta acompanha o inseto escolhido (formiga ou tanajura). Mira 2: 11° → 16° → 22° |
+| 08/11/2026 | Frenesi | Comer outra tanajura ou cogumelo com o Frenesi ligado voltava o tempo para 6 s | Com o Frenesi ligado, cada tanajura ou cogumelo comido soma 3 s ao que falta (2 tanajuras de uma vez faltando 4 s: 10 s). A barra do card usa a duração total |
+| 08/11/2026 | Câmara aberta | As moradoras fugiam e iam morar num canto da região, de 4 a 13 m da câmara | Correm alguns segundos e voltam a passear até 5 m da câmara, por cima do monte também, contornando arbustos e lagoas |
+| 08/11/2026 | Formigas que passeiam | Atravessavam pedras, arbustos e árvores | Sobem e andam por cima das pedras (e troncos caídos); dão a volta rente nos troncos das árvores, nos arbustos (por fora das folhas) e nos cupinzeiros |

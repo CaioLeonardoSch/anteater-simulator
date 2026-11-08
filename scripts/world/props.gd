@@ -281,6 +281,9 @@ static func build_log(rng: RandomNumberGenerator, mats) -> Node3D:
 	b.add_tube(bpts, PackedFloat32Array([radius * 0.45, radius * 0.3, radius * 0.18]), 8, false, false, 0.5)
 	add_log_end(b, rng, branch + 2 * 9, 8, bpts[2], (bpts[2] - bpts[1]).normalized(), radius * 0.18, false)
 	var root := Node3D.new()
+	# O tubo do tronco (sem o galho), para as formigas andarem por cima.
+	root.set_meta("tube_pts", pts)
+	root.set_meta("tube_radii", radii)
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit(null, mats.log_bark)
 	root.add_child(mi)

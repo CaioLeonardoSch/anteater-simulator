@@ -478,7 +478,7 @@ func _update_tongue(delta: float) -> void:
 	match t_state:
 		Tongue.OUT:
 			t_time += delta
-			# A tanajura foge rápido: a ponta vai atrás dela até alcançar.
+			# Com Mira, a ponta vai atrás do inseto até alcançar.
 			if t_follow >= 0 and swarm.alive[t_follow] == 1 and swarm.mode[t_follow] != swarm.Mode.STUCK:
 				t_target = swarm.body_point(t_follow)
 			var k := clampf(t_time / t_dur_out, 0.0, 1.0)
@@ -503,12 +503,15 @@ func _start_flick() -> void:
 	t_dur_out = period * 0.36
 	t_dur_back = period * 0.5
 	var target := _straight_target()
-	t_follow = _path_tanajura
-	# Língua Certeira: a ponta vai atrás da formiga mais perto da mira.
+	# Sem Mira, a língua vai reta. Com Mira, vai atrás do inseto mais perto
+	# da mira (ou da tanajura no caminho) e o acompanha.
+	t_follow = -1
 	var ant := _tracked_ant()
 	if ant >= 0:
-		target = swarm.pos[ant] + Vector3(0, 0.02, 0)
-		t_follow = ant if swarm.kind[ant] == swarm.TANAJURA else -1
+		target = swarm.body_point(ant)
+		t_follow = ant
+	elif GameState.tongue_tracking():
+		t_follow = _path_tanajura
 	t_target = target
 	t_state = Tongue.OUT
 	t_time = 0.0

@@ -188,7 +188,7 @@ cada clique em pontos e, depois do ponto, **quando ela abre**. Sem nada, desde
 o começo. Os **marcos** da área 1 são: **Formigueiro** (o primeiro formigueiro
 limpo), **Metade** (metade dos insetos) e **80%** (80% dos insetos; o Farejar
 vem de presente). **Área 2** fica para depois da demo. Na árvore, o que ainda
-não abriu aparece com cadeado e o marco embaixo.
+não abriu aparece só com o cadeado.
 
 | Habilidade | Níveis (preço de cada clique · quando abre) |
 |---|---|

@@ -249,9 +249,8 @@ ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
 | **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400): ainda não feitas, aparecem com cadeado |
 
 **Habilidades por região:** o que é da área 2 (a **Escalada + Cauda** e os
-níveis mais fortes das linhas) aparece na árvore desde o começo, com um
-cadeado e "Área 2" embaixo. O que espera um marco aparece com cadeado e o
-marco embaixo ("Formigueiro", "Metade", "80%"). Ao chegar num marco, um cartão
+níveis mais fortes das linhas) aparece na árvore desde o começo, só com um
+cadeado, sem texto (o mesmo para o que espera um marco). Ao chegar num marco, um cartão
 grande avisa quantas habilidades novas abriram.
 
 **Fora por enquanto:** Camuflagem (repete o que a Língua já faz) e Natação. O
@@ -382,7 +381,7 @@ Feito, seguindo as decisões:
    comer metade dos insetos (marco 2) e comer 80% (marco 3) abrem habilidades
    novas, com um cartão grande na tela ("4 habilidades novas na árvore"). No
    marco 3, o **Farejar** vem de presente e não sai ao redistribuir. Os níveis
-   mais fortes ficam para a área 2, com cadeado e "Área 2" na árvore.
+   mais fortes ficam para a área 2, com cadeado na árvore.
 23. **Objetivos (o tutorial guiado):** um cartão no canto, sempre visível, com
    o objetivo da vez e o progresso ("120 / 200"): andar com WASD, comer um
    inseto, comer 200, aprender uma habilidade, abrir uma câmara, limpar um
@@ -699,4 +698,5 @@ acertar a duração com testes.
 | 07/11/2026 | Lagoas | Água azul-acinzentada lisa e parada, beira de terra seca rachada | Água que reflete o céu do jogo (muda com a tarde) e uma faixa do paredão no fundo, com ondinhas que andam com o vento e brilho do sol; lama molhada escura e lisa na beira, com poças brilhando. Velocidade ≈2% menor (≈176 → ≈173 quadros por segundo) |
 | 08/11/2026 | Tamanho da área 1 | Uns 120 m de ponta a ponta, 18 formigueiros (11 pequenos e 7 grandes com rainha), 116 câmaras, 44 000 insetos e 4 lagoas | Uns 50 m, 8 formigueiros (5 pequenos, 2 médios e 1 grande com a rainha), 40 câmaras, 10 000 insetos e 1 lagoa; jogos salvos antigos não abrem |
 | 08/11/2026 | Quando as habilidades abrem | Nove travas por insetos comidos (200 a 21 000) | Desde o começo, em 3 marcos (o 1º formigueiro limpo, metade e 80%, com o Farejar de presente) ou só na área 2 |
+| 08/11/2026 | Cadeados da árvore | "Formigueiro", "Metade", "80%" ou "Área 2" embaixo do cadeado | Só o cadeado, sem texto |
 | 08/11/2026 | Tutorial | Só as dicas de controle embaixo da tela | Objetivos no canto, um de cada vez, com um losango que voa do cartão até o alvo; F mostra de novo |

@@ -770,8 +770,8 @@ Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
 - Cada marco mostra um cartão, como "Formigueiro limpo · 4 habilidades novas
   na árvore".
 
-**Na árvore:** o que é de outra área aparece com cadeado e "Área 2". O que
-espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
+**Na árvore:** o que ainda não abriu (de outra área ou esperando um marco)
+aparece só com o cadeado, sem texto (decidido pelo Caio em 08/11/2026).
 
 ### Área 1 menor (08/11: o Caio pediu 50 m)
 
@@ -818,7 +818,7 @@ espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
    uma lagoa só.
 2. **Marcos no lugar das travas:** o primeiro formigueiro limpo, metade e 80%
    (com o Farejar de presente), um cartão grande na tela a cada marco e, na
-   árvore, o cadeado com "Formigueiro", "Metade", "80%" ou "Área 2" embaixo.
+   árvore, só o cadeado (sem texto embaixo).
    Redistribuir continua de graça, e o presente não sai.
 3. **Jogos salvos antigos não abrem** (o mapa e as travas mudaram).
 4. **Bot na área 1:** seção 13.

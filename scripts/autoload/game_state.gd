@@ -560,17 +560,6 @@ func is_gift(id: String) -> bool:
 	return false
 
 
-## Texto curto embaixo do cadeado na árvore ("Formigueiro", "Metade", "80%"
-## ou "Área 2"; vazio no ramo da Escalada, que já diz no nome do ramo).
-func lock_label(id: String) -> String:
-	var u := unlock_of(id)
-	if u == AREA2:
-		return "Área 2"
-	if not region_required(id).is_empty():
-		return ""
-	return String(get_marco(u).get("short", ""))
-
-
 ## Região necessária para comprar (vazio = disponível em qualquer lugar).
 func region_required(id: String) -> String:
 	var u := get_upgrade(id)

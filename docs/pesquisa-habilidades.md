@@ -908,6 +908,60 @@ o jogador sempre sabe para onde ir.
   ("marco").
 - O código está em `scripts/ui/objectives.gd`.
 
+## 13. Bot na área 1 nova (08/11/2026)
+
+O mesmo bot das seções 5 e 10 (compra em rodízio entre os ramos, acelerado 8
+vezes), agora na clareira de 50 m com 10 000 insetos e os marcos. Os registros
+estão em `docs/dados/bot-area1.csv` e `bot-area1-travou.csv`.
+
+**Quanto cada formigueiro guarda** (somando trilhas, passeio e câmaras):
+pequeno 1 026, médio 1 437 e o da rainha 1 996 (com a rainha, que vale 200).
+
+### 1ª rodada: travou com 9 601 insetos
+
+O bot gastou os pontos em outras linhas e nunca comprou a **Fundura** (60 +
+120 pontos). Os 399 insetos que sobraram estavam no formigueiro da rainha, que
+só abre com ela, e valiam só 40 pontos. **Um jogador pode cair nisso também**:
+a área 1 dá uns 1 000 pontos e o que abre nela custa 1 442. A saída hoje é
+redistribuir os pontos (de graça). Para a 2ª rodada, o bot passou a comprar a
+Fundura primeiro depois do marco 2, como faria quem segue o objetivo
+"Desmanche o formigueiro da rainha".
+
+### 2ª rodada: limpou a área
+
+| Minuto (do bot) | Insetos | O que aconteceu |
+|---:|---:|---|
+| 0:04 | 1 | Objetivos: andar e comer um inseto |
+| 3:09 | 200 | Coma 200; aprendeu a Lambida Contínua logo depois |
+| 7:30 | 500 | Cavar e a primeira câmara aberta |
+| 10 | 644 | |
+| 20 | 1 945 | |
+| 30 | 3 162 | |
+| 40 | 4 694 | |
+| 42:37 | 5 000 | **Marco 2** (metade) |
+| 51:12 | 6 170 | Fundura 2 |
+| 53:38 | 7 163 | **Marco 1**: o primeiro formigueiro limpo foi o da rainha |
+| 59:35 | 8 000 | **Marco 3** (80%) e o Farejar de presente |
+| 70:56 | 10 000 | **Área limpa** |
+
+- **38 cliques comprados**, 68 pontos sobrando no fim. As duas esperas
+  longas foram pela Fundura: 4 minutos pela 1 (60 pontos) e 9 minutos pela 2
+  (120 pontos, logo depois do marco 2). Fora isso, uma compra a cada 1 a 3
+  minutos.
+- **O bot não segue os objetivos:** ele come o inseto mais perto e não
+  termina um formigueiro de propósito. Por isso o marco 1 veio depois do 2.
+  Quem segue o losango deve limpar um formigueiro pequeno (1 026 insetos)
+  bem antes da metade.
+- **A duração para uma pessoa:** na clareira antiga, o Caio comeu 3,1 vezes
+  mais rápido que o bot. Na mesma proporção, os 71 minutos do bot viram
+  **perto de 23 minutos**, perto da meta de 20.
+
+### Para decidir
+
+- **A Fundura pode travar o fim.** Ideias: dar a Fundura 1 no marco 1 e a 2
+  no marco 2 de presente (como o Farejar); deixar mais barata; ou, quando
+  faltar ponto para ela, a dica embaixo da mira lembrar de redistribuir.
+
 ## Fontes
 
 - Anthony Pecorella, "The Math of Idle Games",

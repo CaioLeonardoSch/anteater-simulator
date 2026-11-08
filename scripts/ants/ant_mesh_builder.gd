@@ -69,7 +69,7 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 			gaster_s = 1.75
 			c_head = Color(0.45, 0.22, 0.09)
 			c_meso = Color(0.50, 0.26, 0.10)
-			c_gaster = Color(0.66, 0.34, 0.11)
+			c_gaster = Color(0.56, 0.27, 0.09)
 			c_leg = Color(0.40, 0.2, 0.08)
 	if lod >= 4:
 		return _build_nano(b, kind, c_head, c_meso, c_gaster, c_leg, gaster_s, head_s)
@@ -82,7 +82,7 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 	b.add_ellipsoid(Vector3(0, 0.21 + (gaster_s - 1.0) * 0.05, gz), Vector3(0.15, 0.13, 0.2) * gaster_s, rings, segs, Basis(Vector3.RIGHT, -0.25))
 	if (kind == "tanajura" or kind == "queen") and not tiny:
 		# Listras douradas no abdômen da tanajura e da rainha.
-		b.color = Color(0.88, 0.62, 0.22)
+		b.color = Color(0.82, 0.56, 0.2)
 		for k in 3:
 			var zz := gz - 0.12 + k * 0.12
 			b.add_ellipsoid(Vector3(0, 0.215 + (gaster_s - 1.0) * 0.05, zz), Vector3(0.152, 0.132, 0.025) * gaster_s, 6, segs, Basis(Vector3.RIGHT, -0.25))
@@ -162,6 +162,7 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 		# O chapéu (uma formiga em 16 000) só nas malhas de perto: de longe nem se vê.
 		if not tiny:
 			_add_hat(b, lod > 0)
+	_shade(b)
 	var mesh := b.commit(null, body_material)
 	# --- Asas (superfície translúcida separada)
 	if kind == "tanajura":
@@ -178,6 +179,22 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 				_add_wing(w, piv, sx, length, width)
 		w.commit(mesh, wing_material)
 	return mesh
+
+
+## Volume pintado na cor: casco mais claro em cima e escuro embaixo, e pernas e
+## antenas escurecendo da junta até a ponta (a folha e o chapéu ficam como estão).
+static func _shade(b: MeshBuilder) -> void:
+	for i in b.verts.size():
+		var part := int(b.custom0[i * 4 + 3] + 0.5)
+		if part == Part.LEAF or part == Part.HAT:
+			continue
+		var c := b.colors[i]
+		var up := b.normals[i].y * 0.5 + 0.5
+		var k := lerpf(0.45, 1.15, up * up)
+		if part == Part.LEG or part == Part.ANTENNA:
+			var piv := Vector3(b.custom0[i * 4], b.custom0[i * 4 + 1], b.custom0[i * 4 + 2])
+			k *= lerpf(1.1, 0.4, clampf(b.verts[i].distance_to(piv) / 0.45, 0.0, 1.0))
+		b.colors[i] = Color(c.r * k, c.g * k, c.b * k, c.a)
 
 
 ## Formiga mínima, para longe (4 a 6 pixels): dois fusos (abdômen e
@@ -297,14 +314,15 @@ static func _add_wing(w: MeshBuilder, piv: Vector3, sx: float, length: float, wi
 	var dir := Vector3(sx * 0.32, 0.04, 1.0).normalized()
 	var side := Vector3(sx, 0, -0.3 * sx).normalized()
 	var count := 10
-	var c := w.add_vertex(piv, Vector3.UP, Vector2(0, 0.5))
+	# UV = (ao longo da asa 0..1, para o lado 0..1): o shader desenha as nervuras.
+	var c := w.add_vertex(piv, Vector3.UP, Vector2(0, 0))
 	var idx: Array[int] = []
 	for k in count + 1:
 		var t := float(k) / count
 		var a := t * PI
 		var along := (1.0 - cos(a)) * 0.5 * length
 		var across := sin(a) * width * (1.0 - t * 0.25)
-		idx.append(w.add_vertex(piv + dir * along + side * across, Vector3.UP, Vector2(t, 1.0)))
+		idx.append(w.add_vertex(piv + dir * along + side * across, Vector3.UP, Vector2(along / length, across / width)))
 	for k in count:
 		w.add_tri(c, idx[k + 1], idx[k])
 

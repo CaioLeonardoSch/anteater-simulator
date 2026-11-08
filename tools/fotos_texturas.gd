@@ -10,7 +10,7 @@ extends Node
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
-## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol.
+## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol, formigas, tanajura.
 
 var main
 var out_dir := "user://fotos"
@@ -129,6 +129,37 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		p.pitch = -0.9
 		await _shot("chao")
+	if _wanted("formigas"):
+		# Na beira da primeira trilha, olhando as operárias passarem.
+		var tr = main.world.trails.trails[0]
+		var s0: float = tr.length * 0.35
+		var tp: Vector2 = tr.point_at(s0)
+		var side: Vector2 = tr.side_at(s0)
+		var ty: float = main.world.terrain.get_height(tp.x, tp.y)
+		await _look_from(tp + side * 0.75, Vector3(tp.x, ty, tp.y))
+		await _shot("formigas")
+	if _wanted("tanajura"):
+		# A primeira tanajura viva, de perto.
+		var sw = main.swarm
+		var best := -1
+		for i in sw.alive.size():
+			if sw.alive[i] == 1 and sw.kind[i] == sw.TANAJURA:
+				best = i
+				break
+		if best >= 0:
+			# Para a tanajura enquanto fotografa.
+			var spd: float = sw.speed[best]
+			sw.speed[best] = 0.0
+			# Ela voa balançando: a câmera acompanha a cada quadro, de lado.
+			for _f in 14:
+				var tq: Vector3 = sw.pos[best]
+				var fwd := Vector2(-sin(sw.yaw[best]), -cos(sw.yaw[best]))
+				var side := Vector2(-fwd.y, fwd.x)
+				# Um pouco à frente e de lado; mira abaixo dela para ficar acima do focinho.
+				await _look_from(Vector2(tq.x, tq.z) + (side + fwd * 0.6).normalized() * 0.55, tq - Vector3(0, 0.12, 0))
+			print("[fotos] tanajura em ", sw.pos[best])
+			DevTools._capture("%s/%s.jpg" % [out_dir, "tanajura"])
+			sw.speed[best] = spd
 	if _wanted("focinho") or _wanted("focinho_sol"):
 		# O focinho em primeira pessoa: de costas para o sol e contra o sol.
 		for k in 2:

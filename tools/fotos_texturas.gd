@@ -10,7 +10,7 @@ extends Node
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
-## cogumelos, cogumelos_longe, cogumelo_comer.
+## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe.
 
 var main
 var out_dir := "user://fotos"
@@ -234,6 +234,26 @@ func _ready() -> void:
 		main.world._splinters(lp)
 		await _shot_after("lascas", 0.25)
 	# Cogumelos: de perto, no meio do campo e a língua pegando um grupinho.
+	if _wanted("flores") or _wanted("flores_longe"):
+		# Florzinha mais perto do ponto (6, 6), de perto e de um pouco mais longe.
+		var best := Vector3.INF
+		for mmi in main.world.grass.get_children():
+			if not (mmi is MultiMeshInstance3D) or mmi.material_override != main.world.mats.flower:
+				continue
+			var mm: MultiMesh = mmi.multimesh
+			for i in mm.instance_count:
+				var o := mm.get_instance_transform(i).origin
+				if Vector2(o.x - 6, o.z - 6).length() < Vector2(best.x - 6, best.z - 6).length():
+					best = o
+		if best != Vector3.INF:
+			var f2 := Vector2(best.x, best.z)
+			var away := (-f2).normalized()
+			if _wanted("flores"):
+				await _look_from(f2 + away * 0.9, best + Vector3(0, 0.2, 0))
+				await _shot("flores")
+			if _wanted("flores_longe"):
+				await _look_from(f2 + away * 2.6, best + Vector3(0, 0.2, 0))
+				await _shot("flores_longe")
 	if (_wanted("cogumelos") or _wanted("cogumelos_longe") or _wanted("cogumelo_comer")) and main.world.mushrooms.spots.size() > 0:
 		var ms = main.world.mushrooms
 		print("[fotos] cogumelos no mapa: ", ms.spots.size())

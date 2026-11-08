@@ -1,24 +1,36 @@
 shader_type spatial;
 render_mode cull_disabled, world_vertex_coords, diffuse_burley;
 // Florzinhas do campo (MultiMesh). COLOR.r = altura (0 base .. 1 topo),
-// COLOR.g = 1 nas pétalas; a cor de cada flor vem da instância.
+// COLOR.g = 1 nas pétalas, COLOR.b = 1 no miolo, COLOR.a = 0..1 da base à
+// ponta da pétala; a cor de cada flor vem da instância.
 
 global uniform vec3 player_pos;
 global uniform vec2 wind_dir;
 global uniform float wind_strength;
 
 uniform vec3 stem_color : source_color = vec3(0.35, 0.45, 0.16);
+// Miolo amarelo (flores claras, roxas, rosas) e marrom (flores amarelas e laranja).
+uniform vec3 center_yellow : source_color = vec3(0.98, 0.76, 0.16);
+uniform vec3 center_brown : source_color = vec3(0.50, 0.27, 0.08);
 uniform float fade_start = 26.0;
 uniform float fade_end = 38.0;
 
+varying float vh;
 varying float vpetal;
+varying float vcenter;
+varying float vpos;
+varying float vrand;
 varying vec3 vinst;
 
 void vertex() {
 	vec3 origin = MODEL_MATRIX[3].xyz;
 	float h = COLOR.r;
+	vh = h;
 	vpetal = COLOR.g;
+	vcenter = COLOR.b;
+	vpos = COLOR.a;
 	vinst = INSTANCE_CUSTOM.rgb;
+	vrand = fract(sin(dot(origin.xz, vec2(12.9898, 78.233))) * 43758.5453);
 	float sway = sin(TIME * 2.1 + origin.x * 0.7 + origin.z * 0.5) * 0.06 * wind_strength * h;
 	vec3 offset = vec3(wind_dir.x, 0.0, wind_dir.y) * sway;
 	vec2 d = VERTEX.xz - player_pos.xz;
@@ -31,9 +43,17 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 col = mix(stem_color, vinst, vpetal);
+	// Caule mais escuro embaixo.
+	vec3 stem = stem_color * (0.65 + 0.5 * vh);
+	// Pétala: mais funda perto do miolo, clara e viva na ponta.
+	vec3 tone = vinst * (0.9 + vrand * 0.2);
+	vec3 petal = mix(tone * vec3(0.68, 0.62, 0.62), min(tone * 1.1 + 0.03, vec3(1.0)), smoothstep(0.05, 0.85, vpos));
+	float yellow = smoothstep(0.3, 0.6, (vinst.r + vinst.g) * 0.5 - vinst.b);
+	vec3 center = mix(center_yellow, center_brown, yellow);
+	vec3 col = mix(stem, petal, vpetal);
+	col = mix(col, center, vcenter);
 	ALBEDO = col;
 	ROUGHNESS = 0.7;
-	BACKLIGHT = col * 0.5;
-	EMISSION = vinst * vpetal * 0.04;
+	BACKLIGHT = col * mix(0.35, 0.65, vpetal);
+	EMISSION = petal * vpetal * 0.04;
 }

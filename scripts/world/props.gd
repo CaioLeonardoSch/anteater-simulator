@@ -384,22 +384,80 @@ static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_head
 	return b.commit()
 
 
-## Florzinha: caule + cabeça com cinco pétalas. COLOR.g = 1 nas pétalas.
-static func build_flower_mesh() -> ArrayMesh:
+## Florzinhas: touceirinha de caules finos com folhinhas e flores de pétalas
+## arredondadas, um pouco em concha. Variante 0: duas ou três flores de cinco
+## pétalas; variante 1: duas margaridas de pétalas finas. COLOR.r = altura
+## (0..1), COLOR.g = 1 nas pétalas, COLOR.b = 1 no miolo e COLOR.a = 0..1 da
+## base à ponta da pétala. Sorteio próprio: não mexe no sorteio do mapa.
+static func build_flower_mesh(variant: int = 0) -> ArrayMesh:
+	const TOP := 0.32
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9100 + variant
 	var b := MeshBuilder.new()
-	b.color = Color(0, 0, 0, 1)
-	var stem := PackedVector3Array([Vector3.ZERO, Vector3(0.01, 0.12, 0), Vector3(0.0, 0.24, 0.01)])
-	b.add_ribbon(stem, PackedFloat32Array([0.012, 0.01, 0.008]), Vector3.RIGHT, Vector3.BACK, PackedFloat32Array([0.0, 0.5, 1.0]))
-	for v in b.verts.size():
-		b.colors[v] = Color(b.uvs[v].y, 0, 0, 1)
-	var center := Vector3(0.0, 0.245, 0.01)
-	b.color = Color(1.0, 1.0, 0, 1)
-	var c := b.add_vertex(center + Vector3.UP * 0.008, Vector3.UP, Vector2(0.5, 0.5))
-	var ring := []
-	for k in 10:
-		var a := TAU * k / 10.0
-		var r := 0.05 if k % 2 == 0 else 0.022
-		ring.append(b.add_vertex(center + Vector3(cos(a) * r, 0.006 if k % 2 == 0 else 0.0, sin(a) * r), Vector3.UP, Vector2(0.5, 0.5)))
-	for k in 10:
-		b.add_tri(c, ring[(k + 1) % 10], ring[k])
+	var heads := rng.randi_range(2, 3) if variant == 0 else 2
+	for i in heads:
+		var ang := TAU * i / heads + rng.randf_range(-0.6, 0.6)
+		var out := Vector3(cos(ang), 0, sin(ang))
+		var side := Vector3(-out.z, 0, out.x)
+		var base := out * (0.0 if i == 0 else rng.randf_range(0.02, 0.05))
+		var h := rng.randf_range(0.22, 0.3) if i == 0 else rng.randf_range(0.14, 0.24)
+		var lean := out * rng.randf_range(0.02, 0.06) * (0.4 if i == 0 else 1.0)
+		var pts := PackedVector3Array()
+		var ws := PackedFloat32Array()
+		var hs := PackedFloat32Array()
+		for k in 4:
+			var t := k / 3.0
+			pts.append(base + Vector3.UP * h * t + lean * t * t)
+			ws.append(lerpf(0.009, 0.006, t))
+			hs.append(h * t / TOP)
+		# Caule em cruz: não some quando visto de lado.
+		var start := b.verts.size()
+		b.add_ribbon(pts, ws, side, out, hs)
+		b.add_ribbon(pts, ws, out, side, hs)
+		for v in range(start, b.verts.size()):
+			b.colors[v] = Color(b.uvs[v].y, 0, 0, 0)
+		# Folhinhas compridas saindo do caule.
+		for l in rng.randi_range(1, 2):
+			var la := ang + PI * (l + 0.5) + rng.randf_range(-0.5, 0.5)
+			var ld := Vector3(cos(la), 0, sin(la))
+			var lp := base + Vector3.UP * h * rng.randf_range(0.12, 0.4)
+			var ll := rng.randf_range(0.05, 0.08)
+			var s0 := b.verts.size()
+			b.add_ribbon(PackedVector3Array([lp, lp + ld * ll * 0.5 + Vector3.UP * ll * 0.3, lp + ld * ll + Vector3.UP * ll * 0.2]),
+				PackedFloat32Array([0.006, 0.02, 0.0]), Vector3(-ld.z, 0, ld.x), Vector3.UP)
+			for v in range(s0, b.verts.size()):
+				b.colors[v] = Color(lp.y / TOP, 0, 0, 0)
+		# Cabeça virada um pouco para fora.
+		var up := (Vector3.UP + out * rng.randf_range(0.15, 0.4)).normalized()
+		var basis := Basis(Quaternion(Vector3.UP, up))
+		if variant == 0:
+			_flower_head(b, pts[3], basis, pts[3].y / TOP, 5, rng.randf_range(0.038, 0.05), 0.55, 0.011)
+		else:
+			_flower_head(b, pts[3], basis, pts[3].y / TOP, 11, rng.randf_range(0.04, 0.052), 0.2, 0.015)
 	return b.commit()
+
+
+## Cabeça da flor: `n` pétalas arredondadas (largura = `wf` do comprimento),
+## subindo na ponta, e o miolo em cúpula de raio `cr`.
+static func _flower_head(b: MeshBuilder, c: Vector3, basis: Basis, hr: float, n: int, length: float,
+		wf: float, cr: float) -> void:
+	var nup := basis * Vector3.UP
+	var us: Array[float] = [0.45, 0.85, 1.0, 0.85, 0.45]
+	var sides: Array[float] = [-1.0, -0.75, 0.0, 0.75, 1.0]
+	for k in n:
+		var a := TAU * k / n
+		var d := basis * Vector3(cos(a), 0, sin(a))
+		var s := basis * Vector3(-sin(a), 0, cos(a))
+		var r0 := cr * 0.6
+		b.color = Color(hr, 1, 0, 0)
+		var i0 := b.add_vertex(c + d * r0, nup)
+		var ring: Array[int] = []
+		for j in 5:
+			var u := us[j]
+			b.color = Color(hr, 1, 0, u)
+			ring.append(b.add_vertex(c + d * (r0 + length * u) + s * length * wf * sides[j]
+				+ nup * length * u * u * 0.35, nup))
+		for j in 4:
+			b.add_tri(i0, ring[j + 1], ring[j])
+	b.color = Color(hr, 0, 1, 0)
+	b.add_ellipsoid(c + nup * 0.003, Vector3(cr, cr * 0.65, cr), 3, 8, basis)

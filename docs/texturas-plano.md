@@ -78,7 +78,7 @@ atuais projetam as manchas nas três direções do mundo (projeção triplanar,
 | Copas, arbustos, ipês | `props.gd` | `leaves_*`, `shrub_*`, `ipe_*` | `shaders/foliage.gdshader` + `assets/textures/leaf_cluster.png` / `shrub_cluster.png` (512 px) / `flower_cluster.png` (256 px), geradas por `tools/gen_textures.py` |
 | Lagoas | `scripts/world/world.gd` `_build_pond_water` | `water` | `shaders/agua.gdshader` |
 | Capim | `scripts/world/grass.gd` | `grass` | `shaders/grass.gdshader` |
-| Terra ao cavar, poeira | `scripts/world/nest.gd`, `world.gd` | `StandardMaterial3D` de cor lisa | — |
+| Terra ao cavar, poeira | `scripts/world/nest.gd`, `world.gd`, `anteater.gd` → `scripts/world/dirt_fx.gd` | torrões, grãos, fumacinha e lascas com cor por partícula | — |
 | Cupinzeiro gigante no horizonte | `scripts/world/giant_mound.gd` | próprio | `shaders/landmark.gdshader` |
 
 Os materiais `bark`, `clay`, `rock`, `cliff` e `nest_soil` usam **o mesmo
@@ -198,4 +198,4 @@ o que for feito nos cupinzeiros).
 | Lagoas | feito em 07/11/2026: shader próprio `shaders/agua.gdshader` (material `water`): reflete as cores do céu (atualizadas com o dia em `world.gd` `_apply_day`) e o paredão numa faixa no fundo (altura reduzida de propósito, `cliff_height`), ondinhas com o vento, transparência pelo caminho da luz na água. Lama molhada na beira pelo canal alfa da máscara do terreno (`mud_tint`, `mud_rough` em `terrain.gdshader`) |
 | Copas e arbustos | feito em 08/11/2026: `assets/textures/leaf_cluster.png` (copas) e `shrub_cluster.png` (arbustos), 512 px, feitas por `tools/gen_textures.py` (roda no Python do Blender; R = sombra, G = tom de cada folha, B = folha seca). Shader `foliage.gdshader` com `tone_amount`, `dry_amount` e `dry_color` (zero nos ipês) |
 | Chão da mata | feito em 08/11/2026: `assets/textures/folhico/` (cor + altura, relevo), feita por `tools/gen_folhico.py` (roda no Python do Blender); shader próprio `shaders/mata.gdshader` (material `forest_floor`), lido de cima em duas escalas, emendando com o tom do campo na beira do mapa (`half_map`, `blend_width`). Fotos `mata` e `mata_chao` (a câmera entra na mata, onde o tamanduá não chega) |
-| Terra ao cavar | a fazer |
+| Terra ao cavar | feito em 08/11/2026: efeitos em `scripts/world/dirt_fx.gd` (sem textura nova): `burst` (câmara aberta e monte desmanchando) solta torrões irregulares de faces retas e grãos em tons de terra, girando e encolhendo no fim, e uma nuvem macia de poeira; `dust_ring` (tremor) é névoa clara que corre pelo chão com grãos pulando; `splinters` (tronco da passagem) são lascas pontudas em tons de madeira e casca. Fotos `cavar`, `poeira` e `lascas` (rodar a ferramenta duas vezes: na primeira o efeito pode não aparecer enquanto o shader compila) |

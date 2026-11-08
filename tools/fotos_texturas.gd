@@ -9,7 +9,7 @@ extends Node
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
-## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera.
+## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas.
 
 var main
 var out_dir := "user://fotos"
@@ -193,6 +193,45 @@ func _ready() -> void:
 		p.pitch = clampf(asin(aim.normalized().y), -1.3, 1.3)
 		await _shot(job[0])
 		p.set_physics_process(true)
+	# Terra ao cavar: a tampa de uma câmara sendo aberta (terra voando), a
+	# poeira do tremor e as lascas do tronco da passagem. Fotos no meio do efeito.
+	if _wanted("cavar"):
+		var done := false
+		for nest in main.world.nests:
+			if nest.big:
+				continue
+			for ci in nest.chambers.size():
+				var c = nest.chambers[ci]
+				if c.royal or c.satellite or c.opened:
+					continue
+				var cp: Vector3 = nest.chamber_world_pos(c)
+				var out2: Vector2 = Vector2(cp.x, cp.z) - nest.center2
+				out2 = out2.normalized() if out2.length() > 0.1 else Vector2(1, 0)
+				await _look_from(Vector2(cp.x, cp.z) + out2 * 2.6, cp + Vector3(0, 0.3, 0))
+				for i in 6:
+					await get_tree().process_frame
+				main.colony.open_chamber(nest, ci, false)
+				await _shot_after("cavar", 0.22)
+				done = true
+				break
+			if done:
+				break
+	if _wanted("poeira"):
+		p.place_at(Vector2(6, 6), 0.8)
+		await get_tree().physics_frame
+		p.pitch = -0.35
+		for i in 6:
+			await get_tree().process_frame
+		p._dust_ring(GameState.tremor_radius())
+		await _shot_after("poeira", 0.3)
+	if _wanted("lascas") and main.world.exit_log:
+		var lp: Vector3 = main.world.exit_log.global_position + Vector3(0, 0.6, 0)
+		var l2 := Vector2(lp.x, lp.z)
+		await _look_from(l2 - l2.normalized() * 3.5, lp)
+		for i in 6:
+			await get_tree().process_frame
+		main.world._splinters(lp)
+		await _shot_after("lascas", 0.25)
 	if _wanted("trilha"):
 		var sw = main.swarm
 		var best := -1
@@ -304,3 +343,9 @@ func _floor_y(mi: MeshInstance3D, p2: Vector2) -> float:
 			best = dd
 			y = w.y
 	return y
+
+
+## Foto `secs` segundos depois de agora (para pegar um efeito no meio).
+func _shot_after(name: String, secs: float) -> void:
+	await get_tree().create_timer(secs).timeout
+	DevTools._capture("%s/%s.jpg" % [out_dir, name])

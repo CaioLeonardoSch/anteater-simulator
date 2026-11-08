@@ -11,6 +11,7 @@ const Vegetation := preload("res://scripts/world/vegetation.gd")
 const Grass := preload("res://scripts/world/grass.gd")
 const Nest := preload("res://scripts/world/nest.gd")
 const Props := preload("res://scripts/world/props.gd")
+const DirtFx := preload("res://scripts/world/dirt_fx.gd")
 const ScentMarks := preload("res://scripts/world/scent_marks.gd")
 const Cliffs := preload("res://scripts/world/cliffs.gd")
 const GiantMound := preload("res://scripts/world/giant_mound.gd")
@@ -526,33 +527,7 @@ func break_exit() -> void:
 
 
 func _splinters(at: Vector3) -> void:
-	var p := GPUParticles3D.new()
-	p.one_shot = true
-	p.amount = 60
-	p.lifetime = 1.3
-	p.explosiveness = 0.95
-	var pm := ParticleProcessMaterial.new()
-	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
-	pm.emission_sphere_radius = 0.6
-	pm.direction = Vector3.UP
-	pm.spread = 75.0
-	pm.initial_velocity_min = 2.0
-	pm.initial_velocity_max = 4.5
-	pm.gravity = Vector3(0, -9.0, 0)
-	pm.scale_min = 0.6
-	pm.scale_max = 1.6
-	p.process_material = pm
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(0.05, 0.03, 0.18)
-	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.55, 0.38, 0.24)
-	m.roughness = 1.0
-	mesh.material = m
-	p.draw_pass_1 = mesh
-	add_child(p)
-	p.global_position = at
-	p.emitting = true
-	get_tree().create_timer(2.5).timeout.connect(p.queue_free)
+	DirtFx.splinters(self, at)
 
 
 ## Espalha câmaras pelo campo, longe das trilhas, dos montes e dos arbustos.

@@ -14,6 +14,7 @@ extends Node3D
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const Props := preload("res://scripts/world/props.gd")
+const DirtFx := preload("res://scripts/world/dirt_fx.gd")
 
 const QUEEN_VALUE := 200
 ## Tamanho dos buracos (o nível de Cavar que cada um pede).
@@ -522,36 +523,7 @@ func _dig_out(royal: Chamber, instant: bool) -> void:
 
 
 func _dirt_burst(at: Vector3, r: float) -> void:
-	var p := GPUParticles3D.new()
-	p.one_shot = true
-	p.amount = 46
-	p.lifetime = 1.1
-	p.explosiveness = 0.95
-	var pm := ParticleProcessMaterial.new()
-	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
-	pm.emission_sphere_radius = r * 0.6
-	pm.direction = Vector3.UP
-	pm.spread = 55.0
-	pm.initial_velocity_min = 1.4
-	pm.initial_velocity_max = 3.0
-	pm.gravity = Vector3(0, -9.0, 0)
-	pm.scale_min = 0.6
-	pm.scale_max = 1.6
-	p.process_material = pm
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.035
-	mesh.height = 0.06
-	mesh.radial_segments = 8
-	mesh.rings = 4
-	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.55, 0.33, 0.2)
-	m.roughness = 1.0
-	mesh.material = m
-	p.draw_pass_1 = mesh
-	get_parent().add_child(p)
-	p.global_position = at + Vector3(0, 0.1, 0)
-	p.emitting = true
-	get_tree().create_timer(2.0).timeout.connect(p.queue_free)
+	DirtFx.burst(get_parent(), at, r)
 
 
 ## Formigueiro limpo: florzinhas brotam no monte.

@@ -16,6 +16,7 @@ signal exit_broken
 
 const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
+const DirtFx := preload("res://scripts/world/dirt_fx.gd")
 const TONGUE_SHADER := preload("res://shaders/tongue.gdshader")
 
 ## O focinho é desenhado em escala reduzida bem perto da câmera: na tela fica
@@ -783,50 +784,7 @@ func _stomp() -> void:
 
 ## Poeira que sobe em volta quando ele cai com força.
 func _dust_ring(radius: float) -> void:
-	var p := GPUParticles3D.new()
-	p.one_shot = true
-	p.amount = 64
-	p.lifetime = 1.0
-	p.explosiveness = 0.95
-	var pm := ParticleProcessMaterial.new()
-	pm.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_RING
-	pm.emission_ring_axis = Vector3.UP
-	pm.emission_ring_radius = 0.6
-	pm.emission_ring_inner_radius = 0.3
-	pm.emission_ring_height = 0.05
-	pm.direction = Vector3.UP
-	pm.spread = 70.0
-	pm.initial_velocity_min = 0.8
-	pm.initial_velocity_max = 1.8
-	pm.radial_velocity_min = radius * 0.45
-	pm.radial_velocity_max = radius * 0.7
-	pm.damping_min = 2.0
-	pm.damping_max = 3.0
-	pm.gravity = Vector3(0, -2.5, 0)
-	pm.scale_min = 0.8
-	pm.scale_max = 1.8
-	var fade := Gradient.new()
-	fade.set_color(0, Color(0.72, 0.5, 0.34, 0.8))
-	fade.set_color(1, Color(0.72, 0.5, 0.34, 0.0))
-	var ramp := GradientTexture1D.new()
-	ramp.gradient = fade
-	pm.color_ramp = ramp
-	p.process_material = pm
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.06
-	mesh.height = 0.12
-	mesh.radial_segments = 8
-	mesh.rings = 4
-	var m := StandardMaterial3D.new()
-	m.vertex_color_use_as_albedo = true
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.roughness = 1.0
-	mesh.material = m
-	p.draw_pass_1 = mesh
-	world.add_child(p)
-	p.global_position = global_position + Vector3(0, 0.05, 0)
-	p.emitting = true
-	get_tree().create_timer(2.0).timeout.connect(p.queue_free)
+	DirtFx.dust_ring(world, global_position, radius)
 
 
 func _update_arms(delta: float) -> void:

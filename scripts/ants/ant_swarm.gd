@@ -412,6 +412,26 @@ func _physics_process(delta: float) -> void:
 				pass
 
 
+## Uma formiga foi pega: as outras num raio em volta do ponto saem correndo.
+func scare(at: Vector3, radius: float) -> void:
+	var from := Vector2(at.x, at.z)
+	var r2 := radius * radius
+	var found: Array[Vector4] = []
+	field.gather(at, radius, found)
+	for f in found:
+		var j := take_from_field(int(f.x), int(f.y), Mode.FLEE)
+		if j >= 0:
+			_start_flee(j, from)
+	for i in CAPACITY:
+		if alive[i] == 0 or kind[i] == QUEEN:
+			continue
+		var m := mode[i]
+		if m != Mode.TRAIL and m != Mode.RETURN and m != Mode.CHAMBER and m != Mode.GHOST:
+			continue
+		if Vector2(pos[i].x, pos[i].z).distance_squared_to(from) < r2:
+			_start_flee(i, from)
+
+
 func _start_flee(i: int, from: Vector2) -> void:
 	var p2 := Vector2(pos[i].x, pos[i].z)
 	var away := (p2 - from)

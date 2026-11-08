@@ -25,6 +25,10 @@ const TONGUE_SHADER := preload("res://shaders/tongue.gdshader")
 const VIEW_SCALE := 0.25
 ## Altura dos olhos: alto o bastante para ver por cima do capim baixo.
 const EYE_HEIGHT := 0.72
+## Raio em volta do ponto onde a língua pega um inseto: os outros ali fogem.
+const SCARE_RADIUS := 2.0
+## Olhar para cima e para baixo: quase na vertical (90° certinho vira a câmera).
+const PITCH_MAX := deg_to_rad(89.0)
 const GRAVITY := 20.0
 
 enum Tongue { IDLE, OUT, BACK }
@@ -237,7 +241,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var rel: Vector2 = event.relative
 		yaw -= rel.x * sens
 		pitch -= rel.y * sens * (-1.0 if Settings.invert_y else 1.0)
-		pitch = clampf(pitch, deg_to_rad(-75.0), deg_to_rad(40.0))
+		pitch = clampf(pitch, -PITCH_MAX, PITCH_MAX)
 		_sway += rel * 0.00035
 
 
@@ -256,7 +260,7 @@ func _physics_process(delta: float) -> void:
 		var gs := Settings.gamepad_sensitivity
 		yaw -= look.x * delta * 2.6 * gs
 		var inv := -1.0 if Settings.invert_y else 1.0
-		pitch = clampf(pitch - look.y * delta * 2.0 * gs * inv, deg_to_rad(-75.0), deg_to_rad(40.0))
+		pitch = clampf(pitch - look.y * delta * 2.0 * gs * inv, -PITCH_MAX, PITCH_MAX)
 	elif bot:
 		_bot_update(delta)
 		input = _bot_input
@@ -314,10 +318,10 @@ func _physics_process(delta: float) -> void:
 		if running:
 			GameState.count("run_time", delta)
 	swarm.threat_pos = global_position
-	# Os insetos fogem a 1 m de você parado, a 2,5 m andando e mais longe
+	# Os insetos fogem a 2 m de você parado, a 2,5 m andando e mais longe
 	# correndo (a língua alcança 1 m, até 3,5 m com Comprimento).
 	var pace := spd / maxf(GameState.walk_speed(), 0.1)
-	swarm.flee_radius = (1.0 + clampf(pace, 0.0, 1.0) * 1.5 + clampf(pace - 1.0, 0.0, 1.0) * 0.9) \
+	swarm.flee_radius = (2.0 + clampf(pace, 0.0, 1.0) * 0.5 + clampf(pace - 1.0, 0.0, 1.0) * 0.9) \
 		* GameState.flee_multiplier(running)
 	_update_aim()
 	_update_tongue(delta)
@@ -585,6 +589,8 @@ func _capture() -> void:
 	if t_stuck.size() > 0:
 		GameState.count("licks_hit")
 		Sfx.play("slurp", -4.0, 1.0, 0.1)
+		# As vizinhas da que foi pega saem correndo.
+		swarm.scare(t_target, SCARE_RADIUS)
 
 
 func _carry_stuck() -> void:

@@ -178,12 +178,17 @@ func zoom_amount() -> float:
 
 func _set_view(z: float, f: Vector2) -> void:
 	zoom = clampf(z, zoom_min(), zoom_max())
-	# O meio do retângulo não sai de cima do mapa (no mais longe, o mapa
-	# inteiro fica no meio).
-	var b := WorldMap.bounds()
-	var t := zoom_amount()
-	f = f.clamp(b.position, b.end)
-	focus = b.get_center().lerp(f, clampf(t * 4.0, 0.0, 1.0))
+	# A vista não passa muito da borda do mapa: de perto, sobra uma folga
+	# para dar para pôr a clareira no meio; onde o mapa inteiro já cabe, fica
+	# no meio.
+	var b := WorldMap.bounds().grow(WorldMap.AREA1_RADIUS * 3.0 * zoom_amount())
+	var half := port.size * 0.5 / zoom
+	for k in 2:
+		if half[k] * 2.0 >= b.size[k]:
+			f[k] = b.get_center()[k]
+		else:
+			f[k] = clampf(f[k], b.position[k] + half[k], b.end[k] - half[k])
+	focus = f
 	_mat.set_shader_parameter("port_size", port.size)
 	_mat.set_shader_parameter("focus", focus)
 	_mat.set_shader_parameter("zoom", zoom)
@@ -247,7 +252,9 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				closed.emit()
 				return
-			_dragging = event.pressed and port.has_point(event.position)
+			# Arrasta com o esquerdo ou o do meio; o direito fica para o marcador.
+			if event.button_index != MOUSE_BUTTON_RIGHT:
+				_dragging = event.pressed and port.has_point(event.position)
 			# Clique com o botão direito (sem arrastar): põe ou tira o marcador.
 			if event.button_index == MOUSE_BUTTON_RIGHT:
 				if event.pressed:

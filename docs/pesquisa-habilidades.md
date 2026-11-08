@@ -677,10 +677,10 @@ escolhe o resto.
 | **Desde o começo** | O começo da Língua, das Garras e das Patas, e o nível 1 de todas as linhas: Bocado, Destreza, Comprimento, Mira, Rapidez, Força, Fundura, Respiro, Passada, Fôlego e Corrida | 532 |
 | **Marco 1: primeiro formigueiro limpo** | Bocado 2, Mira 2, Respiro 2, Passada 2 | 370 |
 | **Marco 2: metade dos insetos da área comidos** | Destreza 2, Força 2, Tremor 1, Fundura 2 (a rainha) | 480 |
-| **Marco 3: 75% dos insetos da área comidos** | **Farejar, de presente**, e Alcance 1 à venda | 60 |
+| **Marco 3: 80% dos insetos da área comidos** | **Farejar, de presente**, e Alcance 1 à venda | 60 |
 | **Fica para a área 2 em diante** | Rapidez 2, Comprimento 2, Bocado 3 e 4, Destreza 3, Mira 3, Tremor 2 e 3, Fôlego 2, Corrida 2 e 3, Alcance 2 e 3, Precisão, Escalada e Cauda | — |
 
-**Por que o Faro aos 75%.** Os últimos insetos de uma área são os
+**Por que o Faro aos 80%.** Os últimos insetos de uma área são os
 espalhados e escondidos, que dão mais trabalho de achar. O Faro resolve
 exatamente isso. Na área 2, maior e mais fechada, ele passa a ser essencial.
 Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
@@ -690,7 +690,7 @@ Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
 - O 1º é um formigueiro limpo: ele aparece no canto da tela, um losango por
   formigueiro, e é resultado do que o jogador fez. Os formigueiros pequenos
   perto da caverna têm poucas moradoras passeando, então ele chega cedo.
-- O 2º e o 3º são a metade e 75% dos insetos da área. Limpar formigueiros
+- O 2º e o 3º são a metade e 80% dos insetos da área. Limpar formigueiros
   inteiros pode demorar, porque as moradoras passeiam longe deles.
 - Cada marco mostra um cartão, como "Formigueiro limpo · 4 habilidades novas
   na árvore".
@@ -728,7 +728,7 @@ espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
 
 ### Decidido pelo Caio (07/11/2026)
 
-1. **Farejar:** de presente no marco 3.
+1. **Farejar:** de presente no marco 3, aos 80% dos insetos da área (08/11: antes eram 75%).
 2. **Marco 2:** metade dos insetos da área.
 3. **Redistribuir pontos:** continua de graça.
 
@@ -742,6 +742,76 @@ Ainda não é para mexer no jogo: a proposta segue em estudo.
 3. Rodar o bot na área 1 para acertar os preços e o ritmo, comparando com a
    sua próxima jogatina.
 4. Áreas 2 a 4: continuam só no papel até a demo estar fechada.
+
+## 12. Proposta: tutorial guiado por objetivos (08/11/2026, só anotado)
+
+A ideia do Caio: uma lista de objetivos, um de cada vez, com um marcador e um
+texto curto dizendo o que fazer. Assim os marcos da seção 11 ficam naturais e
+o jogador sempre sabe para onde ir.
+
+**O que o jogo já tem e vai ser aproveitado**
+- As dicas de controle embaixo da tela ("WASD Andar", "Shift Correr", "Tab
+  Mapa e habilidades"), que somem depois que você usa.
+- A dica do lugar ("E Abrir câmara", o cadeado, as formigas que faltam).
+- O alfinete na bússola com a distância, que hoje só aparece quando você
+  marca um ponto no mapa.
+
+### Na tela
+
+- **Cartão de objetivo no canto**, sempre visível: "OBJETIVO", uma frase
+  curta e o progresso, como "Coma 200 insetos · 120/200". Quando o objetivo
+  se cumpre, ganha um ✓ e um som, e o próximo aparece.
+- **Pulo automático:** o que o jogador já fez antes de chegar a vez é pulado
+  na hora, ninguém fica preso.
+- **Marcador:** um losango em cima do alvo, com a distância embaixo, e o
+  mesmo losango na bússola. Só aparece quando o objetivo tem um lugar. Segue
+  a opção de Dicas e pode ser desligado.
+
+### A animação do losango
+
+- **É da tela, não do mapa.** O losango não é uma coisa física no mundo: não
+  desvia de árvores nem de penhascos e fica sempre visível por cima de tudo.
+- **O voo:** quando um objetivo novo aparece, o losango sai do cartão de
+  objetivo e vai numa leve curva até o ponto certo da tela, em um ou dois
+  segundos, com um rastro fraco de luz.
+- **Depois do voo** ele fica pulsando em cima do alvo. Depois de um tempo,
+  ele some.
+- **Alvo atrás do jogador:** o losango vai até a borda da tela pelo lado mais
+  curto, e a bússola mostra o rumo.
+- **Tecla para reacender:** depois que o losango some, uma tecla faz ele voar
+  de novo do cartão até o alvo. A sugestão é uma tecla nova, separada do Faro,
+  para as duas coisas não se misturarem.
+
+### A sequência da área 1
+
+| # | Objetivo | Marcador | O que é |
+|---|---|---|---|
+| 1 | Ande com WASD | — | tutorial |
+| 2 | Use a língua para comer uma formiga | trilha mais perto | tutorial |
+| 3 | Coma 200 insetos | — | tutorial |
+| 4 | Abra a árvore (Tab) e aprenda uma habilidade | — | tutorial |
+| 5 | Aprenda Cavar e abra uma câmara | câmara pequena mais perto | tutorial |
+| 6 | Limpe um formigueiro | formigueiro pequeno mais perto | marco 1 |
+| 7 | Coma metade dos insetos da área | — | marco 2 |
+| 8 | Desmanche o formigueiro da rainha | formigueiro grande | pede a Fundura 2, que abre no marco 2 |
+| 9 | Coma todos os insetos da área | — | aos 80%, marco 3: ganha o Farejar de presente |
+
+- "Corra (Shift)" entra como objetivo extra logo depois da primeira compra
+  das Patas, sem segurar a fila.
+- No objetivo 9, o Farejar chega com o cartão "O faro despertou" e a tecla
+  dele. Não vira um objetivo à parte.
+- Com a área limpa, o losango aponta para o tronco da saída.
+
+### Decidido pelo Caio (08/11/2026)
+
+1. Cartão sempre visível; o marcador segue a opção de Dicas.
+2. Os passos 9 a 11 da primeira versão viraram um só: comer todos os insetos
+   da área, com o Farejar aos 80%.
+3. O losango voa pelo ar, numa leve curva, como parte da tela.
+4. Tem uma tecla para reacender o losango depois que ele some.
+
+Ainda não é para mexer no jogo. A sugestão é fazer o tutorial junto com as
+áreas e os marcos, para os marcos já nascerem como objetivos.
 
 ## Fontes
 

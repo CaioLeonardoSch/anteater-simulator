@@ -32,6 +32,12 @@ func build(mats, haze_color: Color) -> void:
 		var c := Vector3(sin(t * 2.4) * 3.0, lerpf(6.0, HEIGHT - 3.0, t), cos(t * 1.7) * 2.0)
 		b.color = Color.WHITE.darkened(rng.randf_range(0.0, 0.14))
 		b.add_blob(c, Vector3(r, HEIGHT / layers * 1.5, r * rng.randf_range(0.85, 1.1)), noise, 0.26, 3, 1.6)
+	# Ponta fina no alto (de longe é o que diz "cupinzeiro", e não morro).
+	b.color = Color(0.97, 0.95, 0.93)
+	for i in 5:
+		var t := float(i) / 4.0
+		var c := Vector3(sin(2.4 + t * 0.5) * 3.0, HEIGHT - 2.0 + t * 16.0, cos(1.7 + t * 0.4) * 2.0)
+		b.add_blob(c, Vector3(lerpf(5.0, 1.4, t), 4.5, lerpf(5.0, 1.4, t)), noise, 0.2, 2, 1.6)
 	# Torres menores em volta (de longe parece um castelo de barro).
 	for k in 7:
 		var ang := TAU * k / 7.0 + rng.randf_range(-0.3, 0.3)
@@ -45,6 +51,11 @@ func build(mats, haze_color: Color) -> void:
 			var r := lerpf(base_r, base_r * 0.3, t)
 			b.color = Color.WHITE.darkened(rng.randf_range(0.04, 0.2))
 			b.add_blob(off + Vector3(0, lerpf(3.0, h, t), 0), Vector3(r, h / n_layers * 1.6, r), noise, 0.3, 2, 2.0)
+		# Agulha no topo de cada torre menor.
+		for j in 3:
+			var tj := float(j + 1) / 3.0
+			var rj := base_r * lerpf(0.26, 0.1, tj)
+			b.add_blob(off + Vector3(0, h + tj * h * 0.22, 0), Vector3(rj, h * 0.06, rj), noise, 0.2, 2, 2.0)
 	_mat = ShaderMaterial.new()
 	_mat.shader = LANDMARK_SHADER
 	_mat.set_shader_parameter("noise_tex", mats.noise_tex)

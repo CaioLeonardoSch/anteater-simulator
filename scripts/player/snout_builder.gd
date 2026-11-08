@@ -99,13 +99,16 @@ static func build_snout(shells: int = 18) -> ArrayMesh:
 		var v := b.verts[i]
 		var t := clampf((-v.z + 0.04) / 0.6, 0.0, 1.0)
 		var top := clampf(b.normals[i].y * 0.5 + 0.5, 0.0, 1.0)
-		var c := Color(0.45, 0.42, 0.38).lerp(Color(0.15, 0.13, 0.12), smoothstep(0.35, 0.97, t))
-		c = c.lerp(c.darkened(0.35), smoothstep(0.55, 0.0, top))
+		var c := Color(0.6, 0.54, 0.45).lerp(Color(0.32, 0.28, 0.24), smoothstep(0.3, 0.75, t))
+		c = c.lerp(Color(0.12, 0.1, 0.09), smoothstep(0.72, 0.92, t))
+		c = c.lerp(c.darkened(0.4), smoothstep(0.55, 0.0, top))
 		var a := atan2(b.normals[i].x, b.normals[i].y)
-		c = c.lightened(maxf(patches.get_noise_2d(a * 0.06, v.z * 0.35), 0.0) * 0.18 * (1.0 - t))
+		# Mechas compridas, umas claras e outras escuras, deitadas para trás.
+		var streak := patches.get_noise_2d(a * 0.12, v.z * 0.12)
+		c = c.lightened(maxf(streak, 0.0) * 0.3 * (1.0 - t)).darkened(maxf(-streak, 0.0) * 0.25)
 		# As cores acima são as que a gente vê (sRGB); o shader trabalha em linear.
 		c = c.srgb_to_linear()
-		c.a = 0.0 if -v.z > MOUTH.z * -1.0 - 0.03 else 1.0
+		c.a = 0.0 if -v.z > MOUTH.z * -1.0 - 0.04 else 1.0
 		b.colors[i] = c
 	# Ponta arredondada com a boca (pele escura e lisa).
 	var tip_ring := b.verts.size() - (sides + 1)
@@ -136,11 +139,14 @@ static func build_snout(shells: int = 18) -> ArrayMesh:
 			b.add_quad(last_ring[s], last_ring[s + 1], ring_idx[s + 1], ring_idx[s])
 		last_ring = ring_idx
 	var fur := _shells(b, shells)
-	var m := fur_material(0.011, 55.0, 0.6)
-	# Fios compridos, deitados para trás (para o rosto) e mesclados.
-	m.set_shader_parameter("stretch", 3.5)
-	m.set_shader_parameter("comb", Vector3(0.0, 0.15, 1.6))
-	m.set_shader_parameter("grizzle", 0.55)
+	var m := fur_material(0.014, 30.0, 0.62)
+	# Fios grossos e compridos, deitados para trás (para o rosto), com a raiz
+	# escura e a ponta clara (pelo mesclado do tamanduá).
+	m.set_shader_parameter("stretch", 6.0)
+	m.set_shader_parameter("comb", Vector3(0.0, 0.2, 2.2))
+	m.set_shader_parameter("grizzle", 0.8)
+	m.set_shader_parameter("root_color", Color(0.1, 0.085, 0.075))
+	m.set_shader_parameter("tip_tint", Color(1.35, 1.3, 1.22))
 	m.set_shader_parameter("droop", 0.1)
 	return fur.commit(null, m)
 

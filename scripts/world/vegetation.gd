@@ -190,8 +190,8 @@ func _build_forest(world, rng: RandomNumberGenerator) -> void:
 			return h - 0.3 * clampf(-out / 3.0, 0.0, 1.0)
 		return h + out * 0.04 + floor_noise.get_noise_2d(p.x, p.y) * 1.2 * smoothstep(0.0, 10.0, out)
 	var b := MeshBuilder.new()
-	var rings := 18
-	var fan := 20
+	var rings := 54
+	var fan := 48
 	for ri in rings + 1:
 		var along := lerpf(0.0, 75.0, float(ri) / rings)
 		var width := 7.0 + along * 0.8
@@ -207,7 +207,8 @@ func _build_forest(world, rng: RandomNumberGenerator) -> void:
 	b.recompute_normals()
 	var floor_mi := MeshInstance3D.new()
 	floor_mi.name = "ChaoDaMata"
-	floor_mi.mesh = b.commit(null, mats.cliff)
+	floor_mi.mesh = b.commit(null, mats.forest_floor)
+	mats.forest_floor.set_shader_parameter("half_map", half_map)
 	floor_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(floor_mi)
 	# Árvores dos dois lados da picada: mais juntas e maiores lá na frente.

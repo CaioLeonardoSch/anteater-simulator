@@ -132,6 +132,14 @@ func _ready() -> void:
 	_vignette.material = _vignette_mat
 	add_child(_vignette)
 	_build_counter()
+	if DevTools.args.has("counter"):
+		_medallion.visible = false
+		_counter_col.visible = false
+		var mock := CounterMock.new()
+		mock.style = String(DevTools.args.counter)
+		add_child(mock)
+		mock.position = Vector2.ZERO
+		mock.size = Vector2(480, 260)
 	_compass = Compass.new()
 	add_child(_compass)
 	_place(_compass, Control.PRESET_CENTER_TOP, Vector2(-350, 10), Vector2(700, 104))
@@ -1635,3 +1643,87 @@ class AbilityIcon extends Control:
 		draw_line(p + Vector2(6.5, -6), p + Vector2(6.5, -2), metal, 3.0, true)
 		draw_rect(Rect2(p + Vector2(-10, -2), Vector2(20, 15)), metal)
 		draw_circle(p + Vector2(0, 4), 2.5, Color(0.08, 0.05, 0.04))
+
+
+## Esboço (só para prints): três jeitos de mostrar insetos e pontos.
+class CounterMock extends Control:
+	const UT := preload("res://scripts/ui/ui_theme.gd")
+	const Glyphs := preload("res://scripts/ui/glyphs.gd")
+	var style := "a"
+	var t := 0.0
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _process(d: float) -> void:
+		t += d
+		queue_redraw()
+
+	func _medal(c: Vector2, value: String, col: Color, share: float, glow: float) -> void:
+		var r := 49.0
+		var gold := UT.GOLD
+		if glow > 0.0:
+			draw_circle(c, r + 22.0, Color(gold, 0.10 * glow))
+			draw_circle(c, r + 16.0, Color(gold, 0.14 * glow))
+		draw_circle(c, r + 13.0, Color(gold, 0.05))
+		draw_circle(c, r + 9.0, Color(0.05, 0.035, 0.028, 0.88))
+		for k in 6:
+			var tt := float(k) / 5.0
+			draw_circle(c, r * (1.0 - tt * 0.7), Color("0d0907").lerp(Color("21150f"), tt))
+		draw_arc(c, r, 0, TAU, 72, Color(gold, 0.55), 1.5, true)
+		# Anel de progresso da área (enche no sentido do relógio, do alto).
+		draw_arc(c, r + 6.0, 0, TAU, 96, Color(gold, 0.18), 5.0, true)
+		if share > 0.0:
+			draw_arc(c, r + 6.0, -PI * 0.5, -PI * 0.5 + TAU * share, 96, gold, 5.0, true)
+		var f: Font = UT.display_font()
+		var fs := 34 if value.length() <= 3 else (29 if value.length() == 4 else 25)
+		var w := f.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		draw_string(f, c + Vector2(-w * 0.5, 12), value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
+
+	func _num(p: Vector2, txt: String, fs: int, col: Color) -> float:
+		var f: Font = UT.display_font()
+		draw_string(f, p + Vector2(1, 2), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(0, 0, 0, 0.75))
+		draw_string(f, p, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
+		return f.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+
+	func _draw() -> void:
+		var eaten := GameState.ants_eaten
+		var share := clampf(float(eaten) / float(GameState.GOAL), 0.0, 1.0)
+		var pts := GameState.points_available()
+		var can := GameState.affordable_count() > 0
+		var pulse := 0.55 + 0.45 * sin(t * 4.0)
+		var glow := pulse if can else 0.0
+		match style:
+			"a":
+				var c := Vector2(86, 82)
+				_medal(c, str(eaten), UT.PALE, share, 0.0)
+				# Selinho dos pontos pendurado embaixo.
+				var f: Font = UT.display_bold_font()
+				var txt := str(pts)
+				var tw := f.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+				var w := 30.0 + tw + 14.0
+				var rect := Rect2(Vector2(c.x - w * 0.5, c.y + 62.0), Vector2(w, 28))
+				if can:
+					draw_rect(rect.grow(5.0), Color(UT.GOLD, 0.12 * glow))
+					draw_rect(rect.grow(2.5), Color(UT.GOLD, 0.18 * glow))
+				draw_line(Vector2(c.x, c.y + 55.0), Vector2(c.x, rect.position.y), Color(UT.GOLD, 0.6), 1.5)
+				draw_rect(rect, Color(0.04, 0.028, 0.024, 0.94))
+				draw_rect(rect, Color(UT.GOLD, 0.95 if can else 0.55), false, 1.5 if can else 1.0)
+				Glyphs.paint(self, "diamond", rect.position + Vector2(16, 14), 9.0, UT.GOLD)
+				draw_string(f, rect.position + Vector2(28, 21), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, UT.GOLD if can else UT.SAND)
+			"b":
+				var c := Vector2(86, 82)
+				_medal(c, str(pts), UT.GOLD, share, glow)
+				Glyphs.paint(self, "diamond", c + Vector2(0, -24), 7.0, Color(UT.GOLD, 0.8))
+			"c":
+				var y := 52.0
+				var x := 30.0
+				Glyphs.paint(self, "ant", Vector2(x + 12, y - 9), 24.0, UT.PALE)
+				x += 32.0
+				x += _num(Vector2(x, y), str(eaten), 28, UT.PALE)
+				x += 30.0
+				if can:
+					draw_circle(Vector2(x + 10, y - 9), 18.0, Color(UT.GOLD, 0.16 * glow))
+				Glyphs.paint(self, "diamond", Vector2(x + 10, y - 9), 12.0 if not can else 12.0 + 2.0 * glow, UT.GOLD)
+				x += 26.0
+				_num(Vector2(x, y), str(pts), 28, UT.GOLD)

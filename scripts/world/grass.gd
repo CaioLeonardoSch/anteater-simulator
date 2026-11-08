@@ -25,7 +25,7 @@ func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_
 		variants.append(Props.build_grass_clump(rng, v[0], v[1]))
 		rng.state = state
 		lite.append(Props.build_grass_clump(rng, v[0], v[1], true))
-	var flower_mesh := Props.build_flower_mesh()
+	var flower_meshes: Array[ArrayMesh] = [Props.build_flower_mesh(0), Props.build_flower_mesh(1)]
 	var patch := FastNoiseLite.new()
 	patch.seed = rng.randi()
 	patch.frequency = 0.045
@@ -88,8 +88,9 @@ func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_
 					else:
 						_add_multimesh(variants[v], lists[v], layer.mat, 0.0, split)
 						_add_multimesh(lite[v], lists[v], layer.mat, split, end)
-			var flowers: Array = []
-			var colors: Array = []
+			# [touceirinhas de cinco pétalas, margaridas]
+			var flowers: Array = [[], []]
+			var colors: Array = [[], []]
 			for _k in flowers_per_chunk:
 				var x := x0 + rng.randf() * CHUNK
 				var z := z0 + rng.randf() * CHUNK
@@ -99,10 +100,13 @@ func build(terrain, mats, rng: RandomNumberGenerator, density_mult: float, view_
 					continue
 				var s := rng.randf_range(0.9, 1.6)
 				var basis := Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * s)
-				flowers.append(Transform3D(basis, Vector3(x, terrain.get_height(x, z) - 0.01, z)))
-				colors.append(flower_colors[rng.randi() % flower_colors.size()])
-			if not flowers.is_empty():
-				_add_multimesh(flower_mesh, flowers, flower_mat, 0.0, near_dist * 1.2 + PAD, colors)
+				# O tipo vem da posição (não gasta o sorteio do mapa): 3 em 10 são margaridas.
+				var kind := 1 if fposmod(sin(x * 12.9898 + z * 78.233) * 43758.5453, 1.0) < 0.3 else 0
+				flowers[kind].append(Transform3D(basis, Vector3(x, terrain.get_height(x, z) - 0.01, z)))
+				colors[kind].append(flower_colors[rng.randi() % flower_colors.size()])
+			for kind in 2:
+				if not flowers[kind].is_empty():
+					_add_multimesh(flower_meshes[kind], flowers[kind], flower_mat, 0.0, near_dist * 1.2 + PAD, colors[kind])
 
 
 ## Mostra o bloco quando o centro dele está entre `from_dist` e `view_dist`.

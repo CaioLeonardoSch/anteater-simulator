@@ -28,7 +28,7 @@ const Achievements := preload("res://scripts/achievements.gd")
 const GOAL := 10000
 ## Formigas comidas para ganhar 1 ponto.
 const ANTS_PER_POINT := 10
-## Quanto dura o Frenesi (depois de comer uma tanajura), em segundos.
+## Quanto dura o Frenesi (depois de comer uma tanajura ou um cogumelo), em segundos.
 const FRENZY_TIME := 6.0
 const RECORD_PATH := "user://save.cfg"
 ## Versões antigas tinham um jogo salvo só: ele vira o jogo 1.
@@ -321,6 +321,22 @@ func _process(delta: float) -> void:
 			frenzy_changed.emit(false)
 
 
+## Liga (ou renova) o Frenesi: tanajura ou cogumelo.
+func start_frenzy() -> void:
+	var was_active := frenzy_time > 0.0
+	frenzy_time = FRENZY_TIME
+	if not was_active:
+		frenzy_changed.emit(true)
+
+
+## Comeu um grupinho de cogumelos: Frenesi, como a tanajura.
+func eat_mushroom() -> void:
+	if completed:
+		return
+	count("mushrooms")
+	start_frenzy()
+
+
 ## Soma formigas comidas. `count` já vem com o valor da rainha (200) incluído.
 func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	if count <= 0 or completed:
@@ -340,10 +356,7 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	queens_eaten += queens
 	if tanajuras > 0:
 		tanajuras_eaten += tanajuras
-		var was_active := frenzy_time > 0.0
-		frenzy_time = FRENZY_TIME
-		if not was_active:
-			frenzy_changed.emit(true)
+		start_frenzy()
 	ants_eaten_changed.emit(ants_eaten, count)
 	_check_affordable(true)
 	if ants_eaten >= GOAL:

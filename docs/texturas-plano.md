@@ -69,16 +69,16 @@ atuais projetam as manchas nas três direções do mundo (projeção triplanar,
 |---|---|---|---|
 | Chão do cerrado e trilhas | `scripts/world/terrain.gd` | `terrain` (a máscara das trilhas vem do terreno) | `shaders/terrain.gdshader` (projeção de cima, em XZ do mundo) |
 | Paredões de arenito | `scripts/world/cliffs.gd` | `cliff` (faixas pintadas por vértice) | `shaders/soft_surface.gdshader` |
-| Chão da mata (caminho para a área 2) | `scripts/world/vegetation.gd` (`ChaoDaMata`) | `cliff` | `soft_surface` |
+| Chão da mata (caminho para a área 2) | `scripts/world/vegetation.gd` (`ChaoDaMata`) | `forest_floor` | `shaders/mata.gdshader` |
 | Pedras | `props.gd` `build_rock` | `rock` | `soft_surface` |
 | Cupinzeiros | `props.gd` `build_termite_mound` | `clay` | `soft_surface` |
 | Casca das árvores e arbustos | `props.gd` `build_tree`, `build_shrub` | `bark` | `soft_surface` |
 | Troncos caídos | `props.gd` `build_log` | `log_bark` | `soft_surface` |
 | Formigueiros e tampas das câmaras | `scripts/world/nest.gd` | `nest_soil`, `nest_cap`, `nest_fungus` | `shaders/formigueiro.gdshader` |
-| Copas, arbustos, ipês | `props.gd` | `leaves_*`, `shrub_*`, `ipe_*` | `shaders/foliage.gdshader` + `assets/textures/leaf_cluster.png` / `flower_cluster.png` (256 px, geradas por `tools/gen_textures.py`) |
+| Copas, arbustos, ipês | `props.gd` | `leaves_*`, `shrub_*`, `ipe_*` | `shaders/foliage.gdshader` + `assets/textures/leaf_cluster.png` / `shrub_cluster.png` (512 px) / `flower_cluster.png` (256 px), geradas por `tools/gen_textures.py` |
 | Lagoas | `scripts/world/world.gd` `_build_pond_water` | `water` | `shaders/agua.gdshader` |
 | Capim | `scripts/world/grass.gd` | `grass` | `shaders/grass.gdshader` |
-| Terra ao cavar, poeira | `scripts/world/nest.gd`, `world.gd` | `StandardMaterial3D` de cor lisa | — |
+| Terra ao cavar, poeira | `scripts/world/nest.gd`, `world.gd`, `anteater.gd` → `scripts/world/dirt_fx.gd` | torrões, grãos, fumacinha e lascas com cor por partícula | — |
 | Cupinzeiro gigante no horizonte | `scripts/world/giant_mound.gd` | próprio | `shaders/landmark.gdshader` |
 
 Os materiais `bark`, `clay`, `rock`, `cliff` e `nest_soil` usam **o mesmo
@@ -143,7 +143,7 @@ godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/fotos/
 
 Nomes das fotos: `arvore`, `copa`, `ipe`, `arbusto`, `cupinzeiro`, `pedra`,
 `tronco`, `tronco_ponta`, `formigueiro`, `formigueiro_grande`, `camara`, `camara_funda`,
-`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `trilha`. Tire
+`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `mata`, `mata_chao`, `trilha`. Tire
 o "antes" de tudo uma vez, no começo. Mostre ao Caio o antes e o depois lado a
 lado. Também vale uma volta no jogo de verdade (com o MCP do Godot), porque a
 foto parada não mostra a repetição da textura nem o FPS.
@@ -196,6 +196,12 @@ o que for feito nos cupinzeiros).
 | Troncos caídos | feito em 07/11/2026: mesma estampa e shader da casca (`shaders/casca.gdshader`, material `log_bark`), com falhas mostrando a madeira (`bare_amount`), musgo só embaixo (`moss_amount`) e pontas quebradas com anéis (`add_log_end` em `props.gd`, UV2.x = 1); vale também para o tronco da passagem |
 | Formigueiros e câmaras | feito em 07/11/2026: `assets/textures/terra/` (monte e tampas) e `assets/textures/cava/` (terra cavada), feitas por `tools/blender_terra.py` e `tools/blender_cava.py`; shader `shaders/formigueiro.gdshader` (materiais `nest_soil`, `nest_cap`, `nest_fungus`). Monte com contorno irregular e olheiros em cone; câmaras por nível em `nest.gd`: rasa (nível 1), anel de terra no campo, poço fundo com fungo e túneis (nível 2) e cratera em degraus com câmaras cortadas (rainha) |
 | Lagoas | feito em 07/11/2026: shader próprio `shaders/agua.gdshader` (material `water`): reflete as cores do céu (atualizadas com o dia em `world.gd` `_apply_day`) e o paredão numa faixa no fundo (altura reduzida de propósito, `cliff_height`), ondinhas com o vento, transparência pelo caminho da luz na água. Lama molhada na beira pelo canal alfa da máscara do terreno (`mud_tint`, `mud_rough` em `terrain.gdshader`) |
-| Copas e arbustos | a fazer |
-| Chão da mata | a fazer |
-| Terra ao cavar | a fazer |
+| Copas e arbustos | feito em 08/11/2026: `assets/textures/leaf_cluster.png` (copas) e `shrub_cluster.png` (arbustos), 512 px, feitas por `tools/gen_textures.py` (roda no Python do Blender; R = sombra, G = tom de cada folha, B = folha seca). Shader `foliage.gdshader` com `tone_amount`, `dry_amount` e `dry_color` (zero nos ipês) |
+| Chão da mata | feito em 08/11/2026: `assets/textures/folhico/` (cor + altura, relevo), feita por `tools/gen_folhico.py` (roda no Python do Blender); shader próprio `shaders/mata.gdshader` (material `forest_floor`), lido de cima em duas escalas, emendando com o tom do campo na beira do mapa (`half_map`, `blend_width`). Fotos `mata` e `mata_chao` (a câmera entra na mata, onde o tamanduá não chega) |
+| Terra ao cavar | feito em 08/11/2026: efeitos em `scripts/world/dirt_fx.gd` (sem textura nova): `burst` (câmara aberta e monte desmanchando) solta torrões irregulares de faces retas e grãos em tons de terra, girando e encolhendo no fim, e uma nuvem macia de poeira; `dust_ring` (tremor) é névoa clara que corre pelo chão com grãos pulando; `splinters` (tronco da passagem) são lascas pontudas em tons de madeira e casca. Fotos `cavar`, `poeira` e `lascas` (rodar a ferramenta duas vezes: na primeira o efeito pode não aparecer enquanto o shader compila) |
+| Capim | feito em 08/11/2026: só shader (`shaders/grass.gdshader`, sem textura): tom por touceira (sorteado pela posição: acobreado `copper_tint`, verde-oliva, palha `straw_color` ou o dourado normal), folhas secas no meio, ponta desbotada, nervura clara e beiradas escuras (UV.x da folha) e pendões avermelhados (`seed_color`) com beira clara. Em `props.gd` `build_grass_clump`: COLOR.b = 1 nos pendões e COLOR.a = 0..1 da base à ponta de cada folha |
+| Florzinhas | feito em 08/11/2026: malha nova em `props.gd` `build_flower_mesh(variant)` (sorteio próprio): touceirinha de 2–3 flores de cinco pétalas arredondadas em concha (variante 0) ou duas margaridas de pétalas finas (variante 1), caule em cruz e folhinhas; em `grass.gd` 3 em 10 são margaridas, escolhidas pela posição (o sorteio do mapa não muda). Shader `shaders/flower.gdshader`: pétala mais funda perto do miolo e viva na ponta (COLOR.a), miolo em cúpula (COLOR.b) amarelo ou marrom conforme a cor da flor (`center_yellow`, `center_brown`). Fotos `flores` e `flores_longe` |
+| Focinho | feito em 08/11/2026: só cores e pelo em `scripts/player/snout_builder.gd` `build_snout` (sem textura): cinza-castanho escurecendo até a ponta preta, mechas compridas claras e escuras, e fios grossos (`fur_material` 0.014 / 30) deitados para trás (`stretch` 6, `comb`), raiz escura (`root_color`) e ponta clara (`tip_tint`), com mais mescla (`grizzle` 0.8); os últimos 4 cm são pele úmida. Fotos `focinho` e `focinho_sol` |
+| Formigas e tanajuras | feito em 08/11/2026: sombreado nas cores dos vértices (`_shade` em `scripts/ants/ant_mesh_builder.gd`: casco escuro embaixo, pernas e antenas escurecendo da junta à ponta), aparência comum em `shaders/ant_look.gdshaderinc` (folha com nervura e tom por formiga, pétala rara, verniz no casco) usada por `ant.gdshader` e `ant_field.gdshader`; asas com UV ao longo/para o lado e nervuras, estigma e película furta-cor em `ant_wing.gdshader`; tanajura mais escura. Fotos `formigas` e `tanajura` |
+| Cupinzeiro gigante | feito em 08/11/2026: `shaders/landmark.gdshader` ganhou sulcos verticais em volta do eixo (cor e normal), camadas, pé escuro e topo claro, cores mais terrosas e menos névoa (`haze_top` 0.22, `haze_base` 0.42); `scripts/world/giant_mound.gd` ganhou ponta fina na torre principal e agulhas nas menores (formato a melhorar quando a área 4 for feita). Foto nova `cupinzeiro_gigante` (zoom de binóculo) e `penhasco` |
+| Ipês | feito em 08/11/2026: nova estampa `assets/textures/flower_cluster.png` (512 px, gerada por `flower_cluster()` em `tools/gen_textures.py` com `Canvas.trumpet` e `Canvas.bloom`: R = sombra/garganta, G = tom de cada flor, B = raminho e cálice); `shaders/foliage.gdshader` ganhou `flower_amount` e `throat_color`; em `scripts/world/materials.gd` os ipês usam tom, raminho marrom (`dry_color`), mais contraluz e cores mais limão (amarelo) e lilás (roxo). Fotos novas `ipe_perto` e `ipe_roxo`, além de `ipe` |

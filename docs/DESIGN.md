@@ -234,7 +234,7 @@ ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
 | **Língua** | começo | Lambida Contínua (15: segurar para lamber) |
 | | Bocado | nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15, e a ponta gruda num raio maior) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40) |
 | | Destreza | só a velocidade: nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4) |
-| | Comprimento | só o alcance: nível 1 (16, 20, 24: 3,3 → 3,6 → 3,9 m; era 3) · nível 2 (60, 80 · Área 2: 4,2 → 4,5 m) |
+| | Comprimento | só o alcance: nível 1 (16, 20, 24: 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m) |
 | | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 10° para 15°) · nível 2 (25, 30, 35 · Formigueiro: 18° → 21° → 25°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
 | **Garras** | começo | Cavar (25: abre as câmaras pequenas; depois as garras descansam 25 s) |
 | | Força | nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s ao abrir) · nível 2 (40, 50 · Metade: 3,2 → 4 s) |
@@ -713,3 +713,4 @@ acertar a duração com testes.
 | 08/11/2026 | Formigas e tanajuras | Corpo de cor única e lisa, folhas verde-limão iguais, asas da tanajura borradas e sem nervura | Volume pintado (claro em cima, escuro embaixo), pernas e antenas escurecendo até a ponta, folhas em tons de verde com nervura (às vezes uma pétala), tanajura marrom mais escura com asas de película furta-cor, nervuras e mancha na beira. Mesmo formato. Velocidade igual (≈176 quadros por segundo) |
 | 08/11/2026 | Cupinzeiro gigante | Bolota rosada e lisa, quase sumindo na névoa (parecia nuvem) | Cor de barro com sulcos verticais de chuva, camadas, pé úmido escuro e topo seco, menos névoa; ponta fina no alto e agulhas nas torres menores, para ler como cupinzeiro de longe. Velocidade igual (≈168 quadros por segundo) |
 | 08/11/2026 | Ipês | Copa de florzinhas borradas e iguais, laranja chapado | Cachos de flores em trombeta (de lado e de frente, boca franzida, garganta com risquinhos) em raminhos marrons; amarelo-limão no sol, sombra quente, luz atravessando as pétalas; ipê-roxo com mais variação entre rosa e lilás. Mesmo formato. Velocidade igual (≈168 quadros por segundo) |
+| 08/11/2026 | Alcance da língua | 3 m no começo; 3,3 → 3,6 → 3,9 m com Comprimento 1 e 4,2 → 4,5 m com Comprimento 2 | 1 m no começo; 1,5 → 2 → 2,5 m e 3 → 3,5 m (dava para pegar formigas parado, logo no começo) |

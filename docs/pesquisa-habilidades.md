@@ -694,7 +694,7 @@ efeito de todos os cliques daquela habilidade.
 | Língua | Lambida Contínua | 1 | 15 | Segurar o botão para lamber sem parar |
 | Língua | Bocado 1 | 3 | 8 + 12 + 16 = 36 | 2, 3 e 5 insetos por lambida |
 | Língua | Destreza 1 | 3 | 10 + 14 + 18 = 42 | Lambe um pouco mais rápido |
-| Língua | Comprimento 1 | 3 | 16 + 20 + 24 = 60 | Alcance de 3,3, 3,6 e 3,9 m |
+| Língua | Comprimento 1 | 3 | 16 + 20 + 24 = 60 | Alcance de 1,5, 2 e 2,5 m (começa em 1 m; até 08/11 era 3,3, 3,6 e 3,9) |
 | Língua | Mira 1 | 1 | 12 | A língua vai sozinha atrás do inseto e a mira fica maior |
 | Garras | Cavar | 1 | 25 | Abre as câmaras pequenas (E) |
 | Garras | Força 1 | 2 | 25 + 35 = 60 | As moradoras ficam tontas e não fogem logo |

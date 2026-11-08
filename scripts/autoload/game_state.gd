@@ -713,7 +713,7 @@ func lick_capacity() -> int:
 
 ## Alcance da língua (linha de Comprimento).
 func tongue_range() -> float:
-	var r: float = _by_clicks([3.0, 3.3, 3.6, 3.9, 4.2, 4.5], COMPRIMENTO)
+	var r: float = _by_clicks([1.0, 1.5, 2.0, 2.5, 3.0, 3.5], COMPRIMENTO)
 	if frenzy_active():
 		r *= 1.25
 	return r

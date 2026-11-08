@@ -39,6 +39,9 @@ var objectives: Objectives
 var _counter_col: VBoxContainer
 var _crosshair: Crosshair
 var _cards: CardStack
+## Coluna fixa do lado direito: o relógio (contra o relógio) e o objetivo.
+## Os cartões que aparecem às vezes ficam logo embaixo dela.
+var _right_col: VBoxContainer
 var _hint: HintRow
 var _tutorial: HintRow
 var _sniff: SniffChip
@@ -135,6 +138,11 @@ func _ready() -> void:
 	_crosshair = Crosshair.new()
 	add_child(_crosshair)
 	_place(_crosshair, Control.PRESET_CENTER, Vector2(-40, -40), Vector2(80, 80))
+	_right_col = VBoxContainer.new()
+	_right_col.add_theme_constant_override("separation", 10)
+	_right_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_right_col)
+	_place(_right_col, Control.PRESET_TOP_RIGHT, Vector2(-310, 24), Vector2(286, 0))
 	_cards = CardStack.new()
 	add_child(_cards)
 	_place(_cards, Control.PRESET_TOP_RIGHT, Vector2(-310, 24), Vector2(286, 230))
@@ -155,7 +163,7 @@ func _ready() -> void:
 	_place(_save, Control.PRESET_BOTTOM_RIGHT, Vector2(-50, -48), Vector2(28, 28))
 	objectives = Objectives.new()
 	add_child(objectives)
-	_counter_col.add_child(objectives.card)
+	_right_col.add_child(objectives.card)
 	_popups = Control.new()
 	_popups.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -361,6 +369,7 @@ func _build_abilities() -> void:
 
 
 func _process(delta: float) -> void:
+	_stack_cards()
 	if player == null:
 		return
 	_play_time += delta
@@ -419,8 +428,7 @@ func _build_clock() -> void:
 	_clock = PanelContainer.new()
 	_clock.add_theme_stylebox_override("panel", UiTheme.panel_frame(16, 8))
 	_clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_clock)
-	_place(_clock, Control.PRESET_TOP_RIGHT, Vector2(-310, 22), Vector2(286, 0))
+	_right_col.add_child(_clock)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 0)
 	_clock.add_child(v)
@@ -441,12 +449,22 @@ func _build_clock() -> void:
 	_clock.visible = false
 
 
+## Os cartões que aparecem às vezes começam logo embaixo do objetivo (e do
+## relógio), que mudam de altura.
+func _stack_cards() -> void:
+	_right_col.reset_size()
+	var top := 24.0
+	if _right_col.get_combined_minimum_size().y > 0.0:
+		top = _right_col.offset_top + _right_col.get_combined_minimum_size().y + 10.0
+	if not is_equal_approx(_cards.offset_top, top):
+		_cards.offset_top = top
+		_cards.offset_bottom = top + 230.0
+
+
 func _update_clock(delta: float) -> void:
 	var on := GameState.mode == GameState.MODE_CLOCK
 	if _clock.visible != on:
 		_clock.visible = on
-		_cards.offset_top = 112.0 if on else 24.0
-		_cards.offset_bottom = _cards.offset_top + 230.0
 	if not on:
 		return
 	_clock_time.text = GameState.format_clock(GameState.elapsed)

@@ -96,8 +96,7 @@ func _resume() -> void:
 func _build_card() -> void:
 	card = PanelContainer.new()
 	card.add_theme_stylebox_override("panel", UiTheme.panel_frame(14, 10))
-	card.custom_minimum_size = Vector2(300, 0)
-	card.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	card.size_flags_horizontal = Control.SIZE_FILL
 	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override("separation", 6)
@@ -130,7 +129,7 @@ func _build_card() -> void:
 	_key.add_child(_key_label)
 	_text = UiTheme.label("", 17, UiTheme.CREAM)
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text.custom_minimum_size = Vector2(272, 0)
+	_text.custom_minimum_size = Vector2(258, 0)
 	v.add_child(_text)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 9)
@@ -145,7 +144,7 @@ func _build_card() -> void:
 	row.add_child(_count)
 	_extra = UiTheme.label("", 14, UiTheme.MUTED)
 	_extra.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_extra.custom_minimum_size = Vector2(272, 0)
+	_extra.custom_minimum_size = Vector2(258, 0)
 	v.add_child(_extra)
 
 

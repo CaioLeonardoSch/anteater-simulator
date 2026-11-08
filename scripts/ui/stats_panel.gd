@@ -88,6 +88,7 @@ func _run_rows() -> Array:
 		["Câmaras abertas", "%d de %d" % [opened, chambers]],
 		["Rainhas comidas", "%d de %d" % [GameState.queens_eaten, queens]],
 		["Tanajuras comidas", _n(GameState.tanajuras_eaten)],
+		["Cogumelos comidos", _n(int(GameState.stat("mushrooms")))],
 		["Maior combo", "%s insetos" % _n(GameState.best_combo)],
 		["Habilidades", "%d de %d cliques" % [skills, skills_total]],
 		["Pontos gastos", _n(GameState.points_spent)],

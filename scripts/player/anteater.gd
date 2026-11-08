@@ -3,6 +3,7 @@ extends CharacterBody3D
 ## com a língua comprida, cava formigueiros e bate no chão (com os upgrades).
 
 signal ate(count: int, tanajuras: int, queens: int)
+signal ate_mushroom
 ## Farejou: quantas formigas sentiu, se havia mais, a distância da mais perto
 ## (-1 = nenhuma) e quantas câmaras fechadas achou (Faro de Câmara).
 signal sniffed(count: int, capped: bool, nearest: float, chambers: int)
@@ -59,6 +60,9 @@ var t_tip := Vector3.ZERO
 ## Tanajura que a língua está indo buscar (a ponta acompanha ela), ou -1.
 var t_follow := -1
 var _path_tanajura := -1
+## Grupinho de cogumelos no caminho da língua (ou -1) e o que está preso nela.
+var _path_mushroom := -1
+var t_mushroom := -1
 var t_stuck := PackedInt32Array()
 var _stuck_offsets: Array[Vector3] = []
 var lick_cooldown := 0.0
@@ -529,6 +533,12 @@ func _straight_target() -> Vector3:
 	_path_tanajura = swarm.tanajura_on_path(origin, target, GameState.capture_radius())
 	if _path_tanajura >= 0:
 		target = swarm.body_point(_path_tanajura)
+	# Cogumelos no caminho: a língua para neles.
+	_path_mushroom = -1
+	if _path_tanajura < 0 and _mushrooms():
+		_path_mushroom = world.mushrooms.on_path(origin, target, GameState.capture_radius())
+		if _path_mushroom >= 0:
+			target = world.mushrooms.center(_path_mushroom)
 	return target
 
 
@@ -551,7 +561,9 @@ func _update_aim() -> void:
 	if aim_ant >= 0:
 		aim_hits = true
 	else:
-		aim_hits = swarm.any_near(_straight_target(), GameState.capture_radius())
+		var target := _straight_target()
+		aim_hits = swarm.any_near(target, GameState.capture_radius()) or _path_mushroom >= 0 \
+				or (_mushrooms() and world.mushrooms.near(target, GameState.capture_radius()) >= 0)
 
 
 func _capture() -> void:
@@ -560,6 +572,13 @@ func _capture() -> void:
 	_stuck_offsets.clear()
 	for i in t_stuck.size():
 		_stuck_offsets.append(Vector3(randf_range(-1, 1), randf_range(-0.3, 1), randf_range(-1, 1)) * 0.04)
+	t_mushroom = -1
+	if _mushrooms():
+		t_mushroom = world.mushrooms.near(t_target, GameState.capture_radius())
+		if t_mushroom >= 0:
+			world.mushrooms.grab(t_mushroom)
+			if t_stuck.is_empty():
+				Sfx.play("slurp", -4.0, 0.9, 0.1)
 	if res.queen_protected and t_stuck.is_empty():
 		queen_blocked.emit()
 		Sfx.play("deny", -8.0)
@@ -571,6 +590,8 @@ func _capture() -> void:
 func _carry_stuck() -> void:
 	var cam := camera.global_position
 	var shrink := clampf(t_tip.distance_to(cam) / 0.9, 0.12, 1.0)
+	if t_mushroom >= 0:
+		world.mushrooms.carry(t_mushroom, t_tip - Vector3(0, 0.02, 0) * shrink, shrink)
 	for k in t_stuck.size():
 		var i := t_stuck[k]
 		swarm.pos[i] = t_tip + _stuck_offsets[k] * shrink - Vector3(0, 0.02, 0) * shrink
@@ -578,6 +599,13 @@ func _carry_stuck() -> void:
 
 
 func _swallow() -> void:
+	if t_mushroom >= 0:
+		world.mushrooms.eat(t_mushroom)
+		t_mushroom = -1
+		GameState.eat_mushroom()
+		ate_mushroom.emit()
+		Sfx.play("munch", -3.0, 0.85, 0.1, 3)
+		Sfx.play("frenzy", -2.0)
 	var n := t_stuck.size()
 	if n == 0:
 		return
@@ -986,3 +1014,8 @@ func _bot_nearest_closed_chamber() -> Vector3:
 				best_d = d
 				best = p
 	return best
+
+
+## Os cogumelos já existem (o mapa foi montado).
+func _mushrooms() -> bool:
+	return world != null and world.mushrooms != null

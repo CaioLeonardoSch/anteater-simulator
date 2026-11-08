@@ -194,6 +194,9 @@ buscamos, no espírito delas:
   efeito e som próprios. O Faro Lendário marca as rainhas na bússola.
 - **Tanajura:** rainha voadora e rara que cruza o mapa. Comê-la deixa a língua
   mais rápida por alguns segundos.
+- **Cogumelos:** 14 grupinhos laranja ao pé de árvores, troncos, arbustos e
+  cupinzeiros. A língua pega o grupinho inteiro e ele dá o mesmo Frenesi da
+  tanajura; nasce de novo no mesmo lugar depois de 90 s.
 - **Sem insetos resistentes:** as formigas-soldado saíram da demo.
 
 ### Habilidades: as 5 do plano
@@ -676,3 +679,4 @@ andar entre ninhos, habilidades e jogo salvo) e boa parte da M3 (o Cerrado com
 | 08/11/2026 | Copas e arbustos | Cada cartão com 9 folhas enormes e pontudas (cara de bordo), do mesmo verde vivo nas copas e nos arbustos | Copas: raminhos com folhas ovais de couro, menores, cada uma num tom e algumas secas. Arbustos: estampa própria, folhas finas e pontudas, verde acinzentado e mais folhas secas. Velocidade igual (≈172 quadros por segundo) |
 | 08/11/2026 | Chão da mata | Usava o material dos paredões: liso, cor de mostarda, com manchinhas vermelhas | Material próprio: folhas secas caídas umas por cima das outras (marrons, avermelhadas e poucas meio verdes), gravetos e terra escura nos vãos, com relevo. Na beira do mapa as folhas rareiam e o chão puxa para o tom do campo; malha mais detalhada para acompanhar o terreno na emenda. Velocidade igual (≈165 quadros por segundo) |
 | 08/11/2026 | Terra ao cavar | Bolinhas lisas de uma cor só ao abrir câmaras, bolas rosadas e duras na poeira do tremor e caixinhas marrons nas lascas do tronco | Torrões irregulares de faces retas em vários tons de terra, com grãos menores, girando e encolhendo ao cair; poeira macia e clara (pó pegando sol) que se espalha e sobe; lascas pontudas de madeira clara e casca escura. Só visual, mesmos momentos e durações. Velocidade igual (≈170 quadros por segundo) |
+| 08/11/2026 | Cogumelos | Não havia | 14 grupinhos de cogumelos laranja (pintinhas creme) ao pé de árvores, troncos, arbustos e cupinzeiros, com uma clareirinha sem capim em volta. A língua pega o grupinho e liga o Frenesi (6 s), como a tanajura; ele nasce de novo depois de 90 s. Estatística "Cogumelos comidos" e dica na ajuda. Velocidade igual |

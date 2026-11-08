@@ -9,7 +9,8 @@ extends Node
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
-## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas.
+## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
+## cogumelos, cogumelos_longe, cogumelo_comer.
 
 var main
 var out_dir := "user://fotos"
@@ -232,6 +233,27 @@ func _ready() -> void:
 			await get_tree().process_frame
 		main.world._splinters(lp)
 		await _shot_after("lascas", 0.25)
+	# Cogumelos: de perto, no meio do campo e a língua pegando um grupinho.
+	if (_wanted("cogumelos") or _wanted("cogumelos_longe") or _wanted("cogumelo_comer")) and main.world.mushrooms.spots.size() > 0:
+		var ms = main.world.mushrooms
+		print("[fotos] cogumelos no mapa: ", ms.spots.size())
+		var m3: Vector3 = ms.center(0)
+		var m2 := Vector2(m3.x, m3.z)
+		var away := (-m2).normalized()
+		if _wanted("cogumelos"):
+			await _look_from(m2 + away * 1.1, m3)
+			await _shot("cogumelos")
+		if _wanted("cogumelos_longe"):
+			await _look_from(m2 + away * 3.0, m3)
+			await _shot("cogumelos_longe")
+		if _wanted("cogumelo_comer"):
+			await _look_from(m2 + away * 1.3, m3)
+			for i in 6:
+				await get_tree().process_frame
+			p._start_flick()
+			await _shot_after("cogumelo_comer", 0.12)
+			await get_tree().create_timer(1.0).timeout
+			print("[fotos] comeu cogumelo: ", GameState.stat("mushrooms"), " frenesi: ", GameState.frenzy_active(), " visível: ", ms.nodes[0].visible)
 	if _wanted("trilha"):
 		var sw = main.swarm
 		var best := -1

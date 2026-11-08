@@ -12,6 +12,7 @@ const Grass := preload("res://scripts/world/grass.gd")
 const Nest := preload("res://scripts/world/nest.gd")
 const Props := preload("res://scripts/world/props.gd")
 const DirtFx := preload("res://scripts/world/dirt_fx.gd")
+const Mushrooms := preload("res://scripts/world/mushrooms.gd")
 const ScentMarks := preload("res://scripts/world/scent_marks.gd")
 const Cliffs := preload("res://scripts/world/cliffs.gd")
 const GiantMound := preload("res://scripts/world/giant_mound.gd")
@@ -45,6 +46,7 @@ var pond_shapes: Array = []
 ## Trilha de terra (sem capim) da caverna até o formigueiro mais perto.
 var cave_path := PackedVector2Array()
 ## Tronco caído que fecha a passagem para a área 2.
+var mushrooms: Mushrooms
 var exit_log: Node3D
 ## A clareira está 100% limpa: o tronco já pode ser quebrado.
 var exit_breakable := false
@@ -211,6 +213,10 @@ func build() -> void:
 		vegetation.obstacles.append(w)
 	_build_pond_water()
 	_build_exit_log()
+	mushrooms = Mushrooms.new()
+	mushrooms.name = "Cogumelos"
+	add_child(mushrooms)
+	mushrooms.build(self)
 	giant_mound = GiantMound.new()
 	add_child(giant_mound)
 	giant_mound.build(mats, Color(0.92, 0.74, 0.6))

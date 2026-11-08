@@ -9,7 +9,7 @@ extends Node
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
-## caverna, trilha, camara, camara_funda, camara_campo, cratera.
+## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera.
 
 var main
 var out_dir := "user://fotos"
@@ -172,6 +172,27 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		p.pitch = 0.05
 		await _shot("caverna")
+	# Chão da mata, depois da passagem. O tamanduá não chega lá (a passagem
+	# termina antes), então a foto desliga a física dele e o põe em cima do chão
+	# da mata: na picada olhando para a frente, e olhando para o chão.
+	var floor_mi := main.world.find_child("ChaoDaMata", true, false) as MeshInstance3D
+	for job in [["mata", 4.0, 14.0], ["mata_chao", 8.0, 10.5]]:
+		if not _wanted(job[0]) or floor_mi == null:
+			continue
+		var cl = main.world.cliffs
+		var e := Vector2(cos(cl.EXIT_ANGLE), sin(cl.EXIT_ANGLE))
+		var start: Vector2 = e * (cl.radius_at(cl.EXIT_ANGLE) + cl.CANYON_LENGTH - 2.0)
+		var from2: Vector2 = start + e * float(job[1])
+		var t2: Vector2 = start + e * float(job[2])
+		p.set_physics_process(false)
+		var d := Vector3(t2.x - from2.x, 0, t2.y - from2.y)
+		p.place_at(from2, atan2(-d.x, -d.z))
+		p.global_position.y = _floor_y(floor_mi, from2) + 0.25
+		await get_tree().process_frame
+		var aim: Vector3 = Vector3(t2.x, _floor_y(floor_mi, t2), t2.y) - p.camera.global_position
+		p.pitch = clampf(asin(aim.normalized().y), -1.3, 1.3)
+		await _shot(job[0])
+		p.set_physics_process(true)
 	if _wanted("trilha"):
 		var sw = main.swarm
 		var best := -1
@@ -269,3 +290,17 @@ func _shot(name: String) -> void:
 	for i in 12:
 		await get_tree().process_frame
 	DevTools._capture("%s/%s.jpg" % [out_dir, name])
+
+
+## Altura do chão da mata em `p2` (o vértice mais perto da malha).
+func _floor_y(mi: MeshInstance3D, p2: Vector2) -> float:
+	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var best := INF
+	var y := 0.0
+	for v in verts:
+		var w: Vector3 = mi.global_transform * v
+		var dd := Vector2(w.x, w.z).distance_squared_to(p2)
+		if dd < best:
+			best = dd
+			y = w.y
+	return y

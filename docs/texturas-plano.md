@@ -69,7 +69,7 @@ atuais projetam as manchas nas três direções do mundo (projeção triplanar,
 |---|---|---|---|
 | Chão do cerrado e trilhas | `scripts/world/terrain.gd` | `terrain` (a máscara das trilhas vem do terreno) | `shaders/terrain.gdshader` (projeção de cima, em XZ do mundo) |
 | Paredões de arenito | `scripts/world/cliffs.gd` | `cliff` (faixas pintadas por vértice) | `shaders/soft_surface.gdshader` |
-| Chão da mata (caminho para a área 2) | `scripts/world/vegetation.gd` (`ChaoDaMata`) | `cliff` | `soft_surface` |
+| Chão da mata (caminho para a área 2) | `scripts/world/vegetation.gd` (`ChaoDaMata`) | `forest_floor` | `shaders/mata.gdshader` |
 | Pedras | `props.gd` `build_rock` | `rock` | `soft_surface` |
 | Cupinzeiros | `props.gd` `build_termite_mound` | `clay` | `soft_surface` |
 | Casca das árvores e arbustos | `props.gd` `build_tree`, `build_shrub` | `bark` | `soft_surface` |
@@ -143,7 +143,7 @@ godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/fotos/
 
 Nomes das fotos: `arvore`, `copa`, `ipe`, `arbusto`, `cupinzeiro`, `pedra`,
 `tronco`, `tronco_ponta`, `formigueiro`, `formigueiro_grande`, `camara`, `camara_funda`,
-`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `trilha`. Tire
+`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `mata`, `mata_chao`, `trilha`. Tire
 o "antes" de tudo uma vez, no começo. Mostre ao Caio o antes e o depois lado a
 lado. Também vale uma volta no jogo de verdade (com o MCP do Godot), porque a
 foto parada não mostra a repetição da textura nem o FPS.
@@ -197,5 +197,5 @@ o que for feito nos cupinzeiros).
 | Formigueiros e câmaras | feito em 07/11/2026: `assets/textures/terra/` (monte e tampas) e `assets/textures/cava/` (terra cavada), feitas por `tools/blender_terra.py` e `tools/blender_cava.py`; shader `shaders/formigueiro.gdshader` (materiais `nest_soil`, `nest_cap`, `nest_fungus`). Monte com contorno irregular e olheiros em cone; câmaras por nível em `nest.gd`: rasa (nível 1), anel de terra no campo, poço fundo com fungo e túneis (nível 2) e cratera em degraus com câmaras cortadas (rainha) |
 | Lagoas | feito em 07/11/2026: shader próprio `shaders/agua.gdshader` (material `water`): reflete as cores do céu (atualizadas com o dia em `world.gd` `_apply_day`) e o paredão numa faixa no fundo (altura reduzida de propósito, `cliff_height`), ondinhas com o vento, transparência pelo caminho da luz na água. Lama molhada na beira pelo canal alfa da máscara do terreno (`mud_tint`, `mud_rough` em `terrain.gdshader`) |
 | Copas e arbustos | feito em 08/11/2026: `assets/textures/leaf_cluster.png` (copas) e `shrub_cluster.png` (arbustos), 512 px, feitas por `tools/gen_textures.py` (roda no Python do Blender; R = sombra, G = tom de cada folha, B = folha seca). Shader `foliage.gdshader` com `tone_amount`, `dry_amount` e `dry_color` (zero nos ipês) |
-| Chão da mata | a fazer |
+| Chão da mata | feito em 08/11/2026: `assets/textures/folhico/` (cor + altura, relevo), feita por `tools/gen_folhico.py` (roda no Python do Blender); shader próprio `shaders/mata.gdshader` (material `forest_floor`), lido de cima em duas escalas, emendando com o tom do campo na beira do mapa (`half_map`, `blend_width`). Fotos `mata` e `mata_chao` (a câmera entra na mata, onde o tamanduá não chega) |
 | Terra ao cavar | a fazer |

@@ -5,6 +5,9 @@ const SOFT_SURFACE := preload("res://shaders/soft_surface.gdshader")
 const FOLIAGE := preload("res://shaders/foliage.gdshader")
 const GRASS := preload("res://shaders/grass.gdshader")
 const TERRAIN := preload("res://shaders/terrain.gdshader")
+const MATA := preload("res://shaders/mata.gdshader")
+const FOLHICO_COR := preload("res://assets/textures/folhico/cor.png")
+const FOLHICO_RELEVO := preload("res://assets/textures/folhico/relevo.png")
 const ARENITO := preload("res://shaders/arenito.gdshader")
 const CASCA := preload("res://shaders/casca.gdshader")
 const FLOWER := preload("res://shaders/flower.gdshader")
@@ -50,6 +53,7 @@ var ipe_ground: ShaderMaterial
 var clay: ShaderMaterial
 var rock: ShaderMaterial
 var cliff: ShaderMaterial
+var forest_floor: ShaderMaterial
 var arenito: ShaderMaterial
 var nest_soil: ShaderMaterial
 var nest_cap: ShaderMaterial
@@ -69,6 +73,13 @@ func _init() -> void:
 	terrain.set_shader_parameter("trilha_cor", TRILHA_COR)
 	terrain.set_shader_parameter("trilha_relevo", TRILHA_RELEVO)
 	terrain.set_shader_parameter("trilha_aspereza", TRILHA_ASPEREZA)
+
+	# Chão da mata (depois da passagem): folhas secas caídas, feitas por
+	# tools/gen_folhico.py.
+	forest_floor = _shader(MATA)
+	forest_floor.set_shader_parameter("noise_tex", noise_tex)
+	forest_floor.set_shader_parameter("folhico_cor", FOLHICO_COR)
+	forest_floor.set_shader_parameter("folhico_relevo", FOLHICO_RELEVO)
 
 	grass = _shader(GRASS)
 	grass.set_shader_parameter("noise_tex", noise_tex)

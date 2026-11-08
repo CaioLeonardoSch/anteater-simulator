@@ -58,6 +58,10 @@ const TANAJURA := 2
 const SIZE := [0.15, 0.44, 0.22]
 const SPEED := [0.7, 0.0, 0.95]
 const PANIC_SPEED := [1.8, 0.0, 2.2]
+## Quando uma formiga é comida: chance de cada vizinha sair correndo e a
+## velocidade dessa corrida (fração da fuga normal).
+const SCARE_CHANCE := 0.2
+const SCARE_SPEED := 0.6
 const CHAMBER_SPEED := 0.32
 const QUEEN_SPEED := 0.05
 
@@ -423,34 +427,37 @@ func _physics_process(delta: float) -> void:
 				pass
 
 
-## Uma formiga foi pega: as outras num raio em volta do ponto saem correndo.
+## Uma formiga foi pega: algumas das outras num raio em volta (SCARE_CHANCE)
+## saem correndo, mais devagar que na fuga normal.
 func scare(at: Vector3, radius: float) -> void:
 	var from := Vector2(at.x, at.z)
 	var r2 := radius * radius
 	var found: Array[Vector4] = []
 	field.gather(at, radius, found)
 	for f in found:
+		if randf() >= SCARE_CHANCE:
+			continue
 		var j := take_from_field(int(f.x), int(f.y), Mode.FLEE)
 		if j >= 0:
-			_start_flee(j, from)
+			_start_flee(j, from, SCARE_SPEED)
 	for i in CAPACITY:
 		if alive[i] == 0 or kind[i] == QUEEN:
 			continue
 		var m := mode[i]
 		if m != Mode.TRAIL and m != Mode.RETURN and m != Mode.CHAMBER and m != Mode.GHOST:
 			continue
-		if Vector2(pos[i].x, pos[i].z).distance_squared_to(from) < r2:
-			_start_flee(i, from)
+		if Vector2(pos[i].x, pos[i].z).distance_squared_to(from) < r2 and randf() < SCARE_CHANCE:
+			_start_flee(i, from, SCARE_SPEED)
 
 
-func _start_flee(i: int, from: Vector2) -> void:
+func _start_flee(i: int, from: Vector2, speed_mult: float = 1.0) -> void:
 	var p2 := Vector2(pos[i].x, pos[i].z)
 	var away := (p2 - from)
 	if away.length_squared() < 0.0001:
 		away = Vector2.RIGHT.rotated(randf() * TAU)
 	away = away.normalized().rotated(randf_range(-0.7, 0.7))
 	mode[i] = Mode.FLEE
-	vel[i] = away * PANIC_SPEED[kind[i]] * randf_range(0.85, 1.15)
+	vel[i] = away * PANIC_SPEED[kind[i]] * speed_mult * randf_range(0.85, 1.15)
 	# Moradoras correm mais longe antes de pensar em voltar para a câmara.
 	timer[i] = randf_range(2.4, 3.8) if home[i] >= 0 else randf_range(1.2, 2.2)
 

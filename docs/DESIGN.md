@@ -725,3 +725,4 @@ acertar a duração com testes.
 | 08/11/2026 | Lagoa | 8 m e rasa (0,5 a 0,95 m de fundo) | 10 m e mais funda (0,8 a 1,4 m). Um tronco caído entra na água, e uma trilha curta (poucas formigas, sem tanajura) sai da trilha mais perto e anda por cima dele até perto da água |
 | 08/11/2026 | Barra de habilidades | Mostrava todas, com cadeado nas que faltavam | Só as aprendidas, na ordem Lamber, Cavar, Farejar e Tremor |
 | 08/11/2026 | Pulo | Só o Tremor pulava (no `Espaço`) | `Espaço` pula sempre (subir nas pedras, sair dos buracos); o Tremor foi para o `X` (`B` no controle) |
+| 08/11/2026 | Susto ao comer | Todas as formigas a até 2 m da que foi comida fugiam, na velocidade normal de fuga | Só as que estão a até 1,5 m, e cada uma tem 20% de chance de fugir, a 60% da velocidade normal |

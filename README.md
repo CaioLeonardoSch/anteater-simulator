@@ -150,8 +150,8 @@ uma vez".
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega perto: a 2 m de você parado, a 2,5 m
-  andando e mais longe ainda correndo. Quando você come uma, as que estão a
-  até 2 m dela também saem correndo. Chegue devagar e lamba de longe (a
+  andando e mais longe ainda correndo. Quando você come uma, cada uma das que
+  estão a até 1,5 m dela tem 20% de chance de sair correndo, mais devagar. Chegue devagar e lamba de longe (a
   língua alcança 1 m, e mais com Comprimento).
   Correndo também não dá para lamber, até aprender **Corrida nível 2**.
 - **Faro:** primeiro só diz quantas formigas há por perto e a que distância

@@ -306,11 +306,18 @@ func _show_tip(id: String) -> void:
 			text = "Aprendida." if ranks == 1 else "Completa: %d de %d cliques." % [ranks, ranks]
 			col = UiTheme.GOLD
 		3:
-			text = "%s · ainda não disponível." % price
+			text = "Fica para a área 2 · %s." % price.to_lower()
 		4:
-			var gate := GameState.gate_of(id)
-			text = "Abre com %s insetos comidos (faltam %s) · %s." % [
-				_thousands(gate), _thousands(gate - GameState.ants_eaten), price.to_lower()]
+			var m := GameState.unlock_of(id)
+			var when := "Abre ao limpar o primeiro formigueiro"
+			if m >= 2:
+				var at := GameState.marco_insects(m)
+				when = "Abre com %s dos insetos comidos (faltam %s)" % [
+					"metade" if m == 2 else "80%", _thousands(at - GameState.ants_eaten)]
+			if GameState.is_gift(id):
+				text = "%s, de presente." % when
+			else:
+				text = "%s · %s." % [when, price.to_lower()]
 		0:
 			var need := GameState.missing_requirements(id)
 			var prev: String = GameState.get_upgrade(need[0]).name if not need.is_empty() else ""
@@ -633,13 +640,9 @@ class SkillNode extends Button:
 		if hot:
 			draw_arc(c, radius + (10.0 if root else 6.5), 0, TAU, 56, Color(1.0, 0.96, 0.8, 0.95), 2.0, true)
 		_rank_pips(c, state)
-		if state == 3:
+		if state == 3 or state == 4:
+			# Travada: só o cadeado.
 			_padlock(c)
-		elif state == 4:
-			# Travada até comer mais insetos: cadeado e "8 mil" embaixo.
-			_padlock(c)
-			var gate := GameState.gate_of(id)
-			_label_below(c, ("%d mil" % (gate / 1000)) if gate >= 1000 else str(gate), Color(0.72, 0.64, 0.55, 0.85))
 		elif state != 2:
 			# Preço embaixo.
 			var font: Font = UT.display_bold_font()
@@ -673,19 +676,6 @@ class SkillNode extends Button:
 			else:
 				var dim := Color(0.55, 0.47, 0.38, 0.9) if state == 1 else Color(0.36, 0.3, 0.25, 0.8)
 				draw_arc(p, 3.3, 0, TAU, 14, dim, 1.4, true)
-
-	func _label_below(c: Vector2, txt: String, tc: Color) -> void:
-		var font: Font = UT.display_bold_font()
-		var tsz := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14)
-		var y := c.y + radius + (19.0 if root else 15.0)
-		var rect := Rect2(Vector2(c.x - tsz.x * 0.5 - 6, y - 12), Vector2(tsz.x + 12, 17))
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color(0.05, 0.03, 0.025, 0.9)
-		sb.border_color = Color(0.45, 0.38, 0.3, 0.6)
-		sb.set_border_width_all(1)
-		sb.set_corner_radius_all(8)
-		draw_style_box(sb, rect)
-		draw_string(font, Vector2(c.x - tsz.x * 0.5, y + 1), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, tc)
 
 	func _padlock(c: Vector2) -> void:
 		var metal := Color(0.95, 0.85, 0.65)

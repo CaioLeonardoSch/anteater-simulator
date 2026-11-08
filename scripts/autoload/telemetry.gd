@@ -3,7 +3,7 @@ extends Node
 ## para um Formulário do Google (as respostas caem numa planilha do Caio).
 ##
 ## O que vai: um número aleatório do jogador (e o apelido, se ele quiser), a
-## versão do jogo, o tempo, os insetos, as compras, as travas, os formigueiros
+## versão do jogo, o tempo, os insetos, as compras, os marcos, os objetivos, os formigueiros
 ## limpos, os números das Estatísticas, a placa de vídeo e o FPS médio. Nada de
 ## nome, e-mail ou arquivos do computador.
 ##
@@ -71,7 +71,7 @@ func _ready() -> void:
 		var costs: Array = u.get("costs", [0])
 		log_event("compra", "%s %d/%d (%d)" % [u.get("name", id), r, costs.size(),
 			int(costs[clampi(r - 1, 0, costs.size() - 1)])]))
-	GameState.gate_opened.connect(func(g): log_event("trava", "%d insetos" % g))
+	GameState.marco_reached.connect(func(m): log_event("marco", str(m)))
 	GameState.skills_reset.connect(func(): log_event("redistribuiu", ""))
 	GameState.level_completed.connect(func(_t):
 		if session_active:

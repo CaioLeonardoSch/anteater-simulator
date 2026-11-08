@@ -7,17 +7,19 @@ extends Node3D
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 
 const SEGMENTS := 432
-const BASE_RADIUS := 64.0
+## Raio da clareira até o pé do paredão (~50 m de ponta a ponta).
+const BASE_RADIUS := 26.0
 ## Pontos do perfil do paredão (de baixo para o platô).
 const PROFILE := 12
-## Caverna: ângulo no anel (radianos, ~12°, a leste), meia-largura, fundo e altura.
+## Caverna: ângulo no anel (radianos, ~12°, a leste), meia-largura (a boca tem
+## uns 10 m), fundo e altura.
 const CAVE_ANGLE := 0.2094
-const CAVE_HALF := 0.08
+const CAVE_HALF := 5.1 / BASE_RADIUS
 const CAVE_DEPTH := 7.5
 const CAVE_HEIGHT := 3.4
 ## Passagem para a área 2 (~162°, oeste-sudoeste), na direção do cupinzeiro gigante.
 const EXIT_ANGLE := 2.8274
-const EXIT_HALF := 0.056
+const EXIT_HALF := 3.6 / BASE_RADIUS
 const CANYON_LENGTH := 15.0
 ## Quanto o platô do topo avança para fora.
 const PLATEAU := 24.0
@@ -45,10 +47,10 @@ func plan(t) -> void:
 		var p := Vector2(cos(a), sin(a))
 		var big := _noise.get_noise_2d(p.x * 2.2, p.y * 2.2)
 		var fine := _noise.get_noise_2d(p.x * 9.0 + 50.0, p.y * 9.0)
-		_r[i] = BASE_RADIUS + big * 2.2 + fine * 0.6
+		_r[i] = BASE_RADIUS + big * 1.4 + fine * 0.4
 		# Mais baixos do lado da passagem, para o cupinzeiro gigante aparecer por cima.
 		var toward_exit := smoothstep(0.2, 1.0, cos(a - EXIT_ANGLE))
-		_h[i] = lerpf(15.5, 10.0, toward_exit) + _noise.get_noise_2d(p.x * 4.0 + 20.0, p.y * 4.0) * 2.0
+		_h[i] = lerpf(12.5, 8.0, toward_exit) + _noise.get_noise_2d(p.x * 4.0 + 20.0, p.y * 4.0) * 2.0
 	# Chão da caverna na altura da boca dela.
 	var cave_dir := Vector2(cos(CAVE_ANGLE), sin(CAVE_ANGLE))
 	var r_cave := radius_at(CAVE_ANGLE)

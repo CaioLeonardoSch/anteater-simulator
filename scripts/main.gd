@@ -187,12 +187,16 @@ func _build_game() -> void:
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
+	# Marco 1: o primeiro formigueiro limpo abre mais habilidades.
+	colony.nest_cleaned.connect(func(_n): GameState.reach_marco(1))
 	colony.nest_cleaned.connect(func(n): Telemetry.log_event("formigueiro", n.display_name))
+	hud.objectives.step_done.connect(func(id): Telemetry.log_event("objetivo", id))
 	if DevTools.autoplay and DevTools.args.has("botlog"):
 		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
 		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
-		colony.nest_cleaned.connect(func(n): _bot_write.call_deferred("formigueiro", "%s (%s)" % [n.display_name, "grande" if n.big else "pequeno"]))
-		GameState.gate_opened.connect(func(g): _bot_write.call_deferred("trava", str(g)))
+		colony.nest_cleaned.connect(func(n): _bot_write.call_deferred("formigueiro", "%s (%s)" % [n.display_name, "grande" if n.big else ("médio" if n.medium else "pequeno")]))
+		hud.objectives.step_done.connect(func(id): _bot_write.call_deferred("objetivo", id))
+		GameState.marco_reached.connect(func(m): _bot_write.call_deferred("marco", str(m)))
 	Settings.changed.connect(world.apply_graphics)
 	Settings.changed.connect(_apply_sniff_color)
 	_apply_sniff_color()
@@ -473,6 +477,17 @@ func _on_eaten_changed(_total: int, _delta: int) -> void:
 ## crescem juntas. Se ainda não dá para pagar, espera juntar os pontos (não
 ## pula para outro ramo). Ramo terminado (ou trancado) sai do rodízio.
 func _bot_buy() -> void:
+	# Depois do marco 2, a Fundura vem primeiro: sem ela, o formigueiro da
+	# rainha não abre e a área não termina (como faria quem segue o objetivo).
+	if GameState.marcos.has(2):
+		for id in ["garras_fundura_1", "garras_fundura_2"]:
+			if GameState.upgrade_state(id) == 1:
+				if GameState.can_buy(id):
+					var c := GameState.cost_of(id)
+					GameState.buy(id)
+					var uf := GameState.get_upgrade(id)
+					_bot_write("compra", "%s;%s %d/%d;%d" % [id, uf.name, GameState.rank(id), GameState.max_rank(id), c])
+				return
 	for _i in BOT_BRANCHES.size() * 2:
 		var id := _bot_next(BOT_BRANCHES[_bot_turn % BOT_BRANCHES.size()])
 		if id.is_empty():

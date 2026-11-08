@@ -3,8 +3,10 @@
 05/11/2026. Pesquisa pedida na revisão de qualidade de vida (ponto 5). Junta o
 que outros jogos e autores de game design dizem com as contas da demo como ela
 está hoje. As recomendações estão na seção 4, em ordem de impacto. As seções 5 e 6
-trazem a simulação com o bot e a proposta de reformulação da economia. Nada
-daqui foi implementado: é material para decidir.
+trazem a simulação com o bot e a proposta de reformulação da economia. As
+propostas aprovadas foram feitas no jogo: a árvore de cliques (seção 9), as
+áreas e os marcos (seção 11) e o tutorial por objetivos (seção 12), em
+08/11/2026. A seção 13 traz o bot na área 1 nova.
 
 ## 1. Como a demo funciona hoje (os números)
 
@@ -628,6 +630,337 @@ ritmo, não o relógio.
 
 Por isso os preços ficaram como na proposta. O próximo ajuste deve vir da
 jogatina do Caio com a árvore nova (a telemetria anota cada clique comprado).
+
+## 11. As 4 áreas, marcos no lugar das travas e a área 1 menor (07/11/2026; feito em 08/11/2026)
+
+### O que o Caio decidiu
+
+- **Formigas por área:** área 1 com 10 mil, área 2 com 30 mil, área 3 com 60
+  mil e área 4 com até 100 mil.
+- **Demo (área 1) de 20 a 30 minutos.** O jogo completo pode crescer com o
+  conteúdo novo das outras áreas.
+- **Travas novas:** cada área tem um **teto** do que dá para comprar, e
+  **marcos** no caminho destravam habilidades (mesmo sem pontos para
+  comprá-las na hora). As travas por insetos comidos saem.
+- **Na área 1 não dá para comprar tudo:** sobra escolha, e o jogador decide
+  onde focar. No fim do jogo dá para comprar tudo.
+- **O Faro abre no fim da área 1.**
+- **A área 1 pode diminuir.**
+
+### Pontos por área
+
+Continua 10 insetos = 1 ponto. A coluna "à venda" é o que a árvore oferece
+até o fim daquela área, somando as anteriores.
+
+| Área | Insetos | Pontos | Pontos até aqui | À venda até aqui | Dá para comprar |
+|---|---|---|---|---|---|
+| 1 | 10 mil | 1 000 | 1 000 | ~1 450 | ~70% |
+| 2 | 30 mil | 3 000 | 4 000 | ~5 300 | ~75% |
+| 3 | 60 mil | 6 000 | 10 000 | ~11 800 | ~85% |
+| 4 | até 100 mil | 10 000 | 20 000 | ~19 500 | tudo, com um pouco sobrando |
+
+- **Os pontos que sobram passam para a área seguinte.**
+- **Falta conteúdo para as áreas 2 a 4.** A árvore de hoje custa 4 227 pontos
+  (4 927 com Escalada e Cauda). Para o jogo inteiro, faltam uns 14 500 pontos
+  em habilidades ou níveis novos.
+- **Os preços precisam subir de área para área.** O tamanduá forte ganha muito
+  mais pontos por minuto: com 40 insetos por lambida, cada lambida vale até 4
+  pontos. Para manter o ritmo de uma compra a cada 40 a 60 s, as habilidades
+  das áreas 3 e 4 custam bem mais que as da área 1.
+
+### Área 1: o que fica à venda
+
+Com os preços de hoje, a área 1 oferece cerca de **1 450 pontos** em
+habilidades, e o jogador ganha **1 000**. Então ele compra perto de 70% e
+escolhe o resto.
+
+| Quando abre | Habilidades | Preço total |
+|---|---|---|
+| **Desde o começo** | O começo da Língua, das Garras e das Patas, e o nível 1 de todas as linhas: Bocado, Destreza, Comprimento, Mira, Rapidez, Força, Fundura, Respiro, Passada, Fôlego e Corrida | 532 |
+| **Marco 1: primeiro formigueiro limpo** | Bocado 2, Mira 2, Respiro 2, Passada 2 | 370 |
+| **Marco 2: metade dos insetos da área comidos** | Destreza 2, Força 2, Tremor 1, Fundura 2 (a rainha) | 480 |
+| **Marco 3: 80% dos insetos da área comidos** | **Farejar, de presente**, e Alcance 1 à venda | 60 |
+| **Fica para a área 2 em diante** | Rapidez 2, Comprimento 2, Bocado 3 e 4, Destreza 3, Mira 3, Tremor 2 e 3, Fôlego 2, Corrida 2 e 3, Alcance 2 e 3, Precisão, Escalada e Cauda | — |
+
+#### Cada desbloqueio, um por um (preços de hoje)
+
+O preço de cada clique vem separado por "+". A coluna "O que faz" resume o
+efeito de todos os cliques daquela habilidade.
+
+**Desde o começo (532 pontos)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Língua | Lambida Contínua | 1 | 15 | Segurar o botão para lamber sem parar |
+| Língua | Bocado 1 | 3 | 8 + 12 + 16 = 36 | 2, 3 e 5 insetos por lambida |
+| Língua | Destreza 1 | 3 | 10 + 14 + 18 = 42 | Lambe um pouco mais rápido |
+| Língua | Comprimento 1 | 3 | 16 + 20 + 24 = 60 | Alcance de 3,3, 3,6 e 3,9 m |
+| Língua | Mira 1 | 1 | 12 | A língua vai sozinha atrás do inseto e a mira fica maior |
+| Garras | Cavar | 1 | 25 | Abre as câmaras pequenas (E) |
+| Garras | Força 1 | 2 | 25 + 35 = 60 | As moradoras ficam tontas e não fogem logo |
+| Garras | Rapidez 1 | 3 | 12 + 16 + 20 = 48 | As garras descansam menos depois de cavar |
+| Garras | Fundura 1 | 1 | 60 | Abre as câmaras grandes |
+| Patas | Fôlego | 1 | 10 | Estamina de 50 para 75 (e libera correr) |
+| Patas | Fôlego 1 | 3 | 12 + 16 + 20 = 48 | Estamina de 100, 125 e 150 |
+| Patas | Passada 1 | 3 | 8 + 12 + 16 = 36 | Gasta menos estamina correndo |
+| Patas | Respiro 1 | 2 | 8 + 12 = 20 | A estamina volta mais rápido |
+| Patas | Corrida 1 | 2 | 25 + 35 = 60 | Corre mais rápido |
+
+**Marco 1: primeiro formigueiro limpo (370 pontos)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Língua | Bocado 2 | 3 | 30 + 40 + 50 = 120 | 8, 11 e 15 insetos por lambida, e a ponta gruda num raio maior |
+| Língua | Mira 2 | 3 | 25 + 30 + 35 = 90 | A área da mira fica maior a cada clique |
+| Patas | Respiro 2 | 2 | 30 + 40 = 70 | A estamina volta mais que o dobro do começo |
+| Patas | Passada 2 | 2 | 40 + 50 = 90 | Correndo, gasta metade da estamina do começo |
+
+**Marco 2: metade dos insetos da área (480 pontos)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Língua | Destreza 2 | 3 | 50 + 60 + 70 = 180 | Lambe ainda mais rápido |
+| Garras | Força 2 | 2 | 40 + 50 = 90 | As moradoras ficam tontas por mais tempo |
+| Garras | Tremor 1 | 1 | 90 | Espaço: pula e deixa tontos os insetos a até 6 m |
+| Garras | Fundura 2 | 1 | 120 | Desmancha o formigueiro grande e chega à rainha |
+
+**Marco 3: 80% dos insetos da área (60 pontos à venda)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Faro | Farejar | 1 | **de presente** (hoje custa 25) | Q: conta os insetos por perto e a bússola aponta o maior grupo |
+| Faro | Alcance 1 | 3 | 15 + 20 + 25 = 60 | Fareja mais longe e recarrega mais rápido |
+
+**Fica para a área 2 em diante (2 760 pontos, mais 700 de Escalada e Cauda)**
+
+| Ramo | Habilidade | Preço |
+|---|---|---|
+| Língua | Comprimento 2 | 60 + 80 = 140 |
+| Língua | Bocado 3 | 70 + 90 = 160 |
+| Língua | Bocado 4 | 160 + 200 = 360 |
+| Língua | Destreza 3 | 260 |
+| Língua | Mira 3 | 110 |
+| Garras | Rapidez 2 | 40 + 50 + 60 = 150 |
+| Garras | Tremor 2 | 45 + 55 + 65 = 165 |
+| Garras | Tremor 3 (Terremoto) | 300 |
+| Patas | Fôlego 2 | 50 + 60 = 110 |
+| Patas | Corrida 2 (lamber correndo) | 90 |
+| Patas | Corrida 3 (não assusta correndo) | 250 |
+| Faro | Alcance 2 | 55 + 70 = 125 |
+| Faro | Alcance 3 | 220 |
+| Faro | Precisão 1, 2 e 3 | 45 + 75 + 200 = 320 |
+| Escalada | Escalada e Cauda Preênsil | 300 + 400 = 700 |
+
+**Somas da área 1:** 532 + 370 + 480 + 60 = **1 442 pontos à venda**, mais o
+Farejar de presente. O jogador ganha 1 000, então sobram uns 440 para escolher
+o que deixar para depois.
+
+**Por que o Faro aos 80%.** Os últimos insetos de uma área são os
+espalhados e escondidos, que dão mais trabalho de achar. O Faro resolve
+exatamente isso. Na área 2, maior e mais fechada, ele passa a ser essencial.
+Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
+("O faro despertou").
+
+**Os marcos.**
+- O 1º é um formigueiro limpo: ele aparece no canto da tela, um losango por
+  formigueiro, e é resultado do que o jogador fez. Os formigueiros pequenos
+  perto da caverna têm poucas moradoras passeando, então ele chega cedo.
+- O 2º e o 3º são a metade e 80% dos insetos da área. Limpar formigueiros
+  inteiros pode demorar, porque as moradoras passeiam longe deles.
+- Cada marco mostra um cartão, como "Formigueiro limpo · 4 habilidades novas
+  na árvore".
+
+**Na árvore:** o que ainda não abriu (de outra área ou esperando um marco)
+aparece só com o cadeado, sem texto (decidido pelo Caio em 08/11/2026).
+
+### Área 1 menor (08/11: o Caio pediu 50 m)
+
+| | Hoje | Proposta |
+|---|---|---|
+| Tamanho | ~120 m de ponta a ponta | **~50 m** (perto de 1/6 da área de hoje) |
+| Formigueiros | 18 | 8: 5 pequenos, 2 médios e 1 grande com a rainha |
+| Câmaras | 116 (48 no meio do campo) | ~40 |
+| Insetos | 44 000 | 10 000 (~1 250 por formigueiro; hoje ~2 400) |
+
+- **Atravessar a área:** uns 18 s andando (2,8 m/s) e 14 s correndo.
+- **Distância entre formigueiros:** uns 12 a 15 m. Da caverna até o
+  primeiro formigueiro, uns 8 a 10 m.
+- **Quantos insetos por metro:** um pouco mais cheio que hoje, porque a área
+  cai mais que os insetos (1/6 da área para 1/4 dos insetos).
+- **O que continua:** a caverna do começo, os penhascos, o cupinzeiro
+  gigante lá longe e o tronco na saída. As lagoas ficam menores ou viram uma
+  só, para caber.
+- **A duração:** com menos caminhada, o ritmo deve passar dos 465 insetos por
+  minuto da primeira jogatina do Caio. A área 1 pode ficar **perto de 20
+  minutos**, ou um pouco menos. O bot confirma isso depois de feita.
+
+### Áreas 2 a 4 (por enquanto, só no papel)
+
+- **Área 2** (mata densa, formiga das árvores): os níveis 2 e 3 das linhas,
+  Precisão, Comprimento 2, Lamber correndo (Corrida 2) e a Escalada, aberta
+  por um marco ("chegou à mata"). Mais habilidades novas, ligadas às árvores.
+- **Área 3** (cupins, em volta do cupinzeiro gigante): as pontas fortes de
+  hoje (Bocado 4, Destreza 3, Terremoto, Corrida 3, Alcance 3), a Cauda
+  Preênsil e habilidades novas para cupinzeiros.
+- **Área 4** (dentro do cupinzeiro gigante): habilidades novas do fim, a
+  definir.
+
+### Decidido pelo Caio (07/11/2026)
+
+1. **Farejar:** de presente no marco 3, aos 80% dos insetos da área (08/11: antes eram 75%).
+2. **Marco 2:** metade dos insetos da área.
+3. **Redistribuir pontos:** continua de graça.
+
+### Feito em 08/11/2026
+
+1. **Área 1 menor:** uns 50 m, 8 formigueiros (5 pequenos, 2 médios e 1
+   grande com a rainha), 40 câmaras (12 no meio do campo), 10 000 insetos e
+   uma lagoa só.
+2. **Marcos no lugar das travas:** o primeiro formigueiro limpo, metade e 80%
+   (com o Farejar de presente), um cartão grande na tela a cada marco e, na
+   árvore, só o cadeado (sem texto embaixo).
+   Redistribuir continua de graça, e o presente não sai.
+3. **Jogos salvos antigos não abrem** (o mapa e as travas mudaram).
+4. **Bot na área 1:** seção 13.
+5. Áreas 2 a 4: continuam só no papel até a demo estar fechada.
+
+## 12. Tutorial guiado por objetivos (08/11/2026; feito no mesmo dia)
+
+A ideia do Caio: uma lista de objetivos, um de cada vez, com um marcador e um
+texto curto dizendo o que fazer. Assim os marcos da seção 11 ficam naturais e
+o jogador sempre sabe para onde ir.
+
+**O que o jogo já tem e vai ser aproveitado**
+- As dicas de controle embaixo da tela ("WASD Andar", "Shift Correr", "Tab
+  Mapa e habilidades"), que somem depois que você usa.
+- A dica do lugar ("E Abrir câmara", o cadeado, as formigas que faltam).
+- O alfinete na bússola com a distância, que hoje só aparece quando você
+  marca um ponto no mapa.
+
+### Na tela
+
+- **Cartão de objetivo no canto**, sempre visível: "OBJETIVO", uma frase
+  curta e o progresso, como "Coma 200 insetos · 120/200". Quando o objetivo
+  se cumpre, ganha um ✓ e um som, e o próximo aparece.
+- **Pulo automático:** o que o jogador já fez antes de chegar a vez é pulado
+  na hora, ninguém fica preso.
+- **Marcador:** um losango em cima do alvo, com a distância embaixo, e o
+  mesmo losango na bússola. Só aparece quando o objetivo tem um lugar. Segue
+  a opção de Dicas e pode ser desligado.
+
+### A animação do losango
+
+- **É da tela, não do mapa.** O losango não é uma coisa física no mundo: não
+  desvia de árvores nem de penhascos e fica sempre visível por cima de tudo.
+- **O voo:** quando um objetivo novo aparece, o losango sai do cartão de
+  objetivo e vai numa leve curva até o ponto certo da tela, em um ou dois
+  segundos, com um rastro fraco de luz.
+- **Depois do voo** ele fica pulsando em cima do alvo. Depois de um tempo,
+  ele some.
+- **Alvo atrás do jogador:** o losango vai até a borda da tela pelo lado mais
+  curto, e a bússola mostra o rumo.
+- **Tecla para reacender:** depois que o losango some, uma tecla faz ele voar
+  de novo do cartão até o alvo. É uma tecla nova, separada do Faro (decidido
+  pelo Caio em 08/11). A tecla é **F** (escolha do Caio), livre e ao lado do
+  WASD; dá para trocar em Configurações.
+
+### A sequência da área 1
+
+| # | Objetivo | Marcador | O que é |
+|---|---|---|---|
+| 1 | Ande com WASD | — | tutorial |
+| 2 | Use a língua para comer uma formiga | trilha mais perto | tutorial |
+| 3 | Coma 200 insetos | — | tutorial |
+| 4 | Abra a árvore (Tab) e aprenda uma habilidade | — | tutorial |
+| 5 | Aprenda Cavar e abra uma câmara | câmara pequena mais perto | tutorial |
+| 6 | Limpe um formigueiro | formigueiro pequeno mais perto | marco 1 |
+| 7 | Coma metade dos insetos da área | — | marco 2 |
+| 8 | Desmanche o formigueiro da rainha | formigueiro grande | pede a Fundura 2, que abre no marco 2 |
+| 9 | Coma todos os insetos da área | — | aos 80%, marco 3: ganha o Farejar de presente |
+
+- "Corra (Shift)" entra como objetivo extra logo depois da primeira compra
+  das Patas, sem segurar a fila.
+- No objetivo 9, o Farejar chega com o cartão "O faro despertou" e a tecla
+  dele. Não vira um objetivo à parte.
+- Com a área limpa, o losango aponta para o tronco da saída.
+
+### Decidido pelo Caio (08/11/2026)
+
+1. Cartão sempre visível; o marcador segue a opção de Dicas.
+2. Os passos 9 a 11 da primeira versão viraram um só: comer todos os insetos
+   da área, com o Farejar aos 80%.
+3. O losango voa pelo ar, numa leve curva, como parte da tela.
+4. Tem uma tecla para reacender o losango depois que ele some.
+
+### Como ficou no jogo (08/11/2026)
+
+- A sequência tem 10 passos: andar, comer um inseto, comer 200, aprender uma
+  habilidade, abrir uma câmara (o losango vai na câmara pequena mais perto),
+  limpar um formigueiro (vai no formigueiro pequeno que dá menos trabalho,
+  somando o que falta e a distância), comer metade, desmanchar a rainha, comer
+  todos (com "Aos 80%, um presente." embaixo) e quebrar o tronco.
+- O "Corra (Shift)" não virou objetivo: a dica de correr embaixo da tela já
+  faz isso.
+- O losango voa em 1,25 s, fica 9 s pulsando com a distância e some em 1,5 s.
+  A tecla **F** (ou Y no controle) faz ele voar de novo; dá para trocar em
+  Configurações → Controles.
+- A telemetria anota cada objetivo cumprido ("objetivo") e cada marco
+  ("marco").
+- O código está em `scripts/ui/objectives.gd`.
+
+## 13. Bot na área 1 nova (08/11/2026)
+
+O mesmo bot das seções 5 e 10 (compra em rodízio entre os ramos, acelerado 8
+vezes), agora na clareira de 50 m com 10 000 insetos e os marcos. Os registros
+estão em `docs/dados/bot-area1.csv` e `bot-area1-travou.csv`.
+
+**Quanto cada formigueiro guarda** (somando trilhas, passeio e câmaras):
+pequeno 1 026, médio 1 437 e o da rainha 1 996 (com a rainha, que vale 200).
+
+### 1ª rodada: travou com 9 601 insetos
+
+O bot gastou os pontos em outras linhas e nunca comprou a **Fundura** (60 +
+120 pontos). Os 399 insetos que sobraram estavam no formigueiro da rainha, que
+só abre com ela, e valiam só 40 pontos. **Um jogador pode cair nisso também**:
+a área 1 dá uns 1 000 pontos e o que abre nela custa 1 442. A saída hoje é
+redistribuir os pontos (de graça). Para a 2ª rodada, o bot passou a comprar a
+Fundura primeiro depois do marco 2, como faria quem segue o objetivo
+"Desmanche o formigueiro da rainha".
+
+### 2ª rodada: limpou a área
+
+| Minuto (do bot) | Insetos | O que aconteceu |
+|---:|---:|---|
+| 0:04 | 1 | Objetivos: andar e comer um inseto |
+| 3:09 | 200 | Coma 200; aprendeu a Lambida Contínua logo depois |
+| 7:30 | 500 | Cavar e a primeira câmara aberta |
+| 10 | 644 | |
+| 20 | 1 945 | |
+| 30 | 3 162 | |
+| 40 | 4 694 | |
+| 42:37 | 5 000 | **Marco 2** (metade) |
+| 51:12 | 6 170 | Fundura 2 |
+| 53:38 | 7 163 | **Marco 1**: o primeiro formigueiro limpo foi o da rainha |
+| 59:35 | 8 000 | **Marco 3** (80%) e o Farejar de presente |
+| 70:56 | 10 000 | **Área limpa** |
+
+- **38 cliques comprados**, 68 pontos sobrando no fim. As duas esperas
+  longas foram pela Fundura: 4 minutos pela 1 (60 pontos) e 9 minutos pela 2
+  (120 pontos, logo depois do marco 2). Fora isso, uma compra a cada 1 a 3
+  minutos.
+- **O bot não segue os objetivos:** ele come o inseto mais perto e não
+  termina um formigueiro de propósito. Por isso o marco 1 veio depois do 2.
+  Quem segue o losango deve limpar um formigueiro pequeno (1 026 insetos)
+  bem antes da metade.
+- **A duração para uma pessoa:** na clareira antiga, o Caio comeu 3,1 vezes
+  mais rápido que o bot. Na mesma proporção, os 71 minutos do bot viram
+  **perto de 23 minutos**, perto da meta de 20.
+
+### Para decidir
+
+- **A Fundura pode travar o fim.** Ideias: dar a Fundura 1 no marco 1 e a 2
+  no marco 2 de presente (como o Farejar); deixar mais barata; ou, quando
+  faltar ponto para ela, a dica embaixo da mira lembrar de redistribuir.
 
 ## Fontes
 

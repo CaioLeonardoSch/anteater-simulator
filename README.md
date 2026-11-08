@@ -18,7 +18,8 @@ produção, os protótipos e as decisões, num lugar só.
 | ![Formigas passeando em volta de uma câmara no meio do campo, muitas carregando folhas](docs/screenshots/passeio.jpg) | ![Um formigueiro grande desmanchado: o buraco com a rainha no fundo, cheio de formigas](docs/screenshots/rainha.jpg) |
 | ![HUD com cartões de conquista, o resultado do faro e as dicas de controle](docs/screenshots/hud.jpg) | ![Mapa no TAB, colorido onde você já andou](docs/screenshots/mapa.jpg) |
 | ![Árvore de habilidades, na aba ao lado do mapa](docs/screenshots/arvore.jpg) | ![Acordando na caverna, com o cupinzeiro gigante lá longe](docs/screenshots/caverna.jpg) |
-| ![Mapa com os 18 formigueiros e os insetos que faltam em cada um](docs/screenshots/mapa-18-formigueiros.jpg) | ![Estatísticas, abertas pelo botão da pausa (Esc)](docs/screenshots/estatisticas-pausa.jpg) |
+| ![Mapa da área 1: 8 formigueiros, 40 câmaras e 10 000 insetos](docs/screenshots/mapa-8-formigueiros.jpg) | ![Estatísticas, abertas pelo botão da pausa (Esc)](docs/screenshots/estatisticas-pausa.jpg) |
+| ![Objetivo no canto e o losango em cima do alvo, com a distância](docs/screenshots/objetivo.jpg) | ![Árvore com cadeados: o que abre nos marcos e o que fica para a área 2](docs/screenshots/arvore-marcos.jpg) |
 | ![Modo contra o relógio: cronômetro e parcial no canto](docs/screenshots/contra-o-relogio.jpg) | ![O sol antes e depois do ajuste da névoa](docs/screenshots/sol-antes-depois.jpg) |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
@@ -30,12 +31,14 @@ produção, os protótipos e as decisões, num lugar só.
 
 Uma **clareira do cerrado no fim da tarde**, cercada por penhascos. O tamanduá
 acorda numa **caverna**, vê lá longe um **cupinzeiro gigante** e a barriga
-ronca: hora de comer. A colônia tem **44 000 insetos**, cada um andando
-sozinho, e **18 formigueiros** espalhados pelo mapa inteiro. Um quarto anda em
+ronca: hora de comer. A clareira tem uns 50 m de ponta a ponta, **10 000
+insetos**, cada um andando sozinho, e **8 formigueiros**. Um quarto anda em
 fila pelas trilhas de terra, um quarto passeia pelo campo em volta das câmaras
 espalhadas pelo mapa, e a metade mora nas **câmaras**, que você abre cavando.
-Perto da caverna ficam os formigueiros pequenos; os 7 grandes, do lado da
-saída, guardam uma **rainha** bem no fundo. **Cada 10 insetos comidos valem 1
+Perto da caverna ficam os 5 formigueiros pequenos; os 2 médios e o grande,
+do lado da saída, que guarda a **rainha** bem no fundo. Um **objetivo** no
+canto da tela diz o que fazer, um de cada vez, e um losango voa até o lugar
+certo (`F` mostra de novo). **Cada 10 insetos comidos valem 1
 ponto** e cada habilidade tem o seu preço. Com a clareira **100% limpa**, as garras quebram o
 **tronco caído** que fecha a saída, e a demo termina.
 
@@ -71,6 +74,7 @@ tela, a resolução e a qualidade gráfica.
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto | `X` |
 | Tremor* (pulo) | `Espaço` | `A` |
 | Mapa, habilidades e estatísticas | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Mostrar o objetivo de novo | `F` | `Y` |
 | Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
 | Pausa | `Esc` | `Start` |
 | Tela cheia | `F11` ou `Alt+Enter` | |
@@ -105,12 +109,22 @@ uma vez".
   relógio. No relógio, um cronômetro fica no canto e cada 25% dos insetos marca
   um tempo parcial, comparado com o do seu recorde (verde mais rápido, vermelho
   mais lento). Pausa, mapa e habilidades param o relógio.
-- **44 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
+- **Objetivos:** um cartão no canto mostra o objetivo da vez, com o
+  progresso ("120 / 200"): andar, comer um inseto, comer 200, aprender uma
+  habilidade, abrir uma câmara, limpar um formigueiro, comer metade, desmanchar
+  a rainha, comer todos e quebrar o tronco. Quando o objetivo tem um lugar, um
+  losango sai do cartão, voa numa leve curva até o alvo e fica pulsando com a
+  distância; depois some, e `F` faz ele voar de novo. O que você já fez é
+  pulado. O losango segue a opção de Dicas.
+- **Marcos:** limpar o primeiro formigueiro, comer metade dos insetos e comer
+  80% abrem habilidades novas na árvore, com um cartão grande na tela. No
+  terceiro marco, o **Farejar** vem de presente.
+- **10 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
   entram de novo. Cada uma foge sozinha quando você chega perto, e cada
   formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal.
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
-  fechadas, e 48 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
+  fechadas, e 12 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
   passeiam em volta contam para o formigueiro dono da câmara). Com **Cavar**
   (Garras), segure `E` perto de uma para abri-la: as moradoras **saem
   correndo**, fogem quando você chega perto e depois voltam para casa. Até 40
@@ -170,17 +184,19 @@ uma vez".
 Cada habilidade tem de **1 a 3 cliques** (bolinhas em volta dela na árvore):
 cada clique é uma melhora pequena, com o seu preço, e a habilidade seguinte da
 linha só abre com todos os cliques da anterior. Entre parênteses: o preço de
-cada clique em pontos e, depois do ponto, a **trava**: quantos insetos é
-preciso ter comido para a habilidade abrir (o começo de cada ramo não tem
-trava, menos o Farejar). Na árvore, ela aparece com cadeado e "8 mil" embaixo.
+cada clique em pontos e, depois do ponto, **quando ela abre**. Sem nada, desde
+o começo. Os **marcos** da área 1 são: **Formigueiro** (o primeiro formigueiro
+limpo), **Metade** (metade dos insetos) e **80%** (80% dos insetos; o Farejar
+vem de presente). **Área 2** fica para depois da demo. Na árvore, o que ainda
+não abriu aparece só com o cadeado.
 
-| Habilidade | Níveis (preço de cada clique · trava) |
+| Habilidade | Níveis (preço de cada clique · quando abre) |
 |---|---|
-| **Língua** | Lambida Contínua (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16 · 200: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · 2 mil: 8 → 11 → 15) · nível 3 (70, 90 · 8 mil: 20 → 25) · nível 4 (160, 200 · 21 mil: 32 → 40); **Destreza** · nível 1 (10, 14, 18 · 500: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · 5 mil: 2,4 → 2,8 → 3,2) · nível 3 (260 · 21 mil: 4,4); **Comprimento** · nível 1 (16, 20, 24 · 1 mil: língua de 3,3 → 3,6 → 3,9 m; era 3) · nível 2 (60, 80 · 8 mil: 4,2 → 4,5 m); **Mira** · nível 1 (12 · 200: a língua vai atrás do inseto mais perto da mira, e a área da mira passa de 10° para 15°) · nível 2 (25, 30, 35 · 3 mil: 18° → 21° → 25°) · nível 3 (110 · 13 mil: a ponta gruda num raio 70% maior) |
-| **Garras** | Cavar (25: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (25, 35 · 2 mil: moradoras tontas por 1,5 → 2,5 s) · nível 2 (40, 50 · 8 mil: 3,2 → 4 s); **Tremor** (sai de Força nível 1) · nível 1 (90 · 5 mil: libera o Tremor, recarga de 21 s) · nível 2 (45, 55, 65 · 13 mil: 18 → 15 → 12 s) · nível 3 (300 · 21 mil: Terremoto, 7 s); **Rapidez** · nível 1 (12, 16, 20 · 1 mil: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · 8 mil: 9 → 7 → 5 s; no último clique, cava na metade do tempo); **Fundura** · nível 1 (60 · 3 mil: câmaras grandes) · nível 2 (120 · 13 mil: desmancha o monte da rainha) |
-| **Patas** | Fôlego (10: estamina máxima de 50 para 75), e depois quatro linhas: **Corrida** · nível 1 (25, 35 · 2 mil: corre 10% e mais 10% mais rápido) · nível 2 (90 · 13 mil: lamber correndo) · nível 3 (250 · 21 mil: correr não assusta); **Respiro** · nível 1 (8, 12 · 200: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · 3 mil: 6 → 7); **Passada** · nível 1 (8, 12, 16 · 500: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · 5 mil: 6 → 5); **Fôlego** · nível 1 (12, 16, 20 · 1 mil: 100 → 125 → 150) · nível 2 (50, 60 · 13 mil: 175 → 200) |
-| **Faro** | Farejar (25 · 3 mil: quantos insetos há a até 10 m; a bússola aponta o maior grupo), e depois: **Alcance** · nível 1 (15, 20, 25 · 3 mil: 13 → 16 → 20 m) · nível 2 (55, 70 · 8 mil: 26 → 34 m; no último clique, a bússola mostra quanto falta em cada formigueiro) · nível 3 (220 · 21 mil: 50 m e as rainhas); **Precisão** · nível 1 (45 · 5 mil: nuvem) · nível 2 (75 · 8 mil: insetos brilhando) · nível 3 (200 · 13 mil: câmaras) |
-| **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): ainda não feitas (aparecem com cadeado) |
+| **Língua** | Lambida Contínua (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40); **Destreza** · nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4); **Comprimento** · nível 1 (16, 20, 24: língua de 3,3 → 3,6 → 3,9 m; era 3) · nível 2 (60, 80 · Área 2: 4,2 → 4,5 m); **Mira** · nível 1 (12: a língua vai atrás do inseto mais perto da mira, e a área da mira passa de 10° para 15°) · nível 2 (25, 30, 35 · Formigueiro: 18° → 21° → 25°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
+| **Garras** | Cavar (25: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s) · nível 2 (40, 50 · Metade: 3,2 → 4 s); **Tremor** (sai de Força nível 1) · nível 1 (90 · Metade: libera o Tremor, recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto, 7 s); **Rapidez** · nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo); **Fundura** · nível 1 (60: câmaras grandes) · nível 2 (120 · Metade: desmancha o monte da rainha) |
+| **Patas** | Fôlego (10: estamina máxima de 50 para 75), e depois quatro linhas: **Corrida** · nível 1 (25, 35: corre 10% e mais 10% mais rápido) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: correr não assusta); **Respiro** · nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7); **Passada** · nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5); **Fôlego** · nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
+| **Faro** | Farejar (de presente no marco 80%: quantos insetos há a até 10 m; a bússola aponta o maior grupo), e depois: **Alcance** · nível 1 (15, 20, 25 · 80%: 13 → 16 → 20 m) · nível 2 (55, 70 · Área 2: 26 → 34 m; no último clique, a bússola mostra quanto falta em cada formigueiro) · nível 3 (220 · Área 2: 50 m e as rainhas); **Precisão** · nível 1 (45 · Área 2: nuvem) · nível 2 (75 · Área 2: insetos brilhando) · nível 3 (200 · Área 2: câmaras) |
+| **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): Área 2, ainda não feitas (aparecem com cadeado) |
 
 **Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde
 no canto de baixo, à esquerda (fica vermelho-escura quando acaba). Ela só volta
@@ -188,19 +204,16 @@ no canto de baixo, à esquerda (fica vermelho-escura quando acaba). Ela só volt
 15%. Começa com 50, gasta 10 por segundo e volta 3 por segundo.
 
 10 formigas comidas = 1 ponto (a rainha vale 20 pontos). As linhas de um ramo
-não se excluem. São 40 habilidades com 75 cliques, e tudo o que dá para
-aprender no Cerrado soma 4 227 pontos (de 4 400 no jogo); dá para redistribuir
-os pontos de graça na árvore. São nove travas (200, 500, 1 mil, 2 mil, 3 mil,
-5 mil, 8 mil, 13 mil e 21 mil insetos), e cada uma abre mais do que dá para
-pagar até a próxima: quase sempre há algo para comprar (as contas estão em
-[`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md), seção 9). Um
-jogo salvo de antes da árvore com cliques abre com os pontos devolvidos, e um
-aviso na tela.
+não se excluem. Na área 1 há uns 1 000 pontos para ganhar, e o que abre nela
+custa 1 442: não dá para comprar tudo, é preciso escolher. Dá para
+redistribuir os pontos de graça na árvore (o Farejar de presente não sai). As
+contas estão em [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md),
+seção 11. Os jogos salvos de antes da área 1 nova não abrem mais.
 
 ### Versão de teste: estatísticas
 
 Na versão de teste, o jogo manda as estatísticas de cada partida (tempo,
-insetos, compras, travas, formigueiros, onde parou e o desempenho do
+insetos, compras, marcos, objetivos, formigueiros, onde parou e o desempenho do
 computador) para um Formulário do Google, e as respostas caem numa planilha.
 Na primeira vez que abre, ele explica e pergunta se pode; não vai nome, e-mail
 nem arquivos. Como funciona e como criar o formulário:

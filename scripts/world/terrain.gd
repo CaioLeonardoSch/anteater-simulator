@@ -5,7 +5,7 @@ extends Node3D
 const SIZE := 160.0
 const RES := 256
 const COLLISION_RES := 160
-const PLAY_RADIUS := 60.0
+const PLAY_RADIUS := 22.0
 const MASK_RES := 512
 
 var heights := PackedFloat32Array()

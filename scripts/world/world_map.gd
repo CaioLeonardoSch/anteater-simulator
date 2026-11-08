@@ -12,18 +12,18 @@ const Cliffs := preload("res://scripts/world/cliffs.gd")
 ## Giro do mundo (plano xz) para o mapa: a saída fica a 45° (direita e cima).
 const ROTATION := -PI * 0.25 - Cliffs.EXIT_ANGLE
 ## Raio da clareira (área 1) que a foto do mapa mostra.
-const AREA1_RADIUS := 74.0
+const AREA1_RADIUS := Cliffs.BASE_RADIUS + 10.0
 
 ## Áreas ainda fechadas: círculos (centro, raio) no espaço do mapa.
 const AREAS := [
-	{"id": 2, "center": Vector2(170, -222), "radius": 125.0, "label": Vector2(170, -222)},
-	{"id": 3, "center": Vector2(525, -547), "radius": 290.0, "label": Vector2(372, -440)},
-	{"id": 4, "center": Vector2(640, -606), "radius": 140.0, "label": Vector2(640, -606)},
+	{"id": 2, "center": Vector2(143.2, -195.2), "radius": 125.0, "label": Vector2(143.2, -195.2)},
+	{"id": 3, "center": Vector2(498.2, -520.2), "radius": 290.0, "label": Vector2(345.2, -413.2)},
+	{"id": 4, "center": Vector2(613.2, -579.2), "radius": 140.0, "label": Vector2(613.2, -579.2)},
 ]
 ## Passagens estreitas entre as áreas: (de, até, meia largura).
 const PASSES := [
-	[Vector2(48, -48), Vector2(128, -146), 15.0],
-	[Vector2(250, -300), Vector2(335, -372), 24.0],
+	[Vector2(21.2, -21.2), Vector2(101.2, -119.2), 15.0],
+	[Vector2(223.2, -273.2), Vector2(308.2, -345.2), 24.0],
 ]
 ## Cupinzeiro gigante: no meio da área 4.
 const MOUND_AREA := 2

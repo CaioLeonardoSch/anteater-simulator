@@ -10,7 +10,7 @@ extends Node
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, arbusto,
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
-## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe.
+## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol.
 
 var main
 var out_dir := "user://fotos"
@@ -129,6 +129,16 @@ func _ready() -> void:
 		await get_tree().physics_frame
 		p.pitch = -0.9
 		await _shot("chao")
+	if _wanted("focinho") or _wanted("focinho_sol"):
+		# O focinho em primeira pessoa: de costas para o sol e contra o sol.
+		for k in 2:
+			var name: String = ["focinho", "focinho_sol"][k]
+			if not _wanted(name):
+				continue
+			p.place_at(Vector2(6, 6), 0.8 + PI * (1 - k))
+			await get_tree().physics_frame
+			p.pitch = -0.45
+			await _shot(name)
 	if _wanted("capim"):
 		p.place_at(Vector2(6, 6), 0.8)
 		await get_tree().physics_frame

@@ -680,6 +680,79 @@ escolhe o resto.
 | **Marco 3: 80% dos insetos da área comidos** | **Farejar, de presente**, e Alcance 1 à venda | 60 |
 | **Fica para a área 2 em diante** | Rapidez 2, Comprimento 2, Bocado 3 e 4, Destreza 3, Mira 3, Tremor 2 e 3, Fôlego 2, Corrida 2 e 3, Alcance 2 e 3, Precisão, Escalada e Cauda | — |
 
+#### Cada desbloqueio, um por um (preços de hoje)
+
+O preço de cada clique vem separado por "+". A coluna "O que faz" resume o
+efeito de todos os cliques daquela habilidade.
+
+**Desde o começo (532 pontos)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Língua | Lambida Contínua | 1 | 15 | Segurar o botão para lamber sem parar |
+| Língua | Bocado 1 | 3 | 8 + 12 + 16 = 36 | 2, 3 e 5 insetos por lambida |
+| Língua | Destreza 1 | 3 | 10 + 14 + 18 = 42 | Lambe um pouco mais rápido |
+| Língua | Comprimento 1 | 3 | 16 + 20 + 24 = 60 | Alcance de 3,3, 3,6 e 3,9 m |
+| Língua | Mira 1 | 1 | 12 | A língua vai sozinha atrás do inseto e a mira fica maior |
+| Garras | Cavar | 1 | 25 | Abre as câmaras pequenas (E) |
+| Garras | Força 1 | 2 | 25 + 35 = 60 | As moradoras ficam tontas e não fogem logo |
+| Garras | Rapidez 1 | 3 | 12 + 16 + 20 = 48 | As garras descansam menos depois de cavar |
+| Garras | Fundura 1 | 1 | 60 | Abre as câmaras grandes |
+| Patas | Fôlego | 1 | 10 | Estamina de 50 para 75 (e libera correr) |
+| Patas | Fôlego 1 | 3 | 12 + 16 + 20 = 48 | Estamina de 100, 125 e 150 |
+| Patas | Passada 1 | 3 | 8 + 12 + 16 = 36 | Gasta menos estamina correndo |
+| Patas | Respiro 1 | 2 | 8 + 12 = 20 | A estamina volta mais rápido |
+| Patas | Corrida 1 | 2 | 25 + 35 = 60 | Corre mais rápido |
+
+**Marco 1: primeiro formigueiro limpo (370 pontos)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Língua | Bocado 2 | 3 | 30 + 40 + 50 = 120 | 8, 11 e 15 insetos por lambida, e a ponta gruda num raio maior |
+| Língua | Mira 2 | 3 | 25 + 30 + 35 = 90 | A área da mira fica maior a cada clique |
+| Patas | Respiro 2 | 2 | 30 + 40 = 70 | A estamina volta mais que o dobro do começo |
+| Patas | Passada 2 | 2 | 40 + 50 = 90 | Correndo, gasta metade da estamina do começo |
+
+**Marco 2: metade dos insetos da área (480 pontos)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Língua | Destreza 2 | 3 | 50 + 60 + 70 = 180 | Lambe ainda mais rápido |
+| Garras | Força 2 | 2 | 40 + 50 = 90 | As moradoras ficam tontas por mais tempo |
+| Garras | Tremor 1 | 1 | 90 | Espaço: pula e deixa tontos os insetos a até 6 m |
+| Garras | Fundura 2 | 1 | 120 | Desmancha o formigueiro grande e chega à rainha |
+
+**Marco 3: 80% dos insetos da área (60 pontos à venda)**
+
+| Ramo | Habilidade | Cliques | Preço | O que faz |
+|---|---|---|---|---|
+| Faro | Farejar | 1 | **de presente** (hoje custa 25) | Q: conta os insetos por perto e a bússola aponta o maior grupo |
+| Faro | Alcance 1 | 3 | 15 + 20 + 25 = 60 | Fareja mais longe e recarrega mais rápido |
+
+**Fica para a área 2 em diante (2 760 pontos, mais 700 de Escalada e Cauda)**
+
+| Ramo | Habilidade | Preço |
+|---|---|---|
+| Língua | Comprimento 2 | 60 + 80 = 140 |
+| Língua | Bocado 3 | 70 + 90 = 160 |
+| Língua | Bocado 4 | 160 + 200 = 360 |
+| Língua | Destreza 3 | 260 |
+| Língua | Mira 3 | 110 |
+| Garras | Rapidez 2 | 40 + 50 + 60 = 150 |
+| Garras | Tremor 2 | 45 + 55 + 65 = 165 |
+| Garras | Tremor 3 (Terremoto) | 300 |
+| Patas | Fôlego 2 | 50 + 60 = 110 |
+| Patas | Corrida 2 (lamber correndo) | 90 |
+| Patas | Corrida 3 (não assusta correndo) | 250 |
+| Faro | Alcance 2 | 55 + 70 = 125 |
+| Faro | Alcance 3 | 220 |
+| Faro | Precisão 1, 2 e 3 | 45 + 75 + 200 = 320 |
+| Escalada | Escalada e Cauda Preênsil | 300 + 400 = 700 |
+
+**Somas da área 1:** 532 + 370 + 480 + 60 = **1 442 pontos à venda**, mais o
+Farejar de presente. O jogador ganha 1 000, então sobram uns 440 para escolher
+o que deixar para depois.
+
 **Por que o Faro aos 80%.** Os últimos insetos de uma área são os
 espalhados e escondidos, que dão mais trabalho de achar. O Faro resolve
 exatamente isso. Na área 2, maior e mais fechada, ele passa a ser essencial.
@@ -698,22 +771,26 @@ Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
 **Na árvore:** o que é de outra área aparece com cadeado e "Área 2". O que
 espera um marco aparece com cadeado e o marco embaixo, como "1º formigueiro".
 
-### Área 1 menor
+### Área 1 menor (08/11: o Caio pediu 50 m)
 
 | | Hoje | Proposta |
 |---|---|---|
-| Tamanho | ~120 m de ponta a ponta | ~80 m (perto da metade da área de hoje) |
+| Tamanho | ~120 m de ponta a ponta | **~50 m** (perto de 1/6 da área de hoje) |
 | Formigueiros | 18 | 8: 5 pequenos, 2 médios e 1 grande com a rainha |
-| Câmaras | 116 (48 no meio do campo) | ~45 |
+| Câmaras | 116 (48 no meio do campo) | ~40 |
 | Insetos | 44 000 | 10 000 (~1 250 por formigueiro; hoje ~2 400) |
 
-- A caverna do começo, os penhascos, as lagoas, o cupinzeiro gigante lá longe
-  e o tronco na saída continuam.
-- O campo fica um pouco menos cheio que hoje, mas as trilhas e a volta dos
-  formigueiros continuam cheias.
-- Na primeira jogatina do Caio, o ritmo foi de uns 465 insetos por minuto.
-  Com 10 mil insetos e um começo mais rápido, a área 1 deve durar **20 a 30
-  minutos**.
+- **Atravessar a área:** uns 18 s andando (2,8 m/s) e 14 s correndo.
+- **Distância entre formigueiros:** uns 12 a 15 m. Da caverna até o
+  primeiro formigueiro, uns 8 a 10 m.
+- **Quantos insetos por metro:** um pouco mais cheio que hoje, porque a área
+  cai mais que os insetos (1/6 da área para 1/4 dos insetos).
+- **O que continua:** a caverna do começo, os penhascos, o cupinzeiro
+  gigante lá longe e o tronco na saída. As lagoas ficam menores ou viram uma
+  só, para caber.
+- **A duração:** com menos caminhada, o ritmo deve passar dos 465 insetos por
+  minuto da primeira jogatina do Caio. A área 1 pode ficar **perto de 20
+  minutos**, ou um pouco menos. O bot confirma isso depois de feita.
 
 ### Áreas 2 a 4 (por enquanto, só no papel)
 
@@ -779,8 +856,9 @@ o jogador sempre sabe para onde ir.
 - **Alvo atrás do jogador:** o losango vai até a borda da tela pelo lado mais
   curto, e a bússola mostra o rumo.
 - **Tecla para reacender:** depois que o losango some, uma tecla faz ele voar
-  de novo do cartão até o alvo. A sugestão é uma tecla nova, separada do Faro,
-  para as duas coisas não se misturarem.
+  de novo do cartão até o alvo. É uma tecla nova, separada do Faro (decidido
+  pelo Caio em 08/11). Sugestão: **R**, que está livre e fica ao lado do
+  WASD; dá para trocar em Configurações.
 
 ### A sequência da área 1
 

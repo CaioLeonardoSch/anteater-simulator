@@ -15,6 +15,11 @@ uniform float use_texture : hint_range(0.0, 1.0) = 1.0;
 uniform float alpha_cut : hint_range(0.0, 1.0) = 0.45;
 uniform float sway = 0.05;
 uniform float backlight_amount = 0.65;
+// Cartões com a estampa de folhas: tom de cada folha (canal G) e folhas
+// secas (canal B). Zero nos ipês (a estampa das flores não tem esses canais).
+uniform float tone_amount : hint_range(0.0, 1.0) = 0.0;
+uniform float dry_amount : hint_range(0.0, 1.0) = 0.0;
+uniform vec3 dry_color : source_color = vec3(0.55, 0.38, 0.18);
 
 varying vec3 wpos;
 varying float vshade;
@@ -41,6 +46,11 @@ void fragment() {
 	vec3 col = mix(color_dark, color_light, smoothstep(0.15, 0.9, vshade * 0.75 + n * 0.45));
 	col = mix(col, color_tip, smoothstep(0.78, 1.05, vshade + (n - 0.5) * 0.5) * 0.55);
 	col *= mix(0.78, 0.72 + leaf.r * 0.42, use_texture);
+	// Cada folha puxa um pouco para o amarelado ou para o azulado.
+	float tg = (pow(leaf.g, 0.4545) - 0.5) * 2.0 * tone_amount * use_texture;
+	col *= vec3(1.0 + tg * 0.12, 1.0 + tg * 0.04, 1.0 - tg * 0.22);
+	// Folhas secas (e os raminhos), marrons.
+	col = mix(col, dry_color * (0.55 + leaf.r * 0.6), leaf.b * dry_amount * use_texture);
 	ALBEDO = col;
 	ROUGHNESS = 0.7;
 	SPECULAR = 0.25;

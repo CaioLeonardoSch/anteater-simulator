@@ -328,7 +328,9 @@ static func add_log_end(b: MeshBuilder, rng: RandomNumberGenerator, ring: int, s
 	b.uv2 = Vector2.ZERO
 
 
-## Tufo de capim: várias folhas curvas e afinando, com COLOR.r = altura.
+## Tufo de capim: várias folhas curvas e afinando, com COLOR.r = altura,
+## COLOR.g = sorteio da folha, COLOR.b = 1 nos pendões (espigas) e
+## COLOR.a = 0..1 da base à ponta de cada folha.
 ## `lite`: versão para longe, com as mesmas folhas em 2 gomos em vez de 4 (3
 ## triângulos por folha em vez de 7). Com o mesmo estado do sorteio, sai a
 ## mesma touceira.
@@ -356,7 +358,7 @@ static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_head
 		b.add_ribbon(pts, widths, side, out, hs)
 		var rnd := rng.randf()
 		for v in range(start, b.verts.size()):
-			b.colors[v] = Color(b.uvs[v].y, rnd, 0, 1)
+			b.colors[v] = Color(b.uvs[v].y, rnd, 0, b.uvs[v].y / h)
 	if seed_heads:
 		for i in rng.randi_range(2, 3):
 			var start := b.verts.size()
@@ -378,7 +380,7 @@ static func build_grass_clump(rng: RandomNumberGenerator, blades: int, seed_head
 				hs.append(t * h)
 			b.add_ribbon(pts, widths, side, out, hs)
 			for v in range(start, b.verts.size()):
-				b.colors[v] = Color(clampf(b.uvs[v].y, 0.0, 1.3), 0.95, 0, 1)
+				b.colors[v] = Color(clampf(b.uvs[v].y, 0.0, 1.3), 0.95, 1, b.uvs[v].y / h)
 	return b.commit()
 
 

@@ -136,6 +136,7 @@ func _distribute() -> void:
 			if ci == n.chambers.size() - 1:
 				r = residents - given
 			c.residents = r
+			c.start_residents = r
 			c.shown = 0
 			c.opened = false
 			given += r
@@ -253,9 +254,20 @@ func _resident_eaten(i: int, code: int) -> int:
 	return value
 
 
-## Olheiro: quantas formigas estão escondidas atrás deste buraco. ci = -1 é
-## um olheiro do monte (dá nas câmaras fechadas do monte); senão, o túnel de
-## uma câmara aberta (as moradoras que ainda não saíram).
+## Parte das moradoras de uma câmara fechada que só sai cavando (o Olheiro
+## ajuda, mas não esvazia a câmara).
+const OLHEIRO_KEEP := 0.5
+
+
+## Quantas o Olheiro ainda pode puxar de uma câmara fechada.
+func _pullable(c) -> int:
+	var keep := int(ceil(c.start_residents * OLHEIRO_KEEP))
+	return maxi(c.residents - c.shown - keep, 0)
+
+
+## Olheiro: quantas formigas dá para puxar por este buraco. ci = -1 é um
+## olheiro do monte (dá nas câmaras fechadas do monte, que guardam metade das
+## moradoras); senão, o túnel de uma câmara aberta (as que ainda não saíram).
 func hidden_behind(nest, ci: int) -> int:
 	if ci >= 0:
 		var c = nest.chambers[ci]
@@ -263,7 +275,7 @@ func hidden_behind(nest, ci: int) -> int:
 	var n := 0
 	for c in nest.chambers:
 		if not c.opened and not c.satellite:
-			n += maxi(c.residents - c.shown, 0)
+			n += _pullable(c)
 	return n
 
 
@@ -281,14 +293,14 @@ func pull_from_hole(nest, ci: int, at: Vector3, count: int) -> PackedInt32Array:
 				var c = nest.chambers[j]
 				if c.opened or c.satellite:
 					continue
-				var h: int = c.residents - c.shown
+				var h := _pullable(c)
 				if h > most:
 					most = h
 					best = j
 			if best < 0:
 				break
 		var ch = nest.chambers[best]
-		if ch.residents - ch.shown <= 0:
+		if (_pullable(ch) if ci < 0 else ch.residents - ch.shown) <= 0:
 			break
 		var i: int = swarm.spawn_resident(swarm.WORKER, nest.index * 16 + best, at2, 0.05, true)
 		if i < 0:

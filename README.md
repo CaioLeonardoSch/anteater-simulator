@@ -151,7 +151,8 @@ uma vez".
   aumenta essa área (6° → 11° → 16° → 22°). Sem Mira, a língua vai reta.
   Com **Olheiro**, mire num buraco do monte (ou no túnel de uma câmara aberta)
   e lamba: a língua entra, gira lá dentro e volta com formigas escondidas
-  (5 no começo, até 20), com uma recarga de 5 s a 2 s.
+  (5 no começo, até 20), com uma recarga de 5 s a 2 s. É uma ajuda: cada câmara
+  fechada guarda metade das moradoras, que só saem cavando.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega perto: a 2 m de você parado, a 2,5 m

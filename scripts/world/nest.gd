@@ -45,6 +45,8 @@ class Chamber extends RefCounted:
 	var radius := 0.4
 	## Moradoras que ainda não foram comidas (dentro da câmara, aberta ou não).
 	var residents := 0
+	## Quantas moravam aqui no começo (o Olheiro não puxa a metade delas).
+	var start_residents := 0
 	## Moradoras que estão à vista agora (o resto sai do túnel aos poucos).
 	var shown := 0
 	## Câmara do campo: formigas que saem dela, passeiam e voltam (as que

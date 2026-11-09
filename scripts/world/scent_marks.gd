@@ -85,10 +85,10 @@ func show_clouds(points: PackedVector3Array) -> void:
 	for k in n:
 		var g: Dictionary = groups[k]
 		var c: Vector3 = g.center + Vector3(randf_range(-0.9, 0.9), 0.0, randf_range(-0.9, 0.9))
-		c.y = world.ground_height(c.x, c.z) + 0.75
-		var size := minf(1.7 + sqrt(float(g.count)) * 0.6, 4.2)
+		c.y = world.ground_height(c.x, c.z) + 0.35
+		var size := minf(0.9 + sqrt(float(g.count)) * 0.3, 2.2)
 		mm.set_instance_transform(k, Transform3D(Basis().scaled(Vector3(size, size * 0.7, size)), c))
-		_cloud_base[k] = clampf(0.3 + float(g.count) * 0.03, 0.3, 0.55)
+		_cloud_base[k] = clampf(0.16 + float(g.count) * 0.015, 0.16, 0.32)
 	mm.visible_instance_count = n
 	set_fade(1.0)
 

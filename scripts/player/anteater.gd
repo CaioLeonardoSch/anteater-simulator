@@ -33,7 +33,7 @@ const GRAVITY := 20.0
 ## Pulo normal (uns 95 cm de altura).
 const JUMP_SPEED := 6.2
 
-enum Tongue { IDLE, OUT, BACK }
+enum Tongue { IDLE, OUT, SPIN, BACK }
 
 var world
 var swarm
@@ -72,6 +72,21 @@ var t_mushroom := -1
 var t_stuck := PackedInt32Array()
 var _stuck_offsets: Array[Vector3] = []
 var lick_cooldown := 0.0
+## Olheiro: o buraco para onde a mira aponta (formigueiro, câmara aberta ou -1
+## para um olheiro do monte, e o ponto da boca do buraco), a recarga e se a
+## lambida em andamento é dentro de um buraco.
+var hole_nest = null
+var hole_chamber := -1
+var hole_point := Vector3.INF
+var aim_hole := false
+var olheiro_cd := 0.0
+var t_hole := false
+var _hole_of_flick = null
+var _hole_ci_of_flick := -1
+## Quanto tempo a língua gira dentro do buraco.
+const OLHEIRO_SPIN := 0.7
+## Folga da mira em volta da boca do buraco (m).
+const OLHEIRO_AIM := 0.22
 ## Clique guardado por um instante (sem a Lambida Contínua, cada clique é uma lambida).
 var _lick_click := 0.0
 var _blocked_note := 0.0
@@ -507,7 +522,22 @@ func _update_tongue(delta: float) -> void:
 			var k := clampf(t_time / t_dur_out, 0.0, 1.0)
 			t_tip = mouth_view().lerp(t_target, 1.0 - pow(1.0 - k, 3.0))
 			if k >= 1.0:
-				_capture()
+				t_time = 0.0
+				if t_hole:
+					t_state = Tongue.SPIN
+					Sfx.play("dig", -12.0, 1.6, 0.1)
+				else:
+					_capture()
+					t_state = Tongue.BACK
+		Tongue.SPIN:
+			# A ponta gira dentro do buraco, cada vez mais funda.
+			t_time += delta
+			var a := t_time * 22.0
+			var depth := 0.03 + 0.05 * minf(t_time / OLHEIRO_SPIN, 1.0)
+			t_tip = t_target + Vector3(cos(a) * 0.022, -depth, sin(a) * 0.022)
+			if t_time >= OLHEIRO_SPIN:
+				_capture_hole()
+				t_target = t_tip
 				t_state = Tongue.BACK
 				t_time = 0.0
 		Tongue.BACK:
@@ -525,6 +555,23 @@ func _start_flick() -> void:
 	lick_cooldown = period
 	t_dur_out = period * 0.36
 	t_dur_back = period * 0.5
+	t_hole = false
+	if aim_hole:
+		# Olheiro: a língua entra no buraco.
+		t_hole = true
+		_hole_of_flick = hole_nest
+		_hole_ci_of_flick = hole_chamber
+		t_follow = -1
+		t_target = hole_point
+		t_dur_out = maxf(t_dur_out, 0.16)
+		t_dur_back = maxf(t_dur_back, 0.3)
+		olheiro_cd = GameState.olheiro_cooldown()
+		aim_hole = false
+		t_state = Tongue.OUT
+		t_time = 0.0
+		GameState.count("licks")
+		Sfx.play("tongue", -7.0, 0.85, 0.12)
+		return
 	var target := _straight_target()
 	# Sem Mira, a língua vai reta. Com Mira, vai atrás do inseto mais perto
 	# da mira (ou da tanajura no caminho) e o acompanha.
@@ -619,6 +666,82 @@ func _capture() -> void:
 		swarm.scare(t_target, SCARE_RADIUS)
 
 
+## Olheiro: as formigas lá de dentro saem grudadas na ponta da língua.
+func _capture_hole() -> void:
+	t_mushroom = -1
+	t_stuck = PackedInt32Array()
+	if _hole_of_flick != null:
+		t_stuck = colony.pull_from_hole(_hole_of_flick, _hole_ci_of_flick, t_tip, GameState.olheiro_ants())
+	_stuck_offsets.clear()
+	for i in t_stuck.size():
+		_stuck_offsets.append(Vector3(randf_range(-1, 1), randf_range(-0.3, 1), randf_range(-1, 1)) * 0.04)
+	if DevTools.args.has("olheiro"):
+		print("OLHEIRO puxou ", t_stuck.size())
+	if t_stuck.size() > 0:
+		GameState.count("licks_hit")
+		Sfx.play("slurp", -3.0, 0.9, 0.1)
+
+
+## Olheiro: procura o buraco para onde a mira aponta (um olheiro do monte ou
+## o túnel de uma câmara aberta), ao alcance da língua e com gente escondida.
+func _update_hole_aim(aim: Vector2) -> void:
+	hole_nest = null
+	hole_chamber = -1
+	hole_point = Vector3.INF
+	aim_hole = false
+	if not GameState.can_olheiro() or aim == Vector2.INF:
+		return
+	var reach := GameState.tongue_range() + 0.3
+	var mouth := mouth_real()
+	var best := OLHEIRO_AIM
+	for n in world.nests:
+		if aim.distance_to(n.center2) > n.radius + 8.0:
+			continue
+		if colony.hidden_behind(n, -1) > 0:
+			for h in n.olheiro_holes():
+				var d: float = aim.distance_to(Vector2(h.x, h.z)) - h.w
+				var at := Vector3(h.x, h.y, h.z)
+				if d < best and at.distance_to(mouth) < reach:
+					best = d
+					hole_nest = n
+					hole_chamber = -1
+					hole_point = at
+		for ci in n.chambers.size():
+			var c = n.chambers[ci]
+			if not c.opened or colony.hidden_behind(n, ci) <= 0:
+				continue
+			var at: Vector3 = n.chamber_world_pos(c)
+			var d: float = aim.distance_to(c.pos2) - 0.15
+			if d < best and at.distance_to(mouth) < reach:
+				best = d
+				hole_nest = n
+				hole_chamber = ci
+				hole_point = at
+	aim_hole = hole_nest != null and olheiro_cd <= 0.0
+
+
+## Teste (--olheiro): vira a cabeça para o olheiro mais perto e lambe dentro dele.
+func dev_olheiro() -> void:
+	var best := Vector3.INF
+	for n in world.nests:
+		for h in n.olheiro_holes():
+			var at := Vector3(h.x, h.y, h.z)
+			if at.distance_to(global_position) < best.distance_to(global_position):
+				best = at
+	if best == Vector3.INF:
+		return
+	var to := best - camera.global_position
+	yaw = atan2(-to.x, -to.z)
+	pitch = atan2(to.y, Vector2(to.x, to.z).length())
+	rotation.y = yaw
+	head.rotation.x = pitch
+	await get_tree().process_frame
+	_update_hole_aim(_aim_ground())
+	print("OLHEIRO alvo=", hole_point, " ok=", aim_hole, " escondidas=", colony.hidden_behind(hole_nest, hole_chamber) if hole_nest != null else -1)
+	if aim_hole:
+		_start_flick()
+
+
 func _carry_stuck() -> void:
 	var cam := camera.global_position
 	var shrink := clampf(t_tip.distance_to(cam) / 0.9, 0.12, 1.0)
@@ -673,13 +796,16 @@ func _update_tongue_visual() -> void:
 	var sdir := (camera.global_transform.basis * SnoutBuilder.SNOUT_DIR).normalized()
 	var p1 := p0 + sdir * length * 0.3
 	var p2 := p3.lerp(p0, 0.3) + Vector3(0, 0.05 * length, 0)
+	if t_hole and t_state != Tongue.BACK:
+		# Dentro do buraco: a língua desce quase reta e torce na boca dele.
+		p2 = t_target + Vector3(0, 0.08 * length, 0) + (p3 - t_target) * 1.5
 	tongue_mat.set_shader_parameter("p0", p0)
 	tongue_mat.set_shader_parameter("p1", p1)
 	tongue_mat.set_shader_parameter("p2", p2)
 	tongue_mat.set_shader_parameter("p3", p3)
 	tongue_mat.set_shader_parameter("r0", 0.0032)
 	tongue_mat.set_shader_parameter("r1", 0.0095)
-	tongue_mat.set_shader_parameter("wobble", 1.0 if t_state == Tongue.BACK else 0.3)
+	tongue_mat.set_shader_parameter("wobble", 1.0 if t_state == Tongue.BACK or t_state == Tongue.SPIN else 0.3)
 
 
 # ------------------------------------------------------------- Habilidades
@@ -688,6 +814,7 @@ func _update_abilities(delta: float) -> void:
 	sniff_cd = maxf(sniff_cd - delta, 0.0)
 	tremor_cd = maxf(tremor_cd - delta, 0.0)
 	dig_cd = maxf(dig_cd - delta, 0.0)
+	olheiro_cd = maxf(olheiro_cd - delta, 0.0)
 	if sniff_left > 0.0:
 		sniff_left -= delta
 		world.scent_marks.set_fade(clampf(sniff_left / 0.8, 0.0, 1.0))
@@ -719,6 +846,8 @@ func _update_abilities(delta: float) -> void:
 	dig_chamber = -1
 	# Só a câmara para onde a mira aponta (e que está ao alcance das garras).
 	var aim := _aim_ground()
+	if t_state == Tongue.IDLE:
+		_update_hole_aim(aim)
 	if aim != Vector2.INF:
 		var best_aim := DIG_AIM_MARGIN
 		for n in world.nests:
@@ -796,37 +925,65 @@ func _update_abilities(delta: float) -> void:
 	_tremor_anim = maxf(_tremor_anim - delta * 2.5, 0.0)
 
 
+## De quem é o faro aqui: Vector2i(formigueiro, câmara) — a câmara aberta com
+## moradoras a até 3 m (código formigueiro*16 + câmara), senão -1 e o
+## formigueiro mais perto (contando o monte e as câmaras do campo dele).
+func sniff_family_at(here: Vector2) -> Vector2i:
+	for n in world.nests:
+		var ci: int = n.open_chamber_near(here, 3.0)
+		if ci >= 0:
+			return Vector2i(n.index, n.index * 16 + ci)
+	var best := -1
+	var best_d := INF
+	for n in world.nests:
+		var d: float = here.distance_to(n.center2) - n.radius
+		for c in n.chambers:
+			if c.satellite:
+				d = minf(d, c.edge_distance(here))
+		if d < best_d:
+			best_d = d
+			best = n.index
+	return Vector2i(best, -1)
+
+
 func do_sniff() -> void:
 	sniff_cd = GameState.sniff_cooldown()
 	sniff_left = GameState.sniff_duration()
 	var precision := GameState.sniff_precision()
-	var res: Dictionary = swarm.sniff(global_position, GameState.sniff_radius(), GameState.sniff_max_ants(),
-		sniff_left, precision >= 2)
-	# Faro Nítido: as formigas farejadas brilham através do capim.
+	var here := Vector2(global_position.x, global_position.z)
+	var fam := sniff_family_at(here)
+	var radius := -1.0 if GameState.sniff_whole_family() else GameState.sniff_radius()
+	var res: Dictionary = swarm.sniff_family(global_position, radius, fam.x, fam.y, sniff_left)
+	# Família nível 3: as formigas farejadas aparecem nítidas através do capim.
 	swarm.set_scent_overlay(precision >= 2)
 	sniff_target = Vector3.INF
 	var points: PackedVector3Array = res.points
 	if not points.is_empty():
-		# A bússola aponta o maior grupo desde o Farejar. Faro Preciso: nuvens
-		# borradas onde elas estão (com o Faro Nítido, as próprias formigas
-		# brilham no lugar da nuvem).
+		# A bússola aponta o maior grupo. Família nível 1: um brilho sem foco
+		# onde elas estão, visto através do capim.
 		if precision == 1:
 			world.scent_marks.show_clouds(points)
 		var groups: Array = world.scent_marks.clusters(points)
 		sniff_target = groups[0].center
 	sniff_chambers.clear()
-	if GameState.sniff_chambers():
-		# Faro de Câmara: colunas de cheiro nas câmaras fechadas por perto.
-		var reach := maxf(GameState.sniff_radius() * 1.5, 20.0)
-		var here := Vector2(global_position.x, global_position.z)
+	if GameState.sniff_family_chambers() and fam.x >= 0:
+		# Rastro: colunas de cheiro nas câmaras fechadas do formigueiro farejado.
+		var nest = world.nests[fam.x]
+		for c in nest.chambers:
+			if not c.opened:
+				sniff_chambers.append(nest.chamber_world_pos(c))
+	var reach := GameState.sniff_chamber_reach()
+	if reach > 0.0:
 		for n in world.nests:
+			if n.index == fam.x:
+				continue
 			for c in n.chambers:
 				if not c.opened and here.distance_to(c.pos2) <= reach:
 					sniff_chambers.append(n.chamber_world_pos(c))
-		world.scent_marks.show_pillars(sniff_chambers)
+	world.scent_marks.show_pillars(sniff_chambers)
 	GameState.count("sniffs")
 	Sfx.play("sniff", -3.0)
-	sniffed.emit(res.count, res.capped, res.nearest, sniff_chambers.size())
+	sniffed.emit(res.count, false, res.nearest, sniff_chambers.size())
 
 
 ## Tremor: um pulo; a pancada (formigas tontas) vem quando ele cai no chão.

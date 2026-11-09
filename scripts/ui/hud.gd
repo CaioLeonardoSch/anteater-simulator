@@ -348,10 +348,11 @@ func _build_abilities() -> void:
 	row.add_theme_constant_override("separation", 22)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
-	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(-280, -128), Vector2(560, 112))
+	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(-330, -128), Vector2(660, 112))
 	var b: Array = GameState.BRANCHES
 	var defs := [
 		{"key": Settings.key_label("lick"), "action": "lick", "name": "Lamber", "kind": "lick", "glyph": "tongue", "tint": b[0].color, "primary": true},
+		{"key": Settings.key_label("lick"), "action": "lick", "name": "Olheiro", "kind": "olheiro", "glyph": "swirl", "tint": b[0].color, "primary": false},
 		{"key": Settings.key_label("dig"), "action": "dig", "name": "Cavar", "kind": "dig", "glyph": "claws", "tint": b[1].color, "primary": false},
 		{"key": Settings.key_label("sniff"), "action": "sniff", "name": "Farejar", "kind": "sniff", "glyph": "nose", "tint": b[3].color, "primary": false},
 		{"key": Settings.key_label("tremor"), "action": "tremor", "name": "Tremor", "kind": "tremor", "glyph": "burst", "tint": b[1].color, "primary": false},
@@ -394,6 +395,10 @@ func _process(delta: float) -> void:
 			"lick":
 				a.locked = false
 				a.cooldown = 0.0
+			"olheiro":
+				a.locked = not GameState.can_olheiro()
+				a.seconds = player.olheiro_cd
+				a.cooldown = player.olheiro_cd / GameState.olheiro_cooldown() if player.olheiro_cd > 0.0 else 0.0
 			"sniff":
 				a.locked = not GameState.can_sniff()
 				a.seconds = player.sniff_cd
@@ -757,14 +762,13 @@ func _on_ate(count: int, _taj: int, _queens: int) -> void:
 
 
 func _on_sniffed(n: int, capped: bool, nearest: float, chambers: int) -> void:
-	_sniff.show_result(n, capped, nearest, chambers if GameState.sniff_chambers() else -1,
+	_sniff.show_result(n, capped, nearest, chambers if GameState.sniff_shows_chambers() else -1,
 		GameState.sniff_duration() + 3.0)
 	var now := Time.get_ticks_msec() / 1000.0
 	_compass.sniff_target = player.sniff_target
 	_compass.sniff_until = now + GameState.sniff_duration() + 3.0
 	_compass.chamber_marks = player.sniff_chambers.duplicate()
 	_compass.nests_until = now + 12.0 if GameState.sniff_nest_counts() else 0.0
-	_compass.queens_until = now + 12.0 if GameState.sniff_queens() else 0.0
 
 
 ## Jogo salvo: só um ícone girando no canto.
@@ -1370,6 +1374,9 @@ class Compass extends Control:
 
 	## Plaquinha embaixo da faixa: distância e as câmaras do formigueiro
 	## (cheias = limpas, só contorno = ainda com formigas).
+	## Plaquinha embaixo do formigueiro para onde você olha: a distância, um
+	## losango por câmara (verde = limpa) e quanto falta, por origem: na trilha,
+	## passeando em volta das câmaras do campo, dentro das câmaras e a rainha.
 	func _plate(top_center: Vector2, nest) -> void:
 		var f: Font = UT.display_font()
 		var dist: float = nest.global_position.distance_to(player.global_position)
@@ -1378,7 +1385,18 @@ class Compass extends Control:
 		var total: int = nest.chambers.size()
 		var done: int = nest.clean_chambers()
 		var pw := total * 10.0 - 4.0 if total > 0 else 0.0
-		var w := 10.0 + tw + (9.0 + pw if total > 0 else 0.0) + 10.0
+		var parts: Array = []
+		if not nest.cleaned:
+			for e in [["trail", int(nest.pool)], ["roam", int(nest.roamers_left())], ["diamond", int(nest.residents_left())]]:
+				if int(e[1]) > 0:
+					parts.append([e[0], str(e[1]), f.get_string_size(str(e[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x])
+		var crown: bool = nest.queen_alive
+		var partw := 0.0
+		for e in parts:
+			partw += 12.0 + 14.0 + 3.0 + float(e[2])
+		if crown:
+			partw += 12.0 + 14.0
+		var w := 10.0 + tw + (9.0 + pw if total > 0 else 0.0) + partw + 10.0
 		var r := Rect2(Vector2(top_center.x - w * 0.5, top_center.y), Vector2(w, 22.0))
 		r.position.x = clampf(r.position.x, 0.0, size.x - r.size.x)
 		draw_rect(r, Color(0.04, 0.028, 0.024, 0.92))
@@ -1392,6 +1410,16 @@ class Compass extends Control:
 			else:
 				_diamond_outline(Vector2(x, cy), 3.8, UT.GOLD)
 			x += 10.0
+		x += -3.0
+		for e in parts:
+			x += 12.0
+			Glyphs.paint(self, e[0], Vector2(x + 7.0, cy), 6.0 if e[0] != "diamond" else 5.0, UT.SAND)
+			x += 14.0 + 3.0
+			draw_string(f, Vector2(x, r.end.y - 6.0), e[1], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, UT.CREAM)
+			x += float(e[2])
+		if crown:
+			x += 12.0
+			Glyphs.paint(self, "crown", Vector2(x + 7.0, cy), 6.5, UT.GOLD)
 
 	func _draw() -> void:
 		if player == null:
@@ -1536,7 +1564,7 @@ class Crosshair extends Control:
 		var cam: Camera3D = player.camera
 		# Verde: a lambida vai pegar formiga (com Língua Certeira, a língua vai
 		# atrás dela; sem, só se ela estiver perto de onde a língua chega reta).
-		var locked: bool = player.aim_hits
+		var locked: bool = player.aim_hits or player.aim_hole
 		var col := UT.AIM if locked else Color(UT.CREAM, 0.88)
 		var r := 15.0 if locked else 12.0
 		if locked:

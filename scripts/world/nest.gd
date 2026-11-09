@@ -447,6 +447,18 @@ func chamber_world_pos(c: Chamber) -> Vector3:
 	return global_position + Vector3(c.local.x, _surf(c.local), c.local.y)
 
 
+## Olheiros do monte no mundo (x, y, z, raio do buraco). Sem monte, nenhum.
+func olheiro_holes() -> Array[Vector4]:
+	var out: Array[Vector4] = []
+	if dug_out:
+		return out
+	for o in _olheiros:
+		var lp := Vector2(o.x, o.y)
+		var w := global_position + Vector3(lp.x, _surf(lp), lp.y)
+		out.append(Vector4(w.x, w.y, w.z, o.z))
+	return out
+
+
 ## Câmaras que ficam no monte (sem as do campo).
 func mound_chambers() -> int:
 	var n := 0

@@ -89,9 +89,11 @@ uma vez".
 
 - **Interface no estilo "Constelação"** (o mesmo da árvore de habilidades):
   painéis com moldura dourada, as formigas comidas num medalhão e as habilidades
-  em círculos, embaixo: só as que você já aprendeu, na ordem Lamber, Cavar,
-  Farejar e Tremor. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
-  frente mostra a distância e as câmaras dele (as verdes já estão limpas).
+  em círculos, embaixo: só as que você já aprendeu, na ordem Lamber, Olheiro,
+  Cavar, Farejar e Tremor. A bússola é uma faixa com o rumo no meio; o formigueiro à sua
+  frente mostra a distância, as câmaras dele (as verdes já estão limpas) e
+  quantas formigas dele faltam: na trilha, passeando no campo e dentro das
+  câmaras, com uma coroa se a rainha está viva.
 - **Pouco texto na tela:** conquistas viram **cartões** no canto direito (câmara
   limpa, formigueiro limpo, rainha, Frenesi, habilidade aprendida); as **dicas**
   são curtas, embaixo da mira, com a tecla num quadradinho ("E Abrir câmara");
@@ -147,28 +149,35 @@ uma vez".
   de Destreza a deixa mais rápida, e a de Comprimento, mais longa. Com **Mira nível 1**, ela vai sozinha atrás da formiga mais perto
   da mira (com um contorno verde suave) e acompanha o inseto; a **Mira nível 2**
   aumenta essa área (6° → 11° → 16° → 22°). Sem Mira, a língua vai reta.
+  Com **Olheiro**, mire num buraco do monte (ou no túnel de uma câmara aberta)
+  e lamba: a língua entra, gira lá dentro e volta com formigas escondidas
+  (5 no começo, até 20), com uma recarga de 5 s a 2 s.
 - **Trilhas:** as formigas vão e voltam sem parar; só as que você come somem
   de vez.
 - **Formigas fogem** quando você chega perto: a 2 m de você parado, a 2,5 m
   andando e mais longe ainda correndo. As da trilha e as que passeiam andam na
   mesma velocidade (0,7 m/s); as moradoras das câmaras, mais devagar. Quando você come uma, cada uma das que
   estão a até 1,5 m dela tem 20% de chance de sair correndo, mais devagar
-  (perto de formigas tontas, ninguém se assusta). Chegue devagar e lamba de longe (a
+  (as tontas continuam tontas). Chegue devagar e lamba de longe (a
   língua alcança 1 m, e mais com Comprimento).
   Correndo também não dá para lamber, até aprender **Corrida nível 2**.
-- **Faro:** primeiro só diz quantas formigas há por perto e a que distância
-  está a mais perto. Com Precisão, mostra uma nuvem borrada onde elas estão e
-  depois as formigas brilhando através do capim; a Precisão nível 3 mostra as
-  câmaras fechadas. Nos níveis altos, a bússola mostra quanto falta em cada
-  formigueiro e onde estão as rainhas. A cor do faro (vermelha) pode ser trocada
-  em Configurações → Jogo.
+- **Faro:** fareja a família do formigueiro mais perto (perto de uma câmara
+  aberta, só as moradoras dela): diz quantas são e a que distância está a mais
+  perto, e a bússola aponta o maior grupo. A linha de **Rastro** mostra colunas
+  de cheiro nas câmaras fechadas desse formigueiro, e depois também nas dos
+  outros por perto (e a bússola passa a mostrar quanto falta em cada um). A
+  linha de **Família** mostra a família: primeiro um brilho borrado através do
+  capim, depois por mais tempo e até as que estão longe na trilha, e no fim cada
+  formiga dela, nítida. A cor do faro (vermelha) pode ser trocada em
+  Configurações → Jogo.
 - **Tremor:** um pulo; ao cair, as formigas em volta ficam tontas.
 - **Tanajuras** (douradas, voando, batendo as asas de vez em quando quando estão perto)
   ativam o **Frenesi**: língua mais rápida e mais longa por 6 s. Cada tanajura
   ou cogumelo comido com o Frenesi ligado soma 3 s.
 - **Cogumelos** (grupinhos laranja ao pé de árvores, troncos e arbustos) também
   dão o Frenesi. Comido, o grupinho nasce de novo no mesmo lugar, pequenino, e
-  leva 3 minutos para crescer e poder ser comido de novo (o jogo salvo lembra).
+  leva 90 s para crescer e poder ser comido de novo; um anel pequeno em cima
+  dele vai enchendo enquanto cresce (o jogo salvo lembra).
 - **Progresso:** formigueiro limpo ganha flores, e um losango por formigueiro
   no canto da tela mostra quantos faltam.
 - **Penhascos e caverna:** a clareira é cercada por penhascos de arenito (o fim
@@ -205,10 +214,10 @@ não abriu aparece só com o cadeado.
 
 | Habilidade | Níveis (preço de cada clique · quando abre) |
 |---|---|
-| **Língua** | Lambida Contínua (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40); **Destreza** · nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4); **Comprimento** · nível 1 (16, 20, 24: língua de 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m); **Mira** · nível 1 (12: a língua vai atrás do inseto mais perto da mira, numa área de 6°, e o acompanha) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
+| **Língua** | Lambida Contínua (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40); **Destreza** · nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4); **Comprimento** · nível 1 (16, 20, 24: língua de 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m); **Mira** · nível 1 (12: a língua vai atrás do inseto mais perto da mira, numa área de 6°, e o acompanha) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior); **Olheiro** · nível 1 (20 · Formigueiro: a língua entra num buraco e puxa 5 formigas; recarga de 5 s) · nível 2 (30, 40, 50 · Metade: 8 → 11 → 15 formigas; 4 → 3,5 → 3 s) · nível 3 (120 · Área 2: 20 formigas; 2 s) |
 | **Garras** | Cavar (25: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s) · nível 2 (40, 50 · Metade: 3,2 → 4 s); **Tremor** (sai de Força nível 1) · nível 1 (90 · Metade: libera o Tremor, recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto, 7 s); **Rapidez** · nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo); **Fundura** · nível 1 (60: câmaras grandes) · nível 2 (120 · Metade: desmancha o monte da rainha) |
 | **Patas** | Fôlego (10: estamina máxima de 50 para 75), e depois quatro linhas: **Corrida** · nível 1 (25, 35: corre 10% e mais 10% mais rápido) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: correr não assusta); **Respiro** · nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7); **Passada** · nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5); **Fôlego** · nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
-| **Faro** | Farejar (de presente no marco 80%: quantos insetos há a até 10 m; a bússola aponta o maior grupo), e depois: **Alcance** · nível 1 (15, 20, 25 · 80%: 13 → 16 → 20 m) · nível 2 (55, 70 · Área 2: 26 → 34 m; no último clique, a bússola mostra quanto falta em cada formigueiro) · nível 3 (220 · Área 2: 50 m e as rainhas); **Precisão** · nível 1 (45 · Área 2: nuvem) · nível 2 (75 · Área 2: insetos brilhando) · nível 3 (200 · Área 2: câmaras) |
+| **Faro** | Farejar (de presente no marco 80%: a família do formigueiro mais perto, a até 12 m, por 4 s; perto de uma câmara aberta, só as moradoras dela; a bússola aponta o maior grupo; recarga de 10 s), e depois: **Rastro** · nível 1 (20 · 80%: colunas nas câmaras fechadas do formigueiro farejado) · nível 2 (40, 55 · Área 2: também as câmaras dos outros a até 25 → 40 m; no último clique, a bússola mostra quanto falta em cada formigueiro); **Família** · nível 1 (30 · 80%: brilho borrado através do capim, a até 16 m) · nível 2 (50, 65 · Área 2: dura 6 → 8 s e pega a família inteira, até longe na trilha) · nível 3 (180 · Área 2: cada formiga da família, nítida) |
 | **Escalada + Cauda** | Escalada (300) · Cauda Preênsil (400): Área 2, ainda não feitas (aparecem com cadeado) |
 
 **Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde

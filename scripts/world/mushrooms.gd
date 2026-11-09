@@ -13,9 +13,13 @@ const COUNT := 14
 ## Distância mínima entre dois grupinhos (m).
 const SPACING := 7.0
 ## Quanto tempo leva crescendo de novo, de pequenino a inteiro (s).
-const GROW_TIME := 180.0
+const GROW_TIME := 90.0
 ## Tamanho do grupinho logo depois de comido (fração do inteiro).
 const SPROUT := 0.15
+const RING_SHADER := preload("res://shaders/anel_progresso.gdshader")
+## Altura e tamanho do anel que mostra quanto falta para crescer (m).
+const RING_Y := 0.5
+const RING_SIZE := 0.16
 ## Raio do grupinho para a língua pegar (somado ao raio da lambida).
 const REACH := 0.24
 ## Altura do meio do grupinho (onde a língua encosta).
@@ -24,6 +28,8 @@ const CENTER_Y := 0.13
 ## Posição de cada grupinho no chão.
 var spots: Array[Vector3] = []
 var nodes: Array[MeshInstance3D] = []
+## Anel em cima de cada grupinho que ainda está crescendo (a borda vai enchendo).
+var rings: Array[MeshInstance3D] = []
 ## Crescendo de novo: 0..1 (1 = inteiro).
 var grow := PackedFloat32Array()
 ## Grupinho preso na língua (ou -1).
@@ -60,6 +66,11 @@ func build(world) -> void:
 		spots.append(Vector3(p.x, y, p.y))
 		# Clareirinha sem capim em volta (o capim alto esconderia o grupinho).
 		world.terrain.mask_paint(p.x, p.y, 0.75, 2, 1.0)
+	var ring_mat := ShaderMaterial.new()
+	ring_mat.shader = RING_SHADER
+	var ring_mesh := QuadMesh.new()
+	ring_mesh.size = Vector2.ONE * RING_SIZE
+	ring_mesh.material = ring_mat
 	for i in spots.size():
 		var mi := MeshInstance3D.new()
 		mi.name = "Cogumelos%d" % i
@@ -70,6 +81,14 @@ func build(world) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		nodes.append(mi)
+		var ring := MeshInstance3D.new()
+		ring.mesh = ring_mesh
+		ring.position = spots[i] + Vector3(0, RING_Y, 0)
+		ring.visibility_range_end = 18.0
+		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ring.visible = false
+		add_child(ring)
+		rings.append(ring)
 	grow.resize(spots.size())
 	grow.fill(1.0)
 
@@ -151,6 +170,8 @@ func _process(delta: float) -> void:
 
 func _show_size(i: int) -> void:
 	nodes[i].scale = Vector3.ONE * lerpf(SPROUT, 1.0, grow[i])
+	rings[i].visible = grow[i] < 1.0
+	rings[i].set_instance_shader_parameter("progress", grow[i])
 
 
 func is_ready(i: int) -> bool:

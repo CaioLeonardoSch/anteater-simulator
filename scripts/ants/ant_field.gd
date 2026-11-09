@@ -622,7 +622,15 @@ func _show(ch: Chunk, o: int) -> void:
 	ch.dirty = true
 
 
-## Brilho do faro (Faro Nítido) até `seconds` segundos a partir de agora.
+## Formigueiro dono de um grupo: o da trilha, ou o da câmara do passeio.
+func chunk_nest(ci: int) -> int:
+	var ch := chunks[ci]
+	if ch.kind == TRAIL:
+		return int(ch.trail.nest)
+	return ch.index / 16
+
+
+## Brilho do faro até `seconds` segundos a partir de agora.
 func highlight(ci: int, i: int, seconds: float) -> void:
 	var ch := chunks[ci]
 	ch.buf[i * STRIDE + 9] = time + seconds

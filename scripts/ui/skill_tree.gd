@@ -22,6 +22,7 @@ const BRANCH_ANGLE := [-144.0, -30.0, 144.0, 30.0, 90.0]
 ## fechados, para não encostar nos vizinhos).
 const LINE_SPREAD := 19.0
 const LINE_SPREAD_4 := 16.0
+const LINE_SPREAD_5 := 14.0
 ## Distância do centro até a 1ª habilidade do ramo, e de um nível para o outro.
 const ROOT_DIST := 165.0
 const ROW_STEP := 74.0
@@ -129,7 +130,7 @@ func _offset_of(u: Dictionary) -> Vector2:
 	var lines: int = GameState.BRANCHES[b].lines.size()
 	var ang: float = BRANCH_ANGLE[b]
 	if lines > 1 and int(u.col) >= 0:
-		ang += (float(u.col) - (lines - 1) * 0.5) * (LINE_SPREAD_4 if lines >= 4 else LINE_SPREAD)
+		ang += (float(u.col) - (lines - 1) * 0.5) * (LINE_SPREAD_5 if lines >= 5 else (LINE_SPREAD_4 if lines >= 4 else LINE_SPREAD))
 	var d := ROOT_DIST + float(u.row) * ROW_STEP
 	var r := deg_to_rad(ang)
 	return Vector2(cos(r) * STRETCH.x, sin(r) * STRETCH.y) * d

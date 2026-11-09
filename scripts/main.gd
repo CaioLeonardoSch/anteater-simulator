@@ -282,6 +282,9 @@ func _start_play() -> void:
 	if DevTools.args.has("sniff"):
 		# Teste: fareja sozinho nesse instante (para capturas do faro).
 		get_tree().create_timer(float(DevTools.args.sniff)).timeout.connect(player.do_sniff)
+	if DevTools.args.has("olheiro"):
+		# Teste: mira no olheiro mais perto e lambe nesse instante.
+		get_tree().create_timer(float(DevTools.args.olheiro)).timeout.connect(player.dev_olheiro)
 	if DevTools.args.has("open"):
 		# Teste: abre todas as câmaras de um formigueiro (ou de todos, com --open=all).
 		for nest in world.nests:

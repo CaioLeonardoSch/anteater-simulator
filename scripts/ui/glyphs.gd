@@ -5,7 +5,7 @@ extends RefCounted
 ## Ícone da 1ª habilidade de cada ramo e de cada linha dele (na ordem de
 ## GameState.BRANCHES).
 const BRANCH_GLYPHS := [
-	["tongue", "ant", "bolt", "reach", "cross"],
+	["tongue", "ant", "bolt", "reach", "cross", "swirl"],
 	["claws", "dizzy", "burst", "clock", "pit"],
 	["paw", "chevrons", "wind", "steps", "heart"],
 	["nose", "rings", "eye"],
@@ -216,6 +216,26 @@ static func paint(ci: CanvasItem, kind: String, c: Vector2, s: float, col: Color
 			ci.draw_line(c + Vector2(0, -0.85) * s, c + Vector2(0, 0.2) * s, col, s * 0.16, true)
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-0.32, -0.02) * s, c + Vector2(0.32, -0.02) * s,
 				c + Vector2(0, 0.36) * s]), col)
+		"trail":
+			# Fila na trilha: quatro pontinhos numa linha ondulada.
+			for k in 4:
+				var t := k / 3.0
+				ci.draw_circle(c + Vector2(lerpf(-0.75, 0.75, t), sin(t * PI * 2.0) * 0.28) * s, s * 0.17, col)
+		"roam":
+			# Passeio: uma volta quase fechada com a ponta da seta.
+			ci.draw_arc(c, s * 0.62, -PI * 0.35, PI * 1.45, 24, col, s * 0.14, true)
+			var tip := c + Vector2(cos(-PI * 0.35), sin(-PI * 0.35)) * s * 0.62
+			ci.draw_colored_polygon(PackedVector2Array([tip + Vector2(-0.3, -0.12) * s, tip + Vector2(0.18, -0.3) * s,
+				tip + Vector2(0.12, 0.22) * s]), col)
+		"swirl":
+			# Olheiro: a língua girando dentro do buraco (espiral sobre a boca).
+			var sp := PackedVector2Array()
+			for i in 25:
+				var t := i / 24.0
+				var a := t * TAU * 1.6
+				sp.append(c + Vector2(cos(a), sin(a) * 0.55) * s * lerpf(0.12, 0.85, t) + Vector2(0, -0.1) * s)
+			ci.draw_polyline(sp, col, s * 0.13, true)
+			ci.draw_arc(c + Vector2(0, 0.55) * s, s * 0.5, PI * 0.1, PI * 0.9, 10, col, s * 0.12, true)
 		"pin":
 			# Marcador do jogador: gota de cabeça para baixo com um furo.
 			var pts := PackedVector2Array()

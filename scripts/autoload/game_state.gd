@@ -52,10 +52,10 @@ const SPLITS := [0.25, 0.5, 0.75, 1.0]
 ## Os 5 ramos. "lines" = nomes das linhas (quando o ramo se divide).
 ## "region" = só pode ser comprada ao chegar nessa região.
 const BRANCHES := [
-	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Comprimento", "Mira"]},
+	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Comprimento", "Mira", "Olheiro"]},
 	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Tremor", "Rapidez", "Fundura"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Corrida", "Respiro", "Passada", "Fôlego"]},
-	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Alcance", "Precisão"]},
+	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Rastro", "Família"]},
 	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Área 2"},
 ]
 
@@ -124,6 +124,15 @@ const UPGRADES := [
 	{"id": "lingua_mira_3", "branch": 0, "col": 3, "row": 3, "costs": [110], "unlock": AREA2, "requires": ["lingua_mira_2"],
 		"name": "Mira nível 3",
 		"desc": "A ponta da língua gruda num raio 70% maior."},
+	{"id": "lingua_olheiro_1", "branch": 0, "col": 4, "row": 1, "costs": [20], "unlock": 1, "requires": ["lingua_segurar"],
+		"name": "Olheiro nível 1",
+		"desc": "Mire num buraco do formigueiro ou de uma câmara aberta e lamba: a língua entra e puxa até 5 formigas lá de dentro. Recarga de 5 s."},
+	{"id": "lingua_olheiro_2", "branch": 0, "col": 4, "row": 2, "costs": [30, 40, 50], "unlock": 2, "requires": ["lingua_olheiro_1"],
+		"name": "Olheiro nível 2",
+		"desc": "8, 11 e 15 formigas por buraco; recarga de 4, 3,5 e 3 s."},
+	{"id": "lingua_olheiro_3", "branch": 0, "col": 4, "row": 3, "costs": [120], "unlock": AREA2, "requires": ["lingua_olheiro_2"],
+		"name": "Olheiro nível 3",
+		"desc": "20 formigas por buraco; recarga de 2 s."},
 	# Garras: Cavar abre as linhas de Força (moradoras tontas), de Rapidez (o
 	# descanso entre usos) e de Fundura (buracos maiores: câmaras grandes e o
 	# monte da rainha). A linha do Tremor sai de Força nível 1.
@@ -191,28 +200,26 @@ const UPGRADES := [
 	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "unlock": AREA2, "requires": ["patas_corrida_2"],
 		"name": "Corrida nível 3",
 		"desc": "Correndo, você não assusta mais os insetos."},
-	# Faro: Farejar abre as linhas de Alcance (distância e quantidade) e de Precisão.
+	# Faro: Farejar (as formigas do formigueiro mais perto) abre as linhas de
+	# Rastro (achar câmaras e formigueiros) e de Família (ver as formigas dele).
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "costs": [25], "unlock": 3, "requires": [],
 		"name": "Farejar",
-		"desc": "[Q] Fareje: descubra quantos insetos há a até 10 m (até 100 deles), a que distância está o mais perto, e a bússola aponta o maior grupo. Recarrega em 10 s."},
-	{"id": "faro_alcance_1", "branch": 3, "col": 0, "row": 1, "costs": [15, 20, 25], "unlock": 3, "requires": ["faro_farejar"],
-		"name": "Alcance nível 1",
-		"desc": "Fareja mais longe e mais insetos, e recarrega mais rápido."},
-	{"id": "faro_alcance_2", "branch": 3, "col": 0, "row": 2, "costs": [55, 70], "unlock": AREA2, "requires": ["faro_alcance_1"],
-		"name": "Alcance nível 2",
-		"desc": "Fareja ainda mais longe; no último clique, a bússola mostra quanto falta em cada formigueiro."},
-	{"id": "faro_alcance_3", "branch": 3, "col": 0, "row": 3, "costs": [220], "unlock": AREA2, "requires": ["faro_alcance_2"],
-		"name": "Alcance nível 3",
-		"desc": "Fareja até 50 m e até 2000 insetos, e marca as rainhas na bússola."},
-	{"id": "faro_precisao_1", "branch": 3, "col": 1, "row": 1, "costs": [45], "unlock": AREA2, "requires": ["faro_farejar"],
-		"name": "Precisão nível 1",
-		"desc": "Uma nuvem de cheiro, meio borrada, mostra onde estão os insetos farejados."},
-	{"id": "faro_precisao_2", "branch": 3, "col": 1, "row": 2, "costs": [75], "unlock": AREA2, "requires": ["faro_precisao_1"],
-		"name": "Precisão nível 2",
-		"desc": "Os insetos farejados brilham nítidos, mesmo atrás do capim."},
-	{"id": "faro_precisao_3", "branch": 3, "col": 1, "row": 3, "costs": [200], "unlock": AREA2, "requires": ["faro_precisao_2"],
-		"name": "Precisão nível 3",
-		"desc": "Farejar também mostra as câmaras fechadas por perto (até no meio do campo), com uma coluna de cheiro."},
+		"desc": "[Q] Fareje o formigueiro mais perto: as formigas dele a até 12 m (na trilha, passeando e nas câmaras) brilham por 4 s, e a bússola aponta o maior grupo delas. Perto de uma câmara aberta, só as moradoras dela. Recarrega em 10 s."},
+	{"id": "faro_rastro_1", "branch": 3, "col": 0, "row": 1, "costs": [20], "unlock": 3, "requires": ["faro_farejar"],
+		"name": "Rastro nível 1",
+		"desc": "Farejar mostra, com uma coluna de cheiro, as câmaras fechadas do formigueiro farejado, até as do meio do campo."},
+	{"id": "faro_rastro_2", "branch": 3, "col": 0, "row": 2, "costs": [40, 55], "unlock": AREA2, "requires": ["faro_rastro_1"],
+		"name": "Rastro nível 2",
+		"desc": "Mostra também as câmaras fechadas de qualquer formigueiro a até 25 m; no último clique, até 40 m, e a bússola mostra quanto falta em cada formigueiro."},
+	{"id": "faro_familia_1", "branch": 3, "col": 1, "row": 1, "costs": [30], "unlock": 3, "requires": ["faro_farejar"],
+		"name": "Família nível 1",
+		"desc": "As formigas farejadas aparecem como um brilho sem foco, mesmo atrás do capim, e o faro alcança 16 m."},
+	{"id": "faro_familia_2", "branch": 3, "col": 1, "row": 2, "costs": [50, 65], "unlock": AREA2, "requires": ["faro_familia_1"],
+		"name": "Família nível 2",
+		"desc": "O brilho dura mais (6 s, depois 8 s) e alcança a família inteira, até as que estão longe na trilha."},
+	{"id": "faro_familia_3", "branch": 3, "col": 1, "row": 3, "costs": [180], "unlock": AREA2, "requires": ["faro_familia_2"],
+		"name": "Família nível 3",
+		"desc": "Todas as formigas do formigueiro farejado ficam marcadas, nítidas, mesmo atrás do capim."},
 	# Escalada + Cauda (ainda não feita: aparece com cadeado)
 	{"id": "escalada_1", "branch": 4, "col": 0, "row": 0, "costs": [300], "requires": [],
 		"name": "Escalada",
@@ -705,12 +712,14 @@ const DESTREZA := ["lingua_destreza_1", "lingua_destreza_2", "lingua_destreza_3"
 const COMPRIMENTO := ["lingua_comprimento_1", "lingua_comprimento_2"]
 ## Os cliques que abrem a área da mira (Mira 3 aumenta a ponta, não a área).
 const MIRA_AREA := ["lingua_mira_1", "lingua_mira_2"]
+const OLHEIRO := ["lingua_olheiro_1", "lingua_olheiro_2", "lingua_olheiro_3"]
 const RAPIDEZ := ["garras_rapidez_1", "garras_rapidez_2"]
 const FORCA := ["garras_forca_1", "garras_forca_2"]
 const FOLEGO := ["patas_folego", "patas_folego_1", "patas_folego_2"]
 const RESPIRO := ["patas_respiro_1", "patas_respiro_2"]
 const PASSADA := ["patas_passada_1", "patas_passada_2"]
-const ALCANCE := ["faro_alcance_1", "faro_alcance_2", "faro_alcance_3"]
+const RASTRO := ["faro_rastro_1", "faro_rastro_2"]
+const FAMILIA := ["faro_familia_1", "faro_familia_2"]
 
 
 ## Valor da lista para a quantidade de cliques comprados numa linha.
@@ -761,6 +770,21 @@ func lick_rate() -> float:
 	if frenzy_active():
 		r *= 1.8
 	return r
+
+
+## Olheiro: a língua entra num buraco e puxa formigas lá de dentro.
+func can_olheiro() -> bool:
+	return has("lingua_olheiro_1")
+
+
+## Quantas formigas a língua puxa de um buraco.
+func olheiro_ants() -> int:
+	return _by_clicks([0, 5, 8, 11, 15, 20], OLHEIRO)
+
+
+## Recarga do Olheiro.
+func olheiro_cooldown() -> float:
+	return _by_clicks([5.0, 5.0, 4.0, 3.5, 3.0, 2.0], OLHEIRO)
 
 
 func can_dig() -> bool:
@@ -873,41 +897,48 @@ func can_sniff() -> bool:
 
 
 func sniff_radius() -> float:
-	return _by_clicks([10.0, 13.0, 16.0, 20.0, 26.0, 34.0, 50.0], ALCANCE)
+	return 16.0 if has("faro_familia_1") else 12.0
 
 
-## Quantos insetos o faro consegue sentir de uma vez (os mais perto).
-func sniff_max_ants() -> int:
-	return _by_clicks([100, 160, 250, 400, 600, 1000, 2000], ALCANCE)
+## Família nível 2: o faro pega a família inteira, em qualquer lugar.
+func sniff_whole_family() -> bool:
+	return has("faro_familia_2")
 
 
 func sniff_duration() -> float:
-	return _by_clicks([4.0, 4.2, 4.5, 5.0, 5.5, 6.0, 7.0], ALCANCE)
+	return _by_clicks([4.0, 4.0, 6.0, 8.0], FAMILIA)
 
 
 func sniff_cooldown() -> float:
-	return _by_clicks([10.0, 9.5, 9.0, 8.5, 8.0, 7.0, 6.0], ALCANCE)
+	return 10.0
 
 
-## 0 = só conta, 1 = nuvem borrada onde estão, 2 = insetos nítidos.
+## 0 = brilho (só onde dá para ver), 1 = brilho sem foco através do capim,
+## 2 = marcadas nítidas através do capim.
 func sniff_precision() -> int:
-	if has("faro_precisao_2"):
+	if has("faro_familia_3"):
 		return 2
-	if has("faro_precisao_1"):
+	if has("faro_familia_1"):
 		return 1
 	return 0
 
 
-func sniff_chambers() -> bool:
-	return has("faro_precisao_3")
+## Rastro: colunas de cheiro nas câmaras fechadas do formigueiro farejado.
+func sniff_family_chambers() -> bool:
+	return has("faro_rastro_1")
+
+
+## Rastro nível 2: câmaras fechadas de qualquer formigueiro até essa distância (0 = não).
+func sniff_chamber_reach() -> float:
+	return _by_clicks([0.0, 0.0, 25.0, 40.0], RASTRO)
+
+
+func sniff_shows_chambers() -> bool:
+	return sniff_family_chambers()
 
 
 func sniff_nest_counts() -> bool:
-	return complete("faro_alcance_2")
-
-
-func sniff_queens() -> bool:
-	return has("faro_alcance_3")
+	return complete("faro_rastro_2")
 
 
 ## O que o próximo clique de uma habilidade muda em números:
@@ -962,6 +993,8 @@ func _stat_snapshot() -> Array:
 		["Alcance da língua", _num(tongue_range(), 1) + " m"],
 		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
 		["Área da mira", (_num(aim_cone_deg(), 0) + "°") if tongue_tracking() else ""],
+		["Formigas por buraco", str(olheiro_ants()) if can_olheiro() else ""],
+		["Recarga do Olheiro", _num(olheiro_cooldown(), 1) + " s" if can_olheiro() else ""],
 		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
 		["Estamina máxima", _num(stamina_max(), 0)],
 		["Gasto correndo", _num(stamina_drain(), 1) + " por segundo"],
@@ -971,10 +1004,10 @@ func _stat_snapshot() -> Array:
 		["Moradoras tontas", _num(dig_stun_time(), 1) + " s" if dig and dig_stun_time() > 0.0 else ""],
 		["Raio do Tremor", _num(tremor_radius(), 0) + " m" if trem else ""],
 		["Recarga do Tremor", _num(tremor_cooldown(), 0) + " s" if trem else ""],
-		["Alcance do faro", _num(sniff_radius(), 0) + " m" if snf else ""],
-		["Insetos farejados", str(sniff_max_ants()) if snf else ""],
+		["Alcance do faro", ("família inteira" if sniff_whole_family() else _num(sniff_radius(), 0) + " m") if snf else ""],
 		["Cheiro dura", _num(sniff_duration(), 1) + " s" if snf else ""],
 		["Recarga do faro", _num(sniff_cooldown(), 0) + " s" if snf else ""],
+		["Câmaras farejadas", (("do formigueiro" if sniff_chamber_reach() <= 0.0 else "a até %d m" % int(sniff_chamber_reach())) if sniff_family_chambers() else "") if snf else ""],
 	]
 
 

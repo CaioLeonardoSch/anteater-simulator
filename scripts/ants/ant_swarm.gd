@@ -428,7 +428,7 @@ func _physics_process(delta: float) -> void:
 
 
 ## Uma formiga foi pega: algumas das outras num raio em volta (SCARE_CHANCE)
-## saem correndo, mais devagar que na fuga normal.
+## saem correndo, mais devagar que na fuga normal. As tontas continuam tontas.
 func scare(at: Vector3, radius: float) -> void:
 	var from := Vector2(at.x, at.z)
 	var r2 := radius * radius
@@ -873,89 +873,73 @@ func keep_target(i: int) -> void:
 		timer[i] = GHOST_TIME
 
 
-## Faro: sente as `max_ants` formigas mais perto num raio. Com `sharp`
-## (Faro Nítido), elas brilham por `duration` segundos. Retorna quantas sentiu,
-## se havia mais, a distância da mais perto e onde elas estão.
-func sniff(center: Vector3, radius: float, max_ants: int, duration: float, sharp: bool) -> Dictionary:
+## Formigueiro de uma formiga simulada aqui (-1 = nenhum).
+func nest_of(i: int) -> int:
+	if home[i] >= 0:
+		return home[i] / 16
+	if origin_chunk[i] >= 0:
+		return field.chunk_nest(origin_chunk[i])
+	if trail_id[i] >= 0:
+		return int(trails[trail_id[i]].nest)
+	return -1
+
+
+## O faro de família: as formigas do formigueiro `nest_i` (ou só as moradoras
+## da câmara `code`, se >= 0) a até `radius` m (< 0 = em qualquer lugar)
+## brilham por `duration` s. Devolve quantas, a mais perto e alguns pontos
+## (para a bússola e o brilho sem foco).
+func sniff_family(center: Vector3, radius: float, nest_i: int, code: int, duration: float) -> Dictionary:
+	var c2 := Vector2(center.x, center.z)
 	var r2 := radius * radius
-	var near: Array[Vector2] = []
+	var points := PackedVector3Array()
+	var count := 0
+	var nearest := INF
+	if nest_i < 0:
+		return {"count": 0, "nearest": -1.0, "points": points}
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
-		var dx := pos[i].x - center.x
-		var dz := pos[i].z - center.z
-		var d2 := dx * dx + dz * dz
-		if d2 <= r2:
-			near.append(Vector2(d2, i))
-	near.sort()
-	var n := mini(max_ants, near.size())
-	var points := PackedVector3Array()
-	var nearest := sqrt(near[0].x) if n > 0 else INF
-	for k in n:
-		var i := int(near[k].y)
-		points.append(pos[i])
-		if sharp:
-			highlight[i] = duration
-	var res := _sniff_field(center, radius, max_ants - n, duration, sharp, points)
-	n += int(res.count)
-	nearest = minf(nearest, float(res.nearest))
-	return {"count": n, "capped": near.size() > max_ants or bool(res.capped),
-		"nearest": nearest if nearest < INF else -1.0, "points": points}
-
-
-## O faro nas formigas de campo: os grupos mais perto primeiro. Para não
-## pesar, só os grupos na beirada do raio são conferidos formiga por formiga;
-## os de dentro contam inteiros.
-func _sniff_field(center: Vector3, radius: float, budget: int, duration: float, sharp: bool,
-		points: PackedVector3Array) -> Dictionary:
-	var c2 := Vector2(center.x, center.z)
-	var order: Array[Vector2] = []
-	for ci in field.chunks.size():
-		var ch = field.chunks[ci]
-		if ch.alive <= 0:
-			continue
-		var d := Vector2(ch.center.x, ch.center.z).distance_to(c2)
-		if d - ch.radius > radius:
-			continue
-		order.append(Vector2(maxf(d - ch.radius, 0.0), ci))
-	order.sort()
-	var count := 0
-	var capped := false
-	var nearest := INF
-	var r2 := radius * radius
-	for e in order:
-		var ci := int(e.y)
-		var ch = field.chunks[ci]
-		var d := Vector2(ch.center.x, ch.center.z).distance_to(c2)
-		var inside: bool = d + ch.radius <= radius
-		var exact: bool = not inside and (radius <= 24.0 or count < 40)
-		for fi in ch.count:
-			if not field.is_alive(ci, fi):
+		if code >= 0:
+			if home[i] != code:
 				continue
-			var p2 := Vector2.INF
-			if exact or count < 40:
-				p2 = field.ant_xz(ch, fi)
-				if p2 == Vector2.INF:
-					continue
-				var d2 := p2.distance_squared_to(c2)
-				if d2 > r2:
-					continue
-				nearest = minf(nearest, sqrt(d2))
-			elif not inside and d > radius:
+		elif nest_of(i) != nest_i:
+			continue
+		var d2 := Vector2(pos[i].x, pos[i].z).distance_squared_to(c2)
+		if radius >= 0.0 and d2 > r2:
+			continue
+		count += 1
+		nearest = minf(nearest, sqrt(d2))
+		highlight[i] = duration
+		if points.size() < 400:
+			points.append(pos[i])
+	if code < 0:
+		for ci in field.chunks.size():
+			var ch = field.chunks[ci]
+			if ch.alive <= 0 or field.chunk_nest(ci) != nest_i:
 				continue
-			if count >= budget:
-				capped = true
-				break
-			count += 1
-			if sharp:
+			var far: bool = radius >= 0.0 and Vector2(ch.center.x, ch.center.z).distance_to(c2) - ch.radius > radius
+			if far:
+				continue
+			var k := 0
+			for fi in ch.count:
+				if not field.is_alive(ci, fi):
+					continue
+				k += 1
+				if radius >= 0.0 or k % 3 == 0:
+					var p2: Vector2 = field.ant_xz(ch, fi)
+					if p2 == Vector2.INF:
+						continue
+					var d2 := p2.distance_squared_to(c2)
+					if radius >= 0.0 and d2 > r2:
+						continue
+					nearest = minf(nearest, sqrt(d2))
+					if points.size() < 400 and k % 3 == 0:
+						var st: Vector4 = field.ant_state(ch, fi)
+						if st.w != INF:
+							points.append(Vector3(st.x, st.y, st.z))
+				count += 1
 				field.highlight(ci, fi, duration)
-			if points.size() < 400 and count % 3 == 0:
-				var st: Vector4 = field.ant_state(ch, fi)
-				if st.w != INF:
-					points.append(Vector3(st.x, st.y, st.z))
-		if capped:
-			break
-	return {"count": count, "capped": capped, "nearest": nearest}
+	return {"count": count, "nearest": nearest if nearest < INF else -1.0, "points": points}
 
 
 func set_scent_overlay(enabled: bool) -> void:

@@ -31,6 +31,7 @@ extends Node
 ##   --conquistas                 mostra as conquistas (escondidas na demo)
 ##   --start=settings --tab=N     abre as configurações na aba N
 ##   --sniff=SEG                  fareja sozinho depois de SEG segundos
+##   --olheiro=SEG                mira no olheiro mais perto e lambe (Olheiro) depois de SEG segundos
 ##   --hats                       chapéu de Natal em uma formiga a cada 20
 ##   --stats                      imprime FPS e estatísticas de render a cada segundo
 ##   --telemetria[=http://...]    os testes também mandam as estatísticas (para esse endereço)
@@ -93,6 +94,14 @@ func _process(delta: float) -> void:
 	var real_dt := delta / maxf(Engine.time_scale, 0.0001)
 	_time += real_dt
 	_frames += 1
+	# --hide=Grass+Swarm: esconde esses nós aos 4 s (para medir o que pesa no desenho).
+	if args.has("hide") and _time > 4.0 and not has_meta("hid"):
+		set_meta("hid", true)
+		for nm in String(args.hide).split("+"):
+			var nd = get_tree().root.find_child(nm, true, false)
+			print("HIDE ", nm, " ", nd)
+			if nd:
+				nd.visible = false
 	if _stats:
 		_stat_timer += real_dt
 		if _stat_timer >= 1.0:

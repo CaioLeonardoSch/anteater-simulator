@@ -40,7 +40,8 @@ const HEIGHT_RES := 256
 const HEIGHT_SIZE := 160.0
 const WORKER_SIZE := 0.15
 const TRAIL_SPEED := 0.7
-const ROAM_SPEED := 0.5
+## Igual à da trilha.
+const ROAM_SPEED := TRAIL_SPEED
 ## Chance de uma formiga aparecer de chapéu de Natal (0,00625%).
 const HAT_CHANCE := 0.0000625
 ## Some no buraco (trilha: perto do olheiro; passeio: perto da câmara).
@@ -621,7 +622,15 @@ func _show(ch: Chunk, o: int) -> void:
 	ch.dirty = true
 
 
-## Brilho do faro (Faro Nítido) até `seconds` segundos a partir de agora.
+## Formigueiro dono de um grupo: o da trilha, ou o da câmara do passeio.
+func chunk_nest(ci: int) -> int:
+	var ch := chunks[ci]
+	if ch.kind == TRAIL:
+		return int(ch.trail.nest)
+	return ch.index / 16
+
+
+## Brilho do faro até `seconds` segundos a partir de agora.
 func highlight(ci: int, i: int, seconds: float) -> void:
 	var ch := chunks[ci]
 	ch.buf[i * STRIDE + 9] = time + seconds

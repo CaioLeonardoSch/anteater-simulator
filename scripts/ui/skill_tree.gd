@@ -17,12 +17,12 @@ const Glyphs := preload("res://scripts/ui/glyphs.gd")
 
 ## Direção de cada ramo, em graus (0 = direita, 90 = para baixo), na ordem de
 ## GameState.BRANCHES.
-const BRANCH_ANGLE := [-144.0, -30.0, 144.0, 30.0, 90.0]
+const BRANCH_ANGLE := [-150.0, -30.0, 144.0, 30.0, 90.0]
 ## Abertura entre as linhas de um ramo (os de 4 linhas, um pouco mais
 ## fechados, para não encostar nos vizinhos).
 const LINE_SPREAD := 19.0
 const LINE_SPREAD_4 := 16.0
-const LINE_SPREAD_5 := 14.0
+const LINE_SPREAD_5 := 13.0
 ## Distância do centro até a 1ª habilidade do ramo, e de um nível para o outro.
 const ROOT_DIST := 165.0
 const ROW_STEP := 74.0

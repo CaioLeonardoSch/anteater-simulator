@@ -24,6 +24,14 @@ const ROYAL := 3
 ## Cor da tampa de cada tamanho: as mais fundas são mais escuras, entre a
 ## terra fofa das pequenas e a cor do monte.
 const CAP_TINT := [Color.WHITE, Color.WHITE, Color(0.84, 0.75, 0.69), Color(0.76, 0.65, 0.58)]
+## Buraco no topo de cada tampa (raio, m, por tamanho): a formiga (15 cm) cabe.
+const CAP_HOLE := [0.0, 0.085, 0.1, 0.12]
+## Beirada em volta do buraco da tampa: altura (em raios do buraco) e até
+## onde vai a terra tirada (em raios do buraco).
+const CAP_HOLE_RIM := 0.55
+const CAP_HOLE_SPREAD := 3.2
+## Quanto a formiga afunda (m) até sumir num buraco.
+const HOLE_SINK := 0.2
 ## Buraco do monte desmanchado: raio da crista da borda (parte do raio do
 ## monte), altura da borda (parte da altura do monte) e o fundo (m; um pouco
 ## acima do chão, para o chão do campo não cobrir o fundo escuro). A parede
@@ -66,6 +74,13 @@ class Chamber extends RefCounted:
 	var half_len := 0.0
 	## Nível de Cavar que o buraco pede (SMALL, LARGE ou ROYAL).
 	var size_class := 1
+	## Tampa fechada: raio (m), altura do morrinho e raio do buraco no topo
+	## dela, por onde as formigas entram e saem.
+	var cap_r := 0.0
+	var cap_bump := 0.0
+	var cap_hole := 0.0
+	## Câmara aberta: as bocas dos túneis (x, z no formigueiro, raio).
+	var tunnels: Array[Vector3] = []
 
 	## Até onde as moradoras andam dentro do buraco aberto.
 	func area_radius() -> float:
@@ -625,13 +640,18 @@ func _build_pit(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 	fn.seed = rng.randi()
 	fn.frequency = 2.5
 	# Bocas de túnel (x, z, raio): na parede das fundas, no chão das rasas.
+	# Cabe uma formiga (15 cm). Nas do campo, um túnel fica bem no meio (é
+	# por ele que as que passeiam entram e saem).
 	var tunnels: Array[Vector3] = []
 	var nt := rng.randi_range(3, 5) if deep else rng.randi_range(1, 2)
-	for _k in nt:
+	for k in nt:
 		var a := rng.randf() * TAU
-		var tt := rng.randf_range(0.68, 0.84) if deep else rng.randf_range(0.1, 0.38)
+		var tt := rng.randf_range(0.68, 0.8) if deep else rng.randf_range(0.1, 0.38)
+		if c.satellite and k == 0:
+			tt = 0.0
 		var p := c.local + Vector2(cos(a), sin(a)) * tt * c.radius
-		tunnels.append(Vector3(p.x, p.y, rng.randf_range(0.05, 0.075) if deep else rng.randf_range(0.04, 0.055)))
+		tunnels.append(Vector3(p.x, p.y, rng.randf_range(0.08, 0.1) if deep else rng.randf_range(0.075, 0.09)))
+	c.tunnels = tunnels
 	var b := MeshBuilder.new()
 	for i in rings + 1:
 		var t := t_out * pow(float(i) / rings, 0.9)
@@ -655,7 +675,7 @@ func _build_pit(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 			for tu in tunnels:
 				var dt := lp.distance_to(Vector2(tu.x, tu.y))
 				dark = maxf(dark, 1.0 - smoothstep(tu.z * 0.55, tu.z * 1.05, dt))
-				y -= 0.04 * (1.0 - smoothstep(0.0, tu.z, dt))
+				y -= 0.06 * (1.0 - smoothstep(0.0, tu.z, dt))
 			lum = lerpf(lum, 0.03, dark)
 			var col := _dug(lum, hue.lerp(Color.WHITE, dark))
 			# A terra tirada em volta é terra fofa (a mesma do monte), mais clara.
@@ -769,7 +789,10 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 			var j1 := (j + 1) % segs
 			b.add_quad(r0 + j, r0 + j1, r1 + j1, r1 + j)
 	b.recompute_normals()
-	# Torrões soltos por cima.
+	c.cap_r = r_out
+	c.cap_bump = bump
+	c.cap_hole = CAP_HOLE[c.size_class]
+	# Torrões soltos por cima (nenhum tapando o buraco do topo).
 	for _k in 9:
 		var a := rng.randf() * TAU
 		var d := sqrt(rng.randf()) * r_out * 0.75
@@ -777,13 +800,79 @@ func _build_cap(c: Chamber, rng: RandomNumberGenerator, mats) -> Node3D:
 		var h := bump * pow(1.0 - pow(d / r_out, 2.0), 1.4)
 		b.color = Color(0.8, 0.74, 0.68).lerp(Color.WHITE, rng.randf()) * tint
 		var y := _surf(c.local + off) - base_y + h
-		b.add_blob(Vector3(off.x, y + 0.015, off.y), Vector3.ONE * rng.randf_range(0.03, 0.055), n, 0.2, 1)
+		var s := rng.randf_range(0.03, 0.055)
+		if d < c.cap_hole * CAP_HOLE_SPREAD + s:
+			continue
+		b.add_blob(Vector3(off.x, y + 0.015, off.y), Vector3.ONE * s, n, 0.2, 1)
+	# O buraco do topo: uma boquinha escura com a beirada de terra tirada.
+	var hr := RandomNumberGenerator.new()
+	hr.seed = 5300 + index * 16 + chambers.find(c)
+	var cap_y := func(off: Vector2) -> float:
+		var t := minf(off.length() / r_out, 1.0)
+		return _surf(c.local + off) - base_y + bump * pow(1.0 - t * t, 1.4) \
+			+ n.get_noise_2d(off.x * 9.0, off.y * 9.0) * 0.02 * (1.0 - t)
+	_add_olheiro(b, hr, n, Vector3(0.0, 0.0, c.cap_hole), cap_y, CAP_HOLE_RIM, CAP_HOLE_SPREAD,
+		tint)
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit(null, mats.nest_cap)
 	# A tampa fica rente ao monte: a sombra dela quase não aparece.
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pivot.add_child(mi)
 	return pivot
+
+
+## Altura da tampa fechada (com a beirada do buraco) acima do chão em `p2`
+## (no mundo); 0 fora dela ou com a câmara aberta. As formigas sobem nela.
+func cap_lift(ci: int, p2: Vector2) -> float:
+	var c := chambers[ci]
+	if c.opened or c.cap_r <= 0.0 or dug_out:
+		return 0.0
+	var d := p2.distance_to(c.pos2)
+	if d >= c.cap_r:
+		return 0.0
+	var t := d / c.cap_r
+	return c.cap_bump * pow(1.0 - t * t, 1.4) + hole_rim(d, c.cap_hole, CAP_HOLE_RIM, CAP_HOLE_SPREAD)
+
+
+## Beirada de um buraco de raio `hr` a `d` m do meio dele (a mesma conta da malha).
+static func hole_rim(d: float, hr: float, rim_k: float, spread: float) -> float:
+	if hr <= 0.0 or rim_k <= 0.0:
+		return 0.0
+	var q := d / hr
+	return hr * rim_k * exp(-pow(q - 1.5, 2.0)) * (1.0 - smoothstep(spread * 0.71, spread, q))
+
+
+## Forma da câmara do campo para as formigas que passeiam em volta dela
+## (veja AntField.home_lift): a tampa com o buraco no topo ou, aberta, a
+## terra tirada em volta e o túnel do meio.
+func roam_shape(ci: int) -> Vector4:
+	var c := chambers[ci]
+	if not c.opened:
+		return Vector4(c.cap_r, c.cap_bump, c.cap_hole, CAP_HOLE_RIM)
+	var hr := c.tunnels[0].z if not c.tunnels.is_empty() else 0.0
+	return Vector4(c.radius, -_pit_dims(c).y, hr, 0.0)
+
+
+## Bocas por onde as moradoras da câmara entram e saem agora, no mundo (x, y
+## da boca, z, raio). Fechada: o buraco da tampa. Aberta: os túneis.
+func chamber_holes(ci: int) -> Array[Vector4]:
+	var c := chambers[ci]
+	var out: Array[Vector4] = []
+	if not c.opened:
+		if c.cap_r > 0.0 and not dug_out:
+			var g := global_position
+			out.append(Vector4(g.x + c.local.x, g.y + _surf(c.local) + c.cap_bump, g.z + c.local.y, c.cap_hole))
+		return out
+	if not c.royal and dug_out:
+		return out
+	for tu in c.tunnels:
+		var lp := Vector2(tu.x, tu.y)
+		# No monte, o chão já desce com a panela; no campo, não.
+		var y := _surf(lp)
+		if c.satellite:
+			y += _pit_offset(c, lp)
+		out.append(Vector4(global_position.x + lp.x, global_position.y + y, global_position.z + lp.y, tu.z))
+	return out
 
 
 ## Altura do chão neste ponto, medida a partir da base do formigueiro.
@@ -818,7 +907,11 @@ func _build_crater() -> Node3D:
 	for _k in 10:
 		var a := rng.randf() * TAU
 		var d := rng.randf_range(0.24, 0.46) * radius
-		tunnels.append(Vector3(cos(a) * d, sin(a) * d, rng.randf_range(0.06, 0.1)))
+		tunnels.append(Vector3(cos(a) * d, sin(a) * d, rng.randf_range(0.08, 0.11)))
+	# As formigas do buraco entram e saem pelos túneis.
+	var royal := royal_chamber()
+	if royal:
+		royal.tunnels = tunnels
 	var b := MeshBuilder.new()
 	var rings := 32
 	var segs := 84
@@ -852,7 +945,7 @@ func _build_crater() -> Node3D:
 			for tu in tunnels:
 				var dt := lp.distance_to(Vector2(tu.x, tu.y))
 				dark = maxf(dark, 1.0 - smoothstep(tu.z * 0.55, tu.z * 1.05, dt))
-				y -= 0.035 * (1.0 - smoothstep(0.0, tu.z, dt))
+				y -= 0.06 * (1.0 - smoothstep(0.0, tu.z, dt))
 			lum = lerpf(lum, 0.03, dark)
 			var col := _dug(lum, hue.lerp(Color.WHITE, dark))
 			# A borda é a terra fofa do monte que sobrou.
@@ -1015,27 +1108,32 @@ func _build_procedural(rng: RandomNumberGenerator, mats) -> MeshInstance3D:
 
 ## Um olheiro: um vulcãozinho de terra fofa (as bolinhas que as saúvas tiram
 ## lá de baixo) com o buraco escuro no meio, e bolinhas soltas em volta.
-func _add_olheiro(b: MeshBuilder, rng: RandomNumberGenerator, n: FastNoiseLite, o: Vector3) -> void:
+## `floor_at` dá a altura do chão em cada ponto (sem ele, o monte); `rim_k` é
+## a altura da beirada e `spread` até onde ela vai (em raios do buraco).
+func _add_olheiro(b: MeshBuilder, rng: RandomNumberGenerator, n: FastNoiseLite, o: Vector3,
+		floor_at: Callable = Callable(), rim_k: float = 0.9, spread: float = 4.5,
+		rim_col: Color = Color(1.0, 0.95, 0.86)) -> void:
 	var c2 := Vector2(o.x, o.y)
 	var rh := o.z
 	var rings := 8
 	var segs := 18
-	var r_out := rh * 4.5
-	var rim_h := rh * 0.9
+	var r_out := rh * spread
+	var rim_h := rh * rim_k
+	var fl := floor_at if floor_at.is_valid() else _surface_h
 	var start := b.vertex_count()
 	b.color = Color(0.03, 0.03, 0.03)
-	b.add_vertex(Vector3(c2.x, _surface_h(c2) + 0.006, c2.y), Vector3.UP)
+	b.add_vertex(Vector3(c2.x, float(fl.call(c2)) + 0.006, c2.y), Vector3.UP)
 	for i in range(1, rings + 1):
 		var t := float(i) / rings
 		for j in segs:
 			var a := TAU * j / segs
 			var wob := 1.0 + 0.15 * n.get_noise_2d(cos(a) * 3.0 + o.x * 5.0, sin(a) * 3.0 + o.y * 5.0)
-			var d := t * 4.5 * wob
+			var d := t * spread * wob
 			var lp := c2 + Vector2(cos(a), sin(a)) * r_out * t
-			var cone := rim_h * exp(-pow((d - 1.5) / 1.0, 2.0)) * (1.0 - smoothstep(3.2, 4.5, t * 4.5))
-			var y := _surface_h(lp) + 0.006 * (1.0 - smoothstep(0.8, 1.0, t)) + cone
+			var cone := rim_h * exp(-pow((d - 1.5) / 1.0, 2.0)) * (1.0 - smoothstep(spread * 0.71, spread, t * spread))
+			var y := float(fl.call(lp)) + 0.006 * (1.0 - smoothstep(0.8, 1.0, t)) + cone
 			var dark := 1.0 - smoothstep(0.75, 1.2, d)
-			b.color = Color(1.0, 0.95, 0.86).lerp(Color(0.03, 0.03, 0.03), dark)
+			b.color = rim_col.lerp(Color(0.03, 0.03, 0.03), dark)
 			b.add_vertex(Vector3(lp.x, y, lp.y), Vector3.UP)
 	for j in segs:
 		b.add_tri(start, start + 1 + (j + 1) % segs, start + 1 + j)
@@ -1048,12 +1146,12 @@ func _add_olheiro(b: MeshBuilder, rng: RandomNumberGenerator, n: FastNoiseLite, 
 	b.recompute_normals(start)
 	for _k in rng.randi_range(8, 14):
 		var a := rng.randf() * TAU
-		var d := rng.randf_range(1.4, 3.4)
+		var d := rng.randf_range(1.4, 3.4) * minf(spread / 4.5, 1.0)
 		var lp := c2 + Vector2(cos(a), sin(a)) * rh * d
 		var s := rng.randf_range(0.008, 0.016)
 		var cone := rim_h * exp(-pow((d - 1.5) / 1.0, 2.0))
-		b.color = Color(0.9, 0.86, 0.8).lerp(Color(1.0, 0.97, 0.9), rng.randf())
-		b.add_blob(Vector3(lp.x, _surface_h(lp) + cone + s * 0.4, lp.y), Vector3.ONE * s, n, 0.2, 1)
+		b.color = Color(0.9, 0.86, 0.8).lerp(Color(1.0, 0.97, 0.9), rng.randf()) * (rim_col if floor_at.is_valid() else Color.WHITE)
+		b.add_blob(Vector3(lp.x, float(fl.call(lp)) + cone + s * 0.4, lp.y), Vector3.ONE * s, n, 0.2, 1)
 
 
 ## Altura da malha do monte: a forma dele, a beirada um pouco enterrada (para

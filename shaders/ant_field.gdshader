@@ -14,7 +14,7 @@ varying float v_highlight;
 varying float v_seed;
 
 void vertex() {
-	v_highlight = field_ant(MODEL_MATRIX, VIEW_MATRIX, CUSTOM0, CUSTOM1, VERTEX, NORMAL, 0.0);
+	v_highlight = field_ant(MODEL_MATRIX, VIEW_MATRIX, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, VERTEX, NORMAL, 0.0);
 	v_part = CUSTOM0.w;
 	v_seed = ant_hash(MODEL_MATRIX[2].y * 0.731 + CUSTOM1.w * 13.7);
 }

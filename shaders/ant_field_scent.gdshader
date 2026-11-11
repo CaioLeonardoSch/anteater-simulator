@@ -10,7 +10,7 @@ uniform vec3 tint : source_color = vec3(1.0, 0.16, 0.12);
 varying float v_highlight;
 
 void vertex() {
-	v_highlight = field_ant(MODEL_MATRIX, VIEW_MATRIX, CUSTOM0, CUSTOM1, VERTEX, NORMAL, 1.0);
+	v_highlight = field_ant(MODEL_MATRIX, VIEW_MATRIX, CUSTOM0, CUSTOM1, INSTANCE_CUSTOM, VERTEX, NORMAL, 1.0);
 }
 
 void fragment() {

@@ -11,7 +11,7 @@ extends Node
 ## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
 ## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol, formigas, tanajura,
-## cupinzeiro_gigante.
+## cupinzeiro_gigante, tampa_campo, tampa_monte, tampa_funda, tampa_rainha.
 
 var main
 var out_dir := "user://fotos"
@@ -112,6 +112,43 @@ func _ready() -> void:
 				break
 			if done:
 				break
+	# Tampas fechadas de cada nível, com o buraco por onde as formigas entram
+	# (de longe o bastante para elas não fugirem do tamanduá).
+	if _wanted("tampa_campo"):
+		var done := false
+		for nest in main.world.nests:
+			for ci in nest.chambers.size():
+				var c = nest.chambers[ci]
+				if not c.satellite or c.opened or not _clear(c.pos2):
+					continue
+				var cp: Vector3 = nest.chamber_world_pos(c)
+				await _look_from(c.pos2 + (-c.pos2).normalized() * 3.0, cp)
+				await _shot_after("tampa_campo", 3.0)
+				done = true
+				break
+			if done:
+				break
+	for job in [["tampa_monte", false, false], ["tampa_funda", true, false], ["tampa_rainha", true, true]]:
+		if not _wanted(job[0]):
+			continue
+		for nest in main.world.nests:
+			if nest.big != job[1]:
+				continue
+			var ci := -1
+			for k in nest.chambers.size():
+				var c = nest.chambers[k]
+				if not c.satellite and c.royal == job[2] and not c.opened:
+					ci = k
+					break
+			if ci < 0:
+				continue
+			var c = nest.chambers[ci]
+			var cp: Vector3 = nest.chamber_world_pos(c)
+			var out2: Vector2 = Vector2(cp.x, cp.z) - nest.center2
+			out2 = out2.normalized() if out2.length() > 0.1 else Vector2(1, 0)
+			await _look_from(Vector2(cp.x, cp.z) + out2 * 3.0, cp)
+			await _shot_after(job[0], 6.0)
+			break
 	if _wanted("cratera"):
 		# O monte grande desmanchado (Escavação Real): o buraco da rainha.
 		for nest in main.world.nests:

@@ -12,6 +12,8 @@ signal chamber_opened(nest, chamber_index: int)
 signal chamber_cleaned(nest, chamber_index: int)
 signal nest_cleaned(nest)
 signal queen_eaten(nest)
+## Comeu tudo da área menos o buraco da rainha (marco 4).
+signal only_queen_left
 
 const Nest := preload("res://scripts/world/nest.gd")
 const AntField := preload("res://scripts/ants/ant_field.gd")
@@ -45,6 +47,7 @@ var active := false
 var trail_left := PackedInt32Array()
 var tanajuras_left := PackedInt32Array()
 var _trail_total := PackedInt32Array()
+var _queen_left_sent := false
 var _clean_announced := {}
 var _refill_timer := 0.0
 
@@ -339,6 +342,39 @@ func _check_cleaned(nest) -> void:
 	if not nest.cleaned and nest.remaining() == 0:
 		nest.set_cleaned()
 		nest_cleaned.emit(nest)
+	if not _queen_left_sent and rest_left() == 0:
+		_queen_left_sent = true
+		only_queen_left.emit()
+
+
+## Quanto falta comer no buraco da rainha (as moradoras dele e a rainha).
+func queen_pit_left() -> int:
+	var n := 0
+	for nest in world.nests:
+		var royal = nest.royal_chamber()
+		if royal != null:
+			n += royal.residents
+		if nest.queen_alive:
+			n += QUEEN_VALUE
+	return n
+
+
+## Quanto havia no buraco da rainha no começo do jogo.
+func queen_pit_start() -> int:
+	var n := 0
+	for nest in world.nests:
+		var royal = nest.royal_chamber()
+		if royal != null:
+			n += royal.start_residents + QUEEN_VALUE
+	return n
+
+
+## Quanto falta comer fora do buraco da rainha.
+func rest_left() -> int:
+	var n := 0
+	for nest in world.nests:
+		n += nest.remaining()
+	return n - queen_pit_left()
 
 
 ## Abre uma câmara: as moradoras (e a rainha) aparecem dentro do buraco.
@@ -493,6 +529,7 @@ func to_save() -> Dictionary:
 func from_save(d: Dictionary) -> void:
 	swarm.clear_all()
 	_clean_announced.clear()
+	_queen_left_sent = false
 	var field = swarm.field
 	# Trilhas: some com as formigas já comidas.
 	var saved_trails: Array = d.get("trails", [])

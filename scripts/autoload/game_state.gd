@@ -66,15 +66,17 @@ const BRANCHES := [
 ##   1: limpar o primeiro formigueiro.
 ##   2: comer metade dos insetos da área.
 ##   3: comer 80% dos insetos da área (o Farejar vem de presente).
+##   4: só falta o buraco da rainha (a Fundura nível 2 vem de presente).
 const MARCOS := [
 	{"index": 1, "title": "Formigueiro limpo", "short": "Formigueiro"},
 	{"index": 2, "title": "Metade da clareira", "short": "Metade", "share": 0.5},
 	{"index": 3, "title": "O faro despertou", "short": "80%", "share": 0.8},
+	{"index": 4, "title": "Só falta a rainha", "short": "Rainha"},
 ]
 const AREA2 := 9
 ## Habilidades que um marco dá de presente (não gastam pontos e ficam ao
 ## redistribuir).
-const MARCO_GIFTS := {3: ["faro_farejar"]}
+const MARCO_GIFTS := {3: ["faro_farejar"], 4: ["garras_fundura_2"]}
 
 ## Cada habilidade (nó): ramo, posição na árvore (col -1 = topo do ramo,
 ## centralizado; 0..3 = linhas da esquerda para a direita), o preço de cada
@@ -163,7 +165,7 @@ const UPGRADES := [
 	{"id": "garras_fundura_1", "branch": 1, "col": 3, "row": 1, "costs": [60], "requires": ["garras_cavar"],
 		"name": "Fundura nível 1",
 		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
-	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "unlock": 2, "requires": ["garras_fundura_1"],
+	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "unlock": 4, "requires": ["garras_fundura_1"],
 		"name": "Fundura nível 2",
 		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
 	# Patas: correr existe desde o começo, gastando estamina. Fôlego abre as

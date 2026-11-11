@@ -13,7 +13,7 @@ const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Glyphs := preload("res://scripts/ui/glyphs.gd")
 
 ## A sequência da área 1. "end" = acabou (o cartão some).
-const STEPS := ["move", "lick", "eat200", "learn", "dig", "nest", "half", "queen", "all", "exit", "end"]
+const STEPS := ["move", "lick", "eat200", "learn", "dig", "nest", "half", "rest", "queen", "all", "exit", "end"]
 ## Duração do voo do losango (s), quanto tempo ele fica no alvo e o fade.
 const FLIGHT_TIME := 1.25
 const MARKER_TIME := 9.0
@@ -179,7 +179,7 @@ func _refresh_text() -> void:
 		_bar.value = clampf(float(p.x) / float(p.y), 0.0, 1.0)
 		_count.text = "%s / %s" % [_n(mini(p.x, p.y)), _n(p.y)]
 	var extra := ""
-	if _step == "all" and not GameState.marcos.has(3):
+	if _step == "rest" and not GameState.marcos.has(3):
 		extra = "Aos 80%, um presente."
 	_extra.text = extra
 	_extra.visible = extra != ""
@@ -211,6 +211,8 @@ func _describe(id: String) -> String:
 			return "Limpe um formigueiro"
 		"half":
 			return "Coma metade dos insetos da área"
+		"rest":
+			return "Coma tudo, menos o formigueiro da rainha"
 		"queen":
 			if GameState.dig_level() >= 3:
 				return "Desmanche o formigueiro da rainha (%s)" % Settings.key_label("dig")
@@ -232,6 +234,10 @@ func _progress(id: String) -> Vector2i:
 				return Vector2i(_nest_start - _nest.remaining(), _nest_start)
 		"half":
 			return Vector2i(GameState.ants_eaten, GameState.marco_insects(2))
+		"rest":
+			if colony != null:
+				var goal: int = GameState.GOAL - colony.queen_pit_start()
+				return Vector2i(goal - colony.rest_left(), goal)
 		"all":
 			return Vector2i(GameState.ants_eaten, GameState.GOAL)
 	return Vector2i.ZERO
@@ -254,6 +260,8 @@ func _is_done(id: String) -> bool:
 			return GameState.marcos.has(1)
 		"half":
 			return GameState.marcos.has(2)
+		"rest":
+			return GameState.marcos.has(4)
 		"queen":
 			if world == null:
 				return false

@@ -577,6 +577,9 @@ func _on_marco_reached(index: int) -> void:
 	if index == 3:
 		sub = "Farejar de presente [%s]  ·  %s" % [Settings.key_label("sniff").to_upper(), sub]
 		icon = "nose"
+	elif index == 4:
+		sub = "Fundura nível 2 de presente [%s]" % Settings.key_label("dig").to_upper()
+		icon = "claws"
 	big_note(String(m.title), sub, 6.0, icon)
 	Sfx.play("point", -2.0)
 

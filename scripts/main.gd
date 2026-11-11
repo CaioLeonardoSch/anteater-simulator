@@ -189,6 +189,8 @@ func _build_game() -> void:
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
 	# Marco 1: o primeiro formigueiro limpo abre mais habilidades.
 	colony.nest_cleaned.connect(func(_n): GameState.reach_marco(1))
+	# Marco 4: só falta o buraco da rainha (a Fundura 2 vem de presente).
+	colony.only_queen_left.connect(func(): GameState.reach_marco(4))
 	colony.nest_cleaned.connect(func(n): Telemetry.log_event("formigueiro", n.display_name))
 	hud.objectives.step_done.connect(func(id): Telemetry.log_event("objetivo", id))
 	if DevTools.autoplay and DevTools.args.has("botlog"):
@@ -302,6 +304,8 @@ func _continue_game() -> void:
 	GameState.reset_run()
 	GameState.from_save(data.get("state", {}))
 	colony.from_save(data.get("colony", {}))
+	if colony.rest_left() == 0:
+		GameState.reach_marco(4)
 	exploration.from_save(String(data.get("explored", "")))
 	world.mushrooms.from_save(data.get("mushrooms", []))
 	var p: Dictionary = data.get("player", {})
@@ -482,10 +486,11 @@ func _on_eaten_changed(_total: int, _delta: int) -> void:
 ## crescem juntas. Se ainda não dá para pagar, espera juntar os pontos (não
 ## pula para outro ramo). Ramo terminado (ou trancado) sai do rodízio.
 func _bot_buy() -> void:
-	# Depois do marco 2, a Fundura vem primeiro: sem ela, o formigueiro da
-	# rainha não abre e a área não termina (como faria quem segue o objetivo).
+	# Depois do marco 2, a Fundura 1 vem primeiro: sem ela, as câmaras grandes
+	# não abrem e a área não termina (como faria quem segue o objetivo). A
+	# Fundura 2 vem de presente no marco 4.
 	if GameState.marcos.has(2):
-		for id in ["garras_fundura_1", "garras_fundura_2"]:
+		for id in ["garras_fundura_1"]:
 			if GameState.upgrade_state(id) == 1:
 				if GameState.can_buy(id):
 					var c := GameState.cost_of(id)

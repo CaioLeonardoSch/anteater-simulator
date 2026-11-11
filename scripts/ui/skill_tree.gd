@@ -311,7 +311,9 @@ func _show_tip(id: String) -> void:
 		4:
 			var m := GameState.unlock_of(id)
 			var when := "Abre ao limpar o primeiro formigueiro"
-			if m >= 2:
+			if m == 4:
+				when = "Abre quando só faltar o formigueiro da rainha"
+			elif m >= 2:
 				var at := GameState.marco_insects(m)
 				when = "Abre com %s dos insetos comidos (faltam %s)" % [
 					"metade" if m == 2 else "80%", _thousands(at - GameState.ants_eaten)]

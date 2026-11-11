@@ -767,6 +767,9 @@ Ele vem **de presente**, não à venda: fica como prêmio por ter chegado lá
   perto da caverna têm poucas moradoras passeando, então ele chega cedo.
 - O 2º e o 3º são a metade e 80% dos insetos da área. Limpar formigueiros
   inteiros pode demorar, porque as moradoras passeiam longe deles.
+- O 4º (11/11/2026) chega quando só falta o buraco da rainha (199 moradoras e
+  a rainha, 4% da área): a Fundura nível 2 vem de presente. Antes ela era uma
+  compra de 120 pontos, e quem gastava os pontos em outras coisas travava.
 - Cada marco mostra um cartão, como "Formigueiro limpo · 4 habilidades novas
   na árvore".
 
@@ -875,8 +878,9 @@ o jogador sempre sabe para onde ir.
 | 5 | Aprenda Cavar e abra uma câmara | câmara pequena mais perto | tutorial |
 | 6 | Limpe um formigueiro | formigueiro pequeno mais perto | marco 1 |
 | 7 | Coma metade dos insetos da área | — | marco 2 |
-| 8 | Desmanche o formigueiro da rainha | formigueiro grande | pede a Fundura 2, que abre no marco 2 |
-| 9 | Coma todos os insetos da área | — | aos 80%, marco 3: ganha o Farejar de presente |
+| 8 | Coma tudo, menos o formigueiro da rainha | — | aos 80%, marco 3: ganha o Farejar de presente; no fim, marco 4: ganha a Fundura 2 |
+| 9 | Desmanche o formigueiro da rainha | formigueiro grande | — |
+| 10 | Coma todos os insetos da área | — | — |
 
 - "Corra (Shift)" entra como objetivo extra logo depois da primeira compra
   das Patas, sem segurar a fila.

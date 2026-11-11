@@ -191,8 +191,6 @@ func _build_game() -> void:
 	colony.nest_cleaned.connect(func(_n): GameState.reach_marco(1))
 	# Marco 4: só falta o buraco da rainha (a Fundura 2 vem de presente).
 	colony.only_queen_left.connect(func(): GameState.reach_marco(4))
-	colony.nest_cleaned.connect(func(n): Telemetry.log_event("formigueiro", n.display_name))
-	hud.objectives.step_done.connect(func(id): Telemetry.log_event("objetivo", id))
 	if DevTools.autoplay and DevTools.args.has("botlog"):
 		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
 		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
@@ -258,7 +256,6 @@ func _start_play() -> void:
 	GameState.mode = GameState.next_mode
 	player.place_at(world.player_start, world.player_start_yaw)
 	_begin_playing()
-	Telemetry.start_session("jogo novo")
 	save_game()
 	# Ele acorda na caverna com fome: a barriga ronca uma vez.
 	if DevTools.start_mode == "" or DevTools.args.has("growl"):
@@ -313,7 +310,6 @@ func _continue_game() -> void:
 		float(p.get("yaw", world.player_start_yaw)))
 	player.pitch = float(p.get("pitch", -0.12))
 	_begin_playing()
-	Telemetry.start_session("continuou")
 	if GameState.skills_refunded:
 		# Jogo salvo de antes da árvore com cliques: os pontos voltaram.
 		GameState.skills_refunded = false
@@ -437,7 +433,6 @@ func _close_tree() -> void:
 
 
 func _restart() -> void:
-	Telemetry.end_session("recomeçou do zero")
 	GameState.delete_saved_game()
 	# Recomeçar mantém o modo (normal ou contra o relógio).
 	GameState.next_mode = GameState.mode
@@ -448,7 +443,6 @@ func _restart() -> void:
 func _to_main_menu() -> void:
 	if state in [State.PLAYING, State.PAUSED, State.TREE]:
 		save_game()
-	Telemetry.end_session("voltou ao menu")
 	skip_menu = false
 	_reload()
 
@@ -568,7 +562,6 @@ func _belly_growl() -> void:
 ## O tronco foi quebrado: a passagem para a área 2 está aberta (fim da demo).
 func _on_exit_broken() -> void:
 	GameState.count("exit_broken")
-	Telemetry.log_event("quebrou o tronco", "")
 	state = State.COMPLETE
 	GameState.delete_saved_game()
 	player.controls_enabled = false

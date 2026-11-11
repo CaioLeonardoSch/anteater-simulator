@@ -123,7 +123,6 @@ func quit_game() -> void:
 	if _quitting:
 		return
 	_quitting = true
-	await Telemetry.before_quit()
 	_release_all()
 	for _i in 4:
 		await get_tree().process_frame

@@ -236,15 +236,6 @@ redistribuir os pontos de graça na árvore (o Farejar de presente não sai). As
 contas estão em [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md),
 seção 11. Os jogos salvos de antes da área 1 nova não abrem mais.
 
-### Versão de teste: estatísticas
-
-Na versão de teste, o jogo manda as estatísticas de cada partida (tempo,
-insetos, compras, marcos, objetivos, formigueiros, onde parou e o desempenho do
-computador) para um Formulário do Google, e as respostas caem numa planilha.
-Na primeira vez que abre, ele explica e pergunta se pode; não vai nome, e-mail
-nem arquivos. Como funciona e como criar o formulário:
-[`docs/estatisticas-dos-testes.md`](docs/estatisticas-dos-testes.md).
-
 ### Versão para Windows e Mac (para mandar aos amigos)
 
 O GitHub gera o jogo para Windows e para Mac sozinho: na aba **Actions**,
@@ -282,8 +273,7 @@ Em **Configurações**:
   rebatida (SSIL), neblina volumétrica e brilho do sol.
 - **Jogo:** sensibilidade do mouse e do controle, inverter eixo Y, campo de
   visão, balanço da câmera, cor do faro, dicas (Todas, Poucas ou Nenhuma),
-  mostrar ou esconder a interface (HUD), enviar ou não as estatísticas da
-  versão de teste e o apelido que vai junto.
+  mostrar ou esconder a interface (HUD).
 - **Controles:** trocar qualquer tecla; Correr e Cavar como "segurar" ou
   "apertar uma vez".
 - **Áudio:** volume geral, música, efeitos e ambiente.
@@ -369,8 +359,7 @@ com `--timescale`, mantém o passo da física igual ao do jogo normal ·
 habilidades · `--open=N|all` abre as câmaras · `--sniff=SEG` fareja nesse
 instante · `--growl` faz a barriga roncar mesmo pulando o menu ·
 `--focus=ID` abre a árvore já com uma habilidade escolhida · `--nohud` esconde a
-interface (capturas limpas do cenário) · `--telemetria` deixa os testes
-mandarem as estatísticas (`--telemetria=http://...` manda para outro endereço) ·
+interface (capturas limpas do cenário) ·
 `--captures=SEG:arquivo.png` tira
 capturas (numa janela de 1600x900) · `--quit` fecha depois · `--stats` mostra
 FPS, formigas vivas e o tempo gasto por quadro.

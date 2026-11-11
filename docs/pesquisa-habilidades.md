@@ -908,8 +908,6 @@ o jogador sempre sabe para onde ir.
 - O losango voa em 1,25 s, fica 9 s pulsando com a distância e some em 1,5 s.
   A tecla **F** (ou Y no controle) faz ele voar de novo; dá para trocar em
   Configurações → Controles.
-- A telemetria anota cada objetivo cumprido ("objetivo") e cada marco
-  ("marco").
 - O código está em `scripts/ui/objectives.gd`.
 
 ## 13. Bot na área 1 nova (08/11/2026)

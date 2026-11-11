@@ -47,6 +47,11 @@ const HAT_CHANCE := 0.0000625
 ## Some no buraco (trilha: perto do olheiro; passeio: perto da câmara).
 const TRAIL_HIDE_S := 0.2
 const ROAM_HIDE_RHO := 0.15
+## Câmara com buraco de verdade: a formiga só some depois de afundar nele.
+const ROAM_HIDE_HOLE := 0.02
+## Igual a HOLE_SINK e HOLE_SPREAD do shader (e da tampa, em nest.gd).
+const HOLE_SINK := 0.2
+const HOLE_SPREAD := 3.2
 ## Separação das camadas de perto: folga (m) em volta de cada faixa, e de
 ## quanto em quanto tempo (s) ou quanto a câmera anda (m) até separar de novo.
 ## A folga cobre o que a formiga e a câmera andam entre uma separação e outra.
@@ -152,6 +157,7 @@ func build(w, trail_counts: Array, roams: Array, rng: RandomNumberGenerator) -> 
 			continue
 		roam_chunk[int(r.code)] = chunks.size()
 		_add_roam_chunk(int(r.code), r.home, float(r.reach), int(r.count), rng)
+		set_roam_shape(int(r.code), r.get("shape", Vector4.ZERO))
 
 
 ## O chão mudou (um monte virou buraco): refaz as alturas que a placa de
@@ -433,7 +439,7 @@ func ant_state(ch: Chunk, i: int, even_hidden: bool = false) -> Vector4:
 	var w := u * 12.566 + seed * 0.05
 	var th := b[o + 10] + cyc * 2.39996 + (u - 0.5) * b[o + 11] + 0.22 * sin(w)
 	var rho := reach * sin(PI * u)
-	if rho < ROAM_HIDE_RHO:
+	if rho < _hide_rho(b, o):
 		return Vector4(0, 0, 0, INF)
 	var d := Vector2(cos(th), sin(th))
 	var raw := Vector2(b[o], b[o + 1]) + d * rho
@@ -457,7 +463,49 @@ func ant_state(ch: Chunk, i: int, even_hidden: bool = false) -> Vector4:
 	if ahead != Vector2.INF and ahead.distance_squared_to(p2) > 1e-8:
 		dp = ahead - p2
 	var y: float = world.ground_height(p2.x, p2.y) + ground.extra_height(p2)
+	if b[o + 16] > 0.0:
+		y += home_lift(Vector4(b[o + 16], b[o + 17], b[o + 18], b[o + 19]), p2 - Vector2(b[o], b[o + 1]))
 	return Vector4(p2.x, y, p2.y, atan2(-dp.x, -dp.y))
+
+
+## Até onde a formiga que passeia chega perto do meio antes de sumir.
+static func _hide_rho(b: PackedFloat32Array, o: int) -> float:
+	return ROAM_HIDE_HOLE if b[o + 18] > 0.0 else ROAM_HIDE_RHO
+
+
+## Altura da tampa (ou da terra em volta da câmara aberta) e do buraco do meio
+## a `off` do meio da câmara: field_home do shader. `ic` = (raio, altura do
+## morrinho ou -altura da terra em volta, raio do buraco, beirada).
+static func home_lift(ic: Vector4, off: Vector2) -> float:
+	var d := off.length()
+	if ic.x <= 0.0 or d * d >= ic.x * ic.x * 2.6:
+		return 0.0
+	var t := d / ic.x
+	var h := 0.0
+	if ic.y > 0.0:
+		h = ic.y * pow(maxf(1.0 - t * t, 0.0), 1.4)
+	elif ic.y < 0.0:
+		h = -ic.y * exp(-pow((t - 1.07) / 0.15, 2.0))
+	if ic.z > 0.0:
+		var q := d / ic.z
+		h += ic.z * ic.w * exp(-(q - 1.5) * (q - 1.5)) * (1.0 - smoothstep(HOLE_SPREAD * 0.71, HOLE_SPREAD, q))
+		h -= HOLE_SINK * (1.0 - smoothstep(0.0, 1.3, q))
+	return h
+
+
+## A câmara do campo `code` mudou (tampa fechada ou aberta): as que passeiam
+## nela passam a subir na forma nova (`shape`, veja home_lift).
+func set_roam_shape(code: int, shape: Vector4) -> void:
+	if not roam_chunk.has(code):
+		return
+	var ch := chunks[roam_chunk[code]]
+	for i in ch.count:
+		var o := i * STRIDE
+		ch.buf[o + 16] = shape.x
+		ch.buf[o + 17] = shape.y
+		ch.buf[o + 18] = shape.z
+		ch.buf[o + 19] = shape.w
+	ch.dirty = true
 
 
 ## Só a posição no chão (x, z), sem a altura: mais rápido. Vector2.INF se a
@@ -480,7 +528,7 @@ func ant_xz(ch: Chunk, i: int) -> Vector2:
 	var cyc := floorf(c)
 	var u := c - cyc
 	var rho := b[o + 2] * (0.75 + 0.25 * sin(cyc * 2.1 + seed * 0.013)) * sin(PI * u)
-	if rho < ROAM_HIDE_RHO:
+	if rho < _hide_rho(b, o):
 		return Vector2.INF
 	var th := b[o + 10] + cyc * 2.39996 + (u - 0.5) * b[o + 11] + 0.22 * sin(u * 12.566 + seed * 0.05)
 	var raw := Vector2(b[o] + cos(th) * rho, b[o + 1] + sin(th) * rho)

@@ -159,7 +159,10 @@ buscamos, no espírito delas:
   filas cheias, indo e voltando sem parar. Você lambe as que estão de passagem.
 - **Passeios:** mais da metade das formigas soltas sai das câmaras espalhadas
   pelo campo, dá uma volta longa (até uns 12 m) e entra de novo. Elas contam
-  para o formigueiro dono da câmara.
+  para o formigueiro dono da câmara. Entram e saem pelo **buraco no topo da
+  tampa** (afundando de cabeça); depois que a câmara é cavada, usam os túneis
+  do fundo. Chegando perto (14 m) de uma câmara fechada, até 3 moradoras
+  saem pelo buraco para espiar e voltam para dentro.
 - **Ninhos com câmaras:** cada ninho tem câmaras internas. Você cava com as
   Garras e esvazia uma por uma, com a satisfação de terminar de arrumar uma
   prateleira. Ao abrir, as moradoras **saem correndo** e fogem quando você chega

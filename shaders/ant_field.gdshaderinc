@@ -97,13 +97,38 @@ int field_climb(vec2 raw, out vec3 p, out vec3 side, out float lift) {
 	return 1;
 }
 
+// Câmara do passeio (na cor extra da instância, igual para o grupo todo):
+// x raio, y altura do morrinho da tampa (> 0) ou da terra tirada em volta da
+// câmara aberta (< 0), z raio do buraco do meio, w altura da beirada dele (em
+// raios do buraco). Tudo 0 = nada (trilhas). A formiga sobe na tampa e, no
+// buraco, afunda até sumir (ant_field.gd faz a mesma conta).
+const float HOLE_SINK = 0.2;
+const float HOLE_SPREAD = 3.2;
+
+float field_home(vec4 ic, vec2 off) {
+	float d = length(off);
+	float t = d / ic.x;
+	float h = 0.0;
+	if (ic.y > 0.0) {
+		h = ic.y * pow(max(1.0 - t * t, 0.0), 1.4);
+	} else if (ic.y < 0.0) {
+		h = -ic.y * exp(-pow((t - 1.07) / 0.15, 2.0));
+	}
+	if (ic.z > 0.0) {
+		float q = d / ic.z;
+		h += ic.z * ic.w * exp(-(q - 1.5) * (q - 1.5)) * (1.0 - smoothstep(HOLE_SPREAD * 0.71, HOLE_SPREAD, q));
+		h -= HOLE_SINK * (1.0 - smoothstep(0.0, 1.3, q));
+	}
+	return h;
+}
+
 vec3 field_trail_point(int row, int i) {
 	return texelFetch(trail_tex, ivec2(i, row), 0).xyz;
 }
 
 // Põe a formiga no mundo. `halo` > 0 engorda a formiga (o brilho do faro).
 // Retorna o destaque do faro (0..1).
-float field_ant(mat4 m, mat4 view, vec4 c0, vec4 c1, inout vec3 vtx, inout vec3 nrm, float halo) {
+float field_ant(mat4 m, mat4 view, vec4 c0, vec4 c1, vec4 ic, inout vec3 vtx, inout vec3 nrm, float halo) {
 	float f0 = m[0].x;
 	float f1 = m[1].x;
 	float f2 = m[2].x;
@@ -183,14 +208,27 @@ float field_ant(mat4 m, mat4 view, vec4 c0, vec4 c1, inout vec3 vtx, inout vec3 
 		float e = 0.15;
 		float hx = field_surface(p2 + vec2(e, 0.0)) - field_surface(p2 - vec2(e, 0.0));
 		float hz = field_surface(p2 + vec2(0.0, e)) - field_surface(p2 - vec2(0.0, e));
-		up = normalize(vec3(-hx, 2.0 * e, -hz));
+		vec2 grad = vec2(hx, hz) / (2.0 * e);
 		pos = vec3(p2.x, field_surface(p2), p2.y);
+		// Sobe na tampa da câmara e afunda no buraco do meio.
+		vec2 hoff = p2 - vec2(f0, f1);
+		if (ic.x > 0.0 && dot(hoff, hoff) < ic.x * ic.x * 2.6) {
+			float eh = 0.02;
+			pos.y += field_home(ic, hoff);
+			vec2 hg = vec2(field_home(ic, hoff + vec2(eh, 0.0)) - field_home(ic, hoff - vec2(eh, 0.0)),
+				field_home(ic, hoff + vec2(0.0, eh)) - field_home(ic, hoff - vec2(0.0, eh))) / (2.0 * eh);
+			float hl = length(hg);
+			grad += hl > 2.5 ? hg * (2.5 / hl) : hg;
+		}
+		up = normalize(vec3(-grad.x, 1.0, -grad.y));
 		fwd = vec3(fw.x, 0.0, fw.y);
 		carry = u > 0.5 ? leaf : 0.0;
-		hidden = rho < 0.15 || pr.a > 0.5;
+		// Some no buraco: com buraco de verdade, só depois de afundar nele.
+		float hide_r = ic.z > 0.0 ? 0.02 : 0.15;
+		hidden = rho < hide_r || pr.a > 0.5;
 		if (cl > 0) {
 			// Sobe no tronco: de pé no chão até chegar, depois de lado no tronco.
-			hidden = rho < 0.15 || cl == 2;
+			hidden = rho < hide_r || cl == 2;
 			vec3 cp2;
 			vec3 cs2;
 			float cl2;

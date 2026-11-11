@@ -31,6 +31,11 @@ const SATELLITE_WEIGHT := 0.6
 ## Até onde as passeadoras vão (m), longe da câmara delas.
 const ROAM_REACH := 8.0
 const ROAM_REACH_MIN := 2.2
+## Câmaras fechadas do monte: com o tamanduá a menos de PEEK_DIST m, até
+## PEEK_MAX moradoras ficam fora, a até PEEK_RADIUS m da tampa.
+const PEEK_MAX := 3
+const PEEK_DIST := 14.0
+const PEEK_RADIUS := 1.3
 
 var swarm
 var world
@@ -56,7 +61,8 @@ func setup(w, sw) -> void:
 		for ci in nest.chambers.size():
 			var c = nest.chambers[ci]
 			if c.roamers > 0:
-				roams.append({"code": nest.index * 16 + ci, "home": c.pos2, "reach": c.roam_reach, "count": c.roamers})
+				roams.append({"code": nest.index * 16 + ci, "home": c.pos2, "reach": c.roam_reach, "count": c.roamers,
+					"shape": nest.roam_shape(ci)})
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7741
 	swarm.field.build(world, trail_counts, roams, rng)
@@ -348,7 +354,13 @@ func open_chamber(nest, ci: int, instant: bool = false, stun: float = 0.0) -> in
 		_merge_into_pit(nest, ci)
 		if not instant:
 			refresh_ground()
-	c.shown = 0
+		# As que espiavam fora da tampa da rainha ficam no buraco com ela.
+		swarm.rehome(code, code, c.pos2, c.area_radius())
+	if c.satellite:
+		# As que passeiam em volta passam a entrar pelo túnel do meio.
+		swarm.field.set_roam_shape(code, nest.roam_shape(ci))
+	# As que já estavam fora (espiando pela tampa) continuam à vista.
+	c.shown = swarm.count_home(code)
 	_refill(nest, ci, false)
 	if c.royal and nest.queen_alive:
 		swarm.spawn_resident(swarm.QUEEN, code, c.pos2, c.area_radius())
@@ -399,8 +411,14 @@ func _refill(nest, ci: int, from_tunnel: bool) -> void:
 		return
 	var want: int = mini(c.residents, _visible_cap(c))
 	var code: int = nest.index * 16 + ci
+	# As que vêm do túnel sobem por uma das bocas dele.
+	var holes: Array[Vector4] = []
+	if from_tunnel:
+		holes = nest.chamber_holes(ci)
 	while c.shown < want:
-		var i: int = swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.area_radius(), from_tunnel, c.axis, c.half_len)
+		var hole := holes[randi() % holes.size()] if not holes.is_empty() else Vector4.ZERO
+		var i: int = swarm.spawn_resident(swarm.WORKER, code, c.pos2, c.area_radius(), from_tunnel, c.axis, c.half_len,
+			hole)
 		if i < 0:
 			break
 		# As que saem do túnel depois vão direto para um canto da região.
@@ -421,11 +439,43 @@ func _process(delta: float) -> void:
 	_refill_timer -= delta
 	if _refill_timer <= 0.0:
 		_refill_timer = 1.0
+		var player := Vector2(swarm.threat_pos.x, swarm.threat_pos.z)
 		for nest in world.nests:
 			for ci in nest.chambers.size():
 				var c = nest.chambers[ci]
 				if c.opened and c.shown < mini(c.residents, _visible_cap(c)):
 					_refill(nest, ci, true)
+				elif not c.opened:
+					_peek(nest, ci, player)
+
+
+## Câmara fechada do monte com o tamanduá por perto: umas poucas moradoras
+## saem pelo buraco da tampa, andam em volta e entram de novo (uma por vez).
+## Elas contam como moradoras (comer uma tira da câmara).
+func _peek(nest, ci: int, player: Vector2) -> void:
+	var c = nest.chambers[ci]
+	if c.satellite or nest.dug_out or c.shown >= PEEK_MAX or c.residents - c.shown <= 0:
+		return
+	if c.pos2.distance_squared_to(player) > PEEK_DIST * PEEK_DIST:
+		return
+	var holes: Array[Vector4] = nest.chamber_holes(ci)
+	if holes.is_empty():
+		return
+	var code: int = nest.index * 16 + ci
+	var i: int = swarm.spawn_resident(swarm.WORKER, code, c.pos2, PEEK_RADIUS, true, 0.0, 0.0, holes[0])
+	if i < 0:
+		return
+	swarm.disperse(i, c.pos2, false, PEEK_RADIUS)
+	c.shown += 1
+
+
+## Uma moradora entrou num buraco da câmara dela: volta a ficar escondida.
+func resident_went_in(i: int) -> void:
+	var code: int = swarm.home[i]
+	if code < 0:
+		return
+	var c = world.nests[code / 16].chambers[code % 16]
+	c.shown = maxi(c.shown - 1, 0)
 
 
 # ------------------------------------------------------------------ Salvar

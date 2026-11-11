@@ -51,7 +51,8 @@ const WANDER_RADIUS := 5.0
 ## Quanto tempo a formiga "na mira" fica com o enxame antes de voltar ao campo.
 const GHOST_TIME := 1.2
 
-enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, CHAMBER, GHOST }
+## ENTER: moradora entrando num buraco (afunda e some). EMERGE: saindo de um.
+enum Mode { TRAIL, FLEE, RETURN, STUNNED, STUCK, CHAMBER, GHOST, ENTER, EMERGE }
 const WORKER := 0
 const QUEEN := 1
 const TANAJURA := 2
@@ -64,6 +65,16 @@ const SCARE_CHANCE := 0.2
 const SCARE_SPEED := 0.6
 const CHAMBER_SPEED := 0.32
 const QUEEN_SPEED := 0.05
+## Buracos das câmaras: quanto a formiga afunda até sumir (m), quanto tempo
+## leva para sair (s), quanto ela inclina (rad) e a chance, por segundo, de uma
+## moradora perto da câmara aberta (ou espiando fora da fechada) voltar para dentro.
+const HOLE_SINK := 0.2
+const EMERGE_TIME := 1.1
+const DIVE_PITCH := 0.9
+const ENTER_CHANCE := 0.04
+const PEEK_ENTER_CHANCE := 0.12
+## Só volta para dentro quem está a menos disto (m) da câmara aberta.
+const ENTER_NEAR := 2.5
 
 var world
 var colony
@@ -107,6 +118,10 @@ var vel := PackedVector2Array()
 ## Centro da câmara (x, raio, z) para as moradoras; a casa (x, 0, z) das que
 ## passeiam em volta de uma câmara do campo.
 var anchor := PackedVector3Array()
+## Entrando ou saindo: a boca do buraco (x, y, z, raio) e a inclinação do corpo
+## (rad, > 0 = cabeça para cima).
+var hole_at := PackedVector4Array()
+var pitch := PackedFloat32Array()
 var _free := PackedInt32Array()
 var alive_count := 0
 
@@ -142,6 +157,28 @@ func _surface(x: float, z: float) -> float:
 	return y
 
 
+## Câmara da formiga (ninho * 16 + câmara): a das moradoras ou a das que
+## passeiam em volta de uma câmara do campo. -1 = nenhuma.
+func _chamber_of(i: int) -> int:
+	if home[i] >= 0:
+		return home[i]
+	if origin_chunk[i] >= 0:
+		var ch = field.chunks[origin_chunk[i]]
+		if ch.kind == AntField.ROAM:
+			return ch.index
+	return -1
+
+
+## Chão da formiga i: o de todas e, em cima da tampa fechada da câmara dela,
+## a tampa (ela sobe no morrinho).
+func _home_surface(i: int, x: float, z: float) -> float:
+	var y := _surface(x, z)
+	var code := _chamber_of(i)
+	if code >= 0:
+		y += world.nests[code / 16].cap_lift(code % 16, Vector2(x, z))
+	return y
+
+
 func setup(w, col) -> void:
 	world = w
 	colony = col
@@ -152,7 +189,7 @@ func setup(w, col) -> void:
 	for arr in [alive, kind, mode, carry]:
 		arr.resize(CAPACITY)
 		arr.fill(0)
-	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, seed_of, shrink]:
+	for arr in [s, dir, lateral, speed, yaw, gait, timer, highlight, rnd, seed_of, shrink, pitch]:
 		arr.resize(CAPACITY)
 		arr.fill(0.0)
 	trail_id.resize(CAPACITY)
@@ -164,6 +201,7 @@ func setup(w, col) -> void:
 	pos.resize(CAPACITY)
 	vel.resize(CAPACITY)
 	anchor.resize(CAPACITY)
+	hole_at.resize(CAPACITY)
 	_free.resize(CAPACITY)
 	for i in CAPACITY:
 		_free[i] = CAPACITY - 1 - i
@@ -227,6 +265,7 @@ func _take_slot() -> int:
 	timer[i] = 0.0
 	highlight[i] = 0.0
 	shrink[i] = 1.0
+	pitch[i] = 0.0
 	carry[i] = 2 if randf() < AntField.hat_chance() else 0
 	vel[i] = Vector2.ZERO
 	home[i] = -1
@@ -257,9 +296,10 @@ func spawn(ant_kind: int, trail_index: int, at_s: float, direction: float, lat: 
 
 ## Moradora de uma câmara aberta (ou a rainha, que anda devagar no fundo).
 ## `from_tunnel` = acabou de sair do túnel, no meio da câmara. Num buraco comprido,
-## `axis` e `half_len` dão a direção e o meio comprimento dela.
+## `axis` e `half_len` dão a direção e o meio comprimento dela. Com `hole`
+## (x, y, z, raio da boca), ela sobe de dentro dele.
 func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: float, from_tunnel: bool = false,
-		axis: float = 0.0, half_len: float = 0.0) -> int:
+		axis: float = 0.0, half_len: float = 0.0, hole: Vector4 = Vector4.ZERO) -> int:
 	var i := _take_slot()
 	if i < 0:
 		return -1
@@ -282,7 +322,107 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 	vel[i] = Vector2(cos(a + (0.3 if from_tunnel else 1.7)), sin(a + (0.3 if from_tunnel else 1.7))) * speed[i]
 	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
 	yaw[i] = randf() * TAU
+	if hole.w > 0.0 and ant_kind != QUEEN:
+		# Sobe de dentro do buraco, com a cabeça para cima.
+		var out := Vector2.RIGHT.rotated(a)
+		mode[i] = Mode.EMERGE
+		hole_at[i] = hole
+		timer[i] = 0.0
+		vel[i] = out * speed[i]
+		pos[i] = Vector3(hole.x, hole.y - HOLE_SINK, hole.z)
+		yaw[i] = atan2(-out.x, -out.y)
+		pitch[i] = DIVE_PITCH
 	return i
+
+
+## Quantas formigas simuladas aqui moram na câmara `code`.
+func count_home(code: int) -> int:
+	var n := 0
+	for i in CAPACITY:
+		if alive[i] == 1 and home[i] == code:
+			n += 1
+	return n
+
+
+## Entrando ou saindo de um buraco: volta a andar no chão, no lugar onde está.
+func _leave_hole(i: int) -> void:
+	if mode[i] == Mode.ENTER or mode[i] == Mode.EMERGE:
+		mode[i] = Mode.CHAMBER
+	pitch[i] = 0.0
+	pos[i].y = _home_surface(i, pos[i].x, pos[i].z)
+
+
+## Sai de dentro do buraco: um pouco para fora da boca, subindo.
+func _update_emerge(i: int, delta: float) -> void:
+	var h := hole_at[i]
+	timer[i] += delta / EMERGE_TIME
+	var k := minf(timer[i], 1.0)
+	var out := vel[i].normalized() if vel[i].length_squared() > 0.000001 else Vector2.RIGHT
+	var p2 := Vector2(h.x, h.z) + out * h.w * 1.7 * k
+	var e := smoothstep(0.0, 1.0, k)
+	pos[i] = Vector3(p2.x, lerpf(h.y - HOLE_SINK, _home_surface(i, p2.x, p2.y), e), p2.y)
+	pitch[i] = DIVE_PITCH * (1.0 - e)
+	yaw[i] = atan2(-out.x, -out.y)
+	gait[i] += speed[i] * 1.5 * delta / (SIZE[kind[i]] * 0.32)
+	if timer[i] >= 1.0:
+		mode[i] = Mode.CHAMBER
+		pitch[i] = 0.0
+		vel[i] = out * speed[i]
+
+
+## Vai até a boca do buraco e afunda nele, de cabeça para baixo, até sumir.
+func _update_enter(i: int, delta: float) -> void:
+	var h := hole_at[i]
+	var p2 := Vector2(pos[i].x, pos[i].z)
+	var to := Vector2(h.x, h.z) - p2
+	var d := to.length()
+	var sp := maxf(speed[i] * 1.4, 0.3)
+	if d > 0.0001:
+		var step := minf(sp * delta, d)
+		p2 += to / d * step
+		d -= step
+		yaw[i] = lerp_angle(yaw[i], atan2(-to.x, -to.y), minf(delta * 10.0, 1.0))
+	var near := h.w * 1.5
+	var sink := 1.0 - d / near if d < near else 0.0
+	# timer > 0: já está afundando (não foge mais).
+	timer[i] = sink
+	var y := _home_surface(i, p2.x, p2.y)
+	pos[i] = Vector3(p2.x, lerpf(y, h.y - HOLE_SINK, sink), p2.y)
+	pitch[i] = -DIVE_PITCH * sink
+	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32)
+	if d <= 0.015:
+		_went_in(i)
+
+
+## Sumiu no buraco: a de campo volta para o passeio dela (dentro da câmara) e
+## a moradora volta a contar como escondida.
+func _went_in(i: int) -> void:
+	if origin_chunk[i] >= 0:
+		_back_to_field(i, true)
+		return
+	if colony != null:
+		colony.resident_went_in(i)
+	despawn(i)
+
+
+## Moradora (fora da câmara) volta para dentro pelo buraco mais perto. Retorna
+## se achou um buraco.
+func _try_enter(i: int) -> bool:
+	var code := _chamber_of(i)
+	if code < 0:
+		return false
+	var holes: Array[Vector4] = world.nests[code / 16].chamber_holes(code % 16)
+	if holes.is_empty():
+		return false
+	var p := pos[i]
+	var best := holes[0]
+	for h in holes:
+		if Vector2(h.x - p.x, h.z - p.z).length_squared() < Vector2(best.x - p.x, best.z - p.z).length_squared():
+			best = h
+	mode[i] = Mode.ENTER
+	hole_at[i] = best
+	timer[i] = 0.0
+	return true
 
 
 ## As moradoras de uma câmara passam a morar em outra (o monte desmanchado:
@@ -293,6 +433,8 @@ func rehome(from_code: int, to_code: int, center: Vector2, radius: float) -> int
 		if alive[i] == 0 or home[i] != from_code:
 			continue
 		home[i] = to_code
+		if mode[i] == Mode.ENTER or mode[i] == Mode.EMERGE:
+			_leave_hole(i)
 		anchor[i] = Vector3(center.x, radius, center.y)
 		dir[i] = 0.0
 		lateral[i] = 0.0
@@ -400,7 +542,9 @@ func _physics_process(delta: float) -> void:
 		var m := mode[i]
 		if highlight[i] > 0.0:
 			highlight[i] = maxf(highlight[i] - delta, 0.0)
-		if m == Mode.TRAIL or m == Mode.RETURN or m == Mode.CHAMBER or m == Mode.GHOST:
+		# Indo para o buraco ainda foge; já afundando, não.
+		if m == Mode.TRAIL or m == Mode.RETURN or m == Mode.CHAMBER or m == Mode.GHOST \
+				or (m == Mode.ENTER and timer[i] <= 0.0):
 			var d2 := Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2)
 			if d2 < flee_r2 and kind[i] != QUEEN:
 				_start_flee(i, tp2)
@@ -423,6 +567,10 @@ func _physics_process(delta: float) -> void:
 				_update_stunned(i, delta)
 			Mode.GHOST:
 				_update_ghost(i, delta)
+			Mode.ENTER:
+				_update_enter(i, delta)
+			Mode.EMERGE:
+				_update_emerge(i, delta)
 			_:
 				pass
 
@@ -457,6 +605,7 @@ func _start_flee(i: int, from: Vector2, speed_mult: float = 1.0) -> void:
 		away = Vector2.RIGHT.rotated(randf() * TAU)
 	away = away.normalized().rotated(randf_range(-0.7, 0.7))
 	mode[i] = Mode.FLEE
+	pitch[i] = 0.0
 	vel[i] = away * PANIC_SPEED[kind[i]] * speed_mult * randf_range(0.85, 1.15)
 	# Moradoras correm mais longe antes de pensar em voltar para a câmara.
 	timer[i] = randf_range(2.4, 3.8) if home[i] >= 0 else randf_range(1.2, 2.2)
@@ -504,7 +653,7 @@ func _update_free(i: int, delta: float) -> void:
 		p2 = p2.normalized() * limit
 		v = -v
 	vel[i] = v
-	var y: float = _surface(p2.x, p2.y)
+	var y: float = _home_surface(i, p2.x, p2.y)
 	if kind[i] == TANAJURA:
 		y += 0.45 + sin(_time * 3.0 + rnd[i] * 9.0) * 0.15
 	pos[i] = Vector3(p2.x, y, p2.y)
@@ -539,6 +688,9 @@ func _update_return(i: int, delta: float) -> void:
 	var dist := to.length()
 	var sp := maxf(speed[i] * 1.8, 0.6)
 	var step := sp * delta
+	# Das que passeiam: chegando na câmara, entra pelo buraco dela.
+	if not on_trail and origin_chunk[i] >= 0 and dist < 0.5 and _try_enter(i):
+		return
 	if dist <= step + 0.04:
 		if origin_chunk[i] >= 0:
 			_back_to_field(i, true)
@@ -547,7 +699,7 @@ func _update_return(i: int, delta: float) -> void:
 		return
 	var v := to / dist * sp
 	p2 += v * delta
-	var y: float = _surface(p2.x, p2.y)
+	var y: float = _home_surface(i, p2.x, p2.y)
 	if kind[i] == TANAJURA:
 		y += 0.4
 	pos[i] = Vector3(p2.x, y, p2.y)
@@ -573,7 +725,7 @@ func _update_homing(i: int, delta: float) -> void:
 	var sp := maxf(speed[i] * 2.4, 0.75)
 	var v := to / dist * sp
 	p2 += v * delta
-	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
+	pos[i] = Vector3(p2.x, _home_surface(i, p2.x, p2.y), p2.y)
 	yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * 10.0, 1.0))
 	gait[i] += sp * delta / (SIZE[kind[i]] * 0.32)
 
@@ -623,10 +775,26 @@ func _update_chamber(i: int, delta: float, threat: Vector2) -> void:
 		p2 = center + n * limit
 		v = v.bounce(n) * 0.8
 	vel[i] = v
-	pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
+	pos[i] = Vector3(p2.x, _home_surface(i, p2.x, p2.y), p2.y)
 	if v.length_squared() > 0.000001:
 		yaw[i] = lerp_angle(yaw[i], atan2(-v.x, -v.y), minf(delta * (2.0 if queen else 8.0), 1.0))
 	gait[i] += v.length() * delta / (SIZE[kind[i]] * 0.32)
+	# De vez em quando volta para dentro por um buraco da câmara (e outra sai).
+	var roll := randf()
+	if not queen and half <= 0.0 and roll < delta * PEEK_ENTER_CHANCE and roll < delta * _enter_chance(i, p2):
+		_try_enter(i)
+
+
+## Chance por segundo da moradora i (em p2) voltar para dentro: as que espiam
+## fora de uma câmara fechada voltam logo; as da câmara aberta, só perto dela.
+func _enter_chance(i: int, p2: Vector2) -> float:
+	var code := home[i]
+	var c = world.nests[code / 16].chambers[code % 16]
+	if not c.opened:
+		return PEEK_ENTER_CHANCE
+	if p2.distance_squared_to(c.pos2) > ENTER_NEAR * ENTER_NEAR:
+		return 0.0
+	return ENTER_CHANCE
 
 
 func _update_stunned(i: int, delta: float) -> void:
@@ -638,7 +806,7 @@ func _update_stunned(i: int, delta: float) -> void:
 		var d := to.length()
 		if d > 0.35:
 			var p2 := Vector2(p.x, p.z) + Vector2(to.x, to.z) / d * minf(2.6 * delta, d)
-			pos[i] = Vector3(p2.x, _surface(p2.x, p2.y), p2.y)
+			pos[i] = Vector3(p2.x, _home_surface(i, p2.x, p2.y), p2.y)
 	if timer[i] <= 0.0:
 		# Acordou perto do tamanduá: continua fugindo de medo.
 		var tp2 := Vector2(threat_pos.x, threat_pos.z)
@@ -664,16 +832,20 @@ func disperse_home(home_code: int, center: Vector2, instant: bool = false) -> vo
 	for i in CAPACITY:
 		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN:
 			continue
+		# Entrando ou saindo pela tampa, que sumiu: fica onde está.
+		if mode[i] == Mode.ENTER or mode[i] == Mode.EMERGE:
+			_leave_hole(i)
 		disperse(i, center, instant)
 
 
-func disperse(i: int, center: Vector2, instant: bool = false) -> void:
+## `radius` = até onde ela passeia (m).
+func disperse(i: int, center: Vector2, instant: bool = false, radius: float = WANDER_RADIUS) -> void:
 	# Em _update_chamber, o limite é 90% do raio guardado.
-	anchor[i] = Vector3(center.x, WANDER_RADIUS / 0.9, center.y)
+	anchor[i] = Vector3(center.x, radius / 0.9, center.y)
 	dir[i] = 0.0
 	lateral[i] = -1.0
 	if instant:
-		var spot := center + Vector2.RIGHT.rotated(randf() * TAU) * WANDER_RADIUS * sqrt(randf())
+		var spot := center + Vector2.RIGHT.rotated(randf() * TAU) * radius * sqrt(randf())
 		pos[i] = Vector3(spot.x, _surface(spot.x, spot.y), spot.y)
 		mode[i] = Mode.CHAMBER
 
@@ -715,6 +887,7 @@ func stun_home(home_code: int, duration: float) -> int:
 	for i in CAPACITY:
 		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN or mode[i] == Mode.STUCK:
 			continue
+		_leave_hole(i)
 		mode[i] = Mode.STUNNED
 		timer[i] = duration * randf_range(0.9, 1.15)
 		n += 1
@@ -737,8 +910,8 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 		if dx * dx + dz * dz <= r2:
 			mode[i] = Mode.STUNNED
 			timer[i] = duration * randf_range(0.9, 1.15)
-			if kind[i] == TANAJURA:
-				pos[i].y = _surface(pos[i].x, pos[i].z)
+			pitch[i] = 0.0
+			pos[i].y = _home_surface(i, pos[i].x, pos[i].z)
 			n += 1
 	return n
 
@@ -990,11 +1163,20 @@ func densest_point(around: Vector3, max_dist: float) -> Vector3:
 
 
 ## Chão inclinado embaixo da formiga: o "para cima" segue a normal do chão.
-func _ground_basis(p: Vector3, a: float) -> Basis:
+## Com `i`, conta também a tampa fechada da câmara da formiga.
+func _ground_basis(p: Vector3, a: float, i: int = -1) -> Basis:
 	var e := 0.25
-	var hx: float = _surface(p.x + e, p.z) - _surface(p.x - e, p.z)
-	var hz: float = _surface(p.x, p.z + e) - _surface(p.x, p.z - e)
-	var up := Vector3(-hx, 2.0 * e, -hz).normalized()
+	var hx: float = (_surface(p.x + e, p.z) - _surface(p.x - e, p.z)) / (2.0 * e)
+	var hz: float = (_surface(p.x, p.z + e) - _surface(p.x, p.z - e)) / (2.0 * e)
+	var code := _chamber_of(i) if i >= 0 else -1
+	if code >= 0:
+		var n = world.nests[code / 16]
+		var ci := code % 16
+		var c2 := Vector2(p.x, p.z)
+		var ec := 0.04
+		hx += (n.cap_lift(ci, c2 + Vector2(ec, 0.0)) - n.cap_lift(ci, c2 - Vector2(ec, 0.0))) / (2.0 * ec)
+		hz += (n.cap_lift(ci, c2 + Vector2(0.0, ec)) - n.cap_lift(ci, c2 - Vector2(0.0, ec))) / (2.0 * ec)
+	var up := Vector3(-hx, 1.0, -hz).normalized()
 	var fwd := Vector3(-sin(a), 0.0, -cos(a))
 	fwd = (fwd - up * fwd.dot(up)).normalized()
 	return Basis(fwd.cross(up), up, -fwd)
@@ -1069,7 +1251,10 @@ func _process(delta: float) -> void:
 		var origin := p
 		var m := mode[i]
 		if k == WORKER and d2 < tilt2 and m != Mode.STUCK:
-			basis = _ground_basis(p, yaw[i])
+			basis = _ground_basis(p, yaw[i], i)
+		if m == Mode.ENTER or m == Mode.EMERGE:
+			# Mergulhando no buraco (cabeça para baixo) ou saindo dele (para cima).
+			basis = basis * Basis(Vector3.RIGHT, pitch[i])
 		if k == QUEEN:
 			size *= 1.0 + sin(_time * 2.0 + rnd[i] * 6.0) * 0.03
 		if m == Mode.STUNNED:

@@ -230,7 +230,7 @@ círculo (●●○). Cada clique é uma melhora pequena, com o seu preço; a pr
 habilidade da linha só abre com todos os cliques da anterior (e o marco dela
 alcançado). Entre parênteses: o preço de cada clique e, depois do ponto, quando
 ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
-(marco 2), **80%** (marco 3) ou **Área 2**. Sem nada, desde o começo.
+(marco 2), **200** (marco 3, 200 insetos comidos) ou **Área 2**. Sem nada, desde o começo.
 
 | Habilidade | Linha | Níveis (preço de cada clique · quando abre) |
 |---|---|---|
@@ -245,11 +245,11 @@ ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
 | | Rapidez | nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo) |
 | | Cavar fundo | nível 1 (60: abre as câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
 | **Patas** | começo | Fôlego (10: estamina máxima de 50 para 75). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: os insetos não fogem mais) |
+| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo; fogem 25% → 20% andando, o dobro correndo; sem Corrida, 35%) · nível 2 (90: lamber correndo; fogem 15%) · nível 3 (250 · Área 2: os insetos não fogem mais) |
 | | Respiro | nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7) |
 | | Passada | nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5) |
 | | Fôlego | nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
-| **Faro** | começo | Farejar (25; de presente no marco 3, aos 80%: diz quantos insetos há a até 10 m, até 100 deles, e a distância do mais perto; a bússola aponta o maior grupo) |
+| **Faro** | começo | Farejar (25; de presente no marco 3, aos 200 insetos: diz quantos insetos há a até 10 m, até 100 deles, e a distância do mais perto; a bússola aponta o maior grupo) |
 | | Alcance | nível 1 (15, 20, 25 · 80%: 13 → 16 → 20 m; 160 → 250 → 400 insetos) · nível 2 (55, 70 · Área 2: 26 → 34 m; 600 → 1000; no último clique, quanto falta em cada formigueiro) · nível 3 (220 · Área 2: 50 m, 2000, e as rainhas). Cada clique também recarrega mais rápido (10 s → 6 s) |
 | | Precisão | nível 1 (45 · Área 2: nuvem borrada onde estão) · nível 2 (75 · Área 2: os insetos brilham nítidos) · nível 3 (200 · Área 2: colunas de cheiro nas câmaras fechadas) |
 | **Escalada** | | Escalada (300): ainda não feitas, aparecem com cadeado |
@@ -744,5 +744,9 @@ acertar a duração com testes.
 | 13/11/2026 | Farejar | Pegava a família do formigueiro mais perto, a até 12 m (perto de uma câmara aberta, só as moradoras dela) | Sem Família, pega só as moradoras da câmara aberta mais perto (empate: a primeira da lista). Família nível 1 em diante volta a pegar a família do ninho |
 | 13/11/2026 | Corrida nível 3 | Comer um inseto ainda assustava as vizinhas | Com Corrida nível 3, nenhum inseto foge: nem quando você chega perto, nem quando come um |
 | 13/11/2026 | Objetivos | "Coma todos os insetos da área" depois de desmanchar o ninho da rainha | Sai: "Desmanche o ninho da rainha" fica até comer tudo, e depois vem o tronco da saída |
+| 13/11/2026 | Quando o Farejar chega | De presente aos 80% dos insetos da área | De presente aos 200 insetos comidos: quem está limpando a primeira câmara já ganha ajuda para achar as que fugiram |
+| 13/11/2026 | Faro na área 1 | Rastro 2, Família 2 e Família 3 só na área 2 | Por enquanto, todo o Faro dá para aprender na área 1 (rever depois) |
+| 13/11/2026 | Língua e tanajura | Sem Mira, a língua ia até onde a tanajura estava no clique; voando, ela já tinha saído dali e a língua errava | A língua sempre acompanha a tanajura que está no caminho, com ou sem Mira |
+| 13/11/2026 | Fuga e Corrida | 35% andando e 70% correndo até a Corrida 3, que zerava | Cada clique da Corrida baixa um pouco (andando / correndo): 35/70, 25/50, 20/40, 15/30 e 0 com a Corrida 3. A Corrida 2 abre na área 1 |
 | 13/11/2026 | Desempenho perto da saída | Entre o ninho da rainha e a saída (muitas formigas passeando em volta do arbusto), o quadro caía: a mira conferia todas as formigas a cada quadro | A procura pula logo as formigas que passam longe, as voltas pelo enxame param na última formiga viva e a cor da mira confere 20 vezes por segundo. Física cai mais ou menos pela metade nesses pontos (+12 a +27 FPS). Jogo igual |
 | 13/11/2026 | Formato das pedras | Bolha mole, com cara de massa de pão, listras onduladas e líquen claro em manchas grandes | Pedra rolada do paredão: umas faces retas de lasca, quinas gastas, um lado mais alto que o outro e o pé mais escuro. Cor menos rosada e líquen mais discreto. Mesma colisão e as formigas continuam subindo |

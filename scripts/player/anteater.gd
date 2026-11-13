@@ -578,13 +578,14 @@ func _start_flick() -> void:
 		return
 	var target := _straight_target()
 	# Sem Mira, a língua vai reta. Com Mira, vai atrás do inseto mais perto
-	# da mira (ou da tanajura no caminho) e o acompanha.
+	# da mira e o acompanha. A tanajura no caminho ela sempre acompanha (voando,
+	# ela sai do lugar antes de a ponta chegar).
 	t_follow = -1
 	var ant := _tracked_ant()
 	if ant >= 0:
 		target = swarm.body_point(ant)
 		t_follow = ant
-	elif GameState.tongue_tracking():
+	else:
 		t_follow = _path_tanajura
 	t_target = target
 	t_state = Tongue.OUT

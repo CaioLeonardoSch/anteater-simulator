@@ -65,12 +65,12 @@ const BRANCHES := [
 ## seções 11 e 12.
 ##   1: limpar o primeiro formigueiro.
 ##   2: comer metade dos insetos da área.
-##   3: comer 80% dos insetos da área (o Farejar vem de presente).
+##   3: comer 200 insetos (o Farejar vem de presente).
 ##   4: só falta o buraco da rainha (a Fundura nível 2 vem de presente).
 const MARCOS := [
 	{"index": 1, "title": "Formigueiro limpo", "short": "Formigueiro"},
 	{"index": 2, "title": "Metade da clareira", "short": "Metade", "share": 0.5},
-	{"index": 3, "title": "O faro despertou", "short": "80%", "share": 0.8},
+	{"index": 3, "title": "O faro despertou", "short": "200", "insects": 200},
 	{"index": 4, "title": "Só falta a rainha", "short": "Rainha"},
 ]
 const AREA2 := 9
@@ -195,10 +195,10 @@ const UPGRADES := [
 		"desc": "A recuperação de estamina é muito eficaz"},
 	{"id": "patas_corrida_1", "branch": 2, "col": 0, "row": 1, "costs": [25, 35], "requires": ["patas_folego"],
 		"name": "Corrida nível 1",
-		"desc": "Corre mais rápido"},
-	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "unlock": AREA2, "requires": ["patas_corrida_1"],
+		"desc": "Corre mais rápido e menos insetos fogem"},
+	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "requires": ["patas_corrida_1"],
 		"name": "Corrida nível 2",
-		"desc": "Dá para lamber enquanto corre"},
+		"desc": "Dá para lamber enquanto corre e menos insetos fogem"},
 	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "unlock": AREA2, "requires": ["patas_corrida_2"],
 		"name": "Corrida nível 3",
 		"desc": "Os insetos não fogem mais"},
@@ -210,16 +210,16 @@ const UPGRADES := [
 	{"id": "faro_rastro_1", "branch": 3, "col": 0, "row": 1, "costs": [20], "unlock": 3, "requires": ["faro_farejar"],
 		"name": "Rastro nível 1",
 		"desc": "Fareje as câmaras do ninho mais próximo"},
-	{"id": "faro_rastro_2", "branch": 3, "col": 0, "row": 2, "costs": [40, 55], "unlock": AREA2, "requires": ["faro_rastro_1"],
+	{"id": "faro_rastro_2", "branch": 3, "col": 0, "row": 2, "costs": [40, 55], "requires": ["faro_rastro_1"],
 		"name": "Rastro nível 2",
 		"desc": "Fareje todas as câmaras ao seu redor"},
 	{"id": "faro_familia_1", "branch": 3, "col": 1, "row": 1, "costs": [30], "unlock": 3, "requires": ["faro_farejar"],
 		"name": "Família nível 1",
 		"desc": "Fareje a localização aproximada dos insetos próximos"},
-	{"id": "faro_familia_2", "branch": 3, "col": 1, "row": 2, "costs": [50, 65], "unlock": AREA2, "requires": ["faro_familia_1"],
+	{"id": "faro_familia_2", "branch": 3, "col": 1, "row": 2, "costs": [50, 65], "requires": ["faro_familia_1"],
 		"name": "Família nível 2",
 		"desc": "Aumenta o alcance e a duração do farejar"},
-	{"id": "faro_familia_3", "branch": 3, "col": 1, "row": 3, "costs": [180], "unlock": AREA2, "requires": ["faro_familia_2"],
+	{"id": "faro_familia_3", "branch": 3, "col": 1, "row": 3, "costs": [180], "requires": ["faro_familia_2"],
 		"name": "Família nível 3",
 		"desc": "Todos os insetos do ninho são realçados, independente da distância"},
 	# Escalada + Cauda (ainda não feita: aparece com cadeado)
@@ -364,7 +364,7 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 	lifetime["eaten"] = int(lifetime.get("eaten", 0)) + count
 	_check_splits(before)
 	for m in MARCOS:
-		if m.has("share") and ants_eaten >= marco_insects(m.index):
+		if (m.has("share") or m.has("insects")) and ants_eaten >= marco_insects(m.index):
 			reach_marco(m.index)
 	_facts_dirty = true
 	combo += count
@@ -541,6 +541,8 @@ func _spent_on(ranks: Dictionary) -> int:
 ## Quantos insetos comidos o marco 2 ou 3 pede (0 para o marco 1).
 func marco_insects(index: int) -> int:
 	for m in MARCOS:
+		if m.index == index and m.has("insects"):
+			return int(m.insects)
 		if m.index == index and m.has("share"):
 			return int(round(GOAL * float(m.share)))
 	return 0
@@ -718,6 +720,7 @@ const RESPIRO := ["patas_respiro_1", "patas_respiro_2"]
 const PASSADA := ["patas_passada_1", "patas_passada_2"]
 const RASTRO := ["faro_rastro_1", "faro_rastro_2"]
 const FAMILIA := ["faro_familia_1", "faro_familia_2"]
+const CORRIDA := ["patas_corrida_1", "patas_corrida_2", "patas_corrida_3"]
 
 
 ## Valor da lista para a quantidade de cliques comprados numa linha.
@@ -885,16 +888,16 @@ func can_lick_running() -> bool:
 	return has("patas_corrida_2")
 
 
-## Chance de um inseto fugir quando você chega perto: 35% andando, 70%
-## correndo. Com Corrida nível 3, eles não fogem mais.
+## Chance de um inseto fugir quando você chega perto, andando / correndo:
+## 35/70%, e cada clique da Corrida baixa: 25/50, 20/40, 15/30 e, com
+## Corrida nível 3, eles não fogem mais.
 func insects_calm() -> bool:
 	return has("patas_corrida_3")
 
 
 func flee_chance(running: bool) -> float:
-	if has("patas_corrida_3"):
-		return 0.0
-	return 0.7 if running else 0.35
+	var walk: float = _by_clicks([0.35, 0.25, 0.20, 0.15, 0.0], CORRIDA)
+	return walk * 2.0 if running else walk
 
 
 func can_sniff() -> bool:
@@ -1005,6 +1008,8 @@ func _stat_snapshot() -> Array:
 		["Recarga do Olheiro", _num(olheiro_cooldown(), 1) + " s" if can_olheiro() else ""],
 		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
 		["Estamina máxima", _num(stamina_max(), 0)],
+		["Fuga andando", "%d%%" % roundi(flee_chance(false) * 100.0)],
+		["Fuga correndo", "%d%%" % roundi(flee_chance(true) * 100.0)],
 		["Gasto correndo", _num(stamina_drain(), 1) + " por segundo"],
 		["Recuperação", _num(stamina_regen(), 1) + " por segundo"],
 		["Tempo para cavar", _num(dig_time(), 1) + " s" if dig else ""],

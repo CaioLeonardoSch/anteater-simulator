@@ -60,6 +60,9 @@ const SORT_EVERY := 0.25
 const SORT_MOVE := 1.0
 ## Quantas camadas (as de perto) são separadas.
 const NEAR_LODS := 3
+## Passeio: o máximo que o contorno (arbustos, até MAX_BLOCK) ou a subida nas
+## árvores (perto do tronco, que pode ser torto) tira a formiga do caminho dela (m).
+const ROAM_WARP_MAX := AntGround.MAX_BLOCK + AntGround.AROUND + 1.0
 ## Diferença máxima de altura entre a câmera e as formigas (a faixa é medida
 ## em 3D, a separação no chão).
 const SORT_DY := 2.5
@@ -524,20 +527,30 @@ func ant_xz(ch: Chunk, i: int) -> Vector2:
 			return Vector2.INF
 		var lat := b[o + 4] + 0.03 * sin(t * 1.3 + seed * 0.039)
 		return ch.trail.point_at(s) + ch.trail.side_at(s) * lat
-	var c := b[o + 4] + t * b[o + 3]
-	var cyc := floorf(c)
-	var u := c - cyc
-	var rho := b[o + 2] * (0.75 + 0.25 * sin(cyc * 2.1 + seed * 0.013)) * sin(PI * u)
-	if rho < _hide_rho(b, o):
+	var raw := _roam_raw(b, o)
+	if raw == Vector2.INF:
 		return Vector2.INF
-	var th := b[o + 10] + cyc * 2.39996 + (u - 0.5) * b[o + 11] + 0.22 * sin(u * 12.566 + seed * 0.05)
-	var raw := Vector2(b[o] + cos(th) * rho, b[o + 1] + sin(th) * rho)
 	var cl := ground.climb(raw)
 	if cl.w > 1.5:
 		return Vector2.INF
 	if cl.w > 0.5:
 		return Vector2(cl.x, cl.z)
 	return ground.warp(raw)
+
+
+## Passeio: onde a formiga estaria sem contornar nem subir em nada (ou
+## Vector2.INF, dentro do buraco). O lugar de verdade fica a menos de
+## ROAM_WARP_MAX disto.
+func _roam_raw(b: PackedFloat32Array, o: int) -> Vector2:
+	var seed := b[o + 6]
+	var c := b[o + 4] + time * b[o + 3]
+	var cyc := floorf(c)
+	var u := c - cyc
+	var rho := b[o + 2] * (0.75 + 0.25 * sin(cyc * 2.1 + seed * 0.013)) * sin(PI * u)
+	if rho < _hide_rho(b, o):
+		return Vector2.INF
+	var th := b[o + 10] + cyc * 2.39996 + (u - 0.5) * b[o + 11] + 0.22 * sin(u * 12.566 + seed * 0.05)
+	return Vector2(b[o] + cos(th) * rho, b[o + 1] + sin(th) * rho)
 
 
 ## Formigas de campo (vivas e fora do buraco) a menos de `radius` (no chão)
@@ -580,7 +593,24 @@ func gather(center: Vector3, radius: float, out: Array[Vector4]) -> void:
 		else:
 			if ch.home.distance_to(c2) > ch.reach + radius:
 				continue
+			# Primeiro a conta rápida (sem contornar nada); a de verdade (que lê
+			# o chão das formigas) só para as que podem estar perto.
+			var b := ch.buf
+			var far := radius + ROAM_WARP_MAX
+			var far2 := far * far
 			for i in ch.count:
+				var o := i * STRIDE
+				if b[o + 8] < 0.5:
+					continue
+				# A volta toda dela (até b[o + 2] do centro) passa longe?
+				var dx := b[o] - c2.x
+				var dz := b[o + 1] - c2.y
+				var reach := b[o + 2] + far
+				if dx * dx + dz * dz > reach * reach:
+					continue
+				var raw := _roam_raw(b, o)
+				if raw == Vector2.INF or raw.distance_squared_to(c2) > far2:
+					continue
 				var d2 := ant_xz(ch, i).distance_squared_to(c2)
 				if d2 <= r2:
 					out.append(Vector4(ci, i, d2, 0.0))

@@ -231,8 +231,26 @@ static func build_termite_mound(rng: RandomNumberGenerator, mats) -> Node3D:
 static func build_rock(rng: RandomNumberGenerator, mats, size: float) -> Node3D:
 	var b := MeshBuilder.new()
 	var basis := Basis(Vector3.UP, rng.randf() * TAU)
-	b.add_blob(Vector3(0, size * 0.25, 0), Vector3(size, size * rng.randf_range(0.5, 0.8), size * rng.randf_range(0.7, 1.0)),
-		noise, 0.42, 3, 0.9 + rng.randf(), basis, -size * 0.1)
+	# Pedra de arenito que rolou do paredão: umas faces mais retas (lascas) em
+	# volta, topo inclinado, quinas gastas e roliças e o pé assentado no chão.
+	var planes: Array[Vector4] = []
+	var top := Vector3(rng.randf_range(-0.35, 0.35), 1.0, rng.randf_range(-0.35, 0.35)).normalized()
+	planes.append(Vector4(top.x, top.y, top.z, rng.randf_range(0.5, 0.75)))
+	planes.append(Vector4(0, -1, 0, 0.5))
+	var sides := rng.randi_range(3, 5)
+	var a0 := rng.randf() * TAU
+	for i in sides:
+		var a := a0 + TAU * (i + rng.randf_range(-0.35, 0.35)) / sides
+		var n := Vector3(cos(a), rng.randf_range(-0.3, 0.5), sin(a)).normalized()
+		planes.append(Vector4(n.x, n.y, n.z, rng.randf_range(0.7, 0.92)))
+	for i in rng.randi_range(1, 3):
+		var a := rng.randf() * TAU
+		var n := Vector3(cos(a), rng.randf_range(0.3, 1.0), sin(a)).normalized()
+		planes.append(Vector4(n.x, n.y, n.z, rng.randf_range(0.65, 0.82)))
+	var radii := Vector3(size * 1.1, size * rng.randf_range(0.6, 0.9), size * rng.randf_range(0.8, 1.05))
+	var cy := radii.y * 0.5 - size * 0.15
+	var wedge := Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(0.25, 0.5)
+	b.add_cut_stone(Vector3(0, cy, 0), radii, planes, noise, 0.16, 0.6 + rng.randf() * 0.6, basis, 50.0, size * 0.25, 0.7, 2, wedge)
 	var root := Node3D.new()
 	var mi := MeshInstance3D.new()
 	mi.mesh = b.commit(null, mats.rock)

@@ -8,7 +8,7 @@ extends Node
 ##   godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/pasta/depois --so=chao,pedra
 ## Sem --fotos, salva em user://fotos (no Windows, %APPDATA%/Godot/app_userdata/Anteater Simulator/fotos).
 ## --so=nome1,nome2 tira só essas fotos. Nomes: arvore, copa, ipe, ipe_perto, ipe_roxo, arbusto,
-## cupinzeiro, pedra, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
+## cupinzeiro, pedra, pedra_pequena, pedra_grande, tronco, tronco_ponta, formigueiro, formigueiro_grande, chao, capim, lagoa, lagoa_beira, penhasco, paredao,
 ## caverna, mata, mata_chao, trilha, camara, camara_funda, camara_campo, cratera, cavar, poeira, lascas,
 ## cogumelos, cogumelos_longe, cogumelo_comer, flores, flores_longe, focinho, focinho_sol, formigas, tanajura,
 ## cupinzeiro_gigante, tampa_campo, tampa_monte, tampa_funda, tampa_rainha.
@@ -53,6 +53,22 @@ func _ready() -> void:
 			continue
 		await _look(n.global_position, j[2], j[3])
 		await _shot(j[0])
+	# Pedras soltas: a menor e a maior (as grandes caíram dos penhascos).
+	if _wanted("pedra_pequena") or _wanted("pedra_grande"):
+		var rocks: Array = main.world.vegetation.rocks.duplicate()
+		var size_of := func(r: Node3D) -> float:
+			for c in r.get_children():
+				if c is MeshInstance3D:
+					var a: AABB = (c as MeshInstance3D).get_aabb()
+					return maxf(a.size.x, a.size.z) * r.scale.x
+			return 1.0
+		rocks.sort_custom(func(a, b): return size_of.call(a) < size_of.call(b))
+		for job in [["pedra_pequena", rocks.front()], ["pedra_grande", rocks.back()]]:
+			if not _wanted(job[0]) or job[1] == null:
+				continue
+			var s: float = size_of.call(job[1])
+			await _look(job[1].global_position, s * 1.3 + 0.8, s * 0.15)
+			await _shot(job[0])
 	if _wanted("tronco_ponta"):
 		# De frente para uma ponta quebrada do tronco caído (a madeira à mostra).
 		var n := _find(mats.log_bark)

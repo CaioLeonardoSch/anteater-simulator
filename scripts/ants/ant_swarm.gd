@@ -124,6 +124,9 @@ var hole_at := PackedVector4Array()
 var pitch := PackedFloat32Array()
 var _free := PackedInt32Array()
 var alive_count := 0
+## Uma depois da última vaga ocupada: as voltas pelo enxame param aqui (as
+## vagas são dadas a partir da 0, então quase sempre isto é bem menor que CAPACITY).
+var _top := 0
 
 ## Posição do tamanduá e raio de fuga, atualizados pelo jogador.
 var threat_pos := Vector3(9999, 0, 9999)
@@ -262,6 +265,7 @@ func _take_slot() -> int:
 	var i := _free[_free.size() - 1]
 	_free.resize(_free.size() - 1)
 	alive[i] = 1
+	_top = maxi(_top, i + 1)
 	alive_count += 1
 	rnd[i] = randf()
 	seed_of[i] = float(randi() % 1024)
@@ -342,7 +346,7 @@ func spawn_resident(ant_kind: int, home_code: int, center: Vector2, radius: floa
 ## Quantas formigas simuladas aqui moram na câmara `code`.
 func count_home(code: int) -> int:
 	var n := 0
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 1 and home[i] == code:
 			n += 1
 	return n
@@ -433,7 +437,7 @@ func _try_enter(i: int) -> bool:
 ## todas caem no buraco da rainha). Retorna quantas mudaram.
 func rehome(from_code: int, to_code: int, center: Vector2, radius: float) -> int:
 	var n := 0
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or home[i] != from_code:
 			continue
 		home[i] = to_code
@@ -454,10 +458,12 @@ func despawn(i: int) -> void:
 	home[i] = -1
 	origin_chunk[i] = -1
 	_free.append(i)
+	while _top > 0 and alive[_top - 1] == 0:
+		_top -= 1
 
 
 func clear_all() -> void:
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 1:
 			# As de campo voltam para o campo.
 			if origin_chunk[i] >= 0 and mode[i] != Mode.STUCK:
@@ -542,7 +548,7 @@ func _physics_process(delta: float) -> void:
 			var i := take_from_field(int(f.x), int(f.y), Mode.FLEE)
 			if i >= 0:
 				_start_flee(i, tp2)
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0:
 			continue
 		var m := mode[i]
@@ -604,7 +610,7 @@ func scare(at: Vector3, radius: float) -> void:
 		var j := take_from_field(int(f.x), int(f.y), Mode.FLEE)
 		if j >= 0:
 			_start_flee(j, from, SCARE_SPEED)
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or kind[i] == QUEEN:
 			continue
 		var m := mode[i]
@@ -845,7 +851,7 @@ func _update_stunned(i: int, delta: float) -> void:
 ## dentro; passam a passear em volta dela, até WANDER_RADIUS.
 ## `instant` = já põe cada uma num ponto da volta (ao carregar um jogo salvo).
 func disperse_home(home_code: int, center: Vector2, instant: bool = false) -> void:
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN:
 			continue
 		# Entrando ou saindo pela tampa, que sumiu: fica onde está.
@@ -880,7 +886,7 @@ func _push_out(p2: Vector2) -> Vector2:
 ## Câmara recém-aberta: as moradoras saem correndo para longe do tamanduá.
 func scatter_home(home_code: int) -> void:
 	var tp2 := Vector2(threat_pos.x, threat_pos.z)
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN or mode[i] != Mode.CHAMBER:
 			continue
 		var a := anchor[i]
@@ -900,7 +906,7 @@ func scatter_home(home_code: int) -> void:
 ## Deixa tontas as moradoras de uma câmara (Garras Fortes, ao abrir).
 func stun_home(home_code: int, duration: float) -> int:
 	var n := 0
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or home[i] != home_code or kind[i] == QUEEN or mode[i] == Mode.STUCK:
 			continue
 		_leave_hole(i)
@@ -918,7 +924,7 @@ func stun_radius(center: Vector3, radius: float, duration: float) -> int:
 	field.gather(center, radius, _found)
 	for f in _found:
 		take_from_field(int(f.x), int(f.y), Mode.STUNNED)
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or mode[i] == Mode.STUCK or kind[i] == QUEEN:
 			continue
 		var dx := pos[i].x - center.x
@@ -947,7 +953,7 @@ func lick(tip: Vector3, radius: float, capacity: int) -> Dictionary:
 	var r2 := radius * radius
 	# Vector3(distância², índice, 0 = daqui / 1 = do campo, grupo do campo)
 	var near: Array[Vector4] = []
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
 		var k := kind[i]
@@ -990,7 +996,7 @@ func tanajura_on_path(from: Vector3, to: Vector3, radius: float) -> int:
 	var r2 := radius * radius
 	var best := -1
 	var best_t := INF
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or kind[i] != TANAJURA or mode[i] == Mode.STUCK or mode[i] == Mode.STUNNED:
 			continue
 		var c := pos[i] + Vector3(0, SIZE[TANAJURA] * 0.25, 0)
@@ -1009,7 +1015,7 @@ func body_point(i: int) -> Vector3:
 ## Há alguma formiga (que dá para pegar) a menos de `radius` deste ponto?
 func any_near(point: Vector3, radius: float) -> bool:
 	var r2 := radius * radius
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or mode[i] == Mode.STUCK or _queen_blocked(i):
 			continue
 		if _reach2(i, point) <= r2:
@@ -1022,7 +1028,7 @@ func any_near(point: Vector3, radius: float) -> bool:
 func best_target(origin: Vector3, aim_dir: Vector3, max_dist: float, max_angle_cos: float) -> int:
 	var best := -1
 	var best_score := -INF
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or mode[i] == Mode.STUCK or _queen_blocked(i):
 			continue
 		var score := _aim_score(pos[i] - origin, aim_dir, max_dist, max_angle_cos)
@@ -1086,7 +1092,7 @@ func sniff_family(center: Vector3, radius: float, nest_i: int, code: int, durati
 	# code < -1: nenhuma câmara para farejar.
 	if nest_i < 0 or code < -1:
 		return {"count": 0, "nearest": -1.0, "points": points}
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:
 			continue
 		if code >= 0:
@@ -1155,7 +1161,7 @@ func densest_point(around: Vector3, max_dist: float) -> Vector3:
 	var best_key := Vector2i.ZERO
 	var best_n := 0
 	var md2 := max_dist * max_dist
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0 or pos[i].distance_squared_to(around) > md2:
 			continue
 		var key := Vector2i(floori(pos[i].x / cell), floori(pos[i].z / cell))
@@ -1236,7 +1242,7 @@ func _process(delta: float) -> void:
 	var chamber_far2 := CHAMBER_DRAW_DIST * CHAMBER_DRAW_DIST
 	var buzz_d2 := BUZZ_DIST * BUZZ_DIST
 	var buzz_at := Vector3.INF
-	for i in CAPACITY:
+	for i in _top:
 		if alive[i] == 0:
 			continue
 		var p := pos[i]

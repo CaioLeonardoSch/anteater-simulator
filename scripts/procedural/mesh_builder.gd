@@ -235,6 +235,90 @@ func add_blob(center: Vector3, radii: Vector3, noise: FastNoiseLite, amount: flo
 	recompute_normals(start)
 
 
+## Pedra lascada e gasta: uma esfera cortada por planos (faces mais retas) e
+## depois alisada `round_passes` vezes, para as quinas ficarem roliças, como
+## pedra que rolou do paredão e pegou chuva; `wedge` levanta um dos lados
+## (para topo e pé não ficarem paralelos, com cara de pão). `planes` são Vector4(normal,
+## distância) no espaço da esfera de raio 1, antes de esticar por `radii`. As
+## quinas mais fechadas que `crease_deg` ficam marcadas na luz; o resto fica
+## liso. O pé (do ponto mais baixo até a altura `base_y`) sai mais escuro pela
+## cor de vértice.
+func add_cut_stone(center: Vector3, radii: Vector3, planes: Array[Vector4], noise: FastNoiseLite,
+		amount: float, noise_scale: float = 1.0, basis: Basis = Basis.IDENTITY,
+		crease_deg: float = 38.0, base_y: float = 0.0, base_dark: float = 0.7,
+		round_passes: int = 0, wedge: Vector2 = Vector2.ZERO) -> void:
+	var ico := _icosphere(3)
+	var src: PackedVector3Array = ico[0]
+	var tris: PackedInt32Array = ico[1]
+	var cut := PackedVector3Array()
+	cut.resize(src.size())
+	for i in src.size():
+		var p := src[i]
+		for pl in planes:
+			var n := Vector3(pl.x, pl.y, pl.z)
+			var over := p.dot(n) - pl.w
+			if over > 0.0:
+				p -= n * over
+		cut[i] = p
+	if round_passes > 0:
+		var near: Array[PackedInt32Array] = []
+		near.resize(src.size())
+		for t in range(0, tris.size(), 3):
+			for k in 3:
+				near[tris[t + k]].append(tris[t + (k + 1) % 3])
+				near[tris[t + k]].append(tris[t + (k + 2) % 3])
+		for _pass in round_passes:
+			var next := cut.duplicate()
+			for i in cut.size():
+				var avg := Vector3.ZERO
+				for j in near[i]:
+					avg += cut[j]
+				next[i] = cut[i].lerp(avg / near[i].size(), 0.6)
+			cut = next
+	var pts := PackedVector3Array()
+	pts.resize(src.size())
+	for i in src.size():
+		var p := cut[i]
+		# Cunha: um lado sobe mais que o outro (o pé, em y = -0,5, fica onde está).
+		p.y += (p.y + 0.5) * (p.x * wedge.x + p.z * wedge.y)
+		if noise:
+			var q := src[i] * noise_scale + center * 0.37
+			p *= 1.0 + amount * noise.get_noise_3d(q.x * 10.0, q.y * 10.0, q.z * 10.0)
+		pts[i] = center + basis * (p * radii)
+	# Normal de cada face e as faces de cada ponto.
+	var fn := PackedVector3Array()
+	fn.resize(tris.size() / 3)
+	var around: Array[PackedInt32Array] = []
+	around.resize(pts.size())
+	for f in fn.size():
+		var a := pts[tris[f * 3]]
+		var b := pts[tris[f * 3 + 1]]
+		var c := pts[tris[f * 3 + 2]]
+		fn[f] = (b - a).cross(c - a)
+		for k in 3:
+			around[tris[f * 3 + k]].append(f)
+	var crease := cos(deg_to_rad(crease_deg))
+	var lo := INF
+	for p in pts:
+		lo = minf(lo, p.y)
+	var saved := color
+	for f in fn.size():
+		var mine := fn[f].normalized()
+		var ids := PackedInt32Array()
+		for k in 3:
+			var vi := tris[f * 3 + k]
+			var n := Vector3.ZERO
+			for g in around[vi]:
+				if fn[g].normalized().dot(mine) >= crease:
+					n += fn[g]
+			var p := pts[vi]
+			var t := clampf((p.y - lo) / maxf(base_y - lo, 0.001), 0.0, 1.0)
+			color = saved * lerpf(base_dark, 1.0, t)
+			ids.append(add_vertex(p, n.normalized() if n != Vector3.ZERO else mine))
+		add_tri(ids[0], ids[1], ids[2])
+	color = saved
+
+
 static var _ico_cache: Dictionary = {}
 
 static func _icosphere(subdiv: int) -> Array:

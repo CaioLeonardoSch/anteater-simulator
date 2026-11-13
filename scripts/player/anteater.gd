@@ -87,6 +87,8 @@ var _hole_ci_of_flick := -1
 const OLHEIRO_SPIN := 0.7
 ## Folga da mira em volta da boca do buraco (m).
 const OLHEIRO_AIM := 0.22
+## De quantos em quantos passos a mira da tela confere se a lambida pega algo.
+const AIM_CHECK_EVERY := 3
 ## Clique guardado por um instante (sem a Lambida Contínua, cada clique é uma lambida).
 var _lick_click := 0.0
 var _blocked_note := 0.0
@@ -640,7 +642,9 @@ func _update_aim() -> void:
 	swarm.aim_target = aim_ant
 	if aim_ant >= 0:
 		aim_hits = true
-	else:
+	elif Engine.get_physics_frames() % AIM_CHECK_EVERY == 1:
+		# Só para a cor da mira: não precisa ser todo passo (a busca pelas formigas
+		# de campo pesa onde há muitas; e fora do passo da fuga, que também busca).
 		var target := _straight_target()
 		aim_hits = swarm.any_near(target, GameState.capture_radius()) or _path_mushroom >= 0 \
 				or (_mushrooms() and world.mushrooms.near(target, GameState.capture_radius()) >= 0)

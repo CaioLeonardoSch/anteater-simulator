@@ -113,6 +113,9 @@ var hole_distance := 0.0
 var chambers: Array[Chamber] = []
 ## Forrageiras das trilhas deste formigueiro que ainda não foram comidas.
 var pool := 0
+## Quanto havia aqui no começo do jogo (a rainha conta QUEEN_VALUE). Não muda
+## ao abrir um jogo salvo.
+var start_total := 0
 var queen_alive := false
 var cleaned := false
 ## O monte foi desmanchado (sobrou o buraco da rainha).

@@ -97,6 +97,7 @@ func _distribute() -> void:
 		assigned += share
 		n.queen_alive = n.big
 		n.cleaned = false
+		n.start_total = share + (QUEEN_VALUE if n.big else 0)
 		# Trilhas.
 		var on_trails := int(round(share * TRAIL_SHARE)) if not n.trail_ids.is_empty() else 0
 		# Trilhas curtas (a do tronco da lagoa): poucas formigas, sem tanajura.

@@ -195,10 +195,10 @@ const UPGRADES := [
 		"desc": "A recuperação de estamina é muito eficaz"},
 	{"id": "patas_corrida_1", "branch": 2, "col": 0, "row": 1, "costs": [25, 35], "requires": ["patas_folego"],
 		"name": "Corrida nível 1",
-		"desc": "Corre mais rápido"},
-	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "unlock": AREA2, "requires": ["patas_corrida_1"],
+		"desc": "Corre mais rápido e menos insetos fogem"},
+	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "requires": ["patas_corrida_1"],
 		"name": "Corrida nível 2",
-		"desc": "Dá para lamber enquanto corre"},
+		"desc": "Dá para lamber enquanto corre e menos insetos fogem"},
 	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "unlock": AREA2, "requires": ["patas_corrida_2"],
 		"name": "Corrida nível 3",
 		"desc": "Os insetos não fogem mais"},
@@ -720,6 +720,7 @@ const RESPIRO := ["patas_respiro_1", "patas_respiro_2"]
 const PASSADA := ["patas_passada_1", "patas_passada_2"]
 const RASTRO := ["faro_rastro_1", "faro_rastro_2"]
 const FAMILIA := ["faro_familia_1", "faro_familia_2"]
+const CORRIDA := ["patas_corrida_1", "patas_corrida_2", "patas_corrida_3"]
 
 
 ## Valor da lista para a quantidade de cliques comprados numa linha.
@@ -887,16 +888,16 @@ func can_lick_running() -> bool:
 	return has("patas_corrida_2")
 
 
-## Chance de um inseto fugir quando você chega perto: 35% andando, 70%
-## correndo. Com Corrida nível 3, eles não fogem mais.
+## Chance de um inseto fugir quando você chega perto, andando / correndo:
+## 35/70%, e cada clique da Corrida baixa: 25/50, 20/40, 15/30 e, com
+## Corrida nível 3, eles não fogem mais.
 func insects_calm() -> bool:
 	return has("patas_corrida_3")
 
 
 func flee_chance(running: bool) -> float:
-	if has("patas_corrida_3"):
-		return 0.0
-	return 0.7 if running else 0.35
+	var walk: float = _by_clicks([0.35, 0.25, 0.20, 0.15, 0.0], CORRIDA)
+	return walk * 2.0 if running else walk
 
 
 func can_sniff() -> bool:
@@ -1007,6 +1008,8 @@ func _stat_snapshot() -> Array:
 		["Recarga do Olheiro", _num(olheiro_cooldown(), 1) + " s" if can_olheiro() else ""],
 		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
 		["Estamina máxima", _num(stamina_max(), 0)],
+		["Fuga andando", "%d%%" % roundi(flee_chance(false) * 100.0)],
+		["Fuga correndo", "%d%%" % roundi(flee_chance(true) * 100.0)],
 		["Gasto correndo", _num(stamina_drain(), 1) + " por segundo"],
 		["Recuperação", _num(stamina_regen(), 1) + " por segundo"],
 		["Tempo para cavar", _num(dig_time(), 1) + " s" if dig else ""],

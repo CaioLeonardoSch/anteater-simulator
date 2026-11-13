@@ -245,7 +245,7 @@ ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
 | | Rapidez | nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo) |
 | | Cavar fundo | nível 1 (60: abre as câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
 | **Patas** | começo | Fôlego (10: estamina máxima de 50 para 75). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: os insetos não fogem mais) |
+| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo; fogem 25% → 20% andando, o dobro correndo; sem Corrida, 35%) · nível 2 (90: lamber correndo; fogem 15%) · nível 3 (250 · Área 2: os insetos não fogem mais) |
 | | Respiro | nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7) |
 | | Passada | nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5) |
 | | Fôlego | nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
@@ -747,3 +747,4 @@ acertar a duração com testes.
 | 13/11/2026 | Quando o Farejar chega | De presente aos 80% dos insetos da área | De presente aos 200 insetos comidos: quem está limpando a primeira câmara já ganha ajuda para achar as que fugiram |
 | 13/11/2026 | Faro na área 1 | Rastro 2, Família 2 e Família 3 só na área 2 | Por enquanto, todo o Faro dá para aprender na área 1 (rever depois) |
 | 13/11/2026 | Língua e tanajura | Sem Mira, a língua ia até onde a tanajura estava no clique; voando, ela já tinha saído dali e a língua errava | A língua sempre acompanha a tanajura que está no caminho, com ou sem Mira |
+| 13/11/2026 | Fuga e Corrida | 35% andando e 70% correndo até a Corrida 3, que zerava | Cada clique da Corrida baixa um pouco (andando / correndo): 35/70, 25/50, 20/40, 15/30 e 0 com a Corrida 3. A Corrida 2 abre na área 1 |

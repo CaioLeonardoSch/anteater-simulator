@@ -143,7 +143,7 @@ godot --path . res://tools/fotos_texturas.tscn -- --start=play --fotos=C:/fotos/
 
 Nomes das fotos: `arvore`, `copa`, `ipe`, `arbusto`, `cupinzeiro`, `pedra`,
 `tronco`, `tronco_ponta`, `formigueiro`, `formigueiro_grande`, `camara`, `camara_funda`,
-`camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `mata`, `mata_chao`, `trilha`. Tire
+`pedra_pequena`, `pedra_grande`, `camara_campo`, `cratera`, `chao`, `capim`, `lagoa`, `lagoa_beira`, `penhasco`, `paredao`, `caverna`, `mata`, `mata_chao`, `trilha`. Tire
 o "antes" de tudo uma vez, no começo. Mostre ao Caio o antes e o depois lado a
 lado. Também vale uma volta no jogo de verdade (com o MCP do Godot), porque a
 foto parada não mostra a repetição da textura nem o FPS.
@@ -190,7 +190,7 @@ o que for feito nos cupinzeiros).
 |---|---|
 | Chão do cerrado | feito em 06/11/2026: `assets/textures/chao/` e `assets/textures/trilha/`, feitas por `tools/blender_chao.py` |
 | Paredões de arenito | feito em 06/11/2026: `assets/textures/arenito/`, feita por `tools/blender_arenito.py`; shader `shaders/arenito.gdshader` (material `arenito`) |
-| Pedras | feito em 06/11/2026: mesma estampa dos paredões (`assets/textures/arenito/`) no shader `shaders/arenito.gdshader`, com líquen em manchas (`lichen_amount`) e topo mais suave (`top_detail`) |
+| Pedras | feito em 06/11/2026: mesma estampa dos paredões (`assets/textures/arenito/`) no shader `shaders/arenito.gdshader`, com líquen em manchas (`lichen_amount`) e topo mais suave (`top_detail`). 13/11/2026: formato novo (pedra rolada do paredão: umas faces retas de lasca, quinas gastas, um lado mais alto, pé mais escuro), cor menos rosada e menos líquen |
 | Cupinzeiros | feito em 06/11/2026: `assets/textures/barro/`, feita por `tools/blender_barro.py`; mesmo shader dos paredões (`shaders/arenito.gdshader`, material `clay`) |
 | Casca das árvores | feito em 07/11/2026: `assets/textures/casca/`, feita por `tools/blender_casca.py`; shader próprio (`shaders/casca.gdshader`, material `bark`), com a estampa presa a cada galho |
 | Troncos caídos | feito em 07/11/2026: mesma estampa e shader da casca (`shaders/casca.gdshader`, material `log_bark`), com falhas mostrando a madeira (`bare_amount`), musgo só embaixo (`moss_amount`) e pontas quebradas com anéis (`add_log_end` em `props.gd`, UV2.x = 1); vale também para o tronco da passagem |

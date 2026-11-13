@@ -887,6 +887,10 @@ func can_lick_running() -> bool:
 
 ## Chance de um inseto fugir quando você chega perto: 35% andando, 70%
 ## correndo. Com Corrida nível 3, eles não fogem mais.
+func insects_calm() -> bool:
+	return has("patas_corrida_3")
+
+
 func flee_chance(running: bool) -> float:
 	if has("patas_corrida_3"):
 		return 0.0
@@ -895,6 +899,11 @@ func flee_chance(running: bool) -> float:
 
 func can_sniff() -> bool:
 	return has("faro_farejar")
+
+
+## Sem Família, o Farejar pega só as moradoras da câmara aberta mais perto.
+func sniff_chamber_only() -> bool:
+	return not has("faro_familia_1")
 
 
 func sniff_radius() -> float:

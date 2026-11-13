@@ -741,3 +741,6 @@ acertar a duração com testes.
 | 13/11/2026 | Nomes das habilidades | Lambida Contínua, Fundura nível 1 e 2, Escalada + Cauda Preênsil | Lambida Rápida, Cavar fundo nível 1 e 2, só Escalada (a Cauda Preênsil saiu) |
 | 13/11/2026 | Mira nível 3 | A ponta da língua grudava num raio 70% maior | A área da mira vai para 30° (área 2) |
 | 13/11/2026 | Insetos fogem | Todos os que estavam perto fugiam; Corrida 3 tirava o alcance maior de quando você corre | Só uma parte foge: 35% andando, 70% correndo (cada inseto tem um número fixo, então os calmos continuam calmos). Com Corrida nível 3, nenhum foge quando você chega perto |
+| 13/11/2026 | Farejar | Pegava a família do formigueiro mais perto, a até 12 m (perto de uma câmara aberta, só as moradoras dela) | Sem Família, pega só as moradoras da câmara aberta mais perto (empate: a primeira da lista). Família nível 1 em diante volta a pegar a família do ninho |
+| 13/11/2026 | Corrida nível 3 | Comer um inseto ainda assustava as vizinhas | Com Corrida nível 3, nenhum inseto foge: nem quando você chega perto, nem quando come um |
+| 13/11/2026 | Objetivos | "Coma todos os insetos da área" depois de desmanchar o ninho da rainha | Sai: "Desmanche o ninho da rainha" fica até comer tudo, e depois vem o tronco da saída |

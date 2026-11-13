@@ -664,8 +664,9 @@ func _capture() -> void:
 	if t_stuck.size() > 0:
 		GameState.count("licks_hit")
 		Sfx.play("slurp", -4.0, 1.0, 0.1)
-		# As vizinhas da que foi pega saem correndo.
-		swarm.scare(t_target, SCARE_RADIUS)
+		# As vizinhas da que foi pega saem correndo (com Corrida nível 3, não).
+		if not GameState.insects_calm():
+			swarm.scare(t_target, SCARE_RADIUS)
 
 
 ## Olheiro: as formigas lá de dentro saem grudadas na ponta da língua.
@@ -948,6 +949,24 @@ func sniff_family_at(here: Vector2) -> Vector2i:
 	return Vector2i(best, -1)
 
 
+## Farejar sem Família: a câmara aberta com moradoras mais perto, até o
+## alcance do faro (código formigueiro*16 + câmara; -2 = nenhuma). Empate: a
+## primeira da lista.
+func nearest_sniff_chamber(here: Vector2) -> int:
+	var best := -2
+	var best_d := GameState.sniff_radius()
+	for n in world.nests:
+		for ci in n.chambers.size():
+			var c = n.chambers[ci]
+			if not c.opened or c.residents <= 0:
+				continue
+			var d: float = c.edge_distance(here)
+			if d < best_d:
+				best_d = d
+				best = n.index * 16 + ci
+	return best
+
+
 func do_sniff() -> void:
 	sniff_cd = GameState.sniff_cooldown()
 	sniff_left = GameState.sniff_duration()
@@ -955,7 +974,12 @@ func do_sniff() -> void:
 	var here := Vector2(global_position.x, global_position.z)
 	var fam := sniff_family_at(here)
 	var radius := -1.0 if GameState.sniff_whole_family() else GameState.sniff_radius()
-	var res: Dictionary = swarm.sniff_family(global_position, radius, fam.x, fam.y, sniff_left)
+	var res: Dictionary
+	if GameState.sniff_chamber_only():
+		# Farejar sem Família: só as moradoras da câmara aberta mais perto.
+		res = swarm.sniff_family(global_position, -1.0, fam.x, nearest_sniff_chamber(here), sniff_left)
+	else:
+		res = swarm.sniff_family(global_position, radius, fam.x, fam.y, sniff_left)
 	# Família nível 3: as formigas farejadas aparecem nítidas através do capim.
 	swarm.set_scent_overlay(precision >= 2)
 	sniff_target = Vector3.INF

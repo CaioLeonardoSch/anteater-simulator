@@ -1083,7 +1083,8 @@ func sniff_family(center: Vector3, radius: float, nest_i: int, code: int, durati
 	var points := PackedVector3Array()
 	var count := 0
 	var nearest := INF
-	if nest_i < 0:
+	# code < -1: nenhuma câmara para farejar.
+	if nest_i < 0 or code < -1:
 		return {"count": 0, "nearest": -1.0, "points": points}
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:

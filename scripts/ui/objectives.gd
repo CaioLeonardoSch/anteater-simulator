@@ -261,12 +261,11 @@ func _is_done(id: String) -> bool:
 		"queen":
 			if world == null:
 				return false
-			for n in world.nests:
-				if n.big and (n.dug_out or not n.queen_alive):
-					return true
-			return false
-		"all":
+			# Fica até comer tudo: as moradoras do buraco da rainha também contam.
 			return GameState.completed
+		"all":
+			# Saiu da lista (era igual ao da rainha); fica só para os jogos salvos.
+			return true
 		"exit":
 			return world != null and world.exit_open
 	return false

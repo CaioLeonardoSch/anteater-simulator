@@ -151,7 +151,7 @@ buscamos, no espírito delas:
 - **A barriga não aponta o caminho:** ela só ronca no começo.
 - **Ideia para a área 2:** um nível das **Garras** que deixa **escalar ou
   quebrar a árvore** para comer as formigas que moram nela (a outra opção é a
-  Escalada + Cauda).
+  Escalada).
 
 ### Como se come: os dois jeitos juntos
 
@@ -174,14 +174,14 @@ buscamos, no espírito delas:
   ficam **sozinhas no meio do campo**, longe das trilhas: o Faro ajuda a achá-las.
 - Depois de abrir uma câmara, **as garras descansam** (25 s no começo).
 - **Buracos maiores pedem mais Cavar:** o Cavar abre as câmaras pequenas (dos
-  formigueiros pequenos e as do campo); a **Fundura nível 1** abre as câmaras
+  formigueiros pequenos e as do campo); a **Cavar fundo nível 1** abre as câmaras
   grandes, dos formigueiros grandes (de tampa mais escura); e a **Fundura
   nível 2** desmancha o monte da rainha.
 - **Cada formiga é uma só** (não há grupos): **10 formigas comidas = 1 ponto**.
   A **língua** começa **lenta** (1,4 lambida por segundo), com **um clique por
   lambida**, pegando **uma** formiga. A linha de Destreza a deixa mais rápida
   (até 4,4 lambidas por segundo) e a de Comprimento, mais longa (de 3 m até
-  4,5 m). A primeira habilidade (**Lambida Contínua**, 15 pontos)
+  4,5 m). A primeira habilidade (**Lambida Rápida**, 15 pontos)
   deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez,
   um pouco a cada clique: 2, 3, 5, 8... até 40 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
@@ -194,7 +194,7 @@ buscamos, no espírito delas:
 ### Desafio extra: rainha e tanajura
 
 - **Rainha:** aparece **só nos ninhos grandes** e mora **bem no fundo**: com
-  **Fundura nível 2** (Garras), cavar o topo do monte o desmancha inteiro, e fica um
+  **Cavar fundo nível 2** (Garras), cavar o topo do monte o desmancha inteiro, e fica um
   **buraco** com a rainha andando devagar lá embaixo, junto com a corte e as
   moradoras das outras câmaras do monte. Só dá para comê-la depois de comer a
   corte. Vale **200 formigas (20 pontos)** e tem
@@ -234,27 +234,27 @@ ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
 
 | Habilidade | Linha | Níveis (preço de cada clique · quando abre) |
 |---|---|---|
-| **Língua** | começo | Lambida Contínua (15: segurar para lamber) |
+| **Língua** | começo | Lambida Rápida (15: segurar para lamber) |
 | | Bocado | nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15, e a ponta gruda num raio maior) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40) |
 | | Destreza | só a velocidade: nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4) |
 | | Comprimento | só o alcance: nível 1 (16, 20, 24: 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m) |
-| | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 6°, e a ponta acompanha o inseto) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: a ponta gruda num raio 70% maior) |
+| | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 6°, e a ponta acompanha o inseto) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: área da mira de 30°) |
 | **Garras** | começo | Cavar (25: abre as câmaras pequenas; depois as garras descansam 25 s) |
 | | Força | nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s ao abrir) · nível 2 (40, 50 · Metade: 3,2 → 4 s) |
 | | Tremor (sai de Força nível 1) | nível 1 (90 · Metade: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: recarga de 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
 | | Rapidez | nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo) |
-| | Fundura | nível 1 (60: abre as câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
+| | Cavar fundo | nível 1 (60: abre as câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
 | **Patas** | começo | Fôlego (10: estamina máxima de 50 para 75). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: correr não assusta) |
+| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: os insetos não fogem mais) |
 | | Respiro | nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7) |
 | | Passada | nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5) |
 | | Fôlego | nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
 | **Faro** | começo | Farejar (25; de presente no marco 3, aos 80%: diz quantos insetos há a até 10 m, até 100 deles, e a distância do mais perto; a bússola aponta o maior grupo) |
 | | Alcance | nível 1 (15, 20, 25 · 80%: 13 → 16 → 20 m; 160 → 250 → 400 insetos) · nível 2 (55, 70 · Área 2: 26 → 34 m; 600 → 1000; no último clique, quanto falta em cada formigueiro) · nível 3 (220 · Área 2: 50 m, 2000, e as rainhas). Cada clique também recarrega mais rápido (10 s → 6 s) |
 | | Precisão | nível 1 (45 · Área 2: nuvem borrada onde estão) · nível 2 (75 · Área 2: os insetos brilham nítidos) · nível 3 (200 · Área 2: colunas de cheiro nas câmaras fechadas) |
-| **Escalada + Cauda** | | Escalada (300) · Cauda Preênsil (400): ainda não feitas, aparecem com cadeado |
+| **Escalada** | | Escalada (300): ainda não feitas, aparecem com cadeado |
 
-**Habilidades por região:** o que é da área 2 (a **Escalada + Cauda** e os
+**Habilidades por região:** o que é da área 2 (a **Escalada** e os
 níveis mais fortes das linhas) aparece na árvore desde o começo, só com um
 cadeado, sem texto (o mesmo para o que espera um marco). Ao chegar num marco, um cartão
 grande avisa quantas habilidades novas abriram.
@@ -277,10 +277,10 @@ Feito, seguindo as decisões:
    **saem correndo**; elas fogem quando você chega perto e depois voltam para
    casa. Até 40 ficam à vista (120 no buraco da rainha); as outras saem do
    túnel conforme você come. Depois de cavar, as garras descansam. As câmaras
-   grandes, de tampa mais escura, pedem **Fundura nível 1**.
+   grandes, de tampa mais escura, pedem **Cavar fundo nível 1**.
 2. **Dá para subir nos formigueiros** e olhar dentro das câmaras lá de cima.
 3. **Rainha** no fundo do formigueiro grande: a tampa dela fica no topo do
-   monte, e só **Fundura nível 2** (Garras) a abre. Aí o **monte inteiro some** e fica
+   monte, e só **Cavar fundo nível 2** (Garras) a abre. Aí o **monte inteiro some** e fica
    um buraco escuro com a rainha andando devagar no fundo, junto com a corte e
    as moradoras das outras câmaras do monte. A rainha brilha de leve, fica
    protegida enquanto houver formigas no buraco e **vale 200 formigas (20
@@ -370,11 +370,8 @@ Feito, seguindo as decisões:
    insetos faltam nele. Clique direito (ou Y no controle) põe um marcador, que
    aparece na bússola. O que foi explorado e o marcador vão no jogo salvo.
 18. **Estatísticas** (um botão na pausa abre a tela delas; também aparecem na tela do fim): os números deste jogo, as ações
-   (linguadas e acerto, faro, tremores, distância, tempo correndo), as parciais
-   do contra o relógio e os recordes de todos os jogos.
-19. **Contra o relógio:** escolhido ao começar um jogo novo. Cronômetro com
-   décimos no canto, parcial a cada 25% dos insetos comparada com a do recorde,
-   e um recorde só desse modo. O relógio só corre com o jogo rodando.
+   (linguadas e acerto, faro, tremores, distância, tempo correndo).
+19. (O modo contra o relógio saiu do jogo em 13/11/2026.)
 20. **Conquistas preparadas** (21, em `scripts/achievements.gd`): contadas, mas
    escondidas na demo; prontas para a Steam ou para um menu próprio.
 21. **Leitura melhor:** nomes das habilidades com contorno escuro, habilidade
@@ -423,7 +420,7 @@ Ainda a ajustar:
 
 - **O vídeo de abertura:** o tamanduá acordando na caverna (fica para depois).
 - **A formiga das árvores (área 2):** que espécie é, e qual habilidade leva até
-  ela: a Escalada + Cauda ou um nível das Garras que escala ou quebra a árvore.
+  ela: a Escalada ou um nível das Garras que escala ou quebra a árvore.
 - **Os cupins (áreas 3 e 4):** como são os ninhos (câmaras, rainha?) e como é
   subir no cupinzeiro gigante.
 - **A "outra floresta":** era a ideia anterior para depois do Cerrado. Com o
@@ -470,7 +467,7 @@ Como estava no README da `main`. Onde ele contradiz a seção 3, vale a seção 
 | **Língua** | Come mais rápido; fica mais comprida e grudenta; libera a lambida |
 | **Patas** | Anda mais rápido; libera a corrida |
 | **Garras** | Abre ninhos maiores e bloqueios; chave para novas regiões |
-| **Escalada + Cauda** | Sobe em árvores e se pendura na cauda para alcançar ninhos embaixo de galhos ou do outro lado de um vão |
+| **Escalada** | Sobe em árvores e se pendura na cauda para alcançar ninhos embaixo de galhos ou do outro lado de um vão |
 | **Focinho** | Sonda fendas estreitas que a garra não abre; essencial no Quintal |
 | **Camuflagem** | Os insetos reagem menos à sua presença (ficam mais parados); outro caminho, além da Língua, para ficar mais eficiente |
 | **Faro** | Ver abaixo |
@@ -519,7 +516,7 @@ teste da melhor ideia do documento (evoluir vira gesto novo).
 
 **Riscos apontados**
 
-1. **Repetição:** só **Escalada + Cauda** (e o Focinho, no Quintal) mudam o
+1. **Repetição:** só **Escalada** (e o Focinho, no Quintal) mudam o
    gesto de verdade. São as mais caras e as mais importantes.
 2. **Camuflagem repetida:** cortada (decisão de 02/11).
 3. **Caçar os últimos 5%:** procurar o último inseto pode ser chato. O Faro
@@ -739,3 +736,8 @@ acertar a duração com testes.
 | 11/11/2026 | Olheiro | Dava para esvaziar uma câmara fechada só pelos olheiros | Cada câmara fechada guarda metade das moradoras, que só saem cavando: o Olheiro é uma ajuda |
 | 11/11/2026 | Fundura nível 2 | Compra de 120 pontos no marco Metade; quem gastava os pontos em outras coisas travava com 9 601 insetos (só faltava o buraco da rainha) | Novo marco 4, **Rainha**: quando só falta o buraco da rainha (199 moradoras e a rainha), a Fundura nível 2 vem de presente. A Fundura 1 continua sendo compra. Objetivo novo antes de desmanchar o monte: "Coma tudo, menos o formigueiro da rainha" |
 | 11/11/2026 | Estatísticas da versão de teste | O jogo mandava as estatísticas de cada partida para um Formulário do Google (com a pergunta na primeira vez, a opção nas Configurações e o apelido) | Removido: o jogo não manda mais nada pela internet. Sem a pergunta, a opção e o apelido; as opções antigas somem do arquivo de configurações. O número da versão continua no menu |
+| 13/11/2026 | Textos do jogo | Muitas explicações: subtítulo no menu, tela Como jogar, notas longas, números repetidos nas descrições das habilidades, avisos grandes no fim | Revisão de todos os textos: sai a tela Como jogar, o subtítulo, o "Recomeçar do zero" da pausa, os avisos "Clareira limpa!" e "O caminho está aberto" e os cartões dos marcos 1 e 2. Descrições das habilidades curtas, sem números (os números ficam nas linhas antes → depois). Formigueiro vira **ninho** nos textos. A caixa da habilidade mostra a linha e os cliques ("Mira · 1 de 3"), o preço e "Clique para aprender", "Faltam N insetos" ou "Bloqueado" |
+| 13/11/2026 | Modo contra o relógio | Escolha entre Normal e Contra o relógio no jogo novo, com parciais e recordes | Removido: "Jogar" começa o jogo direto. Sem recordes no menu, no fim e nas estatísticas. A conquista Relâmpago vale para qualquer jogo |
+| 13/11/2026 | Nomes das habilidades | Lambida Contínua, Fundura nível 1 e 2, Escalada + Cauda Preênsil | Lambida Rápida, Cavar fundo nível 1 e 2, só Escalada (a Cauda Preênsil saiu) |
+| 13/11/2026 | Mira nível 3 | A ponta da língua grudava num raio 70% maior | A área da mira vai para 30° (área 2) |
+| 13/11/2026 | Insetos fogem | Todos os que estavam perto fugiam; Corrida 3 tirava o alcance maior de quando você corre | Só uma parte foge: 35% andando, 70% correndo (cada inseto tem um número fixo, então os calmos continuam calmos). Com Corrida nível 3, nenhum foge quando você chega perto |

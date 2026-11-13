@@ -341,11 +341,13 @@ func _physics_process(delta: float) -> void:
 		if running:
 			GameState.count("run_time", delta)
 	swarm.threat_pos = global_position
-	# Os insetos fogem a 2 m de você parado, a 2,5 m andando e mais longe
-	# correndo (a língua alcança 1 m, até 3,5 m com Comprimento).
+	# Os insetos podem fugir a 2 m de você parado, a 2,5 m andando e mais longe
+	# correndo (a língua alcança 1 m, até 3,5 m com Comprimento). Só uma parte
+	# deles foge: 35% andando, 70% correndo, nenhum com Corrida nível 3.
 	var pace := spd / maxf(GameState.walk_speed(), 0.1)
 	swarm.flee_radius = (2.0 + clampf(pace, 0.0, 1.0) * 0.5 + clampf(pace - 1.0, 0.0, 1.0) * 0.9) \
-		* GameState.flee_multiplier(running)
+		* (1.5 if running else 1.0)
+	swarm.flee_chance = GameState.flee_chance(running)
 	_update_aim()
 	_update_tongue(delta)
 	_update_abilities(delta)

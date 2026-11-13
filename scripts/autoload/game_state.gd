@@ -53,10 +53,10 @@ const SPLITS := [0.25, 0.5, 0.75, 1.0]
 ## "region" = só pode ser comprada ao chegar nessa região.
 const BRANCHES := [
 	{"id": "lingua", "name": "Língua", "color": Color(0.96, 0.45, 0.55), "lines": ["Bocado", "Destreza", "Comprimento", "Mira", "Olheiro"]},
-	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Tremor", "Rapidez", "Fundura"]},
+	{"id": "garras", "name": "Garras", "color": Color(0.95, 0.70, 0.30), "lines": ["Força", "Tremor", "Rapidez", "Cavar fundo"]},
 	{"id": "patas", "name": "Patas", "color": Color(0.45, 0.75, 0.55), "lines": ["Corrida", "Respiro", "Passada", "Fôlego"]},
 	{"id": "faro", "name": "Faro", "color": Color(0.55, 0.70, 0.98), "lines": ["Rastro", "Família"]},
-	{"id": "escalada", "name": "Escalada + Cauda", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Área 2"},
+	{"id": "escalada", "name": "Escalada", "color": Color(0.80, 0.62, 0.42), "lines": [], "region": "Área 2"},
 ]
 
 ## Marcos da área 1 (no lugar das travas por insetos). Cada habilidade diz
@@ -88,147 +88,144 @@ const UPGRADES := [
 	# Destreza (lambidas por segundo), Comprimento (alcance) e Mira (a língua ir
 	# atrás do inseto).
 	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "costs": [15], "requires": [],
-		"name": "Lambida Contínua",
-		"desc": "Segure o botão para lamber sem parar."},
+		"name": "Lambida Rápida",
+		"desc": "Segure o botão para lamber sem parar"},
 	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "costs": [8, 12, 16], "requires": ["lingua_segurar"],
 		"name": "Bocado nível 1",
-		"desc": "Cada lambida pega mais insetos perto da ponta da língua: 2, depois 3, depois 5."},
+		"desc": "Cada lambida pega mais insetos perto da ponta da língua"},
 	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "costs": [30, 40, 50], "unlock": 1, "requires": ["lingua_bocado_1"],
 		"name": "Bocado nível 2",
-		"desc": "8, 11 e 15 insetos por lambida, e a ponta gruda num raio um pouco maior."},
+		"desc": "Mais insetos por lambida, e a ponta gruda num raio um pouco maior"},
 	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "costs": [70, 90], "unlock": AREA2, "requires": ["lingua_bocado_2"],
 		"name": "Bocado nível 3",
-		"desc": "20 e 25 insetos por lambida, e a ponta gruda num raio um pouco maior."},
+		"desc": "Ainda mais insetos por lambida, e a ponta gruda num raio ainda maior"},
 	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "costs": [160, 200], "unlock": AREA2, "requires": ["lingua_bocado_3"],
 		"name": "Bocado nível 4",
-		"desc": "32 e 40 insetos por lambida, e a ponta gruda num raio um pouco maior."},
+		"desc": "Bastante insetos por lambida, e a ponta gruda num raio bem maior"},
 	{"id": "lingua_destreza_1", "branch": 0, "col": 1, "row": 1, "costs": [10, 14, 18], "requires": ["lingua_segurar"],
 		"name": "Destreza nível 1",
-		"desc": "A língua lambe mais rápido: de 1,4 para 1,6, depois 1,8, depois 2 lambidas por segundo."},
+		"desc": "Lambidas um pouco mais rápidas"},
 	{"id": "lingua_destreza_2", "branch": 0, "col": 1, "row": 2, "costs": [50, 60, 70], "unlock": 2, "requires": ["lingua_destreza_1"],
 		"name": "Destreza nível 2",
-		"desc": "A língua lambe ainda mais rápido: 2,4, depois 2,8, depois 3,2 lambidas por segundo."},
+		"desc": "Lambidas mais rápidas"},
 	{"id": "lingua_destreza_3", "branch": 0, "col": 1, "row": 3, "costs": [260], "unlock": AREA2, "requires": ["lingua_destreza_2"],
 		"name": "Destreza nível 3",
-		"desc": "A língua lambe muito mais rápido: 4,4 lambidas por segundo."},
+		"desc": "Lambidas muito mais rápidas"},
 	{"id": "lingua_comprimento_1", "branch": 0, "col": 2, "row": 1, "costs": [16, 20, 24], "requires": ["lingua_segurar"],
 		"name": "Comprimento nível 1",
-		"desc": "A língua alcança mais longe: de 1 m para 1,5, depois 2, depois 2,5 m."},
+		"desc": "A língua alcança um pouco mais longe"},
 	{"id": "lingua_comprimento_2", "branch": 0, "col": 2, "row": 2, "costs": [60, 80], "unlock": AREA2, "requires": ["lingua_comprimento_1"],
 		"name": "Comprimento nível 2",
-		"desc": "A língua alcança 3 e depois 3,5 m."},
+		"desc": "A língua alcança mais longe"},
 	{"id": "lingua_mira_1", "branch": 0, "col": 3, "row": 1, "costs": [12], "requires": ["lingua_segurar"],
 		"name": "Mira nível 1",
-		"desc": "A língua vai sozinha atrás do inseto mais perto da mira."},
+		"desc": "A língua segue levemente o alvo"},
 	{"id": "lingua_mira_2", "branch": 0, "col": 3, "row": 2, "costs": [25, 30, 35], "unlock": 1, "requires": ["lingua_mira_1"],
 		"name": "Mira nível 2",
-		"desc": "A área da mira em que a língua procura insetos fica maior a cada clique (de 6° para 11°, 16° e 22°)."},
+		"desc": "A procura da mira é aumentada"},
 	{"id": "lingua_mira_3", "branch": 0, "col": 3, "row": 3, "costs": [110], "unlock": AREA2, "requires": ["lingua_mira_2"],
 		"name": "Mira nível 3",
-		"desc": "A ponta da língua gruda num raio 70% maior."},
+		"desc": "A área de procura da mira é ainda maior"},
 	{"id": "lingua_olheiro_1", "branch": 0, "col": 4, "row": 1, "costs": [20], "unlock": 1, "requires": ["lingua_segurar"],
 		"name": "Olheiro nível 1",
-		"desc": "Mire num buraco do formigueiro ou de uma câmara aberta e lamba: a língua entra e puxa até 5 formigas lá de dentro. Recarga de 5 s."},
+		"desc": "Enfie a língua no buraco e coma alguns insetos."},
 	{"id": "lingua_olheiro_2", "branch": 0, "col": 4, "row": 2, "costs": [30, 40, 50], "unlock": 2, "requires": ["lingua_olheiro_1"],
 		"name": "Olheiro nível 2",
-		"desc": "8, 11 e 15 formigas por buraco; recarga de 4, 3,5 e 3 s."},
+		"desc": "Mais formigas são comidas e o tempo de recarga é menor"},
 	{"id": "lingua_olheiro_3", "branch": 0, "col": 4, "row": 3, "costs": [120], "unlock": AREA2, "requires": ["lingua_olheiro_2"],
 		"name": "Olheiro nível 3",
-		"desc": "20 formigas por buraco; recarga de 2 s."},
+		"desc": "Ainda mais formigas e carregamento rápido"},
 	# Garras: Cavar abre as linhas de Força (moradoras tontas), de Rapidez (o
 	# descanso entre usos) e de Fundura (buracos maiores: câmaras grandes e o
 	# monte da rainha). A linha do Tremor sai de Força nível 1.
 	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "costs": [25], "requires": [],
 		"name": "Cavar",
-		"desc": "Segure [E] perto de uma câmara pequena fechada para abri-la. Depois, as garras descansam 25 s."},
+		"desc": "Cave numa câmara pequena fechada"},
 	{"id": "garras_forca_1", "branch": 1, "col": 0, "row": 1, "costs": [25, 35], "requires": ["garras_cavar"],
 		"name": "Força nível 1",
-		"desc": "Abrir uma câmara deixa as moradoras tontas, sem fugir: 1,5 s, depois 2,5 s."},
+		"desc": "Ao cavar, as formigas ali dentro ficam atordoadas"},
 	{"id": "garras_forca_2", "branch": 1, "col": 0, "row": 2, "costs": [40, 50], "unlock": 2, "requires": ["garras_forca_1"],
 		"name": "Força nível 2",
-		"desc": "As moradoras ficam tontas por mais tempo: 3,2 s, depois 4 s."},
+		"desc": "Aumenta a duração do atordoamento"},
 	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [90], "unlock": 2, "requires": ["garras_forca_1"],
 		"name": "Tremor nível 1",
-		"desc": "[X] Tremor: pule e caia com força. Os insetos num raio de 6 m ficam tontos por 3 s. Recarrega em 21 s."},
+		"desc": "Pule e caia com força. Os insetos próximos ficam atordoados por alguns segundos"},
 	{"id": "garras_tremor_2", "branch": 1, "col": 1, "row": 3, "costs": [45, 55, 65], "unlock": AREA2, "requires": ["garras_tremor_1"],
 		"name": "Tremor nível 2",
-		"desc": "O Tremor recarrega mais rápido: 18, 15 e 12 s."},
+		"desc": "Diminui o tempo de recarga do Tremor"},
 	{"id": "garras_tremor_3", "branch": 1, "col": 1, "row": 4, "costs": [300], "unlock": AREA2, "requires": ["garras_tremor_2"],
 		"name": "Tremor nível 3",
-		"desc": "Vira Terremoto: pulo mais alto, tremor quase 2x maior, os insetos tontos são puxados para a sua boca, e recarrega em só 7 s."},
+		"desc": "Aumenta o alcance do Tremor, reduz o tempo de recarga e atrai os insetos para um ponto à sua frente"},
 	{"id": "garras_rapidez_1", "branch": 1, "col": 2, "row": 1, "costs": [12, 16, 20], "requires": ["garras_cavar"],
 		"name": "Rapidez nível 1",
-		"desc": "As garras descansam menos depois de cavar: de 25 s para 20, depois 16, depois 12 s."},
+		"desc": "Reduz o tempo de recarga de Cavar"},
 	{"id": "garras_rapidez_2", "branch": 1, "col": 2, "row": 2, "costs": [40, 50, 60], "unlock": AREA2, "requires": ["garras_rapidez_1"],
 		"name": "Rapidez nível 2",
-		"desc": "Descanso ainda menor: 9, depois 7, depois 5 s; no último clique, a câmara abre na metade do tempo (0,6 s em vez de 1,2 s)."},
+		"desc": "Reduz ainda mais o tempo de recarga de Cavar e o último nível acelera a velocidade"},
 	{"id": "garras_fundura_1", "branch": 1, "col": 3, "row": 1, "costs": [60], "requires": ["garras_cavar"],
-		"name": "Fundura nível 1",
-		"desc": "Abre também as câmaras grandes, as dos formigueiros grandes."},
+		"name": "Cavar fundo nível 1",
+		"desc": "Cave câmaras grandes fechadas"},
 	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "unlock": 4, "requires": ["garras_fundura_1"],
-		"name": "Fundura nível 2",
-		"desc": "Desmancha um formigueiro grande inteiro: no fundo do buraco estão a rainha e a corte dela."},
+		"name": "Cavar fundo nível 2",
+		"desc": "Desmancha um ninho inteiro e revela a rainha"},
 	# Patas: correr existe desde o começo, gastando estamina. Fôlego abre as
 	# linhas de Corrida (velocidade e o que dá para fazer correndo), Respiro
 	# (recuperar mais rápido), Passada (gastar menos correndo) e Fôlego
 	# (estamina máxima).
 	{"id": "patas_folego", "branch": 2, "col": -1, "row": 0, "costs": [10], "requires": [],
 		"name": "Fôlego",
-		"desc": "Estamina máxima de 50 para 75."},
+		"desc": "Aumenta a estamina em 50%"},
 	{"id": "patas_folego_1", "branch": 2, "col": 3, "row": 1, "costs": [12, 16, 20], "requires": ["patas_folego"],
 		"name": "Fôlego nível 1",
-		"desc": "Estamina máxima de 100, depois 125, depois 150."},
+		"desc": "Aumenta a estamina em até 200%"},
 	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 2, "costs": [50, 60], "unlock": AREA2, "requires": ["patas_folego_1"],
 		"name": "Fôlego nível 2",
-		"desc": "Estamina máxima de 175 e depois 200."},
+		"desc": "Aumenta a estamina em até 300%"},
 	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "costs": [8, 12, 16], "requires": ["patas_folego"],
 		"name": "Passada nível 1",
-		"desc": "Correndo, gasta menos estamina: de 10 por segundo para 9, depois 8, depois 7."},
+		"desc": "Aumenta a eficiência da estamina"},
 	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "costs": [40, 50], "unlock": 1, "requires": ["patas_passada_1"],
 		"name": "Passada nível 2",
-		"desc": "Correndo, gasta ainda menos estamina: 6, depois 5 por segundo (metade do começo)."},
+		"desc": "A estamina é consumida numa velocidade muito menor"},
 	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "costs": [8, 12], "requires": ["patas_folego"],
 		"name": "Respiro nível 1",
-		"desc": "A estamina volta mais rápido: de 3 por segundo para 4, depois 5."},
+		"desc": "A recuperação de estamina é um pouco mais eficaz"},
 	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "costs": [30, 40], "unlock": 1, "requires": ["patas_respiro_1"],
 		"name": "Respiro nível 2",
-		"desc": "A estamina volta ainda mais rápido: 6, depois 7 por segundo (mais que o dobro do começo)."},
+		"desc": "A recuperação de estamina é muito eficaz"},
 	{"id": "patas_corrida_1", "branch": 2, "col": 0, "row": 1, "costs": [25, 35], "requires": ["patas_folego"],
 		"name": "Corrida nível 1",
-		"desc": "Corre mais rápido: de 3,5 m/s para 3,85, depois 4,2 m/s (andando, 2,8 m/s)."},
+		"desc": "Corre mais rápido"},
 	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "unlock": AREA2, "requires": ["patas_corrida_1"],
 		"name": "Corrida nível 2",
-		"desc": "Dá para lamber enquanto corre."},
+		"desc": "Dá para lamber enquanto corre"},
 	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "unlock": AREA2, "requires": ["patas_corrida_2"],
 		"name": "Corrida nível 3",
-		"desc": "Correndo, os insetos não fogem mais de longe: fogem quase como se você estivesse andando."},
+		"desc": "Os insetos não fogem mais"},
 	# Faro: Farejar (as formigas do formigueiro mais perto) abre as linhas de
 	# Rastro (achar câmaras e formigueiros) e de Família (ver as formigas dele).
 	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "costs": [25], "unlock": 3, "requires": [],
 		"name": "Farejar",
-		"desc": "[Q] Fareje o formigueiro mais perto: as formigas dele a até 12 m (na trilha, passeando e nas câmaras) brilham por 4 s, e a bússola aponta o maior grupo delas. Perto de uma câmara aberta, só as moradoras dela. Recarrega em 10 s."},
+		"desc": "[Q] Fareje alguns insetos da câmara mais próxima"},
 	{"id": "faro_rastro_1", "branch": 3, "col": 0, "row": 1, "costs": [20], "unlock": 3, "requires": ["faro_farejar"],
 		"name": "Rastro nível 1",
-		"desc": "Farejar mostra, com uma coluna de cheiro, as câmaras fechadas do formigueiro farejado, até as do meio do campo."},
+		"desc": "Fareje as câmaras do ninho mais próximo"},
 	{"id": "faro_rastro_2", "branch": 3, "col": 0, "row": 2, "costs": [40, 55], "unlock": AREA2, "requires": ["faro_rastro_1"],
 		"name": "Rastro nível 2",
-		"desc": "Mostra também as câmaras fechadas de qualquer formigueiro a até 25 m; no último clique, até 40 m, e a bússola mostra quanto falta em cada formigueiro."},
+		"desc": "Fareje todas as câmaras ao seu redor"},
 	{"id": "faro_familia_1", "branch": 3, "col": 1, "row": 1, "costs": [30], "unlock": 3, "requires": ["faro_farejar"],
 		"name": "Família nível 1",
-		"desc": "As formigas farejadas aparecem como um brilho sem foco, mesmo atrás do capim, e o faro alcança 16 m."},
+		"desc": "Fareje a localização aproximada dos insetos próximos"},
 	{"id": "faro_familia_2", "branch": 3, "col": 1, "row": 2, "costs": [50, 65], "unlock": AREA2, "requires": ["faro_familia_1"],
 		"name": "Família nível 2",
-		"desc": "O brilho dura mais (6 s, depois 8 s) e alcança a família inteira, até as que estão longe na trilha."},
+		"desc": "Aumenta o alcance e a duração do farejar"},
 	{"id": "faro_familia_3", "branch": 3, "col": 1, "row": 3, "costs": [180], "unlock": AREA2, "requires": ["faro_familia_2"],
 		"name": "Família nível 3",
-		"desc": "Todas as formigas do formigueiro farejado ficam marcadas, nítidas, mesmo atrás do capim."},
+		"desc": "Todos os insetos do ninho são realçados, independente da distância"},
 	# Escalada + Cauda (ainda não feita: aparece com cadeado)
 	{"id": "escalada_1", "branch": 4, "col": 0, "row": 0, "costs": [300], "requires": [],
 		"name": "Escalada",
-		"desc": "Sobe em árvores e cupinzeiros para alcançar ninhos no alto."},
-	{"id": "escalada_2", "branch": 4, "col": 0, "row": 1, "costs": [400], "requires": ["escalada_1"],
-		"name": "Cauda Preênsil",
-		"desc": "Pendura-se pela cauda para alcançar ninhos embaixo de galhos e do outro lado de vãos."},
+		"desc": "Permite subir em árvores para alcançar novos ninhos"},
 ]
 
 ## Regiões que o jogador já alcançou (o Cerrado é o começo).
@@ -265,7 +262,6 @@ var marker := Vector2.INF
 var queens_eaten: int = 0
 ## Modo deste jogo e o do próximo jogo novo (escolhido ao começar).
 var mode := MODE_NORMAL
-var next_mode := MODE_NORMAL
 ## Tempos parciais deste jogo e os do recorde contra o relógio.
 var splits: Array = []
 var best_splits: Array = []
@@ -440,7 +436,7 @@ func achievement_facts() -> Dictionary:
 		"skills": purchased.size(), "skills_all": 1 if all_skills else 0,
 		"sniffs": stat("sniffs"), "distance": stat("distance"), "exit_broken": stat("exit_broken"),
 		"clock_done": 1 if completed and mode == MODE_CLOCK else 0,
-		"clock_fast": 1 if completed and mode == MODE_CLOCK and elapsed < Achievements.FAST_TIME else 0,
+		"clock_fast": 1 if completed and elapsed < Achievements.FAST_TIME else 0,
 	}
 
 
@@ -748,22 +744,22 @@ func tongue_tracking() -> bool:
 
 
 ## Abertura (graus, do centro até a borda) da área da mira em que a língua
-## procura insetos.
+## procura insetos (Mira nível 3 abre para 30°).
 func aim_cone_deg() -> float:
-	return _by_clicks([0.0, 6.0, 11.0, 16.0, 22.0], MIRA_AREA)
+	var deg: float = _by_clicks([0.0, 6.0, 11.0, 16.0, 22.0], MIRA_AREA)
+	if has("lingua_mira_3"):
+		deg = 30.0
+	return deg
 
 
 ## Raio em que a ponta da língua gruda: cresce com os nós de Bocado completos
-## e 70% com Mira nível 3.
+## completos.
 func capture_radius() -> float:
 	var full := 0
 	for id in BOCADO:
 		if complete(id):
 			full += 1
-	var r: float = 0.34 * [1.0, 1.0, 1.15, 1.3, 1.45][full]
-	if has("lingua_mira_3"):
-		r *= 1.7
-	return r
+	return 0.34 * [1.0, 1.0, 1.15, 1.3, 1.45][full]
 
 
 ## Lambidas por segundo: começa devagar e acelera com a linha de Destreza.
@@ -889,9 +885,12 @@ func can_lick_running() -> bool:
 	return has("patas_corrida_2")
 
 
-## Quanto mais longe os insetos fogem quando você corre (Corrida 3 tira isso).
-func flee_multiplier(running: bool) -> float:
-	return 1.5 if running and not has("patas_corrida_3") else 1.0
+## Chance de um inseto fugir quando você chega perto: 35% andando, 70%
+## correndo. Com Corrida nível 3, eles não fogem mais.
+func flee_chance(running: bool) -> float:
+	if has("patas_corrida_3"):
+		return 0.0
+	return 0.7 if running else 0.35
 
 
 func can_sniff() -> bool:
@@ -993,8 +992,6 @@ func _stat_snapshot() -> Array:
 		["Insetos por lambida", str(lick_capacity())],
 		["Lambidas por segundo", _num(lick_rate(), 2)],
 		["Alcance da língua", _num(tongue_range(), 1) + " m"],
-		["Raio da ponta", _num(capture_radius() * 100.0, 0) + " cm"],
-		["Área da mira", (_num(aim_cone_deg(), 0) + "°") if tongue_tracking() else ""],
 		["Formigas por buraco", str(olheiro_ants()) if can_olheiro() else ""],
 		["Recarga do Olheiro", _num(olheiro_cooldown(), 1) + " s" if can_olheiro() else ""],
 		["Velocidade máxima", _num(run_speed() if run else walk_speed(), 1) + " m/s"],
@@ -1003,13 +1000,13 @@ func _stat_snapshot() -> Array:
 		["Recuperação", _num(stamina_regen(), 1) + " por segundo"],
 		["Tempo para cavar", _num(dig_time(), 1) + " s" if dig else ""],
 		["Descanso das garras", _num(dig_cooldown(), 0) + " s" if dig else ""],
-		["Moradoras tontas", _num(dig_stun_time(), 1) + " s" if dig and dig_stun_time() > 0.0 else ""],
+		["Insetos atordoados", _num(dig_stun_time(), 1) + " s" if dig and dig_stun_time() > 0.0 else ""],
 		["Raio do Tremor", _num(tremor_radius(), 0) + " m" if trem else ""],
 		["Recarga do Tremor", _num(tremor_cooldown(), 0) + " s" if trem else ""],
 		["Alcance do faro", ("família inteira" if sniff_whole_family() else _num(sniff_radius(), 0) + " m") if snf else ""],
-		["Cheiro dura", _num(sniff_duration(), 1) + " s" if snf else ""],
+		["Duração do faro", _num(sniff_duration(), 1) + " s" if snf else ""],
 		["Recarga do faro", _num(sniff_cooldown(), 0) + " s" if snf else ""],
-		["Câmaras farejadas", (("do formigueiro" if sniff_chamber_reach() <= 0.0 else "a até %d m" % int(sniff_chamber_reach())) if sniff_family_chambers() else "") if snf else ""],
+		["Câmaras farejadas", (("do ninho" if sniff_chamber_reach() <= 0.0 else "a até %d m" % int(sniff_chamber_reach())) if sniff_family_chambers() else "") if snf else ""],
 	]
 
 
@@ -1096,7 +1093,8 @@ func from_save(d: Dictionary) -> void:
 	completed = bool(d.get("completed", false)) and ants_eaten >= GOAL
 	var m: Array = d.get("marker", [])
 	marker = Vector2(float(m[0]), float(m[1])) if m.size() == 2 else Vector2.INF
-	mode = MODE_CLOCK if String(d.get("mode", MODE_NORMAL)) == MODE_CLOCK else MODE_NORMAL
+	# O modo contra o relógio saiu do jogo: jogos salvos nele seguem no normal.
+	mode = MODE_NORMAL
 	splits = Array(d.get("splits", []))
 	stats = Dictionary(d.get("stats", {}))
 	run_id = String(d.get("run_id", run_id))

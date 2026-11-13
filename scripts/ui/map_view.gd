@@ -424,7 +424,7 @@ func _key(at: Vector2, key: String, what: String) -> float:
 func _legend(at: Vector2) -> void:
 	var gold := UiTheme.GOLD
 	var rows := [
-		["mound", gold, "Formigueiros", nests_text],
+		["mound", gold, "Ninhos", nests_text],
 		["diamond", UiTheme.PALE, "Câmaras", chambers_text],
 		["cave", UiTheme.SAND, "Caverna", ""],
 		["player", UiTheme.PALE, "Jogador", ""],

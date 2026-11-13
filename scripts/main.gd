@@ -44,7 +44,6 @@ var _menu_t := 0.0
 var _menu_center := Vector3.ZERO
 var _complete_wait := -1.0
 var _base_time_scale := 1.0
-var _new_record := false
 var _reloading := false
 var _autosave := AUTOSAVE_EVERY
 ## Bot: de qual ramo é a vez de comprar, o arquivo do registro (--botlog) e o
@@ -78,22 +77,14 @@ func _ready() -> void:
 	_build_game()
 	if DevTools.args.has("slot"):
 		GameState.slot = clampi(int(DevTools.args.slot), 1, GameState.SLOTS)
-	if DevTools.args.get("mode", "") == GameState.MODE_CLOCK:
-		GameState.next_mode = GameState.MODE_CLOCK
 	if DevTools.start_mode == "continue":
 		_continue_game()
 	elif DevTools.start_mode == "settings":
 		_enter_menu()
 		menus.open_settings(int(DevTools.args.get("tab", "0")))
-	elif DevTools.start_mode == "howto":
-		_enter_menu()
-		menus.show_screen("howto")
 	elif DevTools.start_mode == "slots":
 		_enter_menu()
 		menus._goto("slots", "title")
-	elif DevTools.start_mode == "mode":
-		_enter_menu()
-		menus._choose_mode(1, "title")
 	elif skip_menu or DevTools.start_mode != "":
 		skip_menu = false
 		_start_play()
@@ -110,7 +101,7 @@ func _ready() -> void:
 			GameState.playing = false
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			hud.visible = false
-			menus.show_end(GameState.elapsed, false)
+			menus.show_end()
 	else:
 		_enter_menu()
 	fade.modulate.a = 1.0
@@ -253,7 +244,7 @@ func _on_continue_pressed() -> void:
 ## Jogo novo.
 func _start_play() -> void:
 	GameState.reset_run()
-	GameState.mode = GameState.next_mode
+	GameState.mode = GameState.MODE_NORMAL
 	player.place_at(world.player_start, world.player_start_yaw)
 	_begin_playing()
 	save_game()
@@ -313,8 +304,6 @@ func _continue_game() -> void:
 	if GameState.skills_refunded:
 		# Jogo salvo de antes da árvore com cliques: os pontos voltaram.
 		GameState.skills_refunded = false
-		hud.big_note("Árvore nova", "Seus pontos voltaram: aprenda de novo na árvore [%s]"
-			% Settings.key_label("skill_tree").to_upper(), 7.0, "lock")
 		save_game()
 	if GameState.completed:
 		# A clareira já estava limpa: o tronco da saída continua esperando as garras.
@@ -434,8 +423,6 @@ func _close_tree() -> void:
 
 func _restart() -> void:
 	GameState.delete_saved_game()
-	# Recomeçar mantém o modo (normal ou contra o relógio).
-	GameState.next_mode = GameState.mode
 	skip_menu = true
 	_reload()
 
@@ -545,9 +532,7 @@ func _on_complete(_time: float) -> void:
 	if _bot_log:
 		_bot_write("fim")
 		get_tree().quit()
-	_new_record = is_equal_approx(GameState.mode_best_time(), GameState.elapsed)
 	world.exit_breakable = true
-	hud.big_note("Clareira limpa!", "Quebre o tronco na saída", 5.0, "log")
 	Sfx.play("complete", 0.0)
 	save_game()
 
@@ -568,7 +553,6 @@ func _on_exit_broken() -> void:
 	player.bot = false
 	Engine.time_scale = _base_time_scale * 0.35
 	_complete_wait = 2.6
-	hud.big_note("O caminho está aberto", "Lá longe, o cupinzeiro gigante espera...", 4.0)
 
 
 func _process(delta: float) -> void:
@@ -599,4 +583,4 @@ func _process(delta: float) -> void:
 			GameState.playing = false
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			hud.visible = false
-			menus.show_end(GameState.elapsed, _new_record)
+			menus.show_end()

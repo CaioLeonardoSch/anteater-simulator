@@ -179,8 +179,6 @@ func _refresh_text() -> void:
 		_bar.value = clampf(float(p.x) / float(p.y), 0.0, 1.0)
 		_count.text = "%s / %s" % [_n(mini(p.x, p.y)), _n(p.y)]
 	var extra := ""
-	if _step == "rest" and not GameState.marcos.has(3):
-		extra = "Aos 80%, um presente."
 	_extra.text = extra
 	_extra.visible = extra != ""
 
@@ -208,15 +206,13 @@ func _describe(id: String) -> String:
 				return "Abra uma câmara (%s)" % Settings.key_label("dig")
 			return "Aprenda Cavar na árvore (%s) e abra uma câmara" % tree
 		"nest":
-			return "Limpe um formigueiro"
+			return "Limpe um ninho"
 		"half":
 			return "Coma metade dos insetos da área"
 		"rest":
-			return "Coma tudo, menos o formigueiro da rainha"
+			return "Coma todos os insetos"
 		"queen":
-			if GameState.dig_level() >= 3:
-				return "Desmanche o formigueiro da rainha (%s)" % Settings.key_label("dig")
-			return "Aprenda Fundura nível 2 e desmanche o formigueiro da rainha"
+			return "Desmanche o ninho da rainha"
 		"all":
 			return "Coma todos os insetos da área"
 		"exit":

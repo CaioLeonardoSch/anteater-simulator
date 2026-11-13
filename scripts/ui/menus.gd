@@ -20,10 +20,7 @@ var _back_to := "title"
 ## Estatísticas (tela aberta pela pausa) e na tela do fim.
 var _pause_stats: StatsPanel
 var _end_stats: StatsPanel
-var _end_time: Label
 var _end_title: Label
-var _end_sub: Label
-var _restart_button: Button
 var _settings_controls: Dictionary = {}
 var _settings_pages: Array[Control] = []
 var _settings_tab_buttons: Array[Button] = []
@@ -32,8 +29,6 @@ var _settings_note: Label
 var _key_buttons: Dictionary = {}
 var _rebinding := ""
 ## Jogo salvo (vazio) onde vai começar o jogo novo e a tela de onde veio.
-var _new_slot := 1
-var _mode_back := "title"
 
 
 func _ready() -> void:
@@ -44,9 +39,7 @@ func _ready() -> void:
 	_screens.pause = _build_pause()
 	_screens.stats = _build_stats()
 	_screens.settings = _build_settings()
-	_screens.howto = _build_howto()
 	_screens.slots = _build_slots()
-	_screens.mode = _build_mode()
 	_screens.end = _build_end()
 	_screens.loading = _build_loading()
 	for k in _screens:
@@ -123,7 +116,7 @@ func _centered_column(parent: Control, panel: bool = true) -> VBoxContainer:
 func _build_loading() -> Control:
 	var s := _screen(1.0)
 	var v := _centered_column(s, false)
-	var t := UiTheme.display_label("Preparando o cerrado...", 36, UiTheme.PALE)
+	var t := UiTheme.display_label("Carregando...", 36, UiTheme.PALE)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(t)
 	return s
@@ -164,15 +157,10 @@ func _build_title() -> Control:
 	divider.custom_minimum_size = Vector2(520, 18)
 	divider.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	v.add_child(divider)
-	var sub := UiTheme.caps_label("Demo · Fase 1: Cerrado ao Entardecer", 18, UiTheme.GOLD)
+	var sub := UiTheme.caps_label("Versão de demonstração", 18, UiTheme.GOLD)
 	sub.add_theme_constant_override("outline_size", 4)
 	sub.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.9))
 	v.add_child(sub)
-	var tag := UiTheme.label("Você é um tamanduá-bandeira faminto. A clareira tem %s insetos.\nCada 10 insetos comidos valem 1 ponto para aprender habilidades." % StatsPanel._n(GameState.GOAL), 22, UiTheme.CREAM)
-	tag.add_theme_font_override("font", UiTheme.semi_font())
-	tag.add_theme_constant_override("outline_size", 4)
-	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.025, 0.02, 0.85))
-	v.add_child(tag)
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 18)
 	v.add_child(gap)
@@ -188,20 +176,17 @@ func _build_title() -> Control:
 		if GameState.any_saved_game():
 			_goto("slots", "title")
 		else:
-			_choose_mode(1, "title"))
+			slot_chosen.emit(1))
 	v.add_child(play)
-	var how := UiTheme.button("Como jogar")
-	how.pressed.connect(_goto.bind("howto", "title"))
-	v.add_child(how)
 	var settings := UiTheme.button("Configurações")
 	settings.pressed.connect(_goto.bind("settings", "title"))
 	v.add_child(settings)
 	var quit := UiTheme.button("Sair")
 	quit.pressed.connect(func(): Sfx.quit_game())
 	v.add_child(quit)
-	for b in [cont, play, how, settings, quit]:
+	for b in [cont, play, settings, quit]:
 		b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var ver := UiTheme.caps_label("Versão de teste %s" % Settings.game_version(), 15, UiTheme.MUTED)
+	var ver := UiTheme.caps_label("Versão %s" % Settings.game_version(), 15, UiTheme.MUTED)
 	ver.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	ver.offset_left = -360
 	ver.offset_top = -44
@@ -209,10 +194,6 @@ func _build_title() -> Control:
 	ver.offset_bottom = -18
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	s.add_child(ver)
-	var record := UiTheme.label("", 20, UiTheme.SAND)
-	record.name = "Record"
-	v.add_child(record)
-	s.visibility_changed.connect(_update_record.bind(record))
 	s.visibility_changed.connect(_update_title_buttons.bind(cont, play))
 	return s
 
@@ -223,32 +204,6 @@ func _update_title_buttons(cont: Button, play: Button) -> void:
 	var saved := GameState.any_saved_game()
 	cont.visible = saved
 	play.text = "Jogos salvos" if saved else "Jogar"
-
-
-func _update_record(record: Label) -> void:
-	var parts: Array[String] = []
-	if GameState.best_time > 0.0:
-		parts.append("Seu recorde: %s" % GameState.format_time(GameState.best_time))
-	if GameState.best_time_clock > 0.0:
-		parts.append("Contra o relógio: %s" % GameState.format_clock(GameState.best_time_clock))
-	record.text = "   ·   ".join(parts)
-
-
-## Recomeçar apaga o jogo salvo: pede um segundo clique para confirmar.
-func _confirm_restart(b: Button) -> void:
-	if b.get_meta("armed", false):
-		b.set_meta("armed", false)
-		restart_pressed.emit()
-		return
-	b.set_meta("armed", true)
-	b.text = "Apaga o progresso! Clique de novo"
-	get_tree().create_timer(3.0, true).timeout.connect(_disarm_restart.bind(b))
-
-
-func _disarm_restart(b: Button) -> void:
-	if is_instance_valid(b):
-		b.set_meta("armed", false)
-		b.text = "Recomeçar do zero"
 
 
 # ------------------------------------------------------------------ Jogos salvos
@@ -273,7 +228,7 @@ func _build_slots() -> Control:
 			if GameState.has_saved_game(slot):
 				slot_chosen.emit(slot)
 			else:
-				_choose_mode(slot, "slots"))
+				slot_chosen.emit(slot))
 		h.add_child(b)
 		var del := UiTheme.button("Apagar", 170)
 		del.custom_minimum_size = Vector2(170, 74)
@@ -290,54 +245,6 @@ func _build_slots() -> Control:
 
 # ------------------------------------------------------------------ Modo do jogo novo
 
-## Jogo novo: normal (no seu ritmo) ou contra o relógio (speedrun).
-func _build_mode() -> Control:
-	var s := _screen(0.6)
-	var v := _centered_column(s)
-	var t := UiTheme.display_label("Jogo novo", 46, UiTheme.PALE)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(t)
-	_mode_option(v, "Normal", "No seu ritmo, sem cronômetro na tela.", GameState.MODE_NORMAL)
-	var clock_desc := _mode_option(v, "Contra o relógio", "", GameState.MODE_CLOCK)
-	var note := UiTheme.label("O relógio só corre com o jogo rodando: pausa, mapa e habilidades param o tempo.", 17, UiTheme.MUTED)
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(note)
-	var back := UiTheme.button("Voltar", 260)
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	back.pressed.connect(func(): show_screen(_mode_back))
-	v.add_child(back)
-	s.visibility_changed.connect(func():
-		var best := GameState.best_time_clock
-		clock_desc.text = "Cronômetro na tela e tempos parciais a cada 25% dos insetos." + (
-			"\nSeu recorde: " + GameState.format_clock(best) if best > 0.0 else ""))
-	return s
-
-
-## Um modo: o botão e, embaixo, o que ele muda. Retorna o texto de baixo.
-func _mode_option(v: VBoxContainer, title: String, desc: String, which: String) -> Label:
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	v.add_child(box)
-	var b := UiTheme.button(title, 460)
-	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	b.pressed.connect(_start_new.bind(which))
-	box.add_child(b)
-	var l := UiTheme.label(desc, 19, UiTheme.SAND)
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(l)
-	return l
-
-
-func _choose_mode(slot: int, back: String) -> void:
-	_new_slot = slot
-	_mode_back = back
-	show_screen("mode")
-
-
-func _start_new(which: String) -> void:
-	GameState.next_mode = which
-	slot_chosen.emit(_new_slot)
-
 
 func _update_slots(rows: Array) -> void:
 	for r in rows:
@@ -352,11 +259,8 @@ func _update_slots(rows: Array) -> void:
 			b.text = "  Jogo %d  ·  vazio: começar um jogo novo" % slot
 		else:
 			var when := Time.get_datetime_dict_from_unix_time(int(info.saved_at) + _utc_offset())
-			var clock: bool = info.mode == GameState.MODE_CLOCK
-			b.text = "  Jogo %d  ·  %d de %d insetos  ·  %s\n  %sSalvo em %02d/%02d às %02d:%02d" % [
-				slot, info.eaten, GameState.GOAL,
-				GameState.format_clock(info.elapsed) if clock else GameState.format_time(info.elapsed),
-				"Contra o relógio  ·  " if clock else "", when.day, when.month, when.hour, when.minute]
+			b.text = "  Jogo %d - Área 1 - Salvo em %02d/%02d às %02d:%02d" % [
+				slot, when.day, when.month, when.hour, when.minute]
 
 
 static func _utc_offset() -> int:
@@ -397,18 +301,12 @@ func _build_pause() -> Control:
 		["Continuar", func(): resume_pressed.emit()],
 		["Árvore de habilidades", func(): skill_tree_pressed.emit()],
 		["Estatísticas", _goto.bind("stats", "pause")],
-		["Como jogar", _goto.bind("howto", "pause")],
 		["Configurações", _goto.bind("settings", "pause")],
-		["Recomeçar do zero", _confirm_restart],
 		["Salvar e voltar ao menu", func(): main_menu_pressed.emit()],
 	]
 	for item in buttons:
 		var b := UiTheme.button(item[0], 380)
-		if item[0] == "Recomeçar do zero":
-			_restart_button = b
-			b.pressed.connect(item[1].bind(b))
-		else:
-			b.pressed.connect(item[1])
+		b.pressed.connect(item[1])
 		v.add_child(b)
 	return s
 
@@ -423,47 +321,6 @@ func _build_stats() -> Control:
 	_pause_stats = StatsPanel.new()
 	_pause_stats.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(_pause_stats)
-	var back := UiTheme.button("Voltar", 260)
-	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	back.pressed.connect(func(): show_screen(_back_to))
-	v.add_child(back)
-	return s
-
-
-func _build_howto() -> Control:
-	var s := _screen(0.7)
-	var v := _centered_column(s)
-	var t := UiTheme.display_label("Como jogar", 46, UiTheme.PALE)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(t)
-	var text := RichTextLabel.new()
-	text.bbcode_enabled = true
-	text.fit_content = true
-	text.custom_minimum_size = Vector2(760, 0)
-	text.add_theme_font_size_override("normal_font_size", 20)
-	text.add_theme_font_override("bold_font", UiTheme.bold_font())
-	text.add_theme_font_size_override("bold_font_size", 20)
-	text.add_theme_color_override("default_color", UiTheme.CREAM)
-	text.text = """[b]Objetivo:[/b] a colônia do cerrado tem [b]%s insetos[/b]. Coma todos e deixe os [b]8 formigueiros[/b] limpos.
-Algumas formigas andam pelas [b]trilhas de terra[/b]; as outras moram nas [b]câmaras[/b] dos formigueiros.
-
-[b]WASD[/b] andar · [b]Mouse[/b] olhar · [b]Shift[/b] correr (gasta a estamina)
-[b]Clique esquerdo[/b] lamber: cada clique é uma lambida (com a [b]Lambida Contínua[/b], é só segurar)
-[b]Q[/b] ou [b]clique direito[/b] farejar (com Farejar) · [b]E (segurado)[/b] abrir uma câmara (com Cavar) · [b]Espaço[/b] pular · [b]X[/b] pulo do Tremor (com Tremor nível 1)
-[b]TAB[/b] árvore de habilidades · [b]ESC[/b] pausa (o jogo salva sozinho) · [b]F11[/b] tela cheia
-
-[b]Dicas[/b]
-· [b]Cada 10 insetos comidos valem 1 ponto[/b], e cada habilidade tem seu preço. Dá para [b]redistribuir os pontos[/b] na árvore quando quiser.
-· Habilidades com [b]cadeado[/b] e um número ("8 mil") abrem quando você tiver comido essa quantidade de insetos: 1 mil, 3 mil, 8 mil, 13 mil e 21 mil.
-· A língua vai [b]reta[/b] até onde você mira (a mira fica verde quando vai pegar formiga); com [b]Mira[/b] (na Língua), ela vai sozinha atrás da mais perto.
-· Suba nos formigueiros: lá de cima dá para ver dentro das câmaras abertas.
-· Os montinhos de terra clara são [b]câmaras fechadas[/b]: cave para comer quem mora lá (elas saem correndo!). Algumas ficam [b]no meio do campo[/b]. Buracos maiores pedem mais [b]Cavar[/b]: as câmaras grandes pedem [b]Fundura nível 1[/b], e a [b]rainha[/b] (vale 200 formigas) mora no fundo dos formigueiros grandes: só [b]Fundura nível 2[/b] desmancha o monte inteiro.
-· [b]Tanajuras[/b] (voando, douradas) e os [b]cogumelos[/b] laranja ao pé das árvores e dos troncos ativam o [b]Frenesi[/b]: língua turbinada por 6 s. Os cogumelos nascem de novo depois de um tempo.
-· Correr gasta a [b]estamina[/b] (a barra verde no canto de baixo, à esquerda). Ela volta quando você para de correr; se zerar, espere a barra encher um pouco.
-· Correr assusta as formigas, e sem [b]Corrida nível 2[/b] não dá para lamber enquanto corre.
-· Com a clareira limpa, quebre o [b]tronco caído[/b] na saída (segure E) para abrir o caminho até o cupinzeiro gigante.
-· Não dá para perder: aproveite o fim de tarde e tente bater seu recorde de tempo.""" % StatsPanel._n(GameState.GOAL)
-	v.add_child(text)
 	var back := UiTheme.button("Voltar", 260)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(func(): show_screen(_back_to))
@@ -642,10 +499,10 @@ func _show_settings_tab(i: int) -> void:
 		_settings_pages[k].visible = k == i
 		_settings_tab_buttons[k].set_pressed_no_signal(k == i)
 	_settings_note.text = [
-		"F11 ou Alt+Enter liga e desliga a tela cheia. Em tela cheia, a resolução muda só o 3D (a interface fica nítida).",
-		"Escolher uma qualidade ajusta todos os itens; mexer num item deixa a qualidade \"Personalizada\".",
+		"F11 ou Alt+Enter liga e desliga a tela cheia.",
+		"",
 		"Dicas \"Poucas\": só o que dá para fazer perto de você. \"Todas\": também ensina os controles, cada um até você usar.",
-		"Clique numa tecla e aperte a nova (Esc cancela). No controle, os botões ficam como estão.",
+		"Clique numa tecla e aperte a nova (Esc para cancelar)",
 		"",
 	][i]
 
@@ -731,16 +588,10 @@ func _build_end() -> Control:
 	_end_title = UiTheme.display_label("Fim da demo!", 60, UiTheme.PALE)
 	_end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(_end_title)
-	_end_sub = UiTheme.label("Você comeu os %s insetos da clareira e abriu o caminho\naté o cupinzeiro gigante." % StatsPanel._n(GameState.GOAL), 24, UiTheme.CREAM)
-	_end_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(_end_sub)
-	_end_time = UiTheme.label("", 24, UiTheme.SAND)
-	_end_time.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(_end_time)
 	_end_stats = StatsPanel.new()
 	_end_stats.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(_end_stats)
-	var thanks := UiTheme.label("Obrigado por jogar a demo!", 20, UiTheme.CREAM)
+	var thanks := UiTheme.label("Obrigado por jogar!", 20, UiTheme.CREAM)
 	thanks.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(thanks)
 	var h := HBoxContainer.new()
@@ -756,24 +607,7 @@ func _build_end() -> Control:
 	return s
 
 
-func _record_text(new_record: bool) -> String:
-	if new_record:
-		return "  (novo recorde!)"
-	var best := GameState.mode_best_time()
-	if best > 0.0:
-		return "  (recorde: %s)" % _fmt(best)
-	return ""
-
-
-## No modo contra o relógio os tempos aparecem com décimos.
-func _fmt(t: float) -> String:
-	return GameState.format_clock(t) if GameState.mode == GameState.MODE_CLOCK else GameState.format_time(t)
-
-
-func show_end(time_sec: float, new_record: bool) -> void:
-	_end_time.text = "%sTempo: %s%s" % [
-		"Contra o relógio  ·  " if GameState.mode == GameState.MODE_CLOCK else "",
-		_fmt(time_sec), _record_text(new_record)]
+func show_end() -> void:
 	_end_stats.refresh()
 	show_screen("end")
 

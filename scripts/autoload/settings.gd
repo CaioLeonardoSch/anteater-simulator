@@ -102,15 +102,11 @@ var show_hud: bool = true
 ## vídeo levam por quadro (para medir o desempenho). F3 liga e desliga.
 var show_perf: bool = false
 
-# Estatísticas da versão de teste (ver Telemetry).
-## Mandar as estatísticas das partidas para o formulário do Caio.
-var send_stats: bool = true
-## Já respondeu à pergunta da primeira vez ("Pode enviar?").
-var stats_asked: bool = false
-## Apelido opcional que vai junto com as estatísticas.
-var nickname: String = ""
-## Número aleatório do jogador (o mesmo em todas as partidas deste computador).
-var player_id: String = ""
+## Número da versão (o mesmo do menu: "Versão de teste 0.1.5").
+static func game_version() -> String:
+	var v := String(ProjectSettings.get_setting("application/config/version", "?"))
+	return v + (" (editor)" if OS.has_feature("editor") else "")
+
 
 # Controles que dá para trocar: [ação, nome]. Só teclado e mouse; o controle
 # (gamepad) fica com o padrão.
@@ -401,10 +397,6 @@ func load_settings() -> void:
 	dig_toggle = bool(cfg.get_value("input", "dig_toggle", dig_toggle))
 	show_hud = bool(cfg.get_value("game", "show_hud", show_hud))
 	show_perf = bool(cfg.get_value("video", "show_perf", show_perf))
-	send_stats = bool(cfg.get_value("stats", "send", send_stats))
-	stats_asked = bool(cfg.get_value("stats", "asked", stats_asked))
-	nickname = String(cfg.get_value("stats", "nickname", nickname))
-	player_id = String(cfg.get_value("stats", "player_id", player_id))
 	bindings.clear()
 	if cfg.has_section("keys"):
 		for action in cfg.get_section_keys("keys"):
@@ -461,10 +453,9 @@ func save_settings() -> void:
 	cfg.set_value("input", "dig_toggle", dig_toggle)
 	cfg.set_value("game", "show_hud", show_hud)
 	cfg.set_value("video", "show_perf", show_perf)
-	cfg.set_value("stats", "send", send_stats)
-	cfg.set_value("stats", "asked", stats_asked)
-	cfg.set_value("stats", "nickname", nickname)
-	cfg.set_value("stats", "player_id", player_id)
+	# As estatísticas da versão de teste não existem mais.
+	if cfg.has_section("stats"):
+		cfg.erase_section("stats")
 	for action in bindings:
 		cfg.set_value("keys", action, bindings[action])
 	cfg.save(SAVE_PATH)

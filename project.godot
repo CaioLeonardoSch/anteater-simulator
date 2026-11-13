@@ -24,7 +24,6 @@ Settings="*res://scripts/autoload/settings.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 DevTools="*res://scripts/autoload/dev_tools.gd"
-Telemetry="*res://scripts/autoload/telemetry.gd"
 
 [debug]
 

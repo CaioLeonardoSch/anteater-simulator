@@ -128,6 +128,10 @@ var alive_count := 0
 ## Posição do tamanduá e raio de fuga, atualizados pelo jogador.
 var threat_pos := Vector3(9999, 0, 9999)
 var flee_radius := 2.0
+## Chance de cada inseto fugir quando você chega perto (GameState.flee_chance).
+## Cada um tem um número fixo: foge se ele for menor que a chance, então os
+## que ficam andando continuam calmos e, ao correr, mais deles fogem.
+var flee_chance := 0.35
 ## Para onde as formigas tontas são puxadas (Terremoto).
 var pull_target := Vector3.INF
 
@@ -533,6 +537,8 @@ func _physics_process(delta: float) -> void:
 		_found.clear()
 		field.gather(threat_pos, flee_radius, _found)
 		for f in _found:
+			if _calm(int(f.x) * 100003 + int(f.y)):
+				continue
 			var i := take_from_field(int(f.x), int(f.y), Mode.FLEE)
 			if i >= 0:
 				_start_flee(i, tp2)
@@ -546,7 +552,7 @@ func _physics_process(delta: float) -> void:
 		if m == Mode.TRAIL or m == Mode.RETURN or m == Mode.CHAMBER or m == Mode.GHOST \
 				or (m == Mode.ENTER and timer[i] <= 0.0):
 			var d2 := Vector2(pos[i].x, pos[i].z).distance_squared_to(tp2)
-			if d2 < flee_r2 and kind[i] != QUEEN:
+			if d2 < flee_r2 and kind[i] != QUEEN and not _calm(i):
 				_start_flee(i, tp2)
 				m = Mode.FLEE
 			elif m == Mode.CHAMBER:
@@ -573,6 +579,16 @@ func _physics_process(delta: float) -> void:
 				_update_emerge(i, delta)
 			_:
 				pass
+
+
+## Este inseto fica calmo com você perto? (Veja flee_chance.)
+func _calm(id: int) -> bool:
+	var n := (id ^ 61) ^ (id >> 16)
+	n = (n * 9) & 0xFFFFFFFF
+	n ^= n >> 4
+	n = (n * 0x27d4eb2d) & 0xFFFFFFFF
+	n ^= n >> 15
+	return float(n & 0xFFFF) / 65536.0 >= flee_chance
 
 
 ## Uma formiga foi pega: algumas das outras num raio em volta (SCARE_CHANCE)
@@ -1067,7 +1083,8 @@ func sniff_family(center: Vector3, radius: float, nest_i: int, code: int, durati
 	var points := PackedVector3Array()
 	var count := 0
 	var nearest := INF
-	if nest_i < 0:
+	# code < -1: nenhuma câmara para farejar.
+	if nest_i < 0 or code < -1:
 		return {"count": 0, "nearest": -1.0, "points": points}
 	for i in CAPACITY:
 		if alive[i] == 0 or mode[i] == Mode.STUCK:

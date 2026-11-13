@@ -274,13 +274,14 @@ func _show_tip(id: String) -> void:
 	var branch: Dictionary = GameState.BRANCHES[u.branch]
 	_tip_title.text = u.name
 	_tip_title.add_theme_color_override("font_color", branch.color.lightened(0.25))
+	# "Mira · 1 de 3": a linha (ou o ramo, no topo) e os cliques.
 	var where: String = branch.name
 	if int(u.col) >= 0 and branch.lines.size() > 1:
-		where += " · linha de %s" % branch.lines[u.col]
+		where = branch.lines[u.col]
 	var ranks := GameState.max_rank(id)
 	var rank := GameState.rank(id)
 	if ranks > 1:
-		where += " · %d de %d cliques" % [rank, ranks]
+		where += " · %d de %d" % [rank, ranks]
 	_tip_where.text = where
 	_tip_desc.text = u.desc
 	for c in _tip_stats.get_children():
@@ -298,39 +299,20 @@ func _show_tip(id: String) -> void:
 	var cost := GameState.cost_of(id)
 	var col := UiTheme.SAND
 	var text := ""
-	# "Custa 12 pontos" ou, com vários cliques, "O 2º clique custa 12 pontos".
-	var price := "Custa %d pontos" % cost
-	if ranks > 1:
-		price = "O %dº clique custa %d pontos" % [rank + 1, cost]
+	# "Custa 12 pontos" e, nos cliques seguintes, só "12 pontos".
+	var price := "Custa %d pontos" % cost if rank == 0 else "%d pontos" % cost
 	match GameState.upgrade_state(id):
 		2:
-			text = "Aprendida." if ranks == 1 else "Completa: %d de %d cliques." % [ranks, ranks]
+			text = "Aprendida" if ranks == 1 else "%d de %d" % [ranks, ranks]
 			col = UiTheme.GOLD
-		3:
-			text = "Fica para a área 2 · %s." % price.to_lower()
-		4:
-			var m := GameState.unlock_of(id)
-			var when := "Abre ao limpar o primeiro formigueiro"
-			if m == 4:
-				when = "Abre quando só faltar o formigueiro da rainha"
-			elif m >= 2:
-				var at := GameState.marco_insects(m)
-				when = "Abre com %s dos insetos comidos (faltam %s)" % [
-					"metade" if m == 2 else "80%", _thousands(at - GameState.ants_eaten)]
-			if GameState.is_gift(id):
-				text = "%s, de presente." % when
-			else:
-				text = "%s · %s." % [when, price.to_lower()]
-		0:
-			var need := GameState.missing_requirements(id)
-			var prev: String = GameState.get_upgrade(need[0]).name if not need.is_empty() else ""
-			text = "Abre depois de todos os cliques de %s · %s." % [prev, price.to_lower()]
+		3, 4, 0:
+			text = "Bloqueado"
 		_:
 			if pts >= cost:
-				text = "%s · clique para aprender." % price
+				text = "%s\nClique para aprender" % price
 				col = branch.color.lightened(0.3)
 			else:
-				text = "%s · faltam %d insetos." % [price, GameState.ants_needed(cost)]
+				text = "%s\nFaltam %d insetos" % [price, GameState.ants_needed(cost)]
 	_tip_state.text = text
 	_tip_state.add_theme_color_override("font_color", col)
 	_tip.visible = true

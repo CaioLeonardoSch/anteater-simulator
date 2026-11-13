@@ -48,6 +48,7 @@ var _sniff: SniffChip
 var _save: SaveIcon
 var _big_box: VBoxContainer
 var _big_note: Label
+var _big_title_row: HBoxContainer
 var _big_icon: GlyphIcon
 var _big_sub: Label
 var _big_time := 0.0
@@ -200,7 +201,6 @@ func _build_counter() -> void:
 	_medallion = Medallion.new()
 	_medallion.position = Vector2(24, 18)
 	_medallion.size = Vector2(116, 116)
-	_medallion.sub = "de %d" % GameState.GOAL
 	add_child(_medallion)
 	var col := VBoxContainer.new()
 	_counter_col = col
@@ -218,10 +218,6 @@ func _build_counter() -> void:
 	panel.add_child(v)
 	var row := HBoxContainer.new()
 	v.add_child(row)
-	var pts_label := UiTheme.caps_label("Pontos", 12)
-	pts_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	pts_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(pts_label)
 	_points_value = UiTheme.display_label("0", 23, UiTheme.GOLD)
 	row.add_child(_points_value)
 	# Barra até a próxima habilidade, com o ícone e o custo dela.
@@ -309,6 +305,7 @@ func _build_big_note() -> void:
 	row.add_theme_constant_override("separation", 18)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_big_box.add_child(row)
+	_big_title_row = row
 	var left := Flourish.new()
 	left.custom_minimum_size = Vector2(150, 20)
 	left.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -565,22 +562,16 @@ func _on_purchased(id: String) -> void:
 
 
 ## Chegou num marco da área: aviso grande no meio da tela com o que abriu.
+## Só os marcos que dão uma habilidade de presente avisam (os outros só abrem
+## habilidades na árvore, que o selo de pontos já mostra).
 func _on_marco_reached(index: int) -> void:
-	var m := GameState.get_marco(index)
-	var opened := 0
-	for id in GameState.marco_unlocks(index):
-		if not GameState.is_gift(id):
-			opened += 1
-	var tree_key := Settings.key_label("skill_tree").to_upper()
-	var sub := "%d %s na árvore [%s]" % [opened, "habilidade nova" if opened == 1 else "habilidades novas", tree_key]
-	var icon := "lock"
-	if index == 3:
-		sub = "Farejar de presente [%s]  ·  %s" % [Settings.key_label("sniff").to_upper(), sub]
-		icon = "nose"
-	elif index == 4:
-		sub = "Fundura nível 2 de presente [%s]" % Settings.key_label("dig").to_upper()
-		icon = "claws"
-	big_note(String(m.title), sub, 6.0, icon)
+	var gifts: Array = GameState.MARCO_GIFTS.get(index, [])
+	if gifts.is_empty():
+		return
+	var id: String = gifts[0]
+	var key := Settings.key_label("sniff" if id == "faro_farejar" else "dig").to_upper()
+	big_note("", "Você desbloqueou a habilidade %s [%s]" % [GameState.get_upgrade(id).name, key],
+		6.0, "nose" if id == "faro_farejar" else "claws")
 	Sfx.play("point", -2.0)
 
 
@@ -593,13 +584,13 @@ func _on_chamber_cleaned(nest, _ci: int) -> void:
 
 func _on_nest_cleaned(_nest) -> void:
 	Sfx.play("nest_clean", -1.0)
-	_cards.push("nest", {"title": "Formigueiro limpo", "icon": "bloom", "icon_col": Color("8fb86a"),
+	_cards.push("nest", {"title": "Ninho limpo", "icon": "bloom", "icon_col": Color("8fb86a"),
 		"icon_bg": BG_GREEN, "ring": UiTheme.LEAF, "value_col": UiTheme.LEAF, "pip": 6.0,
 		"pips_on": colony.nests_cleaned(), "pips_total": world.nests.size()})
 
 
 func _on_queen_eaten(_nest) -> void:
-	_cards.push("queen", {"title": "Rainha", "icon": "crown", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD,
+	_cards.push("queen", {"title": "", "icon": "crown", "icon_col": UiTheme.GOLD, "icon_bg": BG_GOLD,
 		"ring": UiTheme.GOLD, "value": "+%d" % NestScript.QUEEN_VALUE, "value_col": UiTheme.GOLD})
 
 
@@ -634,7 +625,7 @@ func _flash_hint(parts: Array, duration: float) -> void:
 ## Dica de cadeado: falta aprender a habilidade `id` (o Tab abre ela na aba
 ## de habilidades).
 func _locked(id: String) -> Array:
-	return [{"icon": "lock", "col": UiTheme.MUTED, "skill": id}, {"text": GameState.get_upgrade(id).name}, {"key": Settings.key_label("skill_tree")}]
+	return [{"icon": "lock", "col": UiTheme.MUTED, "skill": id}]
 
 
 ## A habilidade da dica de cadeado na tela agora ("" se não há uma).
@@ -660,8 +651,7 @@ func _context_hint() -> Array:
 	# Tronco caído na saída para a área 2.
 	if not world.exit_open and world.near_exit(p2, 4.5):
 		if not world.exit_breakable:
-			return [{"icon": "lock", "col": UiTheme.MUTED}, {"num": str(colony.remaining())},
-				{"icon": "ant", "col": UiTheme.SAND}]
+			return [{"icon": "lock", "col": UiTheme.MUTED}]
 		if not GameState.can_dig():
 			return _locked("garras_cavar")
 		return [{"key": Settings.key_label("dig")}, {"text": "Quebrar o tronco"}]
@@ -673,18 +663,9 @@ func _context_hint() -> Array:
 		var c = n.chambers[ci]
 		if c.royal and n.queen_alive:
 			if c.residents > 0:
-				return [{"icon": "crown", "col": UiTheme.GOLD}, {"num": str(c.residents)},
-					{"icon": "ant", "col": UiTheme.SAND}]
+				return [{"icon": "ant", "col": UiTheme.SAND}, {"num": str(c.residents)}]
 			return []
-		return [{"num": str(c.residents)}, {"icon": "ant", "col": UiTheme.SAND}]
-	# No monte, só faltam as câmaras do campo.
-	var nest = player.near_nest
-	if nest != null and not nest.cleaned and _closed_on_mound(nest) == 0 and nest.closed_chambers() > 0:
-		var parts: Array = [{"icon": "diamond", "col": Settings.sniff_color()}, {"num": str(nest.closed_chambers())},
-			{"text": "no campo"}]
-		if GameState.can_sniff():
-			parts.append({"key": Settings.key_label("sniff")})
-		return parts
+		return [{"icon": "ant", "col": UiTheme.SAND}, {"num": str(c.residents)}]
 	return []
 
 
@@ -783,6 +764,7 @@ func show_saved() -> void:
 ## texto de baixo (por exemplo, "log").
 func big_note(title: String, sub: String = "", duration: float = 3.5, icon: String = "") -> void:
 	_big_note.text = title
+	_big_title_row.visible = title != ""
 	_big_sub.text = sub
 	_big_icon.kind = icon
 	_big_icon.visible = icon != ""
@@ -898,7 +880,7 @@ class Medallion extends Control:
 		var f: Font = UT.display_font()
 		var fs := 34 if value.length() <= 3 else (29 if value.length() == 4 else 25)
 		var w := f.get_string_size(value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		draw_string(f, c + Vector2(-w * 0.5, 7), value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UT.PALE)
+		draw_string(f, c + Vector2(-w * 0.5, 7.0 if sub != "" else 11.0), value, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, UT.PALE)
 		var cf: Font = UT.caps_font()
 		var s := sub.to_upper()
 		var w2 := cf.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x

@@ -31,7 +31,7 @@ func setup(w, c) -> void:
 
 
 ## Refaz os quadros com os números de agora. Duas colunas da mesma largura:
-## "Este jogo" (e as parciais, no contra o relógio) e "Ações" com "Recordes".
+## "Este jogo" e "Ações".
 ## O último quadro de cada coluna estica até embaixo, para as bordas baterem.
 func refresh() -> void:
 	for c in get_children():
@@ -40,11 +40,8 @@ func refresh() -> void:
 		return
 	var left := _column()
 	left.add_child(_panel("Este jogo", _run_rows()))
-	if GameState.mode == GameState.MODE_CLOCK:
-		left.add_child(_panel("Parciais", _split_rows()))
 	var right := _column()
 	right.add_child(_panel("Ações", _action_rows()))
-	right.add_child(_panel("Recordes", _record_rows()))
 	for col in [left, right]:
 		col.get_child(col.get_child_count() - 1).size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if Achievements.VISIBLE or DevTools.args.has("conquistas"):
@@ -62,7 +59,6 @@ func _column() -> VBoxContainer:
 # ------------------------------------------------------------------ Números
 
 func _run_rows() -> Array:
-	var clock := GameState.mode == GameState.MODE_CLOCK
 	var opened := 0
 	var chambers := 0
 	var queens := 0
@@ -81,10 +77,9 @@ func _run_rows() -> Array:
 			skills_total += GameState.max_rank(u.id)
 			skills += GameState.rank(u.id)
 	return [
-		["Modo", "Contra o relógio" if clock else "Normal"],
-		["Tempo de jogo", GameState.format_clock(GameState.elapsed) if clock else GameState.format_time(GameState.elapsed)],
+		["Tempo de jogo", GameState.format_time(GameState.elapsed)],
 		["Insetos comidos", "%s de %s" % [_n(GameState.ants_eaten), _n(GameState.GOAL)]],
-		["Formigueiros limpos", "%d de %d" % [colony.nests_cleaned(), world.nests.size()]],
+		["Ninhos limpos", "%d de %d" % [colony.nests_cleaned(), world.nests.size()]],
 		["Câmaras abertas", "%d de %d" % [opened, chambers]],
 		["Rainhas comidas", "%d de %d" % [GameState.queens_eaten, queens]],
 		["Tanajuras comidas", _n(GameState.tanajuras_eaten)],
@@ -106,35 +101,6 @@ func _action_rows() -> Array:
 		["Tremores", "%s vezes" % _n(int(GameState.stat("tremors")))],
 		["Distância", _distance(GameState.stat("distance"))],
 		["Correndo", GameState.format_time(GameState.stat("run_time"))],
-	]
-
-
-func _split_rows() -> Array:
-	var rows := []
-	for i in GameState.SPLITS.size():
-		var label := "%d%% dos insetos" % int(round(GameState.SPLITS[i] * 100.0))
-		if i < GameState.splits.size():
-			var t := float(GameState.splits[i])
-			var cell := [GameState.format_clock(t)]
-			if i < GameState.best_splits.size():
-				var d := t - float(GameState.best_splits[i])
-				cell.append([GameState.format_diff(d), GREEN if d < 0.0 else RED])
-			rows.append([label, cell])
-		elif i < GameState.best_splits.size():
-			rows.append([label, [["recorde " + GameState.format_clock(float(GameState.best_splits[i])), UiTheme.MUTED]]])
-		else:
-			rows.append([label, "—"])
-	return rows
-
-
-func _record_rows() -> Array:
-	var lt := GameState.lifetime
-	return [
-		["Melhor tempo", GameState.format_time(GameState.best_time) if GameState.best_time > 0.0 else "—"],
-		["Contra o relógio", GameState.format_clock(GameState.best_time_clock) if GameState.best_time_clock > 0.0 else "—"],
-		["Clareiras limpas", _n(int(lt.get("cleared", 0)))],
-		["Insetos (todos os jogos)", _n(int(lt.get("eaten", 0)))],
-		["Tempo jogado (todos)", GameState.format_time(float(lt.get("playtime", 0.0)))],
 	]
 
 

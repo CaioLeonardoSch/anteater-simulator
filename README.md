@@ -117,9 +117,9 @@ uma vez".
   losango sai do cartão, voa numa leve curva até o alvo e fica pulsando com a
   distância; depois some, e `F` faz ele voar de novo. O que você já fez é
   pulado. O losango segue a opção de Dicas.
-- **Marcos:** limpar o primeiro formigueiro, comer metade dos insetos e comer
-  80% abrem habilidades novas na árvore, com um cartão grande na tela. No
-  terceiro marco, o **Farejar** vem de presente. O quarto chega quando só falta
+- **Marcos:** limpar o primeiro formigueiro e comer metade dos insetos abrem
+  habilidades novas na árvore. Aos **200 insetos** comidos, o **Farejar** vem
+  de presente, com um cartão grande na tela. O quarto chega quando só falta
   o formigueiro da rainha: a **Cavar fundo nível 2** vem de presente.
 - **10 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
@@ -207,7 +207,7 @@ cada clique é uma melhora pequena, com o seu preço, e a habilidade seguinte da
 linha só abre com todos os cliques da anterior. Entre parênteses: o preço de
 cada clique em pontos e, depois do ponto, **quando ela abre**. Sem nada, desde
 o começo. Os **marcos** da área 1 são: **Formigueiro** (o primeiro formigueiro
-limpo), **Metade** (metade dos insetos), **80%** (80% dos insetos; o Farejar
+limpo), **Metade** (metade dos insetos), **200** (200 insetos comidos; o Farejar
 vem de presente) e **Rainha** (só falta o formigueiro da rainha; a Fundura
 nível 2 vem de presente). **Área 2** fica para depois da demo. Na árvore, o que ainda
 não abriu aparece só com o cadeado.
@@ -217,7 +217,7 @@ não abriu aparece só com o cadeado.
 | **Língua** | Lambida Rápida (15: segurar para lamber), e depois quatro linhas: **Bocado** · nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40); **Destreza** · nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4); **Comprimento** · nível 1 (16, 20, 24: língua de 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m); **Mira** · nível 1 (12: a língua vai atrás do inseto mais perto da mira, numa área de 6°, e o acompanha) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: área da mira de 30°); **Olheiro** · nível 1 (20 · Formigueiro: a língua entra num buraco e puxa 5 formigas; recarga de 5 s) · nível 2 (30, 40, 50 · Metade: 8 → 11 → 15 formigas; 4 → 3,5 → 3 s) · nível 3 (120 · Área 2: 20 formigas; 2 s) |
 | **Garras** | Cavar (25: câmaras pequenas; depois as garras descansam 25 s), e depois: **Força** · nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s) · nível 2 (40, 50 · Metade: 3,2 → 4 s); **Tremor** (sai de Força nível 1) · nível 1 (90 · Metade: libera o Tremor, recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto, 7 s); **Rapidez** · nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo); **Cavar fundo** · nível 1 (60: câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
 | **Patas** | Fôlego (10: estamina máxima de 50 para 75), e depois quatro linhas: **Corrida** · nível 1 (25, 35: corre 10% e mais 10% mais rápido) · nível 2 (90 · Área 2: lamber correndo) · nível 3 (250 · Área 2: os insetos não fogem mais); **Respiro** · nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7); **Passada** · nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5); **Fôlego** · nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
-| **Faro** | Farejar (de presente no marco 80%: as moradoras da câmara aberta mais perto, a até 12 m, brilham por 4 s; a bússola aponta o maior grupo; recarga de 10 s), e depois: **Rastro** · nível 1 (20 · 80%: colunas nas câmaras fechadas do formigueiro farejado) · nível 2 (40, 55 · Área 2: também as câmaras dos outros a até 25 → 40 m; no último clique, a bússola mostra quanto falta em cada formigueiro); **Família** · nível 1 (30 · 80%: a família do ninho mais perto, não só a câmara, com um brilho borrado através do capim, a até 16 m) · nível 2 (50, 65 · Área 2: dura 6 → 8 s e pega a família inteira, até longe na trilha) · nível 3 (180 · Área 2: cada formiga da família, nítida) |
+| **Faro** | Farejar (de presente aos 200 insetos: as moradoras da câmara aberta mais perto, a até 12 m, brilham por 4 s; a bússola aponta o maior grupo; recarga de 10 s), e depois: **Rastro** · nível 1 (20: colunas nas câmaras fechadas do formigueiro farejado) · nível 2 (40, 55: também as câmaras dos outros a até 25 → 40 m; no último clique, a bússola mostra quanto falta em cada formigueiro); **Família** · nível 1 (30: a família do ninho mais perto, não só a câmara, com um brilho borrado através do capim, a até 16 m) · nível 2 (50, 65: dura 6 → 8 s e pega a família inteira, até longe na trilha) · nível 3 (180: cada formiga da família, nítida). Por enquanto, o Faro inteiro dá para aprender na área 1 |
 | **Escalada** | Escalada (300): Área 2, ainda não feitas (aparecem com cadeado) |
 
 **Estamina:** correr existe desde o começo, mas gasta a estamina, a barra verde

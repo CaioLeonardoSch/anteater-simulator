@@ -310,7 +310,9 @@ func _pick_target() -> void:
 					best_score = score
 					_nest = n
 			if _nest != null:
-				_nest_start = maxi(_nest.remaining(), 1)
+				# O total é o do começo do jogo (não o que sobrou ao abrir um
+				# jogo salvo), para a barra mostrar o que já foi comido.
+				_nest_start = maxi(maxi(_nest.start_total, _nest.remaining()), 1)
 				_target = _ground(_nest.center2) + Vector3(0, _nest.height, 0)
 		"queen":
 			for n in world.nests:

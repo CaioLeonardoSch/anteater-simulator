@@ -68,35 +68,43 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 col = mix(base_color, mid_color, smoothstep(0.0, 0.5, vh));
-	col = mix(col, tip_color, smoothstep(0.45, 1.0, vh));
+	// Com MSAA a placa de vídeo pinta a beirada da folha fina num ponto que cai
+	// fora dela, e esses valores "passam do ponto" (muito claros ou pretos,
+	// piscando quando o capim balança). Trava tudo na faixa certa.
+	float fh = clamp(vh, 0.0, 1.0);
+	float ft = clamp(vt, 0.0, 1.0);
+	float fr = clamp(vrand, 0.0, 1.0);
+	float fs = clamp(vseed, 0.0, 1.0);
+	float ftu = clamp(vtuft, 0.0, 1.0);
+	vec3 col = mix(base_color, mid_color, smoothstep(0.0, 0.5, fh));
+	col = mix(col, tip_color, smoothstep(0.45, 1.0, fh));
 	float patch = texture(noise_tex, vworld.xz * 0.018 + 0.5).r;
-	col = mix(col, green_color * (0.6 + vh * 0.6), smoothstep(0.62, 0.8, patch) * 0.55);
+	col = mix(col, green_color * (0.6 + fh * 0.6), smoothstep(0.62, 0.8, patch) * 0.55);
 	// Cada touceira com seu tom: umas acobreadas, outras verde-oliva, outras
 	// cor de palha clara; o resto fica no dourado do campo.
-	float base_k = smoothstep(0.0, 0.5, vh);
-	col = mix(col, col * copper_tint, (1.0 - smoothstep(0.12, 0.2, vtuft)) * base_k);
-	col = mix(col, mix(col, green_color * 1.1, 0.5), smoothstep(0.2, 0.25, vtuft) * (1.0 - smoothstep(0.32, 0.37, vtuft)));
-	col = mix(col, straw_color, smoothstep(0.84, 0.9, vtuft) * 0.45 * base_k);
+	float base_k = smoothstep(0.0, 0.5, fh);
+	col = mix(col, col * copper_tint, (1.0 - smoothstep(0.12, 0.2, ftu)) * base_k);
+	col = mix(col, mix(col, green_color * 1.1, 0.5), smoothstep(0.2, 0.25, ftu) * (1.0 - smoothstep(0.32, 0.37, ftu)));
+	col = mix(col, straw_color, smoothstep(0.84, 0.9, ftu) * 0.45 * base_k);
 	// Umas folhas mais secas e amarronzadas no meio das outras.
-	col = mix(col, col * vec3(0.82, 0.66, 0.5), smoothstep(0.8, 0.9, vrand) * (1.0 - vseed));
-	col *= 0.82 + vrand * 0.32;
+	col = mix(col, col * vec3(0.82, 0.66, 0.5), smoothstep(0.8, 0.9, fr) * (1.0 - fs));
+	col *= 0.82 + fr * 0.32;
 	// Ponta seca e desbotada.
-	col = mix(col, straw_color, smoothstep(0.72, 1.0, vt) * 0.5 * (1.0 - vseed));
+	col = mix(col, straw_color, smoothstep(0.72, 1.0, ft) * 0.5 * (1.0 - fs));
 	// Nervura clara no meio da folha e beiradas mais escuras (dá volume).
-	float edge = abs(UV.x - 0.5) * 2.0;
-	col *= mix(1.0, mix(1.14, 0.8, edge * edge), 1.0 - vseed);
-	col = mix(col, col * 1.18 + vec3(0.03), (1.0 - smoothstep(0.0, 0.18, edge)) * 0.5 * (1.0 - vseed) * base_k);
+	float edge = min(abs(UV.x - 0.5) * 2.0, 1.0);
+	col *= mix(1.0, mix(1.14, 0.8, edge * edge), 1.0 - fs);
+	col = mix(col, col * 1.18 + vec3(0.03), (1.0 - smoothstep(0.0, 0.18, edge)) * 0.5 * (1.0 - fs) * base_k);
 	// Pendões: haste cor de palha e espiga avermelhada, com a beira felpuda clara.
-	float head = smoothstep(0.55, 0.68, vt);
+	float head = smoothstep(0.55, 0.68, ft);
 	vec3 seed_col = mix(straw_color * 0.85, mix(seed_color, straw_color, edge * 0.7), head);
-	col = mix(col, seed_col * (0.85 + vtuft * 0.3), vseed);
+	col = mix(col, seed_col * (0.85 + ftu * 0.3), fs);
 	ALBEDO = col;
 	ROUGHNESS = 0.75;
 	SPECULAR = 0.3;
 	vec3 up_v = normalize((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz);
 	NORMAL = normalize(mix(NORMAL, up_v, 0.35));
-	BACKLIGHT = col * mix(0.75 * (0.3 + vh), 1.1, vseed * head);
-	AO = mix(0.35, 1.0, smoothstep(0.0, 0.6, vh));
+	BACKLIGHT = col * mix(0.75 * (0.3 + fh), 1.1, fs * head);
+	AO = mix(0.35, 1.0, smoothstep(0.0, 0.6, fh));
 	AO_LIGHT_AFFECT = 0.6;
 }

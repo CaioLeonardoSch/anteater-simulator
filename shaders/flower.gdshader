@@ -43,17 +43,24 @@ void vertex() {
 }
 
 void fragment() {
+	// Com MSAA a beirada das pétalas finas é pintada num ponto fora delas e os
+	// valores passam do ponto (pontinhos claros piscando): trava na faixa certa.
+	float fh = clamp(vh, 0.0, 1.0);
+	float fp = clamp(vpetal, 0.0, 1.0);
+	float fc = clamp(vcenter, 0.0, 1.0);
+	float fpo = clamp(vpos, 0.0, 1.0);
+	float fr = clamp(vrand, 0.0, 1.0);
 	// Caule mais escuro embaixo.
-	vec3 stem = stem_color * (0.65 + 0.5 * vh);
+	vec3 stem = stem_color * (0.65 + 0.5 * fh);
 	// Pétala: mais funda perto do miolo, clara e viva na ponta.
-	vec3 tone = vinst * (0.9 + vrand * 0.2);
-	vec3 petal = mix(tone * vec3(0.68, 0.62, 0.62), min(tone * 1.1 + 0.03, vec3(1.0)), smoothstep(0.05, 0.85, vpos));
+	vec3 tone = vinst * (0.9 + fr * 0.2);
+	vec3 petal = mix(tone * vec3(0.68, 0.62, 0.62), min(tone * 1.1 + 0.03, vec3(1.0)), smoothstep(0.05, 0.85, fpo));
 	float yellow = smoothstep(0.3, 0.6, (vinst.r + vinst.g) * 0.5 - vinst.b);
 	vec3 center = mix(center_yellow, center_brown, yellow);
-	vec3 col = mix(stem, petal, vpetal);
-	col = mix(col, center, vcenter);
+	vec3 col = mix(stem, petal, fp);
+	col = mix(col, center, fc);
 	ALBEDO = col;
 	ROUGHNESS = 0.7;
-	BACKLIGHT = col * mix(0.35, 0.65, vpetal);
-	EMISSION = petal * vpetal * 0.04;
+	BACKLIGHT = col * mix(0.35, 0.65, fp);
+	EMISSION = petal * fp * 0.04;
 }

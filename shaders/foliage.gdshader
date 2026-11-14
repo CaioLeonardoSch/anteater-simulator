@@ -37,6 +37,8 @@ void vertex() {
 }
 
 void fragment() {
+	// Com MSAA a beirada é pintada fora do cartão: trava o tom na faixa certa.
+	float fsh = clamp(vshade, 0.0, 1.0);
 	vec4 leaf = texture(leaf_tex, UV);
 	if (use_texture > 0.5) {
 		// Com mipmaps (versões menores da textura para longe) o recorte das folhas
@@ -47,8 +49,8 @@ void fragment() {
 		ALPHA_SCISSOR_THRESHOLD = alpha_cut;
 	}
 	float n = texture(noise_tex, wpos.xz * 0.31 + vec2(wpos.y * 0.13, -wpos.y * 0.11)).r;
-	vec3 col = mix(color_dark, color_light, smoothstep(0.15, 0.9, vshade * 0.75 + n * 0.45));
-	col = mix(col, color_tip, smoothstep(0.78, 1.05, vshade + (n - 0.5) * 0.5) * 0.55);
+	vec3 col = mix(color_dark, color_light, smoothstep(0.15, 0.9, fsh * 0.75 + n * 0.45));
+	col = mix(col, color_tip, smoothstep(0.78, 1.05, fsh + (n - 0.5) * 0.5) * 0.55);
 	col *= mix(0.78, 0.72 + leaf.r * 0.42, use_texture);
 	// Cada folha puxa um pouco para o amarelado ou para o azulado.
 	float tg = (pow(leaf.g, 0.4545) - 0.5) * 2.0 * tone_amount * use_texture;
@@ -62,6 +64,6 @@ void fragment() {
 	ROUGHNESS = 0.7;
 	SPECULAR = 0.25;
 	BACKLIGHT = col * backlight_amount;
-	AO = mix(0.45, 1.0, vshade);
+	AO = mix(0.45, 1.0, fsh);
 	AO_LIGHT_AFFECT = 0.45;
 }

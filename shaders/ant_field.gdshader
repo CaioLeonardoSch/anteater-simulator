@@ -22,6 +22,7 @@ void vertex() {
 void fragment() {
 	vec3 base = COLOR.rgb;
 	ant_look(base, v_part, UV, v_seed, ALBEDO, ROUGHNESS, SPECULAR, RIM, BACKLIGHT, CLEARCOAT);
+	ant_spec_aa(NORMAL, ROUGHNESS, CLEARCOAT);
 	CLEARCOAT_ROUGHNESS = 0.2;
 	RIM_TINT = 0.35;
 	EMISSION = glow_color * v_highlight * 0.5;

@@ -38,3 +38,13 @@ void ant_look(vec3 base, float part, vec2 uv, float seed, out vec3 albedo, out f
 		coat = 0.6;
 	}
 }
+
+// Formiga pequena na tela: a curva toda do casco cabe num pixel e o reflexo do
+// sol vira um ponto que pisca enquanto ela anda (pior com MSAA). Quanto mais a
+// superfície muda dentro de um pixel, mais fosco fica o casco.
+void ant_spec_aa(vec3 n, inout float rough, inout float coat) {
+	vec3 dn = fwidth(n);
+	float k = min(dot(dn, dn), 1.0);
+	rough = sqrt(rough * rough + min(k * 0.5, 0.18));
+	coat *= 1.0 - smoothstep(0.1, 0.6, k);
+}

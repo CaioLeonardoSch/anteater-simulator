@@ -431,7 +431,7 @@ func _build_controls_page(stack: Control) -> void:
 	var keys := GridContainer.new()
 	keys.columns = 4
 	keys.add_theme_constant_override("h_separation", 18)
-	keys.add_theme_constant_override("v_separation", 6)
+	keys.add_theme_constant_override("v_separation", 2)
 	page.add_child(keys)
 	for pair in Settings.REBINDABLE:
 		var l := UiTheme.label(pair[1], 18)
@@ -440,7 +440,8 @@ func _build_controls_page(stack: Control) -> void:
 		l.custom_minimum_size.x = 220
 		keys.add_child(l)
 		var b := UiTheme.button("", 150)
-		b.custom_minimum_size = Vector2(150, 40)
+		b.custom_minimum_size = Vector2(150, 42)
+		b.add_theme_font_size_override("font_size", 19)
 		b.pressed.connect(_start_rebind.bind(pair[0]))
 		keys.add_child(b)
 		_key_buttons[pair[0]] = b

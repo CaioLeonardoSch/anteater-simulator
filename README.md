@@ -75,7 +75,8 @@ tela, a resolução e a qualidade gráfica.
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto, olhando para ela | `X` |
 | Pular (subir nas pedras, sair dos buracos) | `Espaço` | `A` |
 | Tremor* (pulo que atordoa) | `X` | `B` |
-| Mapa, habilidades e estatísticas | `Tab` (o mapa abre primeiro; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Mapa e habilidades | `Tab` (abre na última aba; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Abrir o mapa / as habilidades | `M` / `H` (a mesma tecla fecha) | |
 | Mostrar o objetivo de novo | `F` | `Y` |
 | Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
 | Pausa | `Esc` | `Start` |
@@ -99,7 +100,7 @@ uma vez".
   são curtas, embaixo da mira, com a tecla num quadradinho ("E Abrir câmara");
   salvar é só um ícone girando. Em Configurações → Jogo, **Dicas** pode ser
   Todas, Poucas ou Nenhuma.
-- **Mapa** (`Tab`): o mapa inteiro visto de cima, com a saída para cima e para
+- **Mapa** (`M`, ou `Tab`): o mapa inteiro visto de cima, com a saída para cima e para
   a direita. A clareira fica colorida onde você já andou; as áreas 2, 3 e 4
   aparecem pretas, com cadeado. A roda do mouse aproxima e arrastar move. Mostra
   os formigueiros (limpos, começados ou não visitados), **quantos insetos
@@ -187,7 +188,7 @@ uma vez".
   dele até perto de onde a água toca. O alto
   dos penhascos é cheio de árvores, e depois da passagem para a próxima área
   uma rampa sobe para uma mata fechada.
-- **Árvore de habilidades** (`Tab`, aba ao lado do mapa): uma constelação, com
+- **Árvore de habilidades** (`H`, ou `Tab`, aba ao lado do mapa): uma constelação, com
   os ramos saindo do centro. Passe o mouse numa habilidade para ver o que ela
   faz (com os números de antes → depois do próximo clique) e clique para
   aprender; as bolinhas em volta mostram os cliques, e as completas acendem em

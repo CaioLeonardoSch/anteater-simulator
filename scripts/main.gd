@@ -361,14 +361,26 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("skill_tree") and state in [State.PLAYING, State.TREE]:
 		if state == State.PLAYING:
-			# Com a dica de cadeado na tela, abre direto naquela habilidade.
+			# Com a dica de cadeado na tela, abre direto naquela habilidade;
+			# sem ela, na última aba que estava aberta.
 			var skill := hud.locked_skill()
 			if skill.is_empty():
-				_open_tree()
+				_open_tree(tab_ui.page)
 			else:
 				_open_tree(TabMenu.SKILLS, skill)
 		else:
 			_close_tree()
+		get_viewport().set_input_as_handled()
+	elif (event.is_action_pressed("open_map") or event.is_action_pressed("open_skills")) \
+			and state in [State.PLAYING, State.TREE]:
+		# M abre o mapa e H as habilidades; na mesma aba, fecha.
+		var page := TabMenu.MAP if event.is_action_pressed("open_map") else TabMenu.SKILLS
+		if state == State.PLAYING:
+			_open_tree(page)
+		elif tab_ui.page == page:
+			_close_tree()
+		else:
+			tab_ui.show_page(page)
 		get_viewport().set_input_as_handled()
 
 
@@ -403,7 +415,7 @@ func _resume() -> void:
 	Sfx.set_music_duck(0.35)
 
 
-## Abre a tela do TAB (o mapa primeiro; a árvore pelo menu de pausa).
+## Abre a tela do TAB na aba `page` (Tab: a última aberta; M: mapa; H: habilidades).
 func _open_tree(page: int = TabMenu.MAP, focus_skill: String = "") -> void:
 	if state == State.COMPLETE:
 		return

@@ -25,6 +25,9 @@ const AUTOSAVE_EVERY := 30.0
 ## Bot de teste: compra uma habilidade de cada ramo por vez, nesta ordem, para
 ## as linhas crescerem juntas (ver _bot_buy).
 const BOT_BRANCHES := [0, 1, 2, 3]
+## Ordem do bot com --bot-compra=lingua (ver _bot_buy).
+const BOT_LINGUA := ["lingua_segurar", "lingua_bocado_1", "garras_cavar", "lingua_bocado_2",
+	"lingua_destreza_1", "garras_rapidez_1", "lingua_comprimento_1", "lingua_destreza_2"]
 
 var state := State.LOADING
 var world: World
@@ -176,12 +179,18 @@ func _build_game() -> void:
 	menus.skill_tree_pressed.connect(_open_tree.bind(TabMenu.SKILLS))
 	GameState.level_completed.connect(_on_complete)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
+	# O bônus de ninho limpo também dá pontos para o bot gastar.
+	GameState.bonus_earned.connect(func(_p): _on_eaten_changed(GameState.ants_eaten, 0))
 	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
-	# Marco 1: o primeiro formigueiro limpo abre mais habilidades.
-	colony.nest_cleaned.connect(func(_n): GameState.reach_marco(1))
-	# Marco 4: só falta o buraco da rainha (a Fundura 2 vem de presente).
-	colony.only_queen_left.connect(func(): GameState.reach_marco(4))
+	# Marco 2: a primeira câmara aberta abre as linhas das Garras e o Olheiro.
+	colony.chamber_opened.connect(func(_n, _ci): GameState.reach_marco(GameState.MARCO_CAMARA))
+	# Cada ninho limpo dá pontos na hora; o primeiro é o marco 4 (Cavar fundo
+	# nível 1 vem de presente).
+	colony.nest_cleaned.connect(func(_n): GameState.add_bonus(GameState.NEST_BONUS))
+	colony.nest_cleaned.connect(func(_n): GameState.reach_marco(GameState.MARCO_NINHO))
+	# Marco 8: só falta o buraco da rainha (Cavar fundo nível 2 vem de presente).
+	colony.only_queen_left.connect(func(): GameState.reach_marco(GameState.MARCO_RAINHA))
 	if DevTools.autoplay and DevTools.args.has("botlog"):
 		_bot_log = FileAccess.open(String(DevTools.args.botlog), FileAccess.WRITE)
 		_bot_log.store_line("tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe")
@@ -290,10 +299,14 @@ func _continue_game() -> void:
 		_start_play()
 		return
 	GameState.reset_run()
-	GameState.from_save(data.get("state", {}))
+	GameState.from_save(data.get("state", {}), int(data.get("version", GameState.SAVE_VERSION)))
 	colony.from_save(data.get("colony", {}))
+	# Marcos que vêm da colônia (num jogo salvo da versão 8, o do ninho limpo
+	# chega aqui pela primeira vez, com o presente novo).
+	if colony.nests_cleaned() > 0:
+		GameState.reach_marco(GameState.MARCO_NINHO)
 	if colony.rest_left() == 0:
-		GameState.reach_marco(4)
+		GameState.reach_marco(GameState.MARCO_RAINHA)
 	exploration.from_save(String(data.get("explored", "")))
 	world.mushrooms.from_save(data.get("mushrooms", []))
 	var p: Dictionary = data.get("player", {})
@@ -478,18 +491,15 @@ func _on_eaten_changed(_total: int, _delta: int) -> void:
 ## raiz) e, empatando, a mais barata; assim as linhas de dentro do ramo também
 ## crescem juntas. Se ainda não dá para pagar, espera juntar os pontos (não
 ## pula para outro ramo). Ramo terminado (ou trancado) sai do rodízio.
+## Com --bot-compra=lingua, antes do rodízio vem BOT_LINGUA, na ordem: a
+## primeira dessa lista que já abriu espera os pontos (o jogador que só
+## melhora a língua e o Cavar). As chaves (Cavar fundo) vêm de presente.
 func _bot_buy() -> void:
-	# Depois do marco 2, a Fundura 1 vem primeiro: sem ela, as câmaras grandes
-	# não abrem e a área não termina (como faria quem segue o objetivo). A
-	# Fundura 2 vem de presente no marco 4.
-	if GameState.marcos.has(2):
-		for id in ["garras_fundura_1"]:
+	if String(DevTools.args.get("bot-compra", "rodizio")) == "lingua":
+		for id in BOT_LINGUA:
 			if GameState.upgrade_state(id) == 1:
 				if GameState.can_buy(id):
-					var c := GameState.cost_of(id)
-					GameState.buy(id)
-					var uf := GameState.get_upgrade(id)
-					_bot_write("compra", "%s;%s %d/%d;%d" % [id, uf.name, GameState.rank(id), GameState.max_rank(id), c])
+					_bot_buy_one(id)
 				return
 	for _i in BOT_BRANCHES.size() * 2:
 		var id := _bot_next(BOT_BRANCHES[_bot_turn % BOT_BRANCHES.size()])
@@ -498,13 +508,17 @@ func _bot_buy() -> void:
 			continue
 		if not GameState.can_buy(id):
 			return
-		var cost := GameState.cost_of(id)
-		GameState.buy(id)
+		_bot_buy_one(id)
 		_bot_turn += 1
-		var u := GameState.get_upgrade(id)
-		print("[bot] comprou %s (%d/%d) com %d formigas comidas" % [id, GameState.rank(id),
-			GameState.max_rank(id), GameState.ants_eaten])
-		_bot_write("compra", "%s;%s %d/%d;%d" % [id, u.name, GameState.rank(id), GameState.max_rank(id), cost])
+
+
+func _bot_buy_one(id: String) -> void:
+	var cost := GameState.cost_of(id)
+	GameState.buy(id)
+	var u := GameState.get_upgrade(id)
+	print("[bot] comprou %s (%d/%d) com %d formigas comidas" % [id, GameState.rank(id),
+		GameState.max_rank(id), GameState.ants_eaten])
+	_bot_write("compra", "%s;%s %d/%d;%d" % [id, u.name, GameState.rank(id), GameState.max_rank(id), cost])
 
 
 ## A próxima habilidade do ramo para o bot: requisitos prontos, sem área trancada,
@@ -578,6 +592,8 @@ func _process(delta: float) -> void:
 			if _bot_log_t <= 0.0:
 				_bot_log_t = 30.0
 				_bot_write("progresso")
+		if player.bot and DevTools.args.has("bot-objetivos"):
+			player.bot_focus_nest = hud.objectives.target_nest()
 	if state == State.MENU and menu_cam:
 		_menu_t += delta
 		var a := _menu_t * 0.06 + 2.2

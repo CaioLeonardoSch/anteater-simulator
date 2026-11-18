@@ -107,6 +107,7 @@ func setup(p, sw, col, w) -> void:
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	GameState.upgrade_affordable.connect(_on_affordable)
 	GameState.skills_reset.connect(_refresh_points)
+	GameState.bonus_earned.connect(_on_bonus)
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
 	GameState.marco_reached.connect(_on_marco_reached)
@@ -564,8 +565,8 @@ func _on_purchased(id: String) -> void:
 ## Chegou num marco da área: aviso grande no meio da tela com o que abriu.
 ## Só os marcos que dão uma habilidade de presente avisam (os outros só abrem
 ## habilidades na árvore, que o selo de pontos já mostra).
-func _on_marco_reached(index: int) -> void:
-	var gifts: Array = GameState.MARCO_GIFTS.get(index, [])
+func _on_marco_reached(_index: int) -> void:
+	var gifts: Array = GameState.last_gifts
 	if gifts.is_empty():
 		return
 	var id: String = gifts[0]
@@ -587,6 +588,25 @@ func _on_nest_cleaned(_nest) -> void:
 	_cards.push("nest", {"title": "Ninho limpo", "icon": "bloom", "icon_col": Color("8fb86a"),
 		"icon_bg": BG_GREEN, "ring": UiTheme.LEAF, "value_col": UiTheme.LEAF, "pip": 6.0,
 		"pips_on": colony.nests_cleaned(), "pips_total": world.nests.size()})
+
+
+## Bônus de ninho limpo: o "+20" dourado sobe ao lado dos pontos, como o "+1"
+## de cada inseto comido, e o número brilha (como o selo das habilidades).
+func _on_bonus(points: int) -> void:
+	_refresh_points()
+	var l := UiTheme.display_label("+%d" % points, 26, UiTheme.GOLD)
+	_soft_shadow(l)
+	# Por cima do painel (a camada dos "+1" fica embaixo dele).
+	add_child(l)
+	var r := _points_value.get_global_rect()
+	l.position = r.position - get_global_rect().position + Vector2(r.size.x + 22.0, 2.0)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(l, "position:y", l.position.y - 16.0, 1.1).set_ease(Tween.EASE_OUT)
+	tw.tween_property(l, "modulate:a", 0.0, 0.9).set_delay(0.5)
+	tw.chain().tween_callback(l.queue_free)
+	_points_value.modulate = Color(1.8, 1.5, 1.0)
+	create_tween().tween_property(_points_value, "modulate", Color.WHITE, 0.7)
 
 
 func _on_queen_eaten(_nest) -> void:

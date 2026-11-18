@@ -1,0 +1,246 @@
+tempo;insetos;formigueiros;pontos_sobrando;habilidades;tremores;evento;detalhe
+0.0;0;0;0;0;0;progresso;
+2.0;0;0;0;0;0;objetivo;move
+5.9;1;0;0;0;0;objetivo;lick
+30.0;19;0;1;0;0;progresso;
+60.3;40;0;4;0;0;progresso;
+71.5;50;0;0;1;0;compra;lingua_segurar;Lambida Rápida 1/1;5
+71.6;50;0;0;1;0;objetivo;eat50
+73.2;52;0;0;1;0;objetivo;learn
+90.4;66;0;1;1;0;progresso;
+120.5;101;0;5;1;0;progresso;
+150.6;128;0;7;1;0;progresso;
+180.9;152;0;10;1;0;progresso;
+211.1;188;0;13;1;0;progresso;
+222.5;200;0;15;2;0;marco;1
+241.6;217;0;16;2;0;progresso;
+271.6;249;0;19;2;0;progresso;
+272.5;250;0;0;3;0;compra;garras_cavar;Cavar 1/1;20
+302.2;281;0;3;3;0;progresso;
+333.2;317;0;6;3;0;progresso;
+359.9;350;0;0;4;0;compra;patas_folego;Fôlego 1/1;10
+363.6;351;0;0;4;0;progresso;
+394.4;374;0;2;4;0;progresso;
+399.3;379;0;2;4;0;marco;2
+400.3;379;0;2;4;0;objetivo;dig
+425.3;396;0;4;4;0;progresso;
+455.8;409;0;5;4;0;progresso;
+486.6;437;0;8;4;0;progresso;
+517.5;470;0;12;4;0;progresso;
+548.5;489;0;13;4;0;progresso;
+579.4;524;0;17;4;0;progresso;
+610.3;540;0;19;4;0;progresso;
+617.8;550;0;0;5;0;compra;faro_rastro_1;Rastro nível 1 1/1;20
+641.2;581;0;3;5;0;progresso;
+672.2;597;0;4;5;0;progresso;
+702.0;630;0;0;6;0;compra;lingua_bocado_1;Bocado nível 1 1/3;8
+703.1;630;0;0;6;0;progresso;
+734.0;684;0;5;6;0;progresso;
+765.0;725;0;9;6;0;progresso;
+785.2;750;0;0;7;0;compra;garras_rapidez_1;Rapidez nível 1 1/3;12
+795.9;752;0;0;7;0;progresso;
+826.8;810;0;6;7;0;progresso;
+857.8;883;0;13;7;0;progresso;
+888.7;902;0;15;7;0;progresso;
+919.6;934;0;18;7;0;progresso;
+950.6;954;0;20;7;0;progresso;
+981.5;981;0;23;7;0;progresso;
+999.6;1000;0;17;8;0;compra;patas_passada_1;Passada nível 1 1/3;8
+999.6;1000;0;17;8;0;marco;3
+1012.4;1004;0;17;8;0;progresso;
+1043.4;1025;0;19;8;0;progresso;
+1074.3;1072;0;24;8;0;progresso;
+1094.6;1130;0;0;9;0;compra;faro_familia_1;Família nível 1 1/1;30
+1105.2;1159;0;2;9;0;progresso;
+1136.2;1215;0;8;9;0;progresso;
+1139.4;1230;0;0;10;0;compra;lingua_destreza_1;Destreza nível 1 1/3;10
+1167.1;1303;0;7;10;0;progresso;
+1198.0;1343;0;11;10;0;progresso;
+1229.0;1373;0;14;10;0;progresso;
+1243.9;1390;0;0;11;0;compra;garras_rapidez_1;Rapidez nível 1 2/3;16
+1259.9;1417;0;2;11;0;progresso;
+1279.1;1471;0;0;12;0;compra;patas_respiro_1;Respiro nível 1 1/2;8
+1290.9;1497;0;2;12;0;progresso;
+1321.8;1570;0;10;12;0;progresso;
+1328.2;1590;0;0;13;0;compra;lingua_mira_1;Mira nível 1 1/1;12
+1352.7;1646;0;5;13;0;progresso;
+1383.6;1716;0;12;13;0;progresso;
+1414.6;1785;0;19;13;0;progresso;
+1416.7;1791;0;0;14;0;compra;garras_rapidez_1;Rapidez nível 1 3/3;20
+1445.5;1817;0;2;14;0;progresso;
+1476.3;1854;0;6;14;0;progresso;
+1496.5;1910;0;0;15;0;compra;patas_folego_1;Fôlego nível 1 1/3;12
+1507.2;1931;0;2;15;0;progresso;
+1538.1;1987;0;7;15;0;progresso;
+1569.1;2036;0;12;15;0;progresso;
+1582.9;2050;0;0;16;0;compra;lingua_bocado_1;Bocado nível 1 2/3;14
+1600.0;2113;0;6;16;0;progresso;
+1630.9;2156;0;10;16;0;progresso;
+1661.9;2181;0;13;16;0;progresso;
+1692.8;2231;0;18;16;0;progresso;
+1723.7;2288;0;23;16;0;progresso;
+1730.1;2300;0;0;17;0;compra;garras_forca_1;Força nível 1 1/2;25
+1754.7;2324;0;2;17;0;progresso;
+1785.6;2378;0;7;17;0;progresso;
+1816.5;2417;0;11;17;0;progresso;
+1820.8;2420;0;0;18;0;compra;patas_passada_1;Passada nível 1 2/3;12
+1847.5;2449;0;2;18;0;progresso;
+1878.4;2454;0;3;18;0;progresso;
+1909.3;2486;0;6;18;0;progresso;
+1940.3;2555;0;13;18;0;progresso;
+1945.6;2560;0;0;19;0;compra;lingua_destreza_1;Destreza nível 1 2/3;14
+1971.2;2637;0;7;19;0;progresso;
+2002.1;2690;0;13;19;0;progresso;
+2033.1;2724;0;16;19;0;progresso;
+2064.0;2764;0;20;19;0;progresso;
+2094.9;2785;0;22;19;0;progresso;
+2125.9;2816;0;25;19;0;progresso;
+2156.8;2835;0;27;19;0;progresso;
+2179.2;2910;0;0;20;0;compra;garras_forca_1;Força nível 1 2/2;35
+2187.7;2920;0;1;20;0;progresso;
+2218.7;2935;0;2;20;0;progresso;
+2249.6;2958;0;4;20;0;progresso;
+2280.5;2999;0;8;20;0;progresso;
+2286.9;3030;0;0;21;0;compra;patas_respiro_1;Respiro nível 1 2/2;12
+2311.5;3048;0;1;21;0;progresso;
+2342.4;3142;0;11;21;0;progresso;
+2360.5;3190;0;0;22;0;compra;lingua_comprimento_1;Comprimento nível 1 1/3;16
+2373.3;3202;0;1;22;0;progresso;
+2404.3;3304;0;11;22;0;progresso;
+2435.2;3330;0;14;22;0;progresso;
+2444.8;3352;0;0;23;0;compra;patas_folego_1;Fôlego nível 1 2/3;16
+2466.1;3368;0;1;23;0;progresso;
+2497.1;3394;0;4;23;0;progresso;
+2528.0;3465;0;11;23;0;progresso;
+2536.5;3501;0;15;23;0;marco;5
+2551.5;3530;0;0;24;0;compra;lingua_destreza_1;Destreza nível 1 3/3;18
+2558.9;3536;0;0;24;0;progresso;
+2589.9;3573;0;4;24;0;progresso;
+2620.8;3603;0;7;24;0;progresso;
+2651.7;3621;0;9;24;0;progresso;
+2682.7;3673;0;14;24;0;progresso;
+2713.6;3696;0;16;24;0;progresso;
+2744.5;3722;0;19;24;0;progresso;
+2775.5;3763;0;23;24;0;progresso;
+2806.4;3898;0;36;24;0;progresso;
+2818.1;3931;0;0;25;0;compra;garras_forca_2;Força nível 2 1/2;40
+2837.3;3959;0;2;25;0;progresso;
+2868.3;3997;0;6;25;0;progresso;
+2899.2;4019;0;8;25;0;progresso;
+2930.1;4053;0;12;25;0;progresso;
+2961.1;4080;0;15;25;0;progresso;
+2972.8;4090;0;0;26;0;compra;patas_passada_1;Passada nível 1 3/3;16
+2992.0;4097;0;0;26;0;progresso;
+3022.9;4101;0;1;26;0;progresso;
+3053.9;4127;0;3;26;0;progresso;
+3084.8;4139;0;4;26;0;progresso;
+3115.7;4164;0;7;26;0;progresso;
+3146.7;4184;0;9;26;0;progresso;
+3177.6;4216;0;12;26;0;progresso;
+3208.5;4246;0;15;26;0;progresso;
+3239.5;4270;0;18;26;0;progresso;
+3264.0;4290;0;0;27;0;compra;lingua_comprimento_1;Comprimento nível 1 2/3;20
+3270.4;4297;0;0;27;0;progresso;
+3301.3;4352;0;6;27;0;progresso;
+3332.3;4420;0;13;27;0;progresso;
+3363.2;4449;0;15;27;0;progresso;
+3394.1;4553;0;26;27;0;progresso;
+3425.1;4600;0;31;27;0;progresso;
+3456.0;4638;0;34;27;0;progresso;
+3486.9;4664;0;37;27;0;progresso;
+3517.9;4684;0;39;27;0;progresso;
+3548.8;4702;0;41;27;0;progresso;
+3579.7;4718;0;42;27;0;progresso;
+3610.7;4747;0;45;27;0;progresso;
+3641.6;4782;0;49;27;0;progresso;
+3645.9;4790;0;0;28;0;compra;garras_forca_2;Força nível 2 2/2;50
+3672.5;4894;0;10;28;0;progresso;
+3703.5;4955;0;16;28;0;progresso;
+3734.4;4978;0;18;28;0;progresso;
+3758.9;4990;0;0;29;0;compra;patas_folego_1;Fôlego nível 1 3/3;20
+3765.3;5007;0;1;29;0;progresso;
+3796.3;5028;0;3;29;0;progresso;
+3827.1;5033;0;4;29;0;progresso;
+3858.0;5054;0;6;29;0;progresso;
+3888.8;5083;0;9;29;0;progresso;
+3919.8;5147;0;15;29;0;progresso;
+3948.5;5192;0;0;30;0;compra;lingua_olheiro_1;Olheiro nível 1 1/1;20
+3950.6;5205;0;1;30;0;progresso;
+3981.5;5305;0;11;30;0;progresso;
+4012.5;5310;0;12;30;0;progresso;
+4043.4;5322;0;13;30;0;progresso;
+4074.3;5411;0;22;30;0;progresso;
+4105.3;5480;0;29;30;0;progresso;
+4136.2;5550;0;36;30;0;progresso;
+4167.1;5626;0;43;30;0;progresso;
+4198.1;5709;0;51;30;0;progresso;
+4229.0;5757;0;56;30;0;progresso;
+4259.9;5774;0;58;30;0;progresso;
+4290.9;5792;0;60;30;0;progresso;
+4321.8;5834;0;64;30;0;progresso;
+4352.7;5885;0;69;30;0;progresso;
+4357.0;5890;0;0;31;0;compra;garras_tremor_1;Tremor nível 1 1/1;70
+4383.4;5912;0;2;31;2;progresso;
+4414.3;5947;0;5;31;3;progresso;
+4445.0;5984;0;9;31;4;progresso;
+4467.1;6000;0;11;31;5;marco;6
+4475.6;6008;0;11;31;6;progresso;
+4506.3;6040;0;15;31;7;progresso;
+4536.4;6064;0;17;31;9;progresso;
+4566.9;6109;0;21;31;10;progresso;
+4590.2;6140;0;0;32;11;compra;patas_corrida_1;Corrida nível 1 1/2;25
+4597.1;6151;0;1;32;11;progresso;
+4628.0;6184;0;4;32;12;progresso;
+4658.9;6280;0;14;32;13;progresso;
+4689.9;6358;0;21;32;15;progresso;
+4716.5;6441;0;0;33;16;compra;faro_rastro_2;Rastro nível 2 1/2;30
+4720.8;6444;0;0;33;16;progresso;
+4751.8;6479;0;3;33;18;progresso;
+4781.8;6521;0;8;33;19;progresso;
+4811.9;6569;0;12;33;20;progresso;
+4842.9;6580;0;14;33;22;progresso;
+4866.3;6660;0;0;34;23;compra;lingua_bocado_1;Bocado nível 1 3/3;22
+4873.7;6685;0;2;34;23;progresso;
+4904.2;6755;0;9;34;25;progresso;
+4935.1;6797;0;13;34;26;progresso;
+4966.0;6873;0;21;34;27;progresso;
+4996.9;6880;0;22;34;29;progresso;
+5027.9;6894;0;23;34;30;progresso;
+5058.6;6900;0;24;34;31;progresso;
+5088.7;6902;0;24;34;32;progresso;
+5118.9;6909;0;24;34;33;progresso;
+5149.2;6924;0;26;34;35;progresso;
+5179.3;6939;0;27;34;36;progresso;
+5209.7;6951;0;29;34;37;progresso;
+5239.8;6952;0;29;34;37;progresso;
+5269.9;6954;0;29;34;38;progresso;
+5300.0;6956;0;29;34;39;progresso;
+5330.1;6957;0;29;34;40;progresso;
+5360.1;6964;0;30;34;41;progresso;
+5391.0;6970;0;31;34;43;progresso;
+5421.9;6975;0;31;34;44;progresso;
+5437.8;7014;0;0;35;45;compra;patas_corrida_1;Corrida nível 1 2/2;35
+5452.8;7014;0;0;35;46;progresso;
+5482.8;7015;0;0;35;46;progresso;
+5513.2;7054;0;4;35;48;progresso;
+5543.8;7070;0;6;35;49;progresso;
+5574.7;7089;0;7;35;50;progresso;
+5605.4;7111;0;10;35;52;progresso;
+5635.9;7114;0;10;35;53;progresso;
+5666.2;7131;0;12;35;55;progresso;
+5696.2;7166;0;15;35;56;progresso;
+5726.3;7192;0;18;35;57;progresso;
+5756.7;7244;0;23;35;59;progresso;
+5787.5;7340;0;33;35;60;progresso;
+5810.8;7360;0;0;36;61;compra;faro_familia_2;Família nível 2 1/2;35
+5817.5;7368;0;0;36;61;progresso;
+5847.5;7391;0;3;36;62;progresso;
+5877.6;7394;0;3;36;63;progresso;
+5907.6;7412;0;5;36;64;progresso;
+5936.1;7424;1;2;37;65;compra;lingua_comprimento_1;Comprimento nível 1 3/3;24
+5936.1;7425;1;2;38;65;marco;4
+5936.1;7425;1;2;38;65;formigueiro;Formigueiro Nordeste (pequeno)
+5936.2;7425;1;2;38;65;objetivo;nest
+5937.7;7425;1;2;38;65;progresso;
+5947.3;7427;2;2;39;65;compra;patas_respiro_2;Respiro nível 2 1/2;20
+5947.3;7428;2;2;39;65;formigueiro;Formigueiro Sudeste (pequeno)

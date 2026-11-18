@@ -3,14 +3,17 @@ extends Node
 ## atributos do tamanduá, recorde e o jogo salvo.
 ##
 ## Economia: cada formiga comida conta 1 e cada 10 formigas valem 1 ponto; a
-## rainha vale 200 formigas (20 pontos). Cada habilidade tem o seu preço. Os
-## pontos gastos podem ser devolvidos de graça ("Redistribuir pontos").
+## rainha vale 200 formigas (20 pontos). Cada ninho limpo dá mais NEST_BONUS
+## pontos na hora. Cada habilidade tem o seu preço. Os pontos gastos podem ser
+## devolvidos de graça ("Redistribuir pontos").
 
 signal ants_eaten_changed(total: int, delta: int)
+## Ganhou pontos sem comer (bônus de ninho limpo).
+signal bonus_earned(points: int)
 ## Uma habilidade que ainda não dava para comprar agora cabe nos pontos.
 signal upgrade_affordable(id: String)
 signal upgrade_purchased(id: String)
-## Chegou num marco da área (1, 2 ou 3): mais habilidades abrem na árvore.
+## Chegou num marco da área (1 a 8): mais habilidades abrem na árvore.
 signal marco_reached(index: int)
 signal skills_reset
 signal level_completed(time_sec: float)
@@ -39,8 +42,9 @@ const OLD_SAVE_PATH := "user://jogo_salvo.json"
 const SLOTS := 3
 ## Versão do jogo salvo: saves de versões com outro mapa não são carregados.
 ## Versão 8: a área 1 ficou menor (8 formigueiros), então os saves antigos não abrem.
-const SAVE_VERSION := 8
-const SAVE_VERSIONS_OK := [8]
+## Versão 9: 8 marcos e bônus por ninho limpo; a 8 abre e é convertida (from_save).
+const SAVE_VERSION := 9
+const SAVE_VERSIONS_OK := [8, 9]
 ## Modos de jogo. Contra o relógio é o speedrun: cronômetro na tela, tempos
 ## parciais e um recorde só dele. O tempo só corre com o jogo rodando (pausa,
 ## mapa e habilidades param o relógio), então dá para comparar jogos.
@@ -60,23 +64,45 @@ const BRANCHES := [
 ]
 
 ## Marcos da área 1 (no lugar das travas por insetos). Cada habilidade diz
-## quando abre ("unlock"): sem a chave, desde o começo; 1, 2 ou 3, no marco;
+## quando abre ("unlock"): sem a chave, desde o começo; 1 a 8, no marco;
 ## AREA2, só na área 2 (não abre na demo). Ver docs/pesquisa-habilidades.md,
-## seções 11 e 12.
-##   1: limpar o primeiro formigueiro.
-##   2: comer metade dos insetos da área.
-##   3: comer 200 insetos (o Farejar vem de presente).
-##   4: só falta o buraco da rainha (a Fundura nível 2 vem de presente).
+## seção 14.
+## Os marcos de quantidade (insetos comidos) abrem a potência e chegam sempre,
+## na mesma ordem. Os de façanha (câmara, ninho, rainha) dão chaves de
+## presente e podem atrasar sem travar a linha principal.
+##   1: comer 200 insetos (o Farejar vem de presente).
+##   2: abrir a primeira câmara.
+##   3: comer 1 000 insetos.
+##   4: limpar o primeiro ninho (Cavar fundo nível 1 vem de presente).
+##   5: comer 3 500 insetos.
+##   6: comer 6 000 insetos.
+##   7: comer 8 000 insetos.
+##   8: só falta o buraco da rainha (Cavar fundo nível 2 vem de presente).
+## "skill" é a habilidade que o cartão de objetivo anuncia antes ("Tremor
+## nível 1 · faltam 380 insetos").
 const MARCOS := [
-	{"index": 1, "title": "Formigueiro limpo", "short": "Formigueiro"},
-	{"index": 2, "title": "Metade da clareira", "short": "Metade", "share": 0.5},
-	{"index": 3, "title": "O faro despertou", "short": "200", "insects": 200},
-	{"index": 4, "title": "Só falta a rainha", "short": "Rainha"},
+	{"index": 1, "title": "O faro despertou", "short": "200", "insects": 200, "skill": "faro_farejar"},
+	{"index": 2, "title": "Primeira câmara", "short": "Câmara"},
+	{"index": 3, "title": "Petisco", "short": "1 000", "insects": 1000, "skill": "lingua_bocado_2"},
+	{"index": 4, "title": "Ninho limpo", "short": "Ninho"},
+	{"index": 5, "title": "Chão tremendo", "short": "3 500", "insects": 3500, "skill": "garras_tremor_1"},
+	{"index": 6, "title": "Faro apurado", "short": "6 000", "insects": 6000, "skill": "patas_corrida_2"},
+	{"index": 7, "title": "Faxina", "short": "8 000", "insects": 8000, "skill": "faro_familia_3"},
+	{"index": 8, "title": "Só falta a rainha", "short": "Rainha"},
 ]
+## Os marcos de façanha, pelo nome.
+const MARCO_CAMARA := 2
+const MARCO_NINHO := 4
+const MARCO_RAINHA := 8
 const AREA2 := 9
 ## Habilidades que um marco dá de presente (não gastam pontos e ficam ao
-## redistribuir).
-const MARCO_GIFTS := {3: ["faro_farejar"], 4: ["garras_fundura_2"]}
+## redistribuir). Cavar fundo nível 1 vem no primeiro ninho limpo ou, se ele
+## demorar, aos 3 500 insetos (o que chegar primeiro): quem não limpa ninhos
+## não fica sem as câmaras grandes.
+const MARCO_GIFTS := {1: ["faro_farejar"], 4: ["garras_fundura_1"], 5: ["garras_fundura_1"],
+	8: ["garras_fundura_2"]}
+## Pontos que cada ninho limpo dá na hora (8 ninhos: 160 pontos na área 1).
+const NEST_BONUS := 20
 
 ## Cada habilidade (nó): ramo, posição na árvore (col -1 = topo do ramo,
 ## centralizado; 0..3 = linhas da esquerda para a direita), o preço de cada
@@ -87,13 +113,13 @@ const UPGRADES := [
 	# Língua: Lambida Contínua abre as linhas de Bocado (quantos por lambida),
 	# Destreza (lambidas por segundo), Comprimento (alcance) e Mira (a língua ir
 	# atrás do inseto).
-	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "costs": [15], "requires": [],
+	{"id": "lingua_segurar", "branch": 0, "col": -1, "row": 0, "costs": [5], "requires": [],
 		"name": "Lambida Rápida",
 		"desc": "Segure o botão para lamber sem parar"},
-	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "costs": [8, 12, 16], "requires": ["lingua_segurar"],
+	{"id": "lingua_bocado_1", "branch": 0, "col": 0, "row": 1, "costs": [8, 14, 22], "requires": ["lingua_segurar"],
 		"name": "Bocado nível 1",
 		"desc": "Cada lambida pega mais insetos perto da ponta da língua"},
-	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "costs": [30, 40, 50], "unlock": 1, "requires": ["lingua_bocado_1"],
+	{"id": "lingua_bocado_2", "branch": 0, "col": 0, "row": 2, "costs": [30, 40, 50], "unlock": 3, "requires": ["lingua_bocado_1"],
 		"name": "Bocado nível 2",
 		"desc": "Mais insetos por lambida, e a ponta gruda num raio um pouco maior"},
 	{"id": "lingua_bocado_3", "branch": 0, "col": 0, "row": 3, "costs": [70, 90], "unlock": AREA2, "requires": ["lingua_bocado_2"],
@@ -102,16 +128,16 @@ const UPGRADES := [
 	{"id": "lingua_bocado_4", "branch": 0, "col": 0, "row": 4, "costs": [160, 200], "unlock": AREA2, "requires": ["lingua_bocado_3"],
 		"name": "Bocado nível 4",
 		"desc": "Bastante insetos por lambida, e a ponta gruda num raio bem maior"},
-	{"id": "lingua_destreza_1", "branch": 0, "col": 1, "row": 1, "costs": [10, 14, 18], "requires": ["lingua_segurar"],
+	{"id": "lingua_destreza_1", "branch": 0, "col": 1, "row": 1, "costs": [10, 14, 18], "unlock": 1, "requires": ["lingua_segurar"],
 		"name": "Destreza nível 1",
 		"desc": "Lambidas um pouco mais rápidas"},
-	{"id": "lingua_destreza_2", "branch": 0, "col": 1, "row": 2, "costs": [50, 60, 70], "unlock": 2, "requires": ["lingua_destreza_1"],
+	{"id": "lingua_destreza_2", "branch": 0, "col": 1, "row": 2, "costs": [35, 45, 55], "unlock": 5, "requires": ["lingua_destreza_1"],
 		"name": "Destreza nível 2",
 		"desc": "Lambidas mais rápidas"},
 	{"id": "lingua_destreza_3", "branch": 0, "col": 1, "row": 3, "costs": [260], "unlock": AREA2, "requires": ["lingua_destreza_2"],
 		"name": "Destreza nível 3",
 		"desc": "Lambidas muito mais rápidas"},
-	{"id": "lingua_comprimento_1", "branch": 0, "col": 2, "row": 1, "costs": [16, 20, 24], "requires": ["lingua_segurar"],
+	{"id": "lingua_comprimento_1", "branch": 0, "col": 2, "row": 1, "costs": [16, 20, 24], "unlock": 2, "requires": ["lingua_segurar"],
 		"name": "Comprimento nível 1",
 		"desc": "A língua alcança um pouco mais longe"},
 	{"id": "lingua_comprimento_2", "branch": 0, "col": 2, "row": 2, "costs": [60, 80], "unlock": AREA2, "requires": ["lingua_comprimento_1"],
@@ -120,16 +146,16 @@ const UPGRADES := [
 	{"id": "lingua_mira_1", "branch": 0, "col": 3, "row": 1, "costs": [12], "requires": ["lingua_segurar"],
 		"name": "Mira nível 1",
 		"desc": "A língua segue levemente o alvo"},
-	{"id": "lingua_mira_2", "branch": 0, "col": 3, "row": 2, "costs": [25, 30, 35], "unlock": 1, "requires": ["lingua_mira_1"],
+	{"id": "lingua_mira_2", "branch": 0, "col": 3, "row": 2, "costs": [25, 30, 35], "unlock": 3, "requires": ["lingua_mira_1"],
 		"name": "Mira nível 2",
 		"desc": "A procura da mira é aumentada"},
 	{"id": "lingua_mira_3", "branch": 0, "col": 3, "row": 3, "costs": [110], "unlock": AREA2, "requires": ["lingua_mira_2"],
 		"name": "Mira nível 3",
 		"desc": "A área de procura da mira é ainda maior"},
-	{"id": "lingua_olheiro_1", "branch": 0, "col": 4, "row": 1, "costs": [20], "unlock": 1, "requires": ["lingua_segurar"],
+	{"id": "lingua_olheiro_1", "branch": 0, "col": 4, "row": 1, "costs": [20], "unlock": 2, "requires": ["lingua_segurar"],
 		"name": "Olheiro nível 1",
 		"desc": "Enfie a língua no buraco e coma alguns insetos."},
-	{"id": "lingua_olheiro_2", "branch": 0, "col": 4, "row": 2, "costs": [30, 40, 50], "unlock": 2, "requires": ["lingua_olheiro_1"],
+	{"id": "lingua_olheiro_2", "branch": 0, "col": 4, "row": 2, "costs": [20, 30, 40], "unlock": 4, "requires": ["lingua_olheiro_1"],
 		"name": "Olheiro nível 2",
 		"desc": "Mais formigas são comidas e o tempo de recarga é menor"},
 	{"id": "lingua_olheiro_3", "branch": 0, "col": 4, "row": 3, "costs": [120], "unlock": AREA2, "requires": ["lingua_olheiro_2"],
@@ -138,16 +164,16 @@ const UPGRADES := [
 	# Garras: Cavar abre as linhas de Força (moradoras tontas), de Rapidez (o
 	# descanso entre usos) e de Fundura (buracos maiores: câmaras grandes e o
 	# monte da rainha). A linha do Tremor sai de Força nível 1.
-	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "costs": [25], "requires": [],
+	{"id": "garras_cavar", "branch": 1, "col": -1, "row": 0, "costs": [20], "requires": [],
 		"name": "Cavar",
 		"desc": "Cave numa câmara pequena fechada"},
-	{"id": "garras_forca_1", "branch": 1, "col": 0, "row": 1, "costs": [25, 35], "requires": ["garras_cavar"],
+	{"id": "garras_forca_1", "branch": 1, "col": 0, "row": 1, "costs": [25, 35], "unlock": 2, "requires": ["garras_cavar"],
 		"name": "Força nível 1",
 		"desc": "Ao cavar, as formigas ali dentro ficam atordoadas"},
-	{"id": "garras_forca_2", "branch": 1, "col": 0, "row": 2, "costs": [40, 50], "unlock": 2, "requires": ["garras_forca_1"],
+	{"id": "garras_forca_2", "branch": 1, "col": 0, "row": 2, "costs": [40, 50], "unlock": 5, "requires": ["garras_forca_1"],
 		"name": "Força nível 2",
 		"desc": "Aumenta a duração do atordoamento"},
-	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [90], "unlock": 2, "requires": ["garras_forca_1"],
+	{"id": "garras_tremor_1", "branch": 1, "col": 1, "row": 2, "costs": [70], "unlock": 5, "requires": ["garras_forca_1"],
 		"name": "Tremor nível 1",
 		"desc": "Pule e caia com força. Os insetos próximos ficam atordoados por alguns segundos"},
 	{"id": "garras_tremor_2", "branch": 1, "col": 1, "row": 3, "costs": [45, 55, 65], "unlock": AREA2, "requires": ["garras_tremor_1"],
@@ -156,16 +182,16 @@ const UPGRADES := [
 	{"id": "garras_tremor_3", "branch": 1, "col": 1, "row": 4, "costs": [300], "unlock": AREA2, "requires": ["garras_tremor_2"],
 		"name": "Tremor nível 3",
 		"desc": "Aumenta o alcance do Tremor, reduz o tempo de recarga e atrai os insetos para um ponto à sua frente"},
-	{"id": "garras_rapidez_1", "branch": 1, "col": 2, "row": 1, "costs": [12, 16, 20], "requires": ["garras_cavar"],
+	{"id": "garras_rapidez_1", "branch": 1, "col": 2, "row": 1, "costs": [12, 16, 20], "unlock": 2, "requires": ["garras_cavar"],
 		"name": "Rapidez nível 1",
 		"desc": "Reduz o tempo de recarga de Cavar"},
 	{"id": "garras_rapidez_2", "branch": 1, "col": 2, "row": 2, "costs": [40, 50, 60], "unlock": AREA2, "requires": ["garras_rapidez_1"],
 		"name": "Rapidez nível 2",
 		"desc": "Reduz ainda mais o tempo de recarga de Cavar e o último nível acelera a velocidade"},
-	{"id": "garras_fundura_1", "branch": 1, "col": 3, "row": 1, "costs": [60], "requires": ["garras_cavar"],
+	{"id": "garras_fundura_1", "branch": 1, "col": 3, "row": 1, "costs": [60], "unlock": 4, "requires": ["garras_cavar"],
 		"name": "Cavar fundo nível 1",
 		"desc": "Cave câmaras grandes fechadas"},
-	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "unlock": 4, "requires": ["garras_fundura_1"],
+	{"id": "garras_fundura_2", "branch": 1, "col": 3, "row": 2, "costs": [120], "unlock": 8, "requires": ["garras_fundura_1"],
 		"name": "Cavar fundo nível 2",
 		"desc": "Desmancha um ninho inteiro e revela a rainha"},
 	# Patas: correr existe desde o começo, gastando estamina. Fôlego abre as
@@ -175,28 +201,28 @@ const UPGRADES := [
 	{"id": "patas_folego", "branch": 2, "col": -1, "row": 0, "costs": [10], "requires": [],
 		"name": "Fôlego",
 		"desc": "Aumenta a estamina em 50%"},
-	{"id": "patas_folego_1", "branch": 2, "col": 3, "row": 1, "costs": [12, 16, 20], "requires": ["patas_folego"],
+	{"id": "patas_folego_1", "branch": 2, "col": 3, "row": 1, "costs": [12, 16, 20], "unlock": 3, "requires": ["patas_folego"],
 		"name": "Fôlego nível 1",
 		"desc": "Aumenta a estamina em até 200%"},
 	{"id": "patas_folego_2", "branch": 2, "col": 3, "row": 2, "costs": [50, 60], "unlock": AREA2, "requires": ["patas_folego_1"],
 		"name": "Fôlego nível 2",
 		"desc": "Aumenta a estamina em até 300%"},
-	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "costs": [8, 12, 16], "requires": ["patas_folego"],
+	{"id": "patas_passada_1", "branch": 2, "col": 2, "row": 1, "costs": [8, 12, 16], "unlock": 3, "requires": ["patas_folego"],
 		"name": "Passada nível 1",
 		"desc": "Aumenta a eficiência da estamina"},
-	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "costs": [40, 50], "unlock": 1, "requires": ["patas_passada_1"],
+	{"id": "patas_passada_2", "branch": 2, "col": 2, "row": 2, "costs": [25, 35], "unlock": 5, "requires": ["patas_passada_1"],
 		"name": "Passada nível 2",
 		"desc": "A estamina é consumida numa velocidade muito menor"},
-	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "costs": [8, 12], "requires": ["patas_folego"],
+	{"id": "patas_respiro_1", "branch": 2, "col": 1, "row": 1, "costs": [8, 12], "unlock": 3, "requires": ["patas_folego"],
 		"name": "Respiro nível 1",
 		"desc": "A recuperação de estamina é um pouco mais eficaz"},
-	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "costs": [30, 40], "unlock": 1, "requires": ["patas_respiro_1"],
+	{"id": "patas_respiro_2", "branch": 2, "col": 1, "row": 2, "costs": [20, 30], "unlock": 5, "requires": ["patas_respiro_1"],
 		"name": "Respiro nível 2",
 		"desc": "A recuperação de estamina é muito eficaz"},
 	{"id": "patas_corrida_1", "branch": 2, "col": 0, "row": 1, "costs": [25, 35], "requires": ["patas_folego"],
 		"name": "Corrida nível 1",
 		"desc": "Corre mais rápido e menos insetos fogem"},
-	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [90], "requires": ["patas_corrida_1"],
+	{"id": "patas_corrida_2", "branch": 2, "col": 0, "row": 2, "costs": [70], "unlock": 6, "requires": ["patas_corrida_1"],
 		"name": "Corrida nível 2",
 		"desc": "Dá para lamber enquanto corre e menos insetos fogem"},
 	{"id": "patas_corrida_3", "branch": 2, "col": 0, "row": 3, "costs": [250], "unlock": AREA2, "requires": ["patas_corrida_2"],
@@ -204,22 +230,22 @@ const UPGRADES := [
 		"desc": "Os insetos não fogem mais"},
 	# Faro: Farejar (as formigas do formigueiro mais perto) abre as linhas de
 	# Rastro (achar câmaras e formigueiros) e de Família (ver as formigas dele).
-	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "costs": [25], "unlock": 3, "requires": [],
+	{"id": "faro_farejar", "branch": 3, "col": -1, "row": 0, "costs": [25], "unlock": 1, "requires": [],
 		"name": "Farejar",
 		"desc": "[Q] Fareje alguns insetos da câmara mais próxima"},
-	{"id": "faro_rastro_1", "branch": 3, "col": 0, "row": 1, "costs": [20], "unlock": 3, "requires": ["faro_farejar"],
+	{"id": "faro_rastro_1", "branch": 3, "col": 0, "row": 1, "costs": [20], "unlock": 1, "requires": ["faro_farejar"],
 		"name": "Rastro nível 1",
 		"desc": "Fareje as câmaras do ninho mais próximo"},
-	{"id": "faro_rastro_2", "branch": 3, "col": 0, "row": 2, "costs": [40, 55], "requires": ["faro_rastro_1"],
+	{"id": "faro_rastro_2", "branch": 3, "col": 0, "row": 2, "costs": [30, 40], "unlock": 6, "requires": ["faro_rastro_1"],
 		"name": "Rastro nível 2",
 		"desc": "Fareje todas as câmaras ao seu redor"},
 	{"id": "faro_familia_1", "branch": 3, "col": 1, "row": 1, "costs": [30], "unlock": 3, "requires": ["faro_farejar"],
 		"name": "Família nível 1",
 		"desc": "Fareje a localização aproximada dos insetos próximos"},
-	{"id": "faro_familia_2", "branch": 3, "col": 1, "row": 2, "costs": [50, 65], "requires": ["faro_familia_1"],
+	{"id": "faro_familia_2", "branch": 3, "col": 1, "row": 2, "costs": [35, 45], "unlock": 6, "requires": ["faro_familia_1"],
 		"name": "Família nível 2",
 		"desc": "Aumenta o alcance e a duração do farejar"},
-	{"id": "faro_familia_3", "branch": 3, "col": 1, "row": 3, "costs": [180], "requires": ["faro_familia_2"],
+	{"id": "faro_familia_3", "branch": 3, "col": 1, "row": 3, "costs": [100], "unlock": 7, "requires": ["faro_familia_2"],
 		"name": "Família nível 3",
 		"desc": "Todos os insetos do ninho são realçados, independente da distância"},
 	# Escalada + Cauda (ainda não feita: aparece com cadeado)
@@ -233,14 +259,18 @@ var regions_reached: Array[String] = ["Cerrado"]
 
 var ants_eaten: int = 0
 var points_spent: int = 0
+## Pontos ganhos sem comer (NEST_BONUS por ninho limpo).
+var bonus_points: int = 0
 ## Habilidades compradas: id -> quantos cliques (1 até max_rank).
 var purchased: Dictionary = {}
-## Marcos já alcançados neste jogo (1, 2, 3) e as habilidades ganhas de
+## Marcos já alcançados neste jogo (1 a 8) e as habilidades ganhas de
 ## presente neles.
 var marcos: Array[int] = []
 ## Objetivo guiado atual (índice em objectives.gd, STEPS).
 var objective := 0
 var gifted: Array[String] = []
+## Os presentes que o último marco deu de verdade (o HUD só avisa desses).
+var last_gifts: Array[String] = []
 ## O jogo salvo aberto era de antes dos nós com cliques: os pontos voltaram
 ## (o HUD avisa uma vez e desliga).
 var skills_refunded := false
@@ -288,6 +318,7 @@ func _ready() -> void:
 func reset_run() -> void:
 	ants_eaten = 0
 	points_spent = 0
+	bonus_points = 0
 	purchased.clear()
 	marcos.clear()
 	gifted.clear()
@@ -453,9 +484,25 @@ func _check_achievements() -> void:
 	_save_record()
 
 
-## Pontos para gastar: 1 a cada 10 formigas comidas, menos o que já foi gasto.
+## Pontos para gastar: 1 a cada 10 formigas comidas, mais os bônus, menos o
+## que já foi gasto.
 func points_available() -> int:
-	return ants_eaten / ANTS_PER_POINT - points_spent
+	return points_earned() - points_spent
+
+
+## Todos os pontos ganhos neste jogo (insetos e bônus).
+func points_earned() -> int:
+	return ants_eaten / ANTS_PER_POINT + bonus_points
+
+
+## Ninho limpo: NEST_BONUS pontos na hora (o HUD mostra um "+20" ao lado dos
+## pontos).
+func add_bonus(points: int) -> void:
+	if points <= 0:
+		return
+	bonus_points += points
+	_check_affordable(true)
+	bonus_earned.emit(points)
 
 
 ## Quantas formigas ainda faltam comer para ter `points` pontos para gastar.
@@ -538,7 +585,7 @@ func _spent_on(ranks: Dictionary) -> int:
 	return t
 
 
-## Quantos insetos comidos o marco 2 ou 3 pede (0 para o marco 1).
+## Quantos insetos comidos o marco pede (0 para os de façanha).
 func marco_insects(index: int) -> int:
 	for m in MARCOS:
 		if m.index == index and m.has("insects"):
@@ -555,19 +602,55 @@ func get_marco(index: int) -> Dictionary:
 	return {}
 
 
-## Chegou no marco: guarda, dá os presentes e avisa (uma vez só).
-func reach_marco(index: int) -> void:
+## Chegou no marco: guarda, dá os presentes e avisa (uma vez só). Sem
+## `announce`, só guarda e dá os presentes (ao abrir um jogo salvo).
+func reach_marco(index: int, announce: bool = true) -> void:
 	if marcos.has(index) or get_marco(index).is_empty():
 		return
 	marcos.append(index)
+	last_gifts.clear()
 	for id in MARCO_GIFTS.get(index, []):
-		if not gifted.has(id):
-			gifted.append(id)
+		if gifted.has(id):
+			# Já veio noutro marco (Cavar fundo nível 1: ninho ou 3 500).
+			purchased[id] = max_rank(id)
+			continue
+		var had := complete(id)
+		# Comprada antes de virar presente (jogo salvo antigo): os pontos voltam.
+		points_spent = maxi(points_spent - _spent_on({id: rank(id)}), 0)
+		gifted.append(id)
 		purchased[id] = max_rank(id)
+		if not had:
+			last_gifts.append(id)
 	_check_affordable(false)
+	if not announce:
+		return
 	marco_reached.emit(index)
-	for id in MARCO_GIFTS.get(index, []):
+	for id in last_gifts:
 		upgrade_purchased.emit(id)
+
+
+## Marcos de quantidade que esse tanto de insetos já alcançou (jogo salvo).
+func _sync_insect_marcos() -> void:
+	for m in MARCOS:
+		if m.has("insects") and ants_eaten >= int(m.insects):
+			reach_marco(m.index, false)
+
+
+## O próximo marco de quantidade que falta ({} se todos chegaram).
+func next_insect_marco() -> Dictionary:
+	for m in MARCOS:
+		if m.has("insects") and not marcos.has(m.index):
+			return m
+	return {}
+
+
+## Insetos do marco de quantidade anterior a `index` (0 se é o primeiro).
+func prev_insect_marco(index: int) -> int:
+	var at := 0
+	for m in MARCOS:
+		if m.has("insects") and m.index < index:
+			at = maxi(at, int(m.insects))
+	return at
 
 
 ## Habilidades que o marco `index` abre na árvore.
@@ -579,7 +662,7 @@ func marco_unlocks(index: int) -> Array[String]:
 	return ids
 
 
-## Quando a habilidade abre: 0 = desde o começo, 1..3 = marco, AREA2.
+## Quando a habilidade abre: 0 = desde o começo, 1..8 = marco, AREA2.
 func unlock_of(id: String) -> int:
 	return int(get_upgrade(id).get("unlock", 0))
 
@@ -1058,7 +1141,7 @@ func _save_record() -> void:
 
 func to_save() -> Dictionary:
 	return {
-		"ants_eaten": ants_eaten, "points_spent": points_spent,
+		"ants_eaten": ants_eaten, "points_spent": points_spent, "bonus_points": bonus_points,
 		"purchased": purchased.duplicate(), "elapsed": elapsed, "best_combo": best_combo,
 		"tanajuras_eaten": tanajuras_eaten, "queens_eaten": queens_eaten,
 		"regions_reached": regions_reached, "completed": completed,
@@ -1068,18 +1151,35 @@ func to_save() -> Dictionary:
 	}
 
 
-func from_save(d: Dictionary) -> void:
+## `version` é a do jogo salvo: a 8 tinha 4 marcos, com outros números, e
+## não tinha o bônus de ninho limpo.
+func from_save(d: Dictionary, version: int = SAVE_VERSION) -> void:
 	ants_eaten = int(d.get("ants_eaten", 0))
+	stats = Dictionary(d.get("stats", {}))
+	bonus_points = int(d.get("bonus_points", 0))
 	purchased.clear()
 	points_spent = 0
 	skills_refunded = false
-	marcos.clear()
-	for m in d.get("marcos", []):
-		marcos.append(int(m))
 	gifted.clear()
 	for g in d.get("gifted", []):
 		gifted.append(String(g))
 	objective = int(d.get("objective", 0))
+	marcos.clear()
+	if version >= 9:
+		for m in d.get("marcos", []):
+			marcos.append(int(m))
+	else:
+		# Versão 8: o marco 3 (200 insetos) virou o 1 e o 4 (só falta a
+		# rainha) virou o 8, com os mesmos presentes; o 2 (metade) saiu. O 1
+		# (ninho limpo) volta em main.gd, pela colônia, com o presente novo
+		# (Cavar fundo nível 1). Os objetivos mudaram: o cartão recomeça e
+		# pula o que já está feito. Os ninhos já limpos valem o bônus.
+		for m in d.get("marcos", []):
+			match int(m):
+				3: marcos.append(1)
+				4: marcos.append(MARCO_RAINHA)
+		objective = 0
+		bonus_points = NEST_BONUS * int(stat("nests_cleaned"))
 	var saved = d.get("purchased", {})
 	if saved is Dictionary:
 		for id in saved:
@@ -1093,10 +1193,16 @@ func from_save(d: Dictionary) -> void:
 		# Jogo salvo de antes dos nós com cliques: as habilidades eram outras.
 		skills_refunded = true
 	# Preços mudaram desde que o jogo foi salvo e não cabem mais: devolve os pontos.
-	if points_spent > ants_eaten / ANTS_PER_POINT:
+	if points_spent > points_earned():
 		purchased.clear()
+		for id in gifted:
+			purchased[id] = max_rank(id)
 		points_spent = 0
 		skills_refunded = true
+	# Marcos que já dá para saber pelo que foi feito (sem avisar de novo).
+	_sync_insect_marcos()
+	if stat("chambers_opened") >= 1.0:
+		reach_marco(MARCO_CAMARA, false)
 	elapsed = float(d.get("elapsed", 0.0))
 	best_combo = int(d.get("best_combo", 0))
 	tanajuras_eaten = int(d.get("tanajuras_eaten", 0))
@@ -1110,7 +1216,6 @@ func from_save(d: Dictionary) -> void:
 	# O modo contra o relógio saiu do jogo: jogos salvos nele seguem no normal.
 	mode = MODE_NORMAL
 	splits = Array(d.get("splits", []))
-	stats = Dictionary(d.get("stats", {}))
 	run_id = String(d.get("run_id", run_id))
 	combo = 0
 	frenzy_time = 0.0

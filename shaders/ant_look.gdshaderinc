@@ -1,5 +1,7 @@
 // Visual das formigas, igual nas de campo (ant_field.gdshader) e nas simuladas
-// (ant.gdshader): casco de quitina brilhante e a folha carregada.
+// (ant.gdshader): casco de quitina brilhante e a folha carregada. As fantasias
+// das colecionáveis (partes 7 e 8) são de pano: o brilho vem de UV.x - 2
+// (0 = fosco, 1 = brilhante como a cartola e as lantejoulas).
 // A folha muda de tom de uma formiga para outra (`seed` 0..1) e tem nervuras;
 // uma em cada doze leva uma pétala (rosa ou amarela) no lugar da folha.
 
@@ -21,7 +23,16 @@ vec3 ant_leaf_color(vec3 base, vec2 uv, float seed) {
 void ant_look(vec3 base, float part, vec2 uv, float seed, out vec3 albedo, out float rough,
 		out float spec, out float rim, out vec3 back, out float coat) {
 	bool leaf = abs(part - 3.0) < 0.5;
-	if (leaf) {
+	bool cloth = part > 6.5;
+	if (cloth) {
+		float gloss = clamp(uv.x - 2.0, 0.0, 1.0);
+		albedo = base;
+		rough = mix(0.78, 0.22, gloss);
+		spec = mix(0.25, 0.6, gloss);
+		rim = mix(0.18, 0.4, gloss);
+		back = vec3(0.0);
+		coat = gloss * 0.7;
+	} else if (leaf) {
 		albedo = ant_leaf_color(base, uv, seed);
 		rough = 0.65;
 		spec = 0.25;

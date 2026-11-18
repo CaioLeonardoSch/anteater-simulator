@@ -21,6 +21,7 @@ produção, os protótipos e as decisões, num lugar só.
 | ![Mapa da área 1: 8 formigueiros, 40 câmaras e 10 000 insetos](docs/screenshots/mapa-8-formigueiros.jpg) | ![Estatísticas, abertas pelo botão da pausa (Esc)](docs/screenshots/estatisticas-pausa.jpg) |
 | ![Objetivo no canto e o losango em cima do alvo, com a distância](docs/screenshots/objetivo.jpg) | ![Árvore com cadeados: o que abre nos marcos e o que fica para a área 2](docs/screenshots/arvore-marcos.jpg) |
 | ![Modo contra o relógio: cronômetro e parcial no canto](docs/screenshots/contra-o-relogio.jpg) | ![O sol antes e depois do ajuste da névoa](docs/screenshots/sol-antes-depois.jpg) |
+| ![Aba Coleção: as formigas fantasiadas já achadas e a silhueta das que faltam](docs/screenshots/colecao.jpg) | |
 
 > Capturas feitas em um servidor sem placa de vídeo (renderização por software).
 > No seu PC fica igual ou melhor.
@@ -75,7 +76,7 @@ tela, a resolução e a qualidade gráfica.
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto, olhando para ela | `X` |
 | Pular (subir nas pedras, sair dos buracos) | `Espaço` | `A` |
 | Tremor* (pulo que atordoa) | `X` | `B` |
-| Mapa e habilidades | `Tab` (abre na última aba; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Mapa, habilidades e coleção | `Tab` (abre na última aba; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
 | Abrir o mapa / as habilidades | `M` / `H` (a mesma tecla fecha) | |
 | Mostrar o objetivo de novo | `F` | `Y` |
 | Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
@@ -129,7 +130,8 @@ uma vez".
 - **10 000 insetos, um a um:** nas trilhas elas vão e voltam do arbusto
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
   entram de novo. Cada uma foge sozinha quando você chega perto, e cada
-  formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal.
+  formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal (é a
+  Formiga Noel da coleção).
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
   fechadas, e 12 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
   passeiam em volta contam para o formigueiro dono da câmara). Com **Cavar**
@@ -198,6 +200,16 @@ uma vez".
   aprender; as bolinhas em volta mostram os cliques, e as completas acendem em
   dourado. Ela não abre
   sozinha: um selo no canto (◆ 2 Tab) mostra quando já dá para aprender algo.
+- **Formigas fantasiadas:** cinco formigas de fantasia ficam escondidas
+  pelos cantos da clareira, sempre no mesmo lugar, paradas ou andando no
+  lugar, e não fogem: a Abóbora (máscara de Halloween), a Tamanduá, a Lincoln
+  (cartola e barba), a Banhista (maiô, touca e óculos) e a Foliã (penas e
+  lantejoulas). Chegue perto e olhe para uma ("Você encontrou a Formiga
+  Abóbora") e ela entra na coleção. A sexta é a Formiga Noel, a do chapéu de
+  Natal, que só aparece de vez em quando no meio das outras.
+- **Coleção** (`Tab`, aba depois das habilidades): um card para cada formiga
+  fantasiada da área. Antes de achar, só a silhueta; achada, a foto dela,
+  mais detalhada, e o nome. A coleção vale para todos os jogos salvos.
 - **Fim da demo:** um tronco caído fecha a passagem para a próxima área. Com
   todas as formigas comidas, a bússola mostra a saída: segure `E` perto do
   tronco e as garras quebram o tronco.

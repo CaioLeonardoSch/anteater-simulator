@@ -210,6 +210,21 @@ buscamos, no espírito delas:
 - **Cogumelos:** 14 grupinhos laranja ao pé de árvores, troncos, arbustos e
   cupinzeiros. A língua pega o grupinho inteiro e ele dá o mesmo Frenesi da
   tanajura; nasce de novo no mesmo lugar depois de 90 s.
+- **Formigas colecionáveis** (desde 18/11/2026; `scripts/collectibles.gd`):
+  seis por área, cada uma com uma fantasia. Na área 1, cinco ficam sempre no
+  mesmo lugar, escondidas perto dos paredões, e não fogem nem são comidas
+  (não contam nos 10 000 insetos): **Abóbora** (máscara de Halloween, anda em
+  roda perto dos cogumelos ao lado da pedra do sudoeste), **Tamanduá**
+  (máscara com o focinho, olha em volta atrás da pedra alta do nordeste),
+  **Lincoln** (cartola e barba, parada atrás da pedra do oeste, perto da
+  saída), **Banhista** (maiô listrado, touca e óculos, vai e volta na margem
+  oeste da lagoa) e **Foliã** (penas e lantejoulas, samba atrás da pedra
+  grande do leste). A sexta é a **Noel**: a formiga de chapéu de Natal que
+  sai em uma de cada 16 000, como antes. Chegando a até 3,5 m, com ela perto
+  do meio da tela e nada no caminho, ela entra na coleção, que vale para
+  todos os jogos salvos (`user://save.cfg`). As fantasias são peças da malha
+  da formiga (partes 7 e 8 do shader) e elas são um terço maiores que as
+  operárias.
 - **Sem insetos resistentes:** as formigas-soldado saíram da demo.
 
 ### Habilidades: as 5 do plano
@@ -416,6 +431,11 @@ Feito, seguindo as decisões:
    curva pela tela até o alvo, fica pulsando com a distância e some; o mesmo
    losango aparece na bússola. **F** (ou Y no controle) faz ele voar de novo.
    O losango segue a opção de Dicas (Nenhuma o esconde); o cartão fica sempre.
+24. **Coleção** (aba do Tab, depois das habilidades): seis cards da área 1,
+   com "Área 1 · 2 de 6" em cima. Antes de achar, o card mostra a silhueta da
+   formiga; achada, a foto (tirada uma vez, num estúdio só dela, com a malha
+   mais detalhada) e o nome. Ao achar, o aviso "Você encontrou a Formiga
+   Abóbora".
 
 Ainda a ajustar:
 
@@ -784,4 +804,5 @@ acertar a duração com testes.
 | 18/11/2026 | Cavar fundo nível 1 | Compra de 60 pontos; sem ela a área não fechava | De presente no 1º ninho limpo (os ninhos pequenos só têm câmaras pequenas) ou aos 3 500 insetos, o que chegar primeiro: no bot que não segue os objetivos, o 1º ninho só saía depois de 60% a 74% dos insetos, e as câmaras grandes ficavam fechadas até lá |
 | 18/11/2026 | Bônus de ninho limpo | Ninho limpo não dava pontos | 20 pontos na hora: um "+20" dourado sobe ao lado dos pontos, como o "+1" de cada inseto (no cartão "Ninho limpo" ele seria lido como insetos, como o "+200" da rainha). 8 ninhos: 160 pontos |
 | 18/11/2026 | Objetivos | Comer 200, aprender uma habilidade, limpar um ninho, comer metade, desmanchar a rainha | Comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar 1 e 4 ninhos, comer todos os insetos (o losango aponta o ninho que dá menos trabalho), desmanchar a rainha. Embaixo, a linha da próxima novidade ("Tremor nível 1 · faltam 380 insetos"). Os textos seguem a revisão de 13/11 |
+| 18/11/2026 | Colecionáveis | Só o chapéu de Natal, numa formiga em cada 16 000, sem contar em nada | Seis formigas fantasiadas por área. Na área 1: Abóbora, Tamanduá, Lincoln, Banhista e Foliã, fixas em lugares escondidos (paradas ou andando no lugar, sem fugir), e a Noel, a do chapéu de Natal, que continua aparecendo de vez em quando. Achar = chegar perto e olhar para ela. Aba Coleção no Tab, com a silhueta antes e a foto depois; vale para todos os jogos salvos |
 | 18/11/2026 | Jogo salvo | Versão 8 | Versão 9; a 8 abre e é convertida (marcos renumerados, os ninhos já limpos valem o bônus, Cavar fundo 1 comprado volta como presente com os 60 pontos devolvidos, o cartão de objetivo recomeça pulando o que já está feito) |

@@ -31,6 +31,8 @@ extends Node
 ##   --start=pause                abre a pausa
 ##   --start=stats                abre as estatísticas (pela pausa)
 ##   --start=end                  abre a tela do fim (com as estatísticas)
+##   --start=colecao              abre a aba Coleção (no Tab)
+##   --colecao=all|abobora,noel   começa com essas formigas na coleção (sem salvar)
 ##   --mode=relogio               o jogo novo é contra o relógio
 ##   --conquistas                 mostra as conquistas (escondidas na demo)
 ##   --start=settings --tab=N     abre as configurações na aba N

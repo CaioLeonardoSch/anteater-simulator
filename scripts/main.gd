@@ -15,6 +15,8 @@ const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const SnoutBuilder := preload("res://scripts/player/snout_builder.gd")
 const AntMeshBuilder := preload("res://scripts/ants/ant_mesh_builder.gd")
 const Props := preload("res://scripts/world/props.gd")
+const CollectibleAnts := preload("res://scripts/world/collectible_ants.gd")
+const Collectibles := preload("res://scripts/collectibles.gd")
 
 enum State { LOADING, MENU, PLAYING, PAUSED, TREE, COMPLETE }
 
@@ -93,6 +95,8 @@ func _ready() -> void:
 		_start_play()
 		if DevTools.start_mode == "tree":
 			_open_tree(TabMenu.SKILLS)
+		elif DevTools.start_mode == "colecao":
+			_open_tree(TabMenu.COLLECTION)
 		elif DevTools.start_mode == "map":
 			_open_tree(TabMenu.MAP)
 		elif DevTools.start_mode == "pause":
@@ -136,6 +140,18 @@ func _build_game() -> void:
 	player.setup(world, swarm, colony)
 	player.place_at(world.player_start, world.player_start_yaw)
 	player.exit_broken.connect(_on_exit_broken)
+	# As formigas colecionáveis, fantasiadas, nos lugares escondidos.
+	var collectibles := CollectibleAnts.new()
+	collectibles.name = "Colecionaveis"
+	world.add_child(collectibles)
+	collectibles.setup(world, player, swarm)
+	if DevTools.args.has("colecao"):
+		# Teste: já começa com essas na coleção (--colecao=all ou ids separados
+		# por vírgula), sem salvar.
+		var ids := String(DevTools.args.colecao).split(",", false)
+		for c in Collectibles.LIST:
+			if ids.has("all") or ids.has(String(c.id)):
+				GameState.collection[c.id] = 0
 	menu_cam = Camera3D.new()
 	menu_cam.name = "MenuCamera"
 	menu_cam.fov = 62.0

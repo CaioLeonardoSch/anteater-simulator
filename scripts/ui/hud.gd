@@ -9,6 +9,7 @@ const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Glyphs := preload("res://scripts/ui/glyphs.gd")
 const NestScript := preload("res://scripts/world/nest.gd")
 const Objectives := preload("res://scripts/ui/objectives.gd")
+const Collectibles := preload("res://scripts/collectibles.gd")
 
 ## Cor do Frenesi (asas de tanajura).
 const FRENZY := Color("f0a65a")
@@ -111,6 +112,7 @@ func setup(p, sw, col, w) -> void:
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
 	GameState.marco_reached.connect(_on_marco_reached)
+	GameState.collectible_found.connect(_on_collectible_found)
 	GameState.split_reached.connect(_on_split)
 	Settings.changed.connect(_refresh_keys)
 	_on_eaten_changed(GameState.ants_eaten, 0)
@@ -574,6 +576,12 @@ func _on_marco_reached(_index: int) -> void:
 	big_note("", "Você desbloqueou a habilidade %s [%s]" % [GameState.get_upgrade(id).name, key],
 		6.0, "nose" if id == "faro_farejar" else "claws")
 	Sfx.play("point", -2.0)
+
+
+## Achou uma formiga colecionável: aviso grande, como o dos presentes.
+func _on_collectible_found(id: String) -> void:
+	big_note("", "Você encontrou a %s" % Collectibles.get_def(id).get("name", id), 5.0, "ant")
+	Sfx.play("upgrade", -2.0, 1.2)
 
 
 func _on_chamber_cleaned(nest, _ci: int) -> void:

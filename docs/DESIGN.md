@@ -52,7 +52,7 @@ buscamos, no espírito delas:
 | **Plano de produção** | Etapas de M1 a M5, riscos e cortes sugeridos | [`docs/PLANO.md`](PLANO.md) (resumo na seção 7) | Escrito |
 | **Protótipo M1 (2D)** | Testa só a sensação de comer: 1 ninho com 6 câmaras, 259 insetos e a rainha. Gráfico simples de propósito | Pasta [`prototipos/m1-loop/`](../prototipos/m1-loop/), um projeto Godot à parte (detalhes na seção 8) | Jogável |
 | **Esboço do mapa** | As 4 áreas do jogo completo, cercadas por penhascos | Seção 3 ([`esboco-mapa.png`](esboco-mapa.png)) | Base para o formato, que pode mudar |
-| **Demo 3D** | A área 1 (uma clareira do cerrado de uns 50 m, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 10 000 insetos (cada um sozinho), 8 formigueiros e 40 câmaras (12 no meio do campo), a rainha no fundo do monte grande, 5 habilidades (40 níveis) que abrem em 3 marcos, objetivos com um losango que mostra o caminho, mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
+| **Demo 3D** | A área 1 (uma clareira do cerrado de uns 50 m, sempre no fim da tarde), em 1ª pessoa: começa numa caverna, cercada por penhascos, com o cupinzeiro gigante lá longe; 10 000 insetos (cada um sozinho), 8 formigueiros e 40 câmaras (12 no meio do campo), a rainha no fundo do monte grande, 5 habilidades (43 níveis) que abrem em 8 marcos, objetivos com um losango que mostra o caminho, mapa no TAB, jogo salvo e um tronco caído que fecha a saída | Projeto principal, na raiz do repositório (detalhes na seção 8) | Jogável, já seguindo as decisões (seção 4) |
 
 ---
 
@@ -103,14 +103,19 @@ buscamos, no espírito delas:
 - **Na área 1, os ninhos são só formigueiros**, de uma formiga que fica só no
   chão, com as câmaras da demo. Os cupinzeiros aparecem apenas como cenário.
 - **10 000 insetos na área 1** (eram 1000, depois 3200, 32 000 e 44 000),
-  cada um andando sozinho: **10 insetos comidos = 1 ponto**, uns 1 000 pontos
-  na área. As próximas áreas terão 30 mil, 60 mil e até 100 mil. A árvore tem
-  40 habilidades com **75 cliques**; o que abre na área 1 custa 1 442 pontos,
-  então é preciso escolher. Em vez das travas por insetos comidos, cada
-  habilidade abre **desde o começo**, num dos **3 marcos** da área (o primeiro
-  formigueiro limpo, metade dos insetos e 80%, com o Farejar de presente) ou
-  só na **área 2**. As contas estão em
-  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 11.
+  cada um andando sozinho: **10 insetos comidos = 1 ponto**, e cada **ninho
+  limpo dá mais 20 pontos**: uns 1 160 pontos na área. As próximas áreas terão
+  30 mil, 60 mil e até 100 mil. A árvore tem 43 habilidades com **79
+  cliques**; o que se compra na área 1 custa 1 560 pontos (56 cliques), então
+  dá para comprar uns 75% e é preciso escolher. Cada habilidade abre **desde o
+  começo**, num dos **8 marcos** da área ou só na **área 2**. Os marcos de
+  quantidade (200, 1 000, 3 500, 6 000 e 8 000 insetos) abrem as linhas mais
+  fortes e chegam sempre; os de façanha (a primeira câmara aberta, o primeiro
+  ninho limpo e quando só falta a rainha) abrem o resto e dão as chaves de
+  presente. Presentes: Farejar (200 insetos), Cavar fundo nível 1 (primeiro
+  ninho limpo, ou aos 3 500 insetos se nenhum ninho foi limpo até lá) e nível 2
+  (só falta a rainha). As contas estão em
+  [`pesquisa-habilidades.md`](pesquisa-habilidades.md), seção 14.
 
 ### O mapa: 4 áreas (esboço de 02/11/2026)
 
@@ -180,8 +185,9 @@ buscamos, no espírito delas:
 - **Cada formiga é uma só** (não há grupos): **10 formigas comidas = 1 ponto**.
   A **língua** começa **lenta** (1,4 lambida por segundo), com **um clique por
   lambida**, pegando **uma** formiga. A linha de Destreza a deixa mais rápida
-  (até 4,4 lambidas por segundo) e a de Comprimento, mais longa (de 3 m até
-  4,5 m). A primeira habilidade (**Lambida Rápida**, 15 pontos)
+  (até 4,4 lambidas por segundo) e a de Comprimento, mais longa (de 1 m até
+  3,5 m). A primeira habilidade (**Lambida Rápida**, 5 pontos, paga com 50
+  insetos)
   deixa segurar o botão; a linha de **Bocado** aumenta quantas vêm de uma vez,
   um pouco a cada clique: 2, 3, 5, 8... até 40 formigas.
 - No começo a língua vai **reta** até onde você mira e pega a formiga que
@@ -228,36 +234,41 @@ dá para aprender algo, um selo no canto da tela mostra quantas (◆ 2 **Tab**).
 Cada habilidade tem de **1 a 3 cliques**, mostrados com bolinhas em volta do
 círculo (●●○). Cada clique é uma melhora pequena, com o seu preço; a próxima
 habilidade da linha só abre com todos os cliques da anterior (e o marco dela
-alcançado). Entre parênteses: o preço de cada clique e, depois do ponto, quando
-ela abre: **Formigueiro** (marco 1, o primeiro formigueiro limpo), **Metade**
-(marco 2), **200** (marco 3, 200 insetos comidos) ou **Área 2**. Sem nada, desde o começo.
+alcançado). Entre parênteses: o preço de cada clique e, depois do ponto, o
+marco em que ela abre: **200**, **1 000**, **3 500**, **6 000** ou **8 000**
+(insetos comidos), **Câmara** (a primeira câmara aberta), **Ninho** (o
+primeiro ninho limpo), **Rainha** (só falta o buraco da rainha) ou **Área 2**.
+Sem nada, desde o começo.
 
 | Habilidade | Linha | Níveis (preço de cada clique · quando abre) |
 |---|---|---|
-| **Língua** | começo | Lambida Rápida (15: segurar para lamber) |
-| | Bocado | nível 1 (8, 12, 16: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · Formigueiro: 8 → 11 → 15, e a ponta gruda num raio maior) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40) |
-| | Destreza | só a velocidade: nível 1 (10, 14, 18: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (50, 60, 70 · Metade: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4) |
-| | Comprimento | só o alcance: nível 1 (16, 20, 24: 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m) |
-| | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 6°, e a ponta acompanha o inseto) · nível 2 (25, 30, 35 · Formigueiro: 11° → 16° → 22°) · nível 3 (110 · Área 2: área da mira de 30°) |
-| **Garras** | começo | Cavar (25: abre as câmaras pequenas; depois as garras descansam 25 s) |
-| | Força | nível 1 (25, 35: moradoras tontas por 1,5 → 2,5 s ao abrir) · nível 2 (40, 50 · Metade: 3,2 → 4 s) |
-| | Tremor (sai de Força nível 1) | nível 1 (90 · Metade: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: recarga de 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
-| | Rapidez | nível 1 (12, 16, 20: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo) |
-| | Cavar fundo | nível 1 (60: abre as câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
+| **Língua** | começo | Lambida Rápida (5: segurar para lamber) |
+| | Bocado | nível 1 (8, 14, 22: 2 → 3 → 5 insetos por lambida) · nível 2 (30, 40, 50 · 1 000: 8 → 11 → 15, e a ponta gruda num raio maior) · nível 3 (70, 90 · Área 2: 20 → 25) · nível 4 (160, 200 · Área 2: 32 → 40) |
+| | Destreza | só a velocidade: nível 1 (10, 14, 18 · 200: 1,6 → 1,8 → 2 lambidas por segundo; eram 1,4) · nível 2 (35, 45, 55 · 3 500: 2,4 → 2,8 → 3,2) · nível 3 (260 · Área 2: 4,4) |
+| | Comprimento | só o alcance: nível 1 (16, 20, 24 · Câmara: 1,5 → 2 → 2,5 m; era 1) · nível 2 (60, 80 · Área 2: 3 → 3,5 m) |
+| | Mira | nível 1 (12: a língua vai atrás do inseto mais perto da mira, sem ela vai reta; área da mira de 6°, e a ponta acompanha o inseto) · nível 2 (25, 30, 35 · 1 000: 11° → 16° → 22°) · nível 3 (110 · Área 2: área da mira de 30°) |
+| | Olheiro | nível 1 (20 · Câmara: mirando num buraco, a língua entra e puxa 5 formigas; recarga de 5 s) · nível 2 (20, 30, 40 · Ninho: 8 → 11 → 15 formigas, recarga de 4 → 3,5 → 3 s) · nível 3 (120 · Área 2: 20 formigas, 2 s) |
+| **Garras** | começo | Cavar (20: abre as câmaras pequenas; depois as garras descansam 25 s) |
+| | Força | nível 1 (25, 35 · Câmara: moradoras tontas por 1,5 → 2,5 s ao abrir) · nível 2 (40, 50 · 3 500: 3,2 → 4 s) |
+| | Tremor (sai de Força nível 1) | nível 1 (70 · 3 500: libera o Tremor, pulo com pancada; recarga de 21 s) · nível 2 (45, 55, 65 · Área 2: recarga de 18 → 15 → 12 s) · nível 3 (300 · Área 2: Terremoto: pulo mais alto, tremor maior, puxa as tontas, recarga de 7 s) |
+| | Rapidez | nível 1 (12, 16, 20 · Câmara: descanso de 20 → 16 → 12 s) · nível 2 (40, 50, 60 · Área 2: 9 → 7 → 5 s; no último clique, cava na metade do tempo) |
+| | Cavar fundo | nível 1 (de presente no marco Ninho, ou no 3 500 se nenhum ninho foi limpo até lá: abre as câmaras grandes) · nível 2 (de presente no marco Rainha: desmancha o monte da rainha) |
 | **Patas** | começo | Fôlego (10: estamina máxima de 50 para 75). Correr existe desde o começo (+25% de velocidade; correndo não dá para lamber) |
-| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo; fogem 25% → 20% andando, o dobro correndo; sem Corrida, 35%) · nível 2 (90: lamber correndo; fogem 15%) · nível 3 (250 · Área 2: os insetos não fogem mais) |
-| | Respiro | nível 1 (8, 12: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (30, 40 · Formigueiro: 6 → 7) |
-| | Passada | nível 1 (8, 12, 16: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (40, 50 · Formigueiro: 6 → 5) |
-| | Fôlego | nível 1 (12, 16, 20: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
-| **Faro** | começo | Farejar (25; de presente no marco 3, aos 200 insetos: diz quantos insetos há a até 10 m, até 100 deles, e a distância do mais perto; a bússola aponta o maior grupo) |
-| | Alcance | nível 1 (15, 20, 25 · 80%: 13 → 16 → 20 m; 160 → 250 → 400 insetos) · nível 2 (55, 70 · Área 2: 26 → 34 m; 600 → 1000; no último clique, quanto falta em cada formigueiro) · nível 3 (220 · Área 2: 50 m, 2000, e as rainhas). Cada clique também recarrega mais rápido (10 s → 6 s) |
-| | Precisão | nível 1 (45 · Área 2: nuvem borrada onde estão) · nível 2 (75 · Área 2: os insetos brilham nítidos) · nível 3 (200 · Área 2: colunas de cheiro nas câmaras fechadas) |
-| **Escalada** | | Escalada (300): ainda não feitas, aparecem com cadeado |
+| | Corrida | nível 1 (25, 35: +10% e mais 10% de velocidade correndo; fogem 25% → 20% andando, o dobro correndo; sem Corrida, 35%) · nível 2 (70 · 6 000: lamber correndo; fogem 15%) · nível 3 (250 · Área 2: os insetos não fogem mais) |
+| | Respiro | nível 1 (8, 12 · 1 000: a estamina volta 4 → 5 por segundo; eram 3) · nível 2 (20, 30 · 3 500: 6 → 7) |
+| | Passada | nível 1 (8, 12, 16 · 1 000: correndo gasta 9 → 8 → 7 por segundo; eram 10) · nível 2 (25, 35 · 3 500: 6 → 5) |
+| | Fôlego | nível 1 (12, 16, 20 · 1 000: 100 → 125 → 150) · nível 2 (50, 60 · Área 2: 175 → 200) |
+| **Faro** | começo | Farejar (de presente no marco 200: Q fareja as moradoras da câmara aberta mais perto, a até 12 m, por 4 s; recarga de 10 s) |
+| | Rastro | nível 1 (20 · 200: colunas de cheiro nas câmaras fechadas do ninho farejado) · nível 2 (30, 40 · 6 000: câmaras fechadas de qualquer ninho a até 25 → 40 m; no último clique, quanto falta em cada ninho) |
+| | Família | nível 1 (30 · 1 000: fareja os insetos a até 16 m, num brilho sem foco através do capim) · nível 2 (35, 45 · 6 000: a família inteira do ninho, em qualquer lugar; o cheiro dura 6 → 8 s) · nível 3 (100 · 8 000: os insetos ficam nítidos através do capim) |
+| **Escalada** | | Escalada (300 · Área 2): ainda não feita, aparece com cadeado |
 
 **Habilidades por região:** o que é da área 2 (a **Escalada** e os
 níveis mais fortes das linhas) aparece na árvore desde o começo, só com um
-cadeado, sem texto (o mesmo para o que espera um marco). Ao chegar num marco, um cartão
-grande avisa quantas habilidades novas abriram.
+cadeado, sem texto (o mesmo para o que espera um marco). Os marcos com
+presente mostram um aviso grande no meio da tela; os de quantidade aparecem no
+cartão de objetivo, na linha da próxima novidade ("Faltam 380 insetos para o
+Tremor"), que mostra por uns segundos o que abriu quando o marco chega.
 
 **Fora por enquanto:** Camuflagem (repete o que a Língua já faz) e Natação. O
 **Focinho** volta junto com o Quintal urbano.
@@ -299,7 +310,7 @@ Feito, seguindo as decisões:
    cuidar dela, e depois ela volta para o caminho dela. Uma formiga em cada
    16 000 usa um **chapéu de Natal**.
 5. **Soldados:** saíram. A **tanajura** continua.
-6. **As 5 habilidades, com 40 níveis e 75 cliques**, cada clique com seu preço (seção 3), numa
+6. **As 5 habilidades, com 43 níveis e 79 cliques**, cada clique com seu preço (seção 3), numa
    árvore com **cara de constelação** que não abre sozinha. A língua começa
    **lenta** (1,4 lambida por segundo, acelerando com a linha de Destreza), com
    um clique por lambida, e vai **reta** até aprender a Mira nível 1; correndo
@@ -380,17 +391,24 @@ Feito, seguindo as decisões:
    árvore mostra os números de antes → depois, e a tanajura zumbe baixinho
    quando está perto. Nos textos, "formigas" virou **"insetos"** onde vale para
    formigas e cupins.
-22. **Marcos no lugar das travas:** limpar o primeiro formigueiro (marco 1),
-   comer metade dos insetos (marco 2) e comer 80% (marco 3) abrem habilidades
-   novas, com um cartão grande na tela ("4 habilidades novas na árvore"). No
-   marco 3, o **Farejar** vem de presente e não sai ao redistribuir. Os níveis
-   mais fortes ficam para a área 2, com cadeado na árvore.
+22. **Marcos no lugar das travas (8 marcos desde 18/11/2026):** comer 200,
+   1 000, 3 500, 6 000 e 8 000 insetos abre as linhas mais fortes (Bocado 2
+   aos 1 000, Tremor aos 3 500); abrir a primeira câmara, limpar o primeiro
+   ninho e só faltar a rainha abrem o resto e dão as chaves. Presentes, que
+   não saem ao redistribuir: **Farejar** (200), **Cavar fundo nível 1**
+   (primeiro ninho, ou 3 500 insetos se nenhum ninho foi limpo) e **nível 2**
+   (só falta a rainha). Cada ninho limpo dá
+   **20 pontos** na hora ("+20" no cartão do ninho). Os níveis mais fortes
+   ficam para a área 2, com cadeado na árvore.
 23. **Objetivos (o tutorial guiado):** um cartão no canto, sempre visível, com
-   o objetivo da vez e o progresso ("120 / 200"): andar com WASD, comer um
-   inseto, comer 200, aprender uma habilidade, abrir uma câmara, limpar um
-   formigueiro (marco 1), comer metade (marco 2), desmanchar o formigueiro da
-   rainha, comer todos (aos 80%, o Farejar) e quebrar o tronco. Cumprido, ganha
-   um ✓ verde e um som, e o próximo aparece; o que já foi feito é pulado.
+   o objetivo da vez e o progresso ("30 / 50"): andar com WASD, comer um
+   inseto, comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar um
+   ninho, limpar 4 ninhos, comer tudo menos o monte da rainha, desmanchar o
+   ninho da rainha e quebrar o tronco. Cumprido, ganha um ✓ verde e um som, e
+   o próximo aparece; o que já foi feito é pulado. Embaixo, depois da primeira
+   habilidade, a **linha da próxima novidade**: "Faltam 380 insetos para o
+   Tremor", com uma barra do marco anterior até o próximo; quando ele chega,
+   mostra por 4 s o que abriu ("Abriu: Tremor nível 1 e mais 4").
    Quando o objetivo tem um lugar, um **losango** sai do cartão, voa numa leve
    curva pela tela até o alvo, fica pulsando com a distância e some; o mesmo
    losango aparece na bússola. **F** (ou Y no controle) faz ele voar de novo.
@@ -399,8 +417,9 @@ Feito, seguindo as decisões:
 Ainda a ajustar:
 
 - **Duração:** a meta da área 1 é de uns 20 minutos, e ela vai ser medida
-  jogando (o bot é bem mais lento que uma pessoa; veja a seção 13 da
-  pesquisa).
+  jogando. Com a economia de 18/11, o bot que segue os objetivos limpa a área
+  em 65 minutos, uns 21 de pessoa (o bot é umas 3 vezes mais lento; veja a
+  seção 14 da pesquisa).
 - **Desempenho:** a medição de 07/11/2026 (servidor sem placa de vídeo, que
   conta o que é desenhado) mostrou onde ia o trabalho e levou às mudanças da
   tabela do histórico. Falta medir num PC de verdade com o medidor do jogo
@@ -412,7 +431,10 @@ Ainda a ajustar:
   reformulação já foi feita (estamina, travas, preços novos, Tremor e rainha
   mais cedo). Com ela, o bot limpou a clareira em 68–73 minutos e comprou a
   última habilidade com 87% dos insetos; o ritmo ainda fica parado dos 20 aos
-  40 minutos e acelera muito no fim (seção 8 da pesquisa).
+  40 minutos e acelera muito no fim (seção 8 da pesquisa). Na área 1 nova, a
+  economia de 18/11 (8 marcos, preços e bônus de ninho) está na seção 14: falta
+  ver jogando quando uma pessoa limpa o primeiro ninho e se o "Limpe 4 ninhos"
+  fica parado como no bot.
 
 ---
 
@@ -574,9 +596,11 @@ acertar a duração com testes.
 - **Língua** que estica até onde você mira; **Faro** que mostra as formigas
   através do capim; **tremor** que deixa as formigas tontas.
 - **Tanajura** voadora que dá o Frenesi.
-- **5 habilidades com 40 níveis**, numa árvore com cara de constelação: 10
-  formigas = 1 ponto, cada nível com seu preço, e redistribuição grátis. Elas
-  abrem em **3 marcos** (o 1º formigueiro limpo, metade e 80%).
+- **5 habilidades com 43 níveis**, numa árvore com cara de constelação: 10
+  formigas = 1 ponto, 20 pontos por ninho limpo, cada nível com seu preço, e
+  redistribuição grátis. Elas abrem em **8 marcos** (200, 1 000, 3 500, 6 000
+  e 8 000 insetos, a primeira câmara, o primeiro ninho limpo e quando só falta
+  a rainha).
 - **Objetivos** no canto, um de cada vez, com um losango que voa até o alvo
   (**F** mostra de novo).
 - **Mapa no TAB**, colorido onde você já andou.
@@ -752,3 +776,9 @@ acertar a duração com testes.
 | 13/11/2026 | Formato das pedras | Bolha mole, com cara de massa de pão, listras onduladas e líquen claro em manchas grandes | Pedra rolada do paredão: umas faces retas de lasca, quinas gastas, um lado mais alto que o outro e o pé mais escuro. Cor menos rosada e líquen mais discreto. Mesma colisão e as formigas continuam subindo |
 | 13/11/2026 | Objetivo "Limpe um ninho" | Ao abrir um jogo salvo, o total virava o que faltava comer (ex.: 496 de 496) | O total é o que o ninho tinha no começo do jogo, e a barra mostra o que já foi comido |
 | 15/11/2026 | Teclas do mapa e das habilidades | `Tab` abria sempre no mapa | `M` abre o mapa e `H` as habilidades (a mesma tecla fecha); `Tab` abre na última aba que estava aberta. As duas teclas novas dá para trocar em Controles |
+| 18/11/2026 | Marcos da área 1 | 4 marcos: 200 insetos (Farejar), o 1º ninho limpo (abria o Bocado 2), metade e só falta a rainha; 15 habilidades abertas no começo e nada novo entre 50% e 96% | 8 marcos: 200, 1 000, 3 500, 6 000 e 8 000 insetos abrem a potência (Bocado 2 aos 1 000, Tremor aos 3 500); a 1ª câmara, o 1º ninho limpo e só falta a rainha abrem o resto e dão as chaves. 6 habilidades no começo. Análise e bot em `pesquisa-habilidades.md`, seção 14 |
+| 18/11/2026 | Preços da área 1 | 1 932 pontos à venda para uns 1 000 ganhos (52%); Lambida Rápida 15, Cavar 25; Faro, Patas e Olheiro caros para o que rendem | 1 560 à venda para 1 160 (uns 75%): Lambida Rápida 5, Cavar 20, Bocado 1 8 · 14 · 22, Destreza 2 35 · 45 · 55, Tremor 1 70, e o apoio (Olheiro 2, Corrida 2, Passada 2, Respiro 2, Rastro 2, Família 2 e 3) mais barato |
+| 18/11/2026 | Cavar fundo nível 1 | Compra de 60 pontos; sem ela a área não fechava | De presente no 1º ninho limpo (os ninhos pequenos só têm câmaras pequenas) ou aos 3 500 insetos, o que chegar primeiro: no bot que não segue os objetivos, o 1º ninho só saía depois de 60% a 74% dos insetos, e as câmaras grandes ficavam fechadas até lá |
+| 18/11/2026 | Bônus de ninho limpo | Ninho limpo não dava pontos | 20 pontos na hora, com "+20" no cartão "Ninho limpo" (8 ninhos: 160 pontos) |
+| 18/11/2026 | Objetivos | Comer 200, aprender uma habilidade, limpar um ninho, comer metade, desmanchar a rainha | Comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar 1 e 4 ninhos, comer tudo menos o monte da rainha (o losango aponta o ninho que dá menos trabalho), desmanchar a rainha. Embaixo, a linha da próxima novidade ("Faltam 380 insetos para o Tremor") |
+| 18/11/2026 | Jogo salvo | Versão 8 | Versão 9; a 8 abre e é convertida (marcos renumerados, os ninhos já limpos valem o bônus, Cavar fundo 1 comprado volta como presente com os 60 pontos devolvidos, o cartão de objetivo recomeça pulando o que já está feito) |

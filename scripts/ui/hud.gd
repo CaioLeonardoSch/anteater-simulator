@@ -107,6 +107,7 @@ func setup(p, sw, col, w) -> void:
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	GameState.upgrade_affordable.connect(_on_affordable)
 	GameState.skills_reset.connect(_refresh_points)
+	GameState.points_changed.connect(_refresh_points)
 	GameState.frenzy_changed.connect(_on_frenzy)
 	GameState.upgrade_purchased.connect(_on_purchased)
 	GameState.marco_reached.connect(_on_marco_reached)
@@ -564,8 +565,8 @@ func _on_purchased(id: String) -> void:
 ## Chegou num marco da área: aviso grande no meio da tela com o que abriu.
 ## Só os marcos que dão uma habilidade de presente avisam (os outros só abrem
 ## habilidades na árvore, que o selo de pontos já mostra).
-func _on_marco_reached(index: int) -> void:
-	var gifts: Array = GameState.MARCO_GIFTS.get(index, [])
+func _on_marco_reached(_index: int) -> void:
+	var gifts: Array = GameState.last_gifts
 	if gifts.is_empty():
 		return
 	var id: String = gifts[0]
@@ -582,10 +583,12 @@ func _on_chamber_cleaned(nest, _ci: int) -> void:
 		"pips_on": nest.clean_chambers(), "pips_total": nest.chambers.size()}, true)
 
 
+## Ninho limpo: o cartão mostra os pontos de bônus (GameState.NEST_BONUS).
 func _on_nest_cleaned(_nest) -> void:
 	Sfx.play("nest_clean", -1.0)
 	_cards.push("nest", {"title": "Ninho limpo", "icon": "bloom", "icon_col": Color("8fb86a"),
-		"icon_bg": BG_GREEN, "ring": UiTheme.LEAF, "value_col": UiTheme.LEAF, "pip": 6.0,
+		"icon_bg": BG_GREEN, "ring": UiTheme.LEAF, "value": "+%d" % GameState.NEST_BONUS,
+		"value_col": UiTheme.LEAF, "pip": 6.0,
 		"pips_on": colony.nests_cleaned(), "pips_total": world.nests.size()})
 
 

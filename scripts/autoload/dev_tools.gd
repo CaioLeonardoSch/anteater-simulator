@@ -12,6 +12,10 @@ extends Node
 ##                                em rodízio entre os ramos
 ##   --botlog=arquivo.csv         o bot anota cada compra, formigueiro limpo e o
 ##                                progresso a cada 30 s de jogo; fecha no fim
+##   --bot-compra=lingua          o bot compra primeiro a língua e o Cavar (main.gd,
+##                                BOT_LINGUA) e depois em rodízio; sem isso, só rodízio
+##   --bot-objetivos              o bot prefere os insetos do ninho do objetivo
+##                                (como quem segue o cartão de objetivo)
 ##   --physics-scale              com --timescale, roda a física mais vezes por
 ##                                segundo (o mesmo passo de 1/60 s do jogo normal)
 ##   --give=N                     começa com N formigas comidas

@@ -96,6 +96,7 @@ func _ready() -> void:
 	GameState.upgrade_affordable.connect(func(_id): refresh())
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	GameState.skills_reset.connect(refresh)
+	GameState.points_changed.connect(func(): _on_eaten_changed(GameState.ants_eaten, 0))
 	_layout()
 	refresh()
 

@@ -5,15 +5,25 @@ extends Control
 ## voa numa leve curva até o alvo e fica pulsando em cima dele, com a
 ## distância; depois de um tempo some. A tecla do objetivo (F) faz ele voar de
 ## novo. O alvo também aparece na bússola. O que o jogador já fez antes de
-## chegar a vez é pulado na hora. Ver docs/pesquisa-habilidades.md, seção 12.
+## chegar a vez é pulado na hora. Embaixo, a linha da próxima novidade mostra
+## quanto falta para o próximo marco de quantidade ("Faltam 380 insetos para o
+## Tremor") e, quando ele chega, o que abriu. Ver docs/pesquisa-habilidades.md,
+## seções 12 e 14.
 
 signal step_done(id: String)
 
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 const Glyphs := preload("res://scripts/ui/glyphs.gd")
+const NestScript := preload("res://scripts/world/nest.gd")
 
 ## A sequência da área 1. "end" = acabou (o cartão some).
-const STEPS := ["move", "lick", "eat200", "learn", "dig", "nest", "half", "rest", "queen", "all", "exit", "end"]
+const STEPS := ["move", "lick", "eat50", "learn", "dig", "nest", "nests4", "rest", "queen", "exit", "end"]
+## Insetos do objetivo "Coma 50 insetos" (pagam a Lambida Rápida).
+const EAT_GOAL := 50
+## Ninhos do objetivo "Limpe 4 ninhos".
+const NESTS_GOAL := 4
+## Quanto tempo a linha da próxima novidade mostra o que abriu (s).
+const NOVELTY_HOLD := 4.0
 ## Duração do voo do losango (s), quanto tempo ele fica no alvo e o fade.
 const FLIGHT_TIME := 1.25
 const MARKER_TIME := 9.0
@@ -38,6 +48,13 @@ var _text: Label
 var _count: Label
 var _extra: Label
 var _bar: Bar
+## Linha da próxima novidade: texto e barra (do marco anterior até o próximo).
+var _novelty: VBoxContainer
+var _novelty_text: Label
+var _novelty_bar: Bar
+## Marco que a linha está mostrando como aberto, e por quanto tempo ainda.
+var _reveal_index := 0
+var _reveal_time := 0.0
 var _icon: Gem
 var _key: PanelContainer
 var _key_label: Label
@@ -69,6 +86,7 @@ func setup(p, w, col, comp) -> void:
 	colony = col
 	compass = comp
 	GameState.run_reset.connect(_restart)
+	GameState.marco_reached.connect(_on_marco)
 	Settings.changed.connect(_refresh_text)
 	_restart()
 
@@ -78,6 +96,7 @@ func setup(p, w, col, comp) -> void:
 func _restart() -> void:
 	_step = ""
 	_done_time = 0.0
+	_reveal_time = 0.0
 	_flight = -1.0
 	_shown = 0.0
 	call_deferred("_resume")
@@ -146,6 +165,25 @@ func _build_card() -> void:
 	_extra.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_extra.custom_minimum_size = Vector2(258, 0)
 	v.add_child(_extra)
+	_novelty = VBoxContainer.new()
+	_novelty.add_theme_constant_override("separation", 5)
+	_novelty.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_novelty.visible = false
+	v.add_child(_novelty)
+	var rule := ColorRect.new()
+	rule.color = Color(GOLD, 0.22)
+	rule.custom_minimum_size = Vector2(0, 1)
+	rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_novelty.add_child(rule)
+	_novelty_text = UiTheme.label("", 14, UiTheme.SAND)
+	_novelty_text.add_theme_color_override("font_color", UiTheme.SAND)
+	_novelty_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_novelty_text.custom_minimum_size = Vector2(258, 0)
+	_novelty.add_child(_novelty_text)
+	_novelty_bar = Bar.new()
+	_novelty_bar.color = UiTheme.SAND
+	_novelty_bar.custom_minimum_size = Vector2(0, 6)
+	_novelty.add_child(_novelty_bar)
 
 
 ## Começa um objetivo: texto, alvo e o voo do losango (se tiver lugar).
@@ -153,6 +191,8 @@ func _enter(id: String) -> void:
 	_step = id
 	_done_time = 0.0
 	_icon.done = false
+	# Sem isso o ✓ do objetivo anterior fica no losango do novo.
+	_icon.queue_redraw()
 	_text.add_theme_color_override("font_color", UiTheme.CREAM)
 	card.visible = id != "end"
 	_pick_target()
@@ -191,30 +231,28 @@ static func _n(v: int) -> String:
 
 
 func _describe(id: String) -> String:
-	var tree := Settings.key_label("skill_tree")
+	var skills := Settings.key_label("open_skills")
 	match id:
 		"move":
 			return "Ande com %s" % Settings.move_keys_label()
 		"lick":
 			return "Use a língua para comer um inseto (%s)" % Settings.key_label("lick")
-		"eat200":
-			return "Coma 200 insetos"
+		"eat50":
+			return "Coma %d insetos" % EAT_GOAL
 		"learn":
-			return "Abra a árvore (%s) e aprenda uma habilidade" % tree
+			return "Aprenda a Lambida Rápida (%s)" % skills
 		"dig":
 			if GameState.can_dig():
 				return "Abra uma câmara (%s)" % Settings.key_label("dig")
-			return "Aprenda Cavar na árvore (%s) e abra uma câmara" % tree
+			return "Aprenda Cavar (%s) e abra uma câmara" % skills
 		"nest":
 			return "Limpe um ninho"
-		"half":
-			return "Coma metade dos insetos da área"
+		"nests4":
+			return "Limpe %d ninhos" % NESTS_GOAL
 		"rest":
-			return "Coma todos os insetos"
+			return "Coma tudo, menos o monte da rainha"
 		"queen":
 			return "Desmanche o ninho da rainha"
-		"all":
-			return "Coma todos os insetos da área"
 		"exit":
 			return "Quebre o tronco da saída (%s)" % Settings.key_label("dig")
 	return ""
@@ -223,19 +261,18 @@ func _describe(id: String) -> String:
 ## Progresso (feito, total); total 0 = sem barra.
 func _progress(id: String) -> Vector2i:
 	match id:
-		"eat200":
-			return Vector2i(GameState.ants_eaten, 200)
+		"eat50":
+			return Vector2i(GameState.ants_eaten, EAT_GOAL)
 		"nest":
 			if _nest != null:
 				return Vector2i(_nest_start - _nest.remaining(), _nest_start)
-		"half":
-			return Vector2i(GameState.ants_eaten, GameState.marco_insects(2))
+		"nests4":
+			if colony != null:
+				return Vector2i(colony.nests_cleaned(), NESTS_GOAL)
 		"rest":
 			if colony != null:
 				var goal: int = GameState.GOAL - colony.queen_pit_start()
 				return Vector2i(goal - colony.rest_left(), goal)
-		"all":
-			return Vector2i(GameState.ants_eaten, GameState.GOAL)
 	return Vector2i.ZERO
 
 
@@ -246,26 +283,23 @@ func _is_done(id: String) -> bool:
 			return Settings.hint_learned("move") or (DevTools.autoplay and GameState.elapsed > 2.0)
 		"lick":
 			return GameState.ants_eaten >= 1
-		"eat200":
-			return GameState.ants_eaten >= 200
+		"eat50":
+			return GameState.ants_eaten >= EAT_GOAL
 		"learn":
-			return GameState.points_spent > 0
+			return GameState.has("lingua_segurar")
 		"dig":
 			return GameState.stat("chambers_opened") >= 1.0
 		"nest":
-			return GameState.marcos.has(1)
-		"half":
-			return GameState.marcos.has(2)
+			return GameState.marcos.has(GameState.MARCO_NINHO)
+		"nests4":
+			return colony != null and colony.nests_cleaned() >= NESTS_GOAL
 		"rest":
-			return GameState.marcos.has(4)
+			return GameState.marcos.has(GameState.MARCO_RAINHA)
 		"queen":
 			if world == null:
 				return false
 			# Fica até comer tudo: as moradoras do buraco da rainha também contam.
 			return GameState.completed
-		"all":
-			# Saiu da lista (era igual ao da rainha); fica só para os jogos salvos.
-			return true
 		"exit":
 			return world != null and world.exit_open
 	return false
@@ -300,12 +334,13 @@ func _pick_target() -> void:
 					if d < best_d:
 						best_d = d
 						_target = n.chamber_world_pos(c)
-		"nest":
+		"nest", "nests4", "rest":
 			var best_score := INF
 			for n in world.nests:
-				if n.cleaned or n.big or n.medium:
+				var left := _nest_left(n)
+				if left <= 0 or not _nest_open(n):
 					continue
-				var score: float = n.remaining() + here.distance_to(n.center2) * 20.0
+				var score: float = left + here.distance_to(n.center2) * 20.0
 				if score < best_score:
 					best_score = score
 					_nest = n
@@ -323,8 +358,45 @@ func _pick_target() -> void:
 				_target = world.exit_log.global_position + Vector3(0, 0.6, 0)
 
 
+## Quanto falta comer no ninho para o objetivo da vez. No "Coma tudo, menos
+## o monte da rainha", o buraco da rainha não conta (ele só abre no fim).
+func _nest_left(n) -> int:
+	if n.cleaned:
+		return 0
+	var left: int = n.remaining()
+	if _step == "rest" and n.big:
+		var royal = n.royal_chamber()
+		if royal != null:
+			left -= royal.residents
+		if n.queen_alive:
+			left -= NestScript.QUEEN_VALUE
+	return left
+
+
+## O losango só aponta ninhos que as garras de agora já limpam: no primeiro,
+## só os pequenos (bastam as garras do começo); depois, os médios também,
+## quando Cavar fundo nível 1 chega; o da rainha, só no fim.
+func _nest_open(n) -> bool:
+	match _step:
+		"nest":
+			return not n.big and not n.medium
+		"nests4":
+			return not n.big and (not n.medium or GameState.dig_level() >= 2)
+	return true
+
+
 func _ground(p: Vector2) -> Vector3:
 	return Vector3(p.x, world.ground_height(p.x, p.y), p.y)
+
+
+## O ninho do objetivo agora (-1 = nenhum). O bot de teste vai atrás dos
+## insetos dele com --bot-objetivos.
+func target_nest() -> int:
+	if _step == "queen" and world != null:
+		for n in world.nests:
+			if n.big:
+				return n.index
+	return _nest.index if _nest != null and _step != "end" else -1
 
 
 ## O losango voa de novo do cartão até o alvo.
@@ -364,13 +436,18 @@ func _process(delta: float) -> void:
 		elif _is_done(_step):
 			_complete()
 		else:
-			# O alvo sumiu (câmara aberta por outro caminho, formigueiro limpo...).
+			# O alvo sumiu (câmara aberta por outro caminho, ninho limpo...).
 			if _step == "dig" and _target != Vector3.INF and fmod(_time, 1.0) < delta:
 				var old := _target
 				_pick_target()
 				if _target != old and _target != Vector3.INF:
 					relight()
+			elif _nest != null and fmod(_time, 1.0) < delta and _nest_left(_nest) <= 0:
+				_pick_target()
+				if _target != Vector3.INF:
+					relight()
 			_refresh_text()
+	_refresh_novelty(delta)
 	if _flight >= 0.0:
 		_flight += delta
 		if _flight >= FLIGHT_TIME:
@@ -380,6 +457,60 @@ func _process(delta: float) -> void:
 	if compass:
 		compass.objective = _target if _markers_on() and _step != "end" else Vector3.INF
 	queue_redraw()
+
+
+# ------------------------------------------------------------------ Próxima novidade
+
+## A linha da próxima novidade aparece depois de aprender a primeira
+## habilidade (quando o jogador já conhece a árvore).
+func _novelty_on() -> bool:
+	return _step != "end" and STEPS.find(_step) > STEPS.find("learn")
+
+
+## Chegou um marco de quantidade: a linha mostra o que abriu por um tempo.
+func _on_marco(index: int) -> void:
+	if not GameState.get_marco(index).has("insects") or not _novelty_on():
+		return
+	_reveal_index = index
+	_reveal_time = NOVELTY_HOLD
+	if GameState.last_gifts.is_empty():
+		# Os marcos com presente já tocam o som do aviso grande.
+		Sfx.play("point", -6.0, 1.5)
+
+
+## "Faltam 380 insetos para o Tremor", com a barra cheia do marco anterior até
+## esse; quando ele chega, "Abriu: Tremor nível 1 e mais 4" por um tempo.
+func _refresh_novelty(delta: float) -> void:
+	_reveal_time = maxf(_reveal_time - delta, 0.0)
+	if not _novelty_on():
+		_novelty.visible = false
+		return
+	if _reveal_time > 0.0:
+		var shown := GameState.get_marco(_reveal_index)
+		var more := GameState.marco_unlocks(_reveal_index).size() - 1
+		var skill: String = GameState.get_upgrade(String(shown.skill)).name
+		_novelty_text.text = "Abriu: %s" % skill if more <= 0 else "Abriu: %s e mais %d" % [skill, more]
+		_novelty_color(UiTheme.LEAF)
+		_novelty_bar.value = 1.0
+		_novelty.visible = true
+		return
+	var m := GameState.next_insect_marco()
+	_novelty.visible = not m.is_empty()
+	if m.is_empty():
+		return
+	var at := int(m.insects)
+	var from := GameState.prev_insect_marco(m.index)
+	_novelty_text.text = "Faltam %s insetos para %s" % [_n(maxi(at - GameState.ants_eaten, 0)), m.next]
+	_novelty_color(UiTheme.SAND)
+	_novelty_bar.value = clampf(float(GameState.ants_eaten - from) / float(maxi(at - from, 1)), 0.0, 1.0)
+
+
+## Cor do texto e da barra da próxima novidade (só muda quando precisa).
+func _novelty_color(c: Color) -> void:
+	if _novelty_bar.color == c:
+		return
+	_novelty_bar.color = c
+	_novelty_text.add_theme_color_override("font_color", c)
 
 
 func _complete() -> void:
@@ -496,20 +627,26 @@ class Gem extends Control:
 			c + Vector2(0, r), c + Vector2(-r * 0.8, 0)]), Color("f6e3b4"))
 
 
-## Barrinha dourada do progresso.
+## Barrinha do progresso (dourada; a da próxima novidade é areia).
 class Bar extends Control:
 	var value := 0.0:
 		set(v):
-			value = v
-			queue_redraw()
+			if v != value:
+				value = v
+				queue_redraw()
+	var color := Color("e8b44f"):
+		set(c):
+			if c != color:
+				color = c
+				queue_redraw()
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func _draw() -> void:
-		var gold := Color("e8b44f")
 		var y := size.y * 0.5
-		draw_rect(Rect2(0, y - 2.0, size.x, 4.0), Color(gold, 0.18))
+		var h := minf(size.y, 4.0)
+		draw_rect(Rect2(0, y - h * 0.5, size.x, h), Color(color, 0.18))
 		var w := size.x * clampf(value, 0.0, 1.0)
 		if w > 1.0:
-			draw_rect(Rect2(0, y - 2.0, w, 4.0), gold)
+			draw_rect(Rect2(0, y - h * 0.5, w, h), color)

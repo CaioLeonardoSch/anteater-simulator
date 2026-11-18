@@ -158,6 +158,8 @@ var _bot_check := 1.2
 var _bot_last_pos := Vector2.ZERO
 var _bot_side := 1.0
 var _bot_side_t := 0.0
+## O ninho do objetivo (-1 = sem foco; ver BOT_FOCUS_FACTOR).
+var bot_focus_nest := -1
 
 
 func _ready() -> void:
@@ -1058,6 +1060,11 @@ func _update_arms(delta: float) -> void:
 
 # ------------------------------------------------------------- Bot de teste
 
+## Com --bot-objetivos, o bot prefere os insetos do ninho do objetivo (main.gd
+## atualiza `bot_focus_nest`), como quem segue o cartão com a bússola e o Faro:
+## os dos outros ninhos só valem a pena se estiverem BOT_FOCUS_FACTOR vezes
+## mais perto.
+const BOT_FOCUS_FACTOR := 3.0
 ## O bot usa o Tremor quando tem pelo menos isso de insetos no raio dele.
 const BOT_TREMOR_CROWD := 12
 
@@ -1176,6 +1183,7 @@ func _bot_pick_target(field) -> void:
 		# mirar nela quando ela passa perto.
 		if swarm.kind[i] == swarm.TANAJURA and d > reach2:
 			continue
+		d = _bot_cost2(swarm.nest_of(i), d)
 		if d < best:
 			best = d
 			_bot_target = i
@@ -1194,6 +1202,7 @@ func _bot_pick_target(field) -> void:
 				cd = minf(cd, p.distance_squared_to(me))
 		else:
 			cd = ch.home.distance_squared_to(me)
+		cd = _bot_cost2(field.chunk_nest(ci), cd)
 		if cd < best_cd:
 			best_cd = cd
 			best_ci = ci
@@ -1205,7 +1214,7 @@ func _bot_pick_target(field) -> void:
 		var p: Vector2 = field.ant_xz(ch, i)
 		if p == Vector2.INF or _bot_skip.has(Vector2i(best_ci, i)):
 			continue
-		var d := p.distance_squared_to(me)
+		var d := _bot_cost2(field.chunk_nest(best_ci), p.distance_squared_to(me))
 		if d < fbest:
 			fbest = d
 			_bot_field = Vector2i(best_ci, i)
@@ -1239,11 +1248,19 @@ func _bot_nearest_closed_chamber() -> Vector3:
 			if c.opened or GameState.dig_level() < c.size_class:
 				continue
 			var p: Vector3 = n.chamber_world_pos(c)
-			var d := p.distance_to(global_position)
+			var d := _bot_cost2(n.index, p.distance_squared_to(global_position))
 			if d < best_d:
 				best_d = d
 				best = p
 	return best
+
+
+## Custo de um alvo do ninho `nest` a `d2` (distância ao quadrado) do bot, na
+## mesma escala: sem foco, ou do ninho do foco, é a própria distância.
+func _bot_cost2(nest: int, d2: float) -> float:
+	if bot_focus_nest < 0 or nest == bot_focus_nest:
+		return d2
+	return d2 * BOT_FOCUS_FACTOR * BOT_FOCUS_FACTOR
 
 
 ## Os cogumelos já existem (o mapa foi montado).

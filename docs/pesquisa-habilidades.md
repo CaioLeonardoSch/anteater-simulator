@@ -6,7 +6,8 @@ está hoje. As recomendações estão na seção 4, em ordem de impacto. As seç
 trazem a simulação com o bot e a proposta de reformulação da economia. As
 propostas aprovadas foram feitas no jogo: a árvore de cliques (seção 9), as
 áreas e os marcos (seção 11) e o tutorial por objetivos (seção 12), em
-08/11/2026. A seção 13 traz o bot na área 1 nova.
+08/11/2026. A seção 13 traz o bot na área 1 nova. A seção 14 traz a economia
+e os marcos novos de 18/11/2026 (8 marcos, preços, bônus de ninho), com o bot.
 
 ## 1. Como a demo funciona hoje (os números)
 
@@ -963,6 +964,159 @@ Fundura primeiro depois do marco 2, como faria quem segue o objetivo
 - **A Fundura pode travar o fim.** Ideias: dar a Fundura 1 no marco 1 e a 2
   no marco 2 de presente (como o Farejar); deixar mais barata; ou, quando
   faltar ponto para ela, a dica embaixo da mira lembrar de redistribuir.
+
+## 14. Economia e marcos novos (feito em 18/11/2026)
+
+Vem da análise de economia e progressão de 14/11/2026, que rodou o bot com a
+árvore de então (registros em `docs/dados/bot-atual-rodizio.csv` e
+`bot-atual-lingua.csv`). O diagnóstico: o Bocado nível 2, a linha principal,
+esperava o primeiro ninho limpo, e no bot isso só saiu aos 91% da área; quem
+comprava de tudo um pouco comia metade de quem comprava língua; a primeira
+compra pedia 150 insetos; 15 habilidades já abriam no começo e nada abria entre
+50% e 96%; a área vendia 1 932 pontos para uns 1 000 ganhos (52%).
+
+### O que mudou
+
+**Oito marcos.** Os de quantidade (insetos comidos) abrem a potência e chegam
+sempre, na mesma ordem. Os de façanha dão chaves de presente e o resto.
+
+| # | Marco | Quando | Presente | Abre na árvore | À venda |
+|---:|---|---|---|---|---:|
+| 0 | Começo | — | — | Lambida Rápida, Bocado 1, Mira 1, Cavar, Fôlego, Corrida 1 | 151 |
+| 1 | O faro despertou | 200 insetos | Farejar | Destreza 1, Rastro 1 | 62 |
+| 2 | Primeira câmara | abrir uma câmara | — | Rapidez 1, Força 1, Olheiro 1, Comprimento 1 | 188 |
+| 3 | Petisco | 1 000 insetos | — | Bocado 2, Mira 2, Fôlego 1, Passada 1, Respiro 1, Família 1 | 344 |
+| 4 | Ninho limpo | o primeiro ninho limpo | Cavar fundo 1 | Olheiro 2 | 90 |
+| 5 | Chão tremendo | 3 500 insetos | Cavar fundo 1, se ainda não veio | Tremor 1, Destreza 2, Força 2, Passada 2, Respiro 2 | 405 |
+| 6 | Faro apurado | 6 000 insetos | — | Corrida 2 (lamber correndo), Rastro 2, Família 2 | 220 |
+| 7 | Faxina | 8 000 insetos | — | Família 3 | 100 |
+| 8 | Só falta a rainha | só o buraco da rainha | Cavar fundo 2 | — | — |
+
+**Preços.** A escala ficou (8 a 100 por clique na área 1), e 10 insetos
+continuam valendo 1 ponto. Mudaram: Lambida Rápida 15 → 5, Cavar 25 → 20,
+Bocado 1 8 · 12 · 16 → 8 · 14 · 22, Destreza 2 50 · 60 · 70 → 35 · 45 · 55,
+Tremor 1 90 → 70, Olheiro 2 30 · 40 · 50 → 20 · 30 · 40, Corrida 2 90 → 70,
+Passada 2 40 · 50 → 25 · 35, Respiro 2 30 · 40 → 20 · 30, Rastro 2 40 · 55 →
+30 · 40, Família 2 50 · 65 → 35 · 45 e Família 3 180 → 100. Cavar fundo 1
+deixou de ser compra.
+
+**Bônus.** Cada ninho limpo dá 20 pontos na hora ("+20" no cartão "Ninho
+limpo"): 160 na área. A área vende 1 560 pontos (56 cliques) para uns 1 160
+ganhos: dá para comprar uns 75%.
+
+**Rede de segurança.** No primeiro teste, o bot que não segue os objetivos
+chegou a 74% da área sem limpar um ninho, e as câmaras grandes (as dos dois
+ninhos médios e do grande) ficaram fechadas até lá. Por isso Cavar fundo nível 1 vem no primeiro
+ninho limpo **ou aos 3 500 insetos**, o que chegar primeiro.
+
+**Objetivos.** Andar, comer um inseto, comer 50, aprender a Lambida Rápida,
+abrir uma câmara, limpar um ninho, limpar 4 ninhos, comer tudo menos o monte
+da rainha, desmanchar o ninho da rainha e quebrar o tronco. Nos objetivos de
+ninho, o losango aponta o que dá menos trabalho (o que falta mais a distância)
+e muda quando ele fica limpo. Embaixo, depois da primeira habilidade, a linha
+da **próxima novidade** ("Faltam 380 insetos para o Tremor", com uma barra do
+marco anterior até o próximo); quando o marco chega, ela mostra por 4 s o que
+abriu ("Abriu: Tremor nível 1 e mais 4"). Os marcos sem presente não têm aviso
+grande (a revisão de textos de 13/11 tirou esses avisos).
+
+**Jogo salvo.** Versão 9. Os da versão 8 abrem e são convertidos: os marcos
+mudam de número, os ninhos já limpos valem o bônus, o Cavar fundo 1 comprado
+vira presente e os 60 pontos voltam, e o cartão de objetivo recomeça pulando
+o que já foi feito.
+
+**Bot.** Duas opções novas: `--bot-compra=lingua` (compra Lambida Rápida,
+Bocado 1 e 2, Cavar, Destreza 1 e 2, Rapidez 1 e Comprimento 1 antes do rodízio) e `--bot-objetivos`
+(prefere os insetos do ninho do objetivo; os de outro ninho só se estiverem 3
+vezes mais perto). Sem elas, o bot joga como antes.
+
+### Bot com a economia nova
+
+Sete partidas: as duas de 14/11 e cinco novas. "Rodízio" é o bot de sempre;
+"língua" compra a língua primeiro; "objetivos" segue o cartão. Insetos comidos
+por minuto de jogo do bot (ele come umas 3 vezes mais devagar que uma pessoa):
+
+| Partida | 10 | 20 | 30 | 40 | 50 | 60 | 70 | 80 | Fim |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 14/11 rodízio | 552 | 1 259 | 1 870 | 2 783 | 3 313 | 3 841 | 4 467 | — | parada aos 71 min |
+| 14/11 língua | 862 | 1 775 | 2 825 | 4 178 | 5 929 | 7 376 | 9 075 | 9 595 | travou em 9 614 |
+| rodízio, sem a rede | 524 | 1 343 | 2 378 | 3 202 | 4 097 | 4 718 | 5 709 | 6 521 | parada aos 98 min, nenhum ninho limpo |
+| rodízio, com a rede | 550 | 1 532 | 2 255 | 2 723 | 3 658 | 4 334 | 5 357 | — | parada aos 90 min, nenhum ninho limpo |
+| língua, sem a rede | 1 074 | 2 431 | 3 522 | 4 481 | 5 655 | 7 281 | 9 568 | 9 725 | **80,4 min** |
+| objetivos + língua | 1 004 | 2 529 | 3 596 | 5 062 | 6 340 | 8 748 | — | — | **64,8 min** |
+| objetivos + rodízio | 550 | 1 157 | 1 911 | 2 688 | 3 162 | 4 360 | — | — | parada aos 69 min, nenhum ninho limpo |
+
+Os momentos que importam, na partida de 14/11 com língua e na de 18/11 com
+objetivos e língua:
+
+| | 14/11 (língua) | 18/11 (objetivos + língua) |
+|---|---|---|
+| Primeira compra | 2,6 min (150 insetos) | 1,0 min (50 insetos) |
+| Bocado 2, primeiro clique | 71,8 min (91%) | 11,7 min (12%) |
+| Tremor abre | 43,5 min (50%) | 28,7 min (35%) |
+| Cavar fundo 1 | comprado aos 40 min (43%) | presente aos 28,7 min (35%, pela rede) |
+| Primeiro ninho limpo | 70,5 min (91%) | 34,6 min (43%) |
+| Maior trecho sem nada novo na árvore | 50% → 96% (46%) | 60% → 80% (20%) |
+| Cliques comprados | 36 | 45 de 56 (1 144 de 1 560 pontos, 73%) |
+| Fim | não terminou | 64,8 min (uns 21 min de pessoa) |
+
+### O que os números mostram
+
+- **A área fecha.** Com a língua primeiro, o bot termina (80 min sem seguir
+  os objetivos, 65 min seguindo); em 14/11 ele travava em 96%.
+- **O começo ficou bem mais rápido.** Aos 20 minutos de bot, 2 431 a 2 529
+  insetos, contra 1 775 em 14/11: o Bocado 2 chega aos 12% em vez de 91%.
+- **Seguir o objetivo vale a pena.** A mesma compra (língua) termina 15
+  minutos antes quando o bot vai atrás do ninho do objetivo (essa partida já
+  tinha a rede de segurança; a outra recebeu o Cavar fundo 1 só aos 60%).
+- **A diferença entre comprar língua e comprar de tudo diminuiu, mas não
+  sumiu.** Aos 60 min: 7 281 contra 4 718 (1,5 vez; em 14/11, 1,9 vez). O
+  rodízio do bot é um jogador ruim de propósito: espera juntar para o próximo
+  ramo da vez mesmo com outra coisa barata à venda, e não termina ninhos.
+- **Com o rodízio, seguir o objetivo não ajudou** (4 360 aos 60 min, contra
+  4 718 sem seguir). Esse bot compra pouca língua e não consegue caçar as
+  formigas espalhadas do ninho do objetivo: aos 69 min, nenhum ninho limpo.
+- **A rede de segurança não mudou o ritmo do bot que passeia** (4 334 contra
+  4 718 aos 60 min, dentro da variação entre partidas). O que segura esse bot é
+  a ordem de compra dele, não as câmaras grandes. Mas ela entrou também no bot
+  que segue os objetivos: o primeiro ninho dele saiu aos 43%, depois dos 35%.
+- **As esperas longas entre compras são do bot.** As maiores (5 a 7,5 min)
+  são o bot esperando o próximo item da lista dele com pontos para outras
+  coisas; seguindo os objetivos, só uma espera passou de 4 min (6,3 min).
+
+### Metas do relatório de 14/11
+
+| Medida | 14/11 | Meta | 18/11 |
+|---|---|---|---|
+| Primeira compra (pessoa) | perto de 2 min | antes de 1 min | 1 min de bot, uns 20 s de pessoa |
+| Bocado 2 abre | entre 10% e 91% da área | aos 10%, sempre | aos 10% (marco de 1 000 insetos) |
+| Diferença de ritmo entre as compras do bot | 1,9 vez | até 1,3 vez | 1,5 vez (não chegou) |
+| Maior espera entre compras (bot) | 5,8 a 10,7 min | até 5 min | 6,3 min seguindo os objetivos (as outras longas são da regra do bot) |
+| Maior trecho sem nada novo na árvore | 46% da área | até 25% | 20% nesta partida; 25% no pior caso (de 35% a 60%, sem ninho no meio) |
+| Comprado do que está à venda | 52% | 70% a 80% | 73% |
+| Duração da área (pessoa) | perto de 30 min | 20 a 25 min | uns 21 min (64,8 min de bot) |
+
+### Para decidir
+
+1. **O primeiro ninho de uma pessoa.** No bot, mesmo seguindo o objetivo, ele
+   só saiu aos 43% (com a língua primeiro; com o rodízio, nem aos 53%), e o
+   Cavar fundo 1 veio pela rede (35%). Jogando dá para ver se uma pessoa limpa
+   o primeiro ninho antes dos 35%. Se não, o mais simples é
+   dar o Cavar fundo 1 só no marco de 3 500 e deixar o ninho com o Olheiro 2 e
+   o bônus.
+2. **"Limpe 4 ninhos" ficou parado.** O bot limpou 3 ninhos até 51% e o 4º só
+   aos 93%: os últimos insetos de cada ninho se espalham. Dá para pedir 3
+   ninhos, ou mostrar na barra o ninho do losango (como no "Limpe um ninho")
+   em vez da contagem.
+3. **O Faro espalhado aos 6 000 e 8 000 insetos** (antes, todo no marco de 200)
+   segue a proposta. Se a ideia era tê-lo cedo, é só voltar as chaves `unlock`
+   de Rastro 2, Família 2 e Família 3.
+4. **O que ficou de fora desta vez** (outras mudanças do relatório): faxina
+   guiada no fim, Olheiro que cresce com o Bocado, Patas com menos linhas,
+   combo que dá pontos, conquistas à vista e a vitrine da área 2 no fim.
+
+Os registros estão em `docs/dados/`: `bot-marcos-rodizio.csv`,
+`bot-marcos-rodizio-rede.csv`, `bot-marcos-lingua.csv`,
+`bot-marcos-objetivos-lingua.csv` e `bot-marcos-objetivos-rodizio.csv`.
 
 ## Fontes
 

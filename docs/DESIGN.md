@@ -267,8 +267,9 @@ Sem nada, desde o começo.
 níveis mais fortes das linhas) aparece na árvore desde o começo, só com um
 cadeado, sem texto (o mesmo para o que espera um marco). Os marcos com
 presente mostram um aviso grande no meio da tela; os de quantidade aparecem no
-cartão de objetivo, na linha da próxima novidade ("Faltam 380 insetos para o
-Tremor"), que mostra por uns segundos o que abriu quando o marco chega.
+cartão de objetivo, na linha da próxima novidade ("Tremor nível 1 · faltam
+380 insetos"), que vira "Tremor nível 1 · desbloqueada" por uns segundos
+quando o marco chega.
 
 **Fora por enquanto:** Camuflagem (repete o que a Língua já faz) e Natação. O
 **Focinho** volta junto com o Quintal urbano.
@@ -398,17 +399,19 @@ Feito, seguindo as decisões:
    não saem ao redistribuir: **Farejar** (200), **Cavar fundo nível 1**
    (primeiro ninho, ou 3 500 insetos se nenhum ninho foi limpo) e **nível 2**
    (só falta a rainha). Cada ninho limpo dá
-   **20 pontos** na hora ("+20" no cartão do ninho). Os níveis mais fortes
+   **20 pontos** na hora (um "+20" dourado sobe ao lado dos pontos, como o
+   "+1" de cada inseto). Os níveis mais fortes
    ficam para a área 2, com cadeado na árvore.
 23. **Objetivos (o tutorial guiado):** um cartão no canto, sempre visível, com
    o objetivo da vez e o progresso ("30 / 50"): andar com WASD, comer um
    inseto, comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar um
-   ninho, limpar 4 ninhos, comer tudo menos o monte da rainha, desmanchar o
-   ninho da rainha e quebrar o tronco. Cumprido, ganha um ✓ verde e um som, e
+   ninho, limpar 4 ninhos, comer todos os insetos (menos o buraco da rainha,
+   que só abre no fim), desmanchar o ninho da rainha e quebrar o tronco. Cumprido, ganha um ✓ verde e um som, e
    o próximo aparece; o que já foi feito é pulado. Embaixo, depois da primeira
-   habilidade, a **linha da próxima novidade**: "Faltam 380 insetos para o
-   Tremor", com uma barra do marco anterior até o próximo; quando ele chega,
-   mostra por 4 s o que abriu ("Abriu: Tremor nível 1 e mais 4").
+   habilidade, a **linha da próxima novidade**: "Tremor nível 1 · faltam 380
+   insetos" (o nome da árvore e o "Faltam N insetos" dela), com uma barra do
+   marco anterior até o próximo; quando ele chega, mostra por 4 s "Tremor
+   nível 1 · desbloqueada" (como o "Aprendida" da árvore e dos cartões).
    Quando o objetivo tem um lugar, um **losango** sai do cartão, voa numa leve
    curva pela tela até o alvo, fica pulsando com a distância e some; o mesmo
    losango aparece na bússola. **F** (ou Y no controle) faz ele voar de novo.
@@ -779,6 +782,6 @@ acertar a duração com testes.
 | 18/11/2026 | Marcos da área 1 | 4 marcos: 200 insetos (Farejar), o 1º ninho limpo (abria o Bocado 2), metade e só falta a rainha; 15 habilidades abertas no começo e nada novo entre 50% e 96% | 8 marcos: 200, 1 000, 3 500, 6 000 e 8 000 insetos abrem a potência (Bocado 2 aos 1 000, Tremor aos 3 500); a 1ª câmara, o 1º ninho limpo e só falta a rainha abrem o resto e dão as chaves. 6 habilidades no começo. Análise e bot em `pesquisa-habilidades.md`, seção 14 |
 | 18/11/2026 | Preços da área 1 | 1 932 pontos à venda para uns 1 000 ganhos (52%); Lambida Rápida 15, Cavar 25; Faro, Patas e Olheiro caros para o que rendem | 1 560 à venda para 1 160 (uns 75%): Lambida Rápida 5, Cavar 20, Bocado 1 8 · 14 · 22, Destreza 2 35 · 45 · 55, Tremor 1 70, e o apoio (Olheiro 2, Corrida 2, Passada 2, Respiro 2, Rastro 2, Família 2 e 3) mais barato |
 | 18/11/2026 | Cavar fundo nível 1 | Compra de 60 pontos; sem ela a área não fechava | De presente no 1º ninho limpo (os ninhos pequenos só têm câmaras pequenas) ou aos 3 500 insetos, o que chegar primeiro: no bot que não segue os objetivos, o 1º ninho só saía depois de 60% a 74% dos insetos, e as câmaras grandes ficavam fechadas até lá |
-| 18/11/2026 | Bônus de ninho limpo | Ninho limpo não dava pontos | 20 pontos na hora, com "+20" no cartão "Ninho limpo" (8 ninhos: 160 pontos) |
-| 18/11/2026 | Objetivos | Comer 200, aprender uma habilidade, limpar um ninho, comer metade, desmanchar a rainha | Comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar 1 e 4 ninhos, comer tudo menos o monte da rainha (o losango aponta o ninho que dá menos trabalho), desmanchar a rainha. Embaixo, a linha da próxima novidade ("Faltam 380 insetos para o Tremor") |
+| 18/11/2026 | Bônus de ninho limpo | Ninho limpo não dava pontos | 20 pontos na hora: um "+20" dourado sobe ao lado dos pontos, como o "+1" de cada inseto (no cartão "Ninho limpo" ele seria lido como insetos, como o "+200" da rainha). 8 ninhos: 160 pontos |
+| 18/11/2026 | Objetivos | Comer 200, aprender uma habilidade, limpar um ninho, comer metade, desmanchar a rainha | Comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar 1 e 4 ninhos, comer todos os insetos (o losango aponta o ninho que dá menos trabalho), desmanchar a rainha. Embaixo, a linha da próxima novidade ("Tremor nível 1 · faltam 380 insetos"). Os textos seguem a revisão de 13/11 |
 | 18/11/2026 | Jogo salvo | Versão 8 | Versão 9; a 8 abre e é convertida (marcos renumerados, os ninhos já limpos valem o bônus, Cavar fundo 1 comprado volta como presente com os 60 pontos devolvidos, o cartão de objetivo recomeça pulando o que já está feito) |

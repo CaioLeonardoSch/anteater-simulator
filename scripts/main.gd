@@ -180,7 +180,7 @@ func _build_game() -> void:
 	GameState.level_completed.connect(_on_complete)
 	GameState.ants_eaten_changed.connect(_on_eaten_changed)
 	# O bônus de ninho limpo também dá pontos para o bot gastar.
-	GameState.points_changed.connect(func(): _on_eaten_changed(GameState.ants_eaten, 0))
+	GameState.bonus_earned.connect(func(_p): _on_eaten_changed(GameState.ants_eaten, 0))
 	colony.chamber_opened.connect(func(_n, _ci): GameState.count("chambers_opened"))
 	colony.nest_cleaned.connect(func(_n): GameState.count("nests_cleaned"))
 	# Marco 2: a primeira câmara aberta abre as linhas das Garras e o Olheiro.

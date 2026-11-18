@@ -8,8 +8,8 @@ extends Node
 ## devolvidos de graça ("Redistribuir pontos").
 
 signal ants_eaten_changed(total: int, delta: int)
-## Os pontos para gastar mudaram sem comer (bônus de ninho limpo).
-signal points_changed
+## Ganhou pontos sem comer (bônus de ninho limpo).
+signal bonus_earned(points: int)
 ## Uma habilidade que ainda não dava para comprar agora cabe nos pontos.
 signal upgrade_affordable(id: String)
 signal upgrade_purchased(id: String)
@@ -78,21 +78,16 @@ const BRANCHES := [
 ##   6: comer 6 000 insetos.
 ##   7: comer 8 000 insetos.
 ##   8: só falta o buraco da rainha (Cavar fundo nível 2 vem de presente).
-## "skill" e "next" são a novidade que o cartão de objetivo anuncia antes
-## ("Faltam 380 insetos para o Tremor").
+## "skill" é a habilidade que o cartão de objetivo anuncia antes ("Tremor
+## nível 1 · faltam 380 insetos").
 const MARCOS := [
-	{"index": 1, "title": "O faro despertou", "short": "200", "insects": 200,
-		"skill": "faro_farejar", "next": "o Farejar"},
+	{"index": 1, "title": "O faro despertou", "short": "200", "insects": 200, "skill": "faro_farejar"},
 	{"index": 2, "title": "Primeira câmara", "short": "Câmara"},
-	{"index": 3, "title": "Petisco", "short": "1 000", "insects": 1000,
-		"skill": "lingua_bocado_2", "next": "o Bocado nível 2"},
+	{"index": 3, "title": "Petisco", "short": "1 000", "insects": 1000, "skill": "lingua_bocado_2"},
 	{"index": 4, "title": "Ninho limpo", "short": "Ninho"},
-	{"index": 5, "title": "Chão tremendo", "short": "3 500", "insects": 3500,
-		"skill": "garras_tremor_1", "next": "o Tremor"},
-	{"index": 6, "title": "Faro apurado", "short": "6 000", "insects": 6000,
-		"skill": "patas_corrida_2", "next": "lamber correndo"},
-	{"index": 7, "title": "Faxina", "short": "8 000", "insects": 8000,
-		"skill": "faro_familia_3", "next": "a Família nível 3"},
+	{"index": 5, "title": "Chão tremendo", "short": "3 500", "insects": 3500, "skill": "garras_tremor_1"},
+	{"index": 6, "title": "Faro apurado", "short": "6 000", "insects": 6000, "skill": "patas_corrida_2"},
+	{"index": 7, "title": "Faxina", "short": "8 000", "insects": 8000, "skill": "faro_familia_3"},
 	{"index": 8, "title": "Só falta a rainha", "short": "Rainha"},
 ]
 ## Os marcos de façanha, pelo nome.
@@ -500,13 +495,14 @@ func points_earned() -> int:
 	return ants_eaten / ANTS_PER_POINT + bonus_points
 
 
-## Ninho limpo: NEST_BONUS pontos na hora (o HUD mostra no cartão do ninho).
+## Ninho limpo: NEST_BONUS pontos na hora (o HUD mostra um "+20" ao lado dos
+## pontos).
 func add_bonus(points: int) -> void:
 	if points <= 0:
 		return
 	bonus_points += points
 	_check_affordable(true)
-	points_changed.emit()
+	bonus_earned.emit(points)
 
 
 ## Quantas formigas ainda faltam comer para ter `points` pontos para gastar.

@@ -112,14 +112,14 @@ uma vez".
   distância andada...).
 - **Objetivos:** um cartão no canto mostra o objetivo da vez, com o
   progresso ("30 / 50"): andar, comer um inseto, comer 50, aprender a Lambida
-  Rápida, abrir uma câmara, limpar um formigueiro, limpar 4, comer tudo menos o
-  monte da rainha, desmanchar o monte dela e quebrar o tronco. Quando o
+  Rápida, abrir uma câmara, limpar um formigueiro, limpar 4, comer todos os
+  insetos, desmanchar o monte da rainha e quebrar o tronco. Quando o
   objetivo tem um lugar (a câmara ou o formigueiro que dá menos trabalho), um
   losango sai do cartão, voa numa leve curva até o alvo e fica pulsando com a
   distância; depois some, e `F` faz ele voar de novo. O que você já fez é
   pulado. O losango segue a opção de Dicas. Embaixo do objetivo, a **próxima
-  novidade**: "Faltam 380 insetos para o Tremor", com uma barra; quando ela
-  chega, o cartão mostra o que abriu na árvore.
+  novidade**: "Tremor nível 1 · faltam 380 insetos", com uma barra; quando ela
+  chega, a linha vira "Tremor nível 1 · desbloqueada".
 - **Marcos:** são 8. Comer **200, 1 000, 3 500, 6 000 e 8 000 insetos** abre
   as linhas mais fortes; abrir a **primeira câmara**, limpar o **primeiro
   formigueiro** e chegar ao ponto em que **só falta a rainha** abrem o resto.

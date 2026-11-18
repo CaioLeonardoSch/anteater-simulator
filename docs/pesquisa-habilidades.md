@@ -1000,8 +1000,8 @@ Passada 2 40 · 50 → 25 · 35, Respiro 2 30 · 40 → 20 · 30, Rastro 2 40 ·
 30 · 40, Família 2 50 · 65 → 35 · 45 e Família 3 180 → 100. Cavar fundo 1
 deixou de ser compra.
 
-**Bônus.** Cada ninho limpo dá 20 pontos na hora ("+20" no cartão "Ninho
-limpo"): 160 na área. A área vende 1 560 pontos (56 cliques) para uns 1 160
+**Bônus.** Cada ninho limpo dá 20 pontos na hora (um "+20" dourado sobe ao
+lado dos pontos, como o "+1" de cada inseto): 160 na área. A área vende 1 560 pontos (56 cliques) para uns 1 160
 ganhos: dá para comprar uns 75%.
 
 **Rede de segurança.** No primeiro teste, o bot que não segue os objetivos
@@ -1010,14 +1010,19 @@ ninhos médios e do grande) ficaram fechadas até lá. Por isso Cavar fundo nív
 ninho limpo **ou aos 3 500 insetos**, o que chegar primeiro.
 
 **Objetivos.** Andar, comer um inseto, comer 50, aprender a Lambida Rápida,
-abrir uma câmara, limpar um ninho, limpar 4 ninhos, comer tudo menos o monte
-da rainha, desmanchar o ninho da rainha e quebrar o tronco. Nos objetivos de
+abrir uma câmara, limpar um ninho, limpar 4 ninhos, comer todos os insetos
+(menos o buraco da rainha), desmanchar o ninho da rainha e quebrar o tronco. Nos objetivos de
 ninho, o losango aponta o que dá menos trabalho (o que falta mais a distância)
 e muda quando ele fica limpo. Embaixo, depois da primeira habilidade, a linha
-da **próxima novidade** ("Faltam 380 insetos para o Tremor", com uma barra do
-marco anterior até o próximo); quando o marco chega, ela mostra por 4 s o que
-abriu ("Abriu: Tremor nível 1 e mais 4"). Os marcos sem presente não têm aviso
-grande (a revisão de textos de 13/11 tirou esses avisos).
+da **próxima novidade** ("Tremor nível 1 · faltam 380 insetos", com uma barra
+do marco anterior até o próximo); quando o marco chega, ela mostra por 4 s
+"Tremor nível 1 · desbloqueada". Os textos seguem o padrão da revisão de 13/11:
+as frases dos objetivos são as de antes (só "uma habilidade" virou "a Lambida
+Rápida"), os nomes são os da árvore, o "·" e o estado curto são os da caixa da
+habilidade ("Mira · 1 de 3", "Aprendida"), e os marcos sem presente não têm
+aviso grande. O bônus do ninho é um "+20" dourado ao lado dos pontos, como o
+"+1" de cada inseto, e não um número no cartão do ninho (lá ele pareceria
+insetos, como o "+200" da rainha).
 
 **Jogo salvo.** Versão 9. Os da versão 8 abrem e são convertidos: os marcos
 mudam de número, os ninhos já limpos valem o bônus, o Cavar fundo 1 comprado

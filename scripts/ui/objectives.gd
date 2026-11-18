@@ -6,9 +6,9 @@ extends Control
 ## distância; depois de um tempo some. A tecla do objetivo (F) faz ele voar de
 ## novo. O alvo também aparece na bússola. O que o jogador já fez antes de
 ## chegar a vez é pulado na hora. Embaixo, a linha da próxima novidade mostra
-## quanto falta para o próximo marco de quantidade ("Faltam 380 insetos para o
-## Tremor") e, quando ele chega, o que abriu. Ver docs/pesquisa-habilidades.md,
-## seções 12 e 14.
+## quanto falta para o próximo marco de quantidade ("Tremor nível 1 · faltam
+## 380 insetos") e, quando ele chega, o que abriu. Ver
+## docs/pesquisa-habilidades.md, seções 12 e 14.
 
 signal step_done(id: String)
 
@@ -231,7 +231,7 @@ static func _n(v: int) -> String:
 
 
 func _describe(id: String) -> String:
-	var skills := Settings.key_label("open_skills")
+	var tree := Settings.key_label("open_skills")
 	match id:
 		"move":
 			return "Ande com %s" % Settings.move_keys_label()
@@ -240,17 +240,17 @@ func _describe(id: String) -> String:
 		"eat50":
 			return "Coma %d insetos" % EAT_GOAL
 		"learn":
-			return "Aprenda a Lambida Rápida (%s)" % skills
+			return "Abra a árvore (%s) e aprenda a Lambida Rápida" % tree
 		"dig":
 			if GameState.can_dig():
 				return "Abra uma câmara (%s)" % Settings.key_label("dig")
-			return "Aprenda Cavar (%s) e abra uma câmara" % skills
+			return "Aprenda Cavar na árvore (%s) e abra uma câmara" % tree
 		"nest":
 			return "Limpe um ninho"
 		"nests4":
 			return "Limpe %d ninhos" % NESTS_GOAL
 		"rest":
-			return "Coma tudo, menos o monte da rainha"
+			return "Coma todos os insetos"
 		"queen":
 			return "Desmanche o ninho da rainha"
 		"exit":
@@ -358,8 +358,8 @@ func _pick_target() -> void:
 				_target = world.exit_log.global_position + Vector3(0, 0.6, 0)
 
 
-## Quanto falta comer no ninho para o objetivo da vez. No "Coma tudo, menos
-## o monte da rainha", o buraco da rainha não conta (ele só abre no fim).
+## Quanto falta comer no ninho para o objetivo da vez. No "Coma todos os
+## insetos", o buraco da rainha não conta (ele só abre no fim).
 func _nest_left(n) -> int:
 	if n.cleaned:
 		return 0
@@ -467,9 +467,11 @@ func _novelty_on() -> bool:
 	return _step != "end" and STEPS.find(_step) > STEPS.find("learn")
 
 
-## Chegou um marco de quantidade: a linha mostra o que abriu por um tempo.
+## Chegou um marco de quantidade: a linha mostra o que abriu por um tempo
+## (menos quando a habilidade veio de presente: o aviso grande já diz).
 func _on_marco(index: int) -> void:
-	if not GameState.get_marco(index).has("insects") or not _novelty_on():
+	var m := GameState.get_marco(index)
+	if not m.has("insects") or not _novelty_on() or GameState.last_gifts.has(String(m.skill)):
 		return
 	_reveal_index = index
 	_reveal_time = NOVELTY_HOLD
@@ -478,8 +480,9 @@ func _on_marco(index: int) -> void:
 		Sfx.play("point", -6.0, 1.5)
 
 
-## "Faltam 380 insetos para o Tremor", com a barra cheia do marco anterior até
-## esse; quando ele chega, "Abriu: Tremor nível 1 e mais 4" por um tempo.
+## "Tremor nível 1 · faltam 380 insetos" (o nome da árvore e o "Faltam N
+## insetos" dela), com a barra do marco anterior até esse; quando ele chega,
+## "Tremor nível 1 · desbloqueada" por um tempo (como o "Aprendida" da árvore).
 func _refresh_novelty(delta: float) -> void:
 	_reveal_time = maxf(_reveal_time - delta, 0.0)
 	if not _novelty_on():
@@ -487,9 +490,7 @@ func _refresh_novelty(delta: float) -> void:
 		return
 	if _reveal_time > 0.0:
 		var shown := GameState.get_marco(_reveal_index)
-		var more := GameState.marco_unlocks(_reveal_index).size() - 1
-		var skill: String = GameState.get_upgrade(String(shown.skill)).name
-		_novelty_text.text = "Abriu: %s" % skill if more <= 0 else "Abriu: %s e mais %d" % [skill, more]
+		_novelty_text.text = "%s · desbloqueada" % GameState.get_upgrade(String(shown.skill)).name
 		_novelty_color(UiTheme.LEAF)
 		_novelty_bar.value = 1.0
 		_novelty.visible = true
@@ -500,7 +501,8 @@ func _refresh_novelty(delta: float) -> void:
 		return
 	var at := int(m.insects)
 	var from := GameState.prev_insect_marco(m.index)
-	_novelty_text.text = "Faltam %s insetos para %s" % [_n(maxi(at - GameState.ants_eaten, 0)), m.next]
+	_novelty_text.text = "%s · faltam %s insetos" % [GameState.get_upgrade(String(m.skill)).name,
+		_n(maxi(at - GameState.ants_eaten, 0))]
 	_novelty_color(UiTheme.SAND)
 	_novelty_bar.value = clampf(float(GameState.ants_eaten - from) / float(maxi(at - from, 1)), 0.0, 1.0)
 

@@ -1,6 +1,7 @@
 // Animação das formigas, compartilhada pelos shaders de corpo, asas e faro.
 // CUSTOM0 = (pivô xyz, parte)  parte: 0 corpo, 1 perna, 2 antena, 3 folha, 4 asa,
-//           5 mandíbula, 6 chapéu de Natal
+//           5 mandíbula, 6 chapéu de Natal, 7 fantasia presa ao corpo e 8 peça
+//           solta da fantasia (só as formigas colecionáveis têm 7 e 8)
 // CUSTOM1 = (peso, fase do passo, lado -1/+1, 0)
 // Formigas simuladas pelo jogo (ant.gdshader): INSTANCE_CUSTOM =
 //   (fase da caminhada, destaque do faro, estado + 4 * semente, folha + 2 * chapéu)
@@ -72,11 +73,15 @@ void ant_parts(inout vec3 v, inout vec3 n, vec4 c0, vec4 c1, float gait, float s
 		mat3 r = ant_rot_y(open * side);
 		v = pivot + r * (v - pivot);
 		n = r * n;
-	} else if (part == 6) {
-		// Chapéu de Natal: só nas formigas sorteadas; balança com o passo.
+	} else if (part == 6 || part == 8) {
+		// Chapéu de Natal (só nas formigas sorteadas) e as peças soltas das
+		// fantasias (penas, cartola): balançam com o passo.
 		mat3 r = ant_rot_x(sin(g * 0.5) * 0.12) * ant_rot_z(sin(g * 0.5 + 1.3) * 0.08);
 		v = pivot + r * (v - pivot) * step(0.5, hat);
 		n = r * n;
+	} else if (part == 7) {
+		// Fantasia das colecionáveis (máscara, maiô, barba): presa ao corpo.
+		v = pivot + (v - pivot) * step(0.5, hat);
 	}
 	if (part != 1) {
 		v.y += sin(g * 2.0) * body_bob * (1.0 - stunned);

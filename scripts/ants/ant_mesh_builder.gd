@@ -6,14 +6,16 @@ extends RefCounted
 ## As operárias andam em grupos de 10: `squad()` junta 10 cópias numa malha só
 ## (CUSTOM1.w = qual delas) e o shader espalha cada uma no seu lugar.
 ## LOD: 0 = detalhada (perto), 1 = simples, 2 = bem simples, 3 = mínima, 4 = só um
-## fuso e a folha (bem longe).
+## fuso e a folha (bem longe); -1 = ainda mais redonda (a foto da coleção).
+## Fantasias das formigas colecionáveis (`costume`): operária sem folha, com a
+## fantasia nas partes 7 (presa ao corpo) e 8 (solta, balança com o passo).
 
 const MeshBuilder := preload("res://scripts/procedural/mesh_builder.gd")
 const ModelLibrary := preload("res://scripts/model_library.gd")
 const ANT_SHADER := preload("res://shaders/ant.gdshader")
 const WING_SHADER := preload("res://shaders/ant_wing.gdshader")
 
-enum Part { BODY, LEG, ANTENNA, LEAF, WING, MANDIBLE, HAT }
+enum Part { BODY, LEG, ANTENNA, LEAF, WING, MANDIBLE, HAT, COSTUME, COSTUME_SWAY }
 
 const KIND_MODEL := {"worker": "formiga_operaria", "queen": "formiga_rainha", "tanajura": "formiga_tanajura"}
 
@@ -34,19 +36,23 @@ static func _tag(b: MeshBuilder, part: int, pivot: Vector3 = Vector3.ZERO, phase
 	b.c1 = Color(1.0, phase, side, 0.0)
 
 
-## Retorna a malha da formiga. Se houver um modelo de IA (assets/models), usa-o.
-static func build(kind: String, lod: int = 0) -> ArrayMesh:
+## Retorna a malha da formiga. Se houver um modelo de IA (assets/models), usa-o
+## (menos para as fantasias, que são feitas aqui).
+static func build(kind: String, lod: int = 0, costume: String = "") -> ArrayMesh:
 	materials()
-	var ai := _from_model(kind)
-	if ai:
-		return ai
+	if costume.is_empty():
+		var ai := _from_model(kind)
+		if ai:
+			return ai
 	var b := MeshBuilder.new()
 	b.use_custom0 = true
 	b.use_custom1 = true
+	var photo := lod < 0
+	lod = maxi(lod, 0)
 	var tiny := lod >= 2
-	var rings: int = [9, 5, 3][clampi(lod, 0, 2)]
-	var segs: int = [14, 7, 5][clampi(lod, 0, 2)]
-	var leg_sides: int = [6, 4, 3][clampi(lod, 0, 2)]
+	var rings: int = 16 if photo else [9, 5, 3][clampi(lod, 0, 2)]
+	var segs: int = 24 if photo else [14, 7, 5][clampi(lod, 0, 2)]
+	var leg_sides: int = 9 if photo else [6, 4, 3][clampi(lod, 0, 2)]
 	var head_s := 1.0
 	var gaster_s := 1.0
 	var mand_s := 1.0
@@ -154,8 +160,14 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 			else:
 				var pts := PackedVector3Array([hip, hip.lerp(knee, 0.5), knee, knee.lerp(foot, 0.5), foot, tarsus])
 				b.add_tube(pts, PackedFloat32Array([0.024, 0.022, 0.019, 0.015, 0.012, 0.008]), leg_sides, false, true)
+	# --- Fantasia (colecionáveis): no lugar da folha.
+	if not costume.is_empty():
+		if costume == "noel":
+			_add_hat(b, false)
+		else:
+			_add_costume(b, costume, rings, segs)
 	# --- Folha carregada (operária)
-	if kind == "worker":
+	elif kind == "worker":
 		_tag(b, Part.LEAF, Vector3(0, 0.17, head_front - 0.09))
 		b.color = Color(0.36, 0.72, 0.18)
 		_add_leaf(b, Vector3(0, 0.17, head_front - 0.09), 6 if tiny else 14)
@@ -186,7 +198,7 @@ static func build(kind: String, lod: int = 0) -> ArrayMesh:
 static func _shade(b: MeshBuilder) -> void:
 	for i in b.verts.size():
 		var part := int(b.custom0[i * 4 + 3] + 0.5)
-		if part == Part.LEAF or part == Part.HAT:
+		if part == Part.LEAF or part >= Part.HAT:
 			continue
 		var c := b.colors[i]
 		var up := b.normals[i].y * 0.5 + 0.5
@@ -290,6 +302,258 @@ static func _add_hat(b: MeshBuilder, tiny: bool) -> void:
 	b.color = Color(0.96, 0.95, 0.92)
 	b.add_ellipsoid(base + Vector3(0, 0.005, 0), Vector3(0.1, 0.026, 0.1), 4 if tiny else 6, sides)
 	b.add_ellipsoid(pts[3] + Vector3(0, -0.005, 0.01), Vector3.ONE * 0.03, 3 if tiny else 5, sides)
+
+
+# ------------------------------------------------------------------ Fantasias
+
+## Fantasias das formigas colecionáveis (scripts/collectibles.gd). Cada peça
+## leva a parte 7 (presa ao corpo) ou 8 (solta, balança com o passo) e o brilho
+## no UV (ant_look.gdshaderinc). Na formiga: a cabeça fica perto de
+## (0, 0.245, -0.27), o tórax em (0, 0.2, -0.07) e o abdômen em (0, 0.21, 0.3);
+## ela olha para -Z.
+static func _add_costume(b: MeshBuilder, costume: String, rings: int, segs: int) -> void:
+	match costume:
+		"abobora":
+			_costume_pumpkin(b, rings, segs)
+		"tamandua":
+			_costume_anteater(b, rings, segs)
+		"lincoln":
+			_costume_lincoln(b, rings, segs)
+		"banhista":
+			_costume_swimmer(b, rings, segs)
+		"folia":
+			_costume_carnival(b, rings, segs)
+
+
+## Máscara de abóbora de Halloween: gomos laranja em volta da cabeça, o cabinho
+## e a cara recortada (olhos, nariz e boca acesos).
+static func _costume_pumpkin(b: MeshBuilder, rings: int, segs: int) -> void:
+	var c := Vector3(0, 0.245, -0.28)
+	_tag(b, Part.COSTUME, c)
+	var from := b.verts.size()
+	var lobes := 8
+	for k in lobes:
+		var a := TAU * k / lobes
+		var dir := Vector3(sin(a), 0.0, -cos(a))
+		b.color = Color(0.95, 0.5, 0.09) if k % 2 == 0 else Color(0.88, 0.43, 0.07)
+		b.add_ellipsoid(c + dir * 0.09, Vector3(0.085, 0.155, 0.1), rings, segs, Basis(Vector3.UP, -a))
+	_gloss(b, from, 0.45)
+	from = b.verts.size()
+	b.color = Color(0.36, 0.44, 0.16)
+	b.add_tube(PackedVector3Array([c + Vector3(0, 0.135, 0), c + Vector3(0.004, 0.18, -0.005), c + Vector3(0.022, 0.21, -0.02)]),
+		PackedFloat32Array([0.026, 0.02, 0.013]), maxi(segs / 2, 6), false, true)
+	_gloss(b, from, 0.1)
+	# A cara recortada, colada na frente da abóbora.
+	from = b.verts.size()
+	b.color = Color(1.0, 0.8, 0.25)
+	var env := Vector3(0.185, 0.15, 0.19)
+	for sx in [-1.0, 1.0]:
+		_front_tri(b, c, env, Vector2(sx * 0.105, 0.272), Vector2(sx * 0.035, 0.272), Vector2(sx * 0.07, 0.325))
+	_front_tri(b, c, env, Vector2(-0.02, 0.232), Vector2(0.02, 0.232), Vector2(0.0, 0.258))
+	var n := 9
+	var top: Array[int] = []
+	var bottom: Array[int] = []
+	for i in n:
+		var x := lerpf(-0.12, 0.12, float(i) / (n - 1))
+		var q := x / 0.12
+		var yt := 0.205 + 0.03 * q * q - (0.022 if i == 3 or i == 5 else 0.0)
+		var yb := 0.165 + 0.07 * q * q
+		top.append(b.add_vertex(_on_front(c, env, x, yt), Vector3.FORWARD))
+		bottom.append(b.add_vertex(_on_front(c, env, x, yb), Vector3.FORWARD))
+	for i in n - 1:
+		b.add_quad(top[i], top[i + 1], bottom[i + 1], bottom[i])
+	_gloss(b, from, 0.0)
+
+
+## Máscara de tamanduá: a cabeça coberta de pelo, o focinho comprido, as
+## orelhinhas e a faixa preta de bordas brancas do tamanduá-bandeira no tórax.
+static func _costume_anteater(b: MeshBuilder, rings: int, segs: int) -> void:
+	var head := Vector3(0, 0.25, -0.285)
+	_tag(b, Part.COSTUME, head)
+	var from := b.verts.size()
+	# As cores do tamanduá do jogo: cabeça marrom-acinzentada, focinho escuro.
+	var fur := Color(0.3, 0.26, 0.23)
+	var dark := Color(0.16, 0.13, 0.11)
+	b.color = fur
+	b.add_ellipsoid(head, Vector3(0.17, 0.13, 0.155), rings, segs)
+	b.color = dark
+	b.add_tube(PackedVector3Array([Vector3(0, 0.235, -0.39), Vector3(0, 0.226, -0.5), Vector3(0, 0.208, -0.62),
+		Vector3(0, 0.186, -0.73)]), PackedFloat32Array([0.078, 0.052, 0.034, 0.02]), maxi(segs / 2, 6), false, true)
+	for sx in [-1.0, 1.0]:
+		b.add_ellipsoid(Vector3(sx * 0.1, 0.365, -0.225), Vector3(0.034, 0.03, 0.016), 5, 8, Basis(Vector3.FORWARD, sx * 0.4))
+	b.color = Color(0.06, 0.05, 0.04)
+	b.add_ellipsoid(Vector3(0, 0.185, -0.738), Vector3(0.022, 0.019, 0.016), 5, 8)
+	for sx in [-1.0, 1.0]:
+		b.add_ellipsoid(Vector3(sx * 0.085, 0.3, -0.408), Vector3(0.017, 0.017, 0.012), 4, 6)
+	_gloss(b, from, 0.0)
+	from = b.verts.size()
+	var th_c := Vector3(0, 0.2, -0.07)
+	var th_r := Vector3(0.075, 0.075, 0.135)
+	var th_b := Basis(Vector3.RIGHT, 0.18)
+	b.color = Color(0.93, 0.91, 0.85)
+	_band(b, th_c, th_r * 1.14, th_b, -0.46, -0.28, segs)
+	b.color = Color(0.07, 0.06, 0.05)
+	_band(b, th_c, th_r * 1.16, th_b, -0.28, 0.14, segs)
+	b.color = Color(0.93, 0.91, 0.85)
+	_band(b, th_c, th_r * 1.14, th_b, 0.14, 0.32, segs)
+	_gloss(b, from, 0.0)
+
+
+## Abraham Lincoln: cartola alta (um pouco para trás, balança com o passo) e a
+## barba sem bigode, do queixo até as bochechas.
+static func _costume_lincoln(b: MeshBuilder, rings: int, segs: int) -> void:
+	var top := Vector3(0, 0.345, -0.27)
+	_tag(b, Part.COSTUME_SWAY, top)
+	var tilt := Basis(Vector3.RIGHT, -0.12)
+	b.xform = Transform3D(tilt, top - tilt * top)
+	var from := b.verts.size()
+	b.color = Color(0.05, 0.045, 0.045)
+	b.add_ellipsoid(top + Vector3(0, 0.006, 0), Vector3(0.138, 0.016, 0.132), maxi(rings / 2, 4), segs)
+	b.add_tube(PackedVector3Array([top + Vector3(0, 0.01, 0), top + Vector3(0, 0.29, 0)]),
+		PackedFloat32Array([0.074, 0.08]), segs, false, true)
+	_gloss(b, from, 0.7)
+	from = b.verts.size()
+	b.color = Color(0.17, 0.16, 0.15)
+	b.add_tube(PackedVector3Array([top + Vector3(0, 0.018, 0), top + Vector3(0, 0.065, 0)]),
+		PackedFloat32Array([0.0795, 0.0805]), segs, false, false)
+	_gloss(b, from, 0.25)
+	b.xform = Transform3D.IDENTITY
+	_tag(b, Part.COSTUME, Vector3(0, 0.2, -0.33))
+	from = b.verts.size()
+	b.color = Color(0.13, 0.09, 0.06)
+	b.add_ellipsoid(Vector3(0, 0.18, -0.37), Vector3(0.142, 0.075, 0.09), rings, segs)
+	b.add_ellipsoid(Vector3(0, 0.135, -0.425), Vector3(0.066, 0.058, 0.05), maxi(rings / 2, 4), segs, Basis.IDENTITY, -0.3)
+	_gloss(b, from, 0.0)
+
+
+## Roupa de banho: maiô listrado de vermelho e branco, touca amarela com
+## florzinhas e óculos de natação.
+static func _costume_swimmer(b: MeshBuilder, rings: int, segs: int) -> void:
+	_tag(b, Part.COSTUME, Vector3(0, 0.2, 0.1))
+	var from := b.verts.size()
+	var red := Color(0.86, 0.15, 0.13)
+	var white := Color(0.96, 0.94, 0.89)
+	var g_c := Vector3(0, 0.21, 0.3)
+	var g_r := Vector3(0.15, 0.13, 0.2) * 1.055
+	var g_b := Basis(Vector3.RIGHT, -0.25)
+	var stripes := 8
+	for k in stripes:
+		b.color = red if k % 2 == 0 else white
+		_band(b, g_c, g_r, g_b, lerpf(-0.9, 0.78, float(k) / stripes), lerpf(-0.9, 0.78, float(k + 1) / stripes), segs)
+	var th_c := Vector3(0, 0.2, -0.07)
+	var th_r := Vector3(0.075, 0.075, 0.135) * 1.12
+	var th_b := Basis(Vector3.RIGHT, 0.18)
+	for k in 4:
+		b.color = white if k % 2 == 0 else red
+		_band(b, th_c, th_r, th_b, lerpf(-0.55, 0.75, float(k) / 4.0), lerpf(-0.55, 0.75, float(k + 1) / 4.0), segs)
+	_gloss(b, from, 0.3)
+	var cap := Vector3(0, 0.31, -0.255)
+	var cap_r := Vector3(0.132, 0.07, 0.125)
+	_tag(b, Part.COSTUME, cap)
+	from = b.verts.size()
+	b.color = Color(0.98, 0.84, 0.22)
+	b.add_ellipsoid(cap, cap_r, rings, segs)
+	b.color = Color(0.98, 0.45, 0.62)
+	for u in [0.5, 2.6, 4.5]:
+		var v := 0.62
+		var p := cap + Vector3(sin(v) * cos(u) * cap_r.x, cos(v) * cap_r.y, sin(v) * sin(u) * cap_r.z)
+		b.add_ellipsoid(p, Vector3.ONE * 0.022, 4, 6)
+	_gloss(b, from, 0.55)
+	from = b.verts.size()
+	b.color = Color(0.45, 0.8, 0.96)
+	for sx in [-1.0, 1.0]:
+		b.add_ellipsoid(Vector3(sx * 0.058, 0.322, -0.378), Vector3(0.03, 0.024, 0.014), 5, 8)
+	_gloss(b, from, 1.0)
+
+
+## Roupa de carnaval: tiara dourada com uma pedra, um leque de penas coloridas
+## (balança com o passo) e lantejoulas no abdômen.
+static func _costume_carnival(b: MeshBuilder, rings: int, segs: int) -> void:
+	var crown := Vector3(0, 0.3, -0.262)
+	_tag(b, Part.COSTUME, crown)
+	var from := b.verts.size()
+	b.color = Color(0.97, 0.77, 0.22)
+	var ring := PackedVector3Array()
+	var radii := PackedFloat32Array()
+	for k in 17:
+		var a := TAU * k / 16.0
+		ring.append(crown + Vector3(sin(a) * 0.148, 0.0, -cos(a) * 0.108))
+		radii.append(0.017)
+	b.add_tube(ring, radii, 6, false, false)
+	b.color = Color(0.2, 0.85, 0.95)
+	b.add_ellipsoid(crown + Vector3(0, 0.012, -0.112), Vector3(0.026, 0.03, 0.014), 5, 8)
+	_gloss(b, from, 1.0)
+	var base := Vector3(0, 0.34, -0.21)
+	_tag(b, Part.COSTUME_SWAY, base)
+	from = b.verts.size()
+	var colors := [Color(0.62, 0.2, 0.85), Color(0.2, 0.45, 0.95), Color(0.15, 0.78, 0.45), Color(1.0, 0.84, 0.15),
+		Color(1.0, 0.5, 0.12), Color(0.95, 0.2, 0.55), Color(0.62, 0.2, 0.85)]
+	for k in 7:
+		var side := (float(k) - 3.0) / 3.0
+		var dir := Vector3(side * 0.75, 1.0, 0.45).normalized()
+		var x := (Vector3.RIGHT - dir * dir.dot(Vector3.RIGHT)).normalized()
+		var feather := Basis(x, dir, x.cross(dir))
+		b.color = colors[k]
+		b.add_ellipsoid(base + dir * (0.2 - absf(side) * 0.03), Vector3(0.034, 0.2, 0.01), maxi(rings / 2, 5), maxi(segs / 2, 8), feather)
+	_gloss(b, from, 0.2)
+	var g_c := Vector3(0, 0.21, 0.3)
+	var g_r := Vector3(0.15, 0.13, 0.2) * 1.05
+	var g_b := Basis(Vector3.RIGHT, -0.25)
+	_tag(b, Part.COSTUME, g_c)
+	from = b.verts.size()
+	var stripes := 6
+	for k in stripes:
+		b.color = Color(0.97, 0.77, 0.22) if k % 2 == 0 else Color(0.95, 0.22, 0.55)
+		_band(b, g_c, g_r, g_b, lerpf(-0.85, 0.75, float(k) / stripes), lerpf(-0.85, 0.75, float(k + 1) / stripes), segs)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2026
+	var beads := [Color(0.3, 0.9, 1.0), Color(1.0, 1.0, 0.95), Color(1.0, 0.85, 0.3)]
+	for k in 14:
+		var t := rng.randf_range(-0.7, 0.6)
+		var a := rng.randf_range(0.15, PI - 0.15)
+		var q := sqrt(1.0 - t * t)
+		b.color = beads[k % beads.size()]
+		b.add_ellipsoid(g_c + g_b * (Vector3(cos(a) * q, sin(a) * q, t) * g_r * 1.06), Vector3.ONE * 0.014, 3, 6)
+	_gloss(b, from, 1.0)
+
+
+## Faixa em volta de um elipsoide (o abdômen ou o tórax), de t0 a t1 ao longo
+## do comprimento dele (-1 = frente, 1 = trás): as listras das fantasias.
+static func _band(b: MeshBuilder, c: Vector3, r: Vector3, basis: Basis, t0: float, t1: float, segs: int) -> void:
+	var steps := maxi(int(ceil((t1 - t0) / 0.12)), 1)
+	var start := b.verts.size()
+	for i in steps + 1:
+		var t := lerpf(t0, t1, float(i) / steps)
+		var q := sqrt(maxf(1.0 - t * t, 0.0))
+		for j in segs + 1:
+			var a := TAU * j / segs
+			var local := Vector3(cos(a) * q, sin(a) * q, t)
+			b.add_vertex(c + basis * (local * r), (basis * Vector3(local.x / r.x, local.y / r.y, local.z / r.z)).normalized())
+	var row := segs + 1
+	for i in steps:
+		for j in segs:
+			var a := start + i * row + j
+			b.add_quad(a, a + 1, a + row + 1, a + row)
+
+
+## Ponto (x, y) colado na frente de um elipsoide (centro c, raios r): a cara da
+## abóbora acompanha a curva dela.
+static func _on_front(c: Vector3, r: Vector3, x: float, y: float) -> Vector3:
+	var k := 1.0 - pow(x / r.x, 2.0) - pow((y - c.y) / r.y, 2.0)
+	return Vector3(x, y, c.z - r.z * sqrt(maxf(k, 0.0)) - 0.006)
+
+
+static func _front_tri(b: MeshBuilder, c: Vector3, r: Vector3, p0: Vector2, p1: Vector2, p2: Vector2) -> void:
+	var i0 := b.add_vertex(_on_front(c, r, p0.x, p0.y), Vector3.FORWARD)
+	var i1 := b.add_vertex(_on_front(c, r, p1.x, p1.y), Vector3.FORWARD)
+	var i2 := b.add_vertex(_on_front(c, r, p2.x, p2.y), Vector3.FORWARD)
+	b.add_tri(i0, i1, i2)
+
+
+## Brilho das peças da fantasia (0 = fosco, 1 = brilhante), guardado no UV.
+static func _gloss(b: MeshBuilder, from: int, gloss: float) -> void:
+	for i in range(from, b.uvs.size()):
+		b.uvs[i] = Vector2(2.0 + gloss, 0.0)
 
 
 static func _add_leaf(b: MeshBuilder, grip: Vector3, count: int = 14) -> void:

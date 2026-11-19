@@ -24,6 +24,8 @@ signal run_reset
 signal split_reached(index: int, time_sec: float, diff: float)
 ## Conquista destravada (na demo só fica registrada; veja achievements.gd).
 signal achievement_unlocked(id: String)
+## Achou uma formiga colecionável (scripts/collectibles.gd) pela primeira vez.
+signal collectible_found(id: String)
 
 const Achievements := preload("res://scripts/achievements.gd")
 
@@ -303,6 +305,8 @@ var run_id: String = ""
 ## Somas de todos os jogos e conquistas destravadas (ficam em save.cfg).
 var lifetime: Dictionary = {}
 var achievements: Dictionary = {}
+## Formigas colecionáveis achadas (id -> quando), em todos os jogos (save.cfg).
+var collection: Dictionary = {}
 var _facts_dirty := false
 var _facts_timer := 0.0
 ## Habilidades que já cabiam nos pontos (para avisar só das novas).
@@ -420,6 +424,23 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 		_check_achievements()
 		_save_record()
 		level_completed.emit(elapsed)
+
+
+## Já achou essa formiga colecionável (em qualquer jogo).
+func has_collectible(id: String) -> bool:
+	return collection.has(id)
+
+
+## Achou uma formiga colecionável: entra na coleção (e fica salva para todos
+## os jogos). Devolve false se ela já estava lá.
+func collect(id: String) -> bool:
+	if collection.has(id):
+		return false
+	collection[id] = Time.get_unix_time_from_system()
+	if not DevTools.autoplay:
+		_save_record()
+	collectible_found.emit(id)
+	return true
 
 
 ## O recorde do modo deste jogo.
@@ -1126,6 +1147,7 @@ func _load_record() -> void:
 		best_splits = cfg.get_value("records", "best_splits_%d" % GOAL, [])
 		lifetime = cfg.get_value("lifetime", "totals", {})
 		achievements = cfg.get_value("achievements", "unlocked", {})
+		collection = cfg.get_value("collection", "found", {})
 
 
 func _save_record() -> void:
@@ -1136,6 +1158,7 @@ func _save_record() -> void:
 	cfg.set_value("records", "best_splits_%d" % GOAL, best_splits)
 	cfg.set_value("lifetime", "totals", lifetime)
 	cfg.set_value("achievements", "unlocked", achievements)
+	cfg.set_value("collection", "found", collection)
 	cfg.save(RECORD_PATH)
 
 

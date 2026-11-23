@@ -711,7 +711,7 @@ func _tutorial_hint() -> Array:
 	if GameState.can_run() and not Settings.hint_learned("run"):
 		parts += [{"key": Settings.key_label("run")}, {"text": "Correr"}, {"gap": 16.0}]
 	if not Settings.hint_learned("map"):
-		parts += [{"key": Settings.key_label("skill_tree")}, {"text": "Mapa e habilidades"}, {"gap": 16.0}]
+		parts += [{"key": Settings.key_label("skill_tree")}, {"text": "Caderno"}, {"gap": 16.0}]
 	if not parts.is_empty():
 		parts.pop_back()
 	return parts

@@ -777,16 +777,23 @@ func _swallow() -> void:
 	var taj := 0
 	var queens := 0
 	var value := 0
+	var noel := false
 	for i in t_stuck:
 		if swarm.kind[i] == swarm.TANAJURA:
 			taj += 1
 		elif swarm.kind[i] == swarm.QUEEN:
 			queens += 1
+		if (swarm.carry[i] & 2) != 0:
+			noel = true
 		value += colony.ant_eaten(i)
 		swarm.despawn(i)
 	t_stuck = PackedInt32Array()
 	GameState.add_eaten(value, taj, queens)
 	ate.emit(value, taj, queens)
+	if noel:
+		# A de chapéu de Natal veio na língua: conta como achada, mesmo que
+		# tenha sido pega de longe (collectible_ants.gd só olha até 3,5 m).
+		GameState.collect("noel")
 	Sfx.play("munch", -3.0 + minf(n, 8) * 0.5, 1.0, 0.1, 3)
 	if taj > 0:
 		Sfx.play("frenzy", -2.0)

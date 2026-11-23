@@ -1,7 +1,8 @@
 extends Control
-## Tela do TAB: três abas, o mapa (abre primeiro), a árvore de habilidades e a
-## coleção de formigas fantasiadas. Q e E (ou os botões de ombro do controle)
-## trocam de aba. As estatísticas ficam na pausa (Esc).
+## O Caderno (Tab): três abas, o mapa (abre primeiro), a árvore de habilidades
+## e a coleção de formigas fantasiadas. Q e E (ou os botões de ombro do
+## controle) trocam de aba; M, H e C abrem direto cada uma. As estatísticas
+## ficam na pausa (Esc).
 
 signal closed
 

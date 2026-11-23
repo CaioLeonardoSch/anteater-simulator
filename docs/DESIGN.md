@@ -220,9 +220,12 @@ buscamos, no espírito delas:
   saída), **Banhista** (maiô listrado, touca e óculos, vai e volta na margem
   oeste da lagoa) e **Foliã** (penas e lantejoulas, samba atrás da pedra
   grande do leste). A sexta é a **Noel**: a formiga de chapéu de Natal que
-  sai em uma de cada 16 000, como antes. Chegando a até 3,5 m, com ela perto
-  do meio da tela e nada no caminho, ela entra na coleção, que vale para
-  todos os jogos salvos (`user://save.cfg`). As fantasias são peças da malha
+  sai em uma de cada 16 000, como antes (com a semente fixa do campo, 2 delas
+  estão em todo jogo; comer uma também conta como achar). Chegando a até
+  3,5 m, com ela perto do meio da tela e nada no caminho, ela entra na
+  coleção. Desde 23/11/2026 a coleção é de cada jogo salvo, e a primeira vez
+  que cada uma é achada, em qualquer jogo, fica em `user://save.cfg` e conta
+  para as conquistas (Baile à fantasia e Coleção da clareira). As fantasias são peças da malha
   da formiga (partes 7 e 8 do shader) e elas são um terço maiores que as
   operárias.
 - **Sem insetos resistentes:** as formigas-soldado saíram da demo.
@@ -399,8 +402,10 @@ Feito, seguindo as decisões:
 18. **Estatísticas** (um botão na pausa abre a tela delas; também aparecem na tela do fim): os números deste jogo, as ações
    (linguadas e acerto, faro, tremores, distância, tempo correndo).
 19. (O modo contra o relógio saiu do jogo em 13/11/2026.)
-20. **Conquistas preparadas** (21, em `scripts/achievements.gd`): contadas, mas
-   escondidas na demo; prontas para a Steam ou para um menu próprio.
+20. **Conquistas preparadas** (18, em `scripts/achievements.gd`): contadas, mas
+   escondidas na demo; prontas para a Steam ou para um menu próprio. Duas são
+   das formigas fantasiadas: achar a primeira e achar as 6 da área 1 (vale a
+   primeira vez de cada uma, em qualquer jogo).
 21. **Leitura melhor:** nomes das habilidades com contorno escuro, habilidade
    bloqueada em cinza claro, o capim some perto da câmera (não tampa as
    formigas), a formiga que a língua vai buscar tem um contorno verde suave, a
@@ -431,11 +436,13 @@ Feito, seguindo as decisões:
    curva pela tela até o alvo, fica pulsando com a distância e some; o mesmo
    losango aparece na bússola. **F** (ou Y no controle) faz ele voar de novo.
    O losango segue a opção de Dicas (Nenhuma o esconde); o cartão fica sempre.
-24. **Coleção** (aba do Tab, depois das habilidades): seis cards da área 1,
-   com "Área 1 · 2 de 6" em cima. Antes de achar, o card mostra a silhueta da
-   formiga; achada, a foto (tirada uma vez, num estúdio só dela, com a malha
-   mais detalhada) e o nome. Ao achar, o aviso "Você encontrou a Formiga
-   Abóbora".
+24. **Coleção** (aba do Caderno, depois das habilidades; **C** abre direto):
+   seis cards da área 1, com "Área 1 · 2 de 6" em cima. Antes de achar, o card
+   mostra a silhueta da formiga; achada, a foto (tirada uma vez, num estúdio só
+   dela, com a malha mais detalhada) e o nome. Ao achar, o aviso "Você
+   encontrou a Formiga Abóbora". A coleção é de cada jogo salvo.
+25. **Caderno:** o nome comum do Tab, com o mapa, as habilidades e a coleção.
+   **M**, **H** e **C** abrem direto cada aba.
 
 Ainda a ajustar:
 
@@ -806,3 +813,5 @@ acertar a duração com testes.
 | 18/11/2026 | Objetivos | Comer 200, aprender uma habilidade, limpar um ninho, comer metade, desmanchar a rainha | Comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar 1 e 4 ninhos, comer todos os insetos (o losango aponta o ninho que dá menos trabalho), desmanchar a rainha. Embaixo, a linha da próxima novidade ("Tremor nível 1 · faltam 380 insetos"). Os textos seguem a revisão de 13/11 |
 | 18/11/2026 | Colecionáveis | Só o chapéu de Natal, numa formiga em cada 16 000, sem contar em nada | Seis formigas fantasiadas por área. Na área 1: Abóbora, Tamanduá, Lincoln, Banhista e Foliã, fixas em lugares escondidos (paradas ou andando no lugar, sem fugir), e a Noel, a do chapéu de Natal, que continua aparecendo de vez em quando. Achar = chegar perto e olhar para ela. Aba Coleção no Tab, com a silhueta antes e a foto depois; vale para todos os jogos salvos |
 | 18/11/2026 | Jogo salvo | Versão 8 | Versão 9; a 8 abre e é convertida (marcos renumerados, os ninhos já limpos valem o bônus, Cavar fundo 1 comprado volta como presente com os 60 pontos devolvidos, o cartão de objetivo recomeça pulando o que já está feito) |
+| 23/11/2026 | Coleção | Valia para todos os jogos salvos | É de cada jogo salvo (um jogo novo começa com ela vazia). A primeira vez que cada formiga é achada, em qualquer jogo, conta para duas conquistas novas: Baile à fantasia (a primeira) e Coleção da clareira (as 6 da área 1). Comer uma Formiga Noel também conta como achar: 2 formigas do campo saem de chapéu em todo jogo, e a língua podia pegar uma de longe |
+| 23/11/2026 | Tab | "Mapa e habilidades"; a Coleção só abria pelo Tab | **Caderno**, o nome comum das três abas; **C** abre a Coleção, como M o mapa e H as habilidades |

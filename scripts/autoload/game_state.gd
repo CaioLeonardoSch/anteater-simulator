@@ -24,10 +24,11 @@ signal run_reset
 signal split_reached(index: int, time_sec: float, diff: float)
 ## Conquista destravada (na demo só fica registrada; veja achievements.gd).
 signal achievement_unlocked(id: String)
-## Achou uma formiga colecionável (scripts/collectibles.gd) pela primeira vez.
+## Achou uma formiga colecionável (scripts/collectibles.gd) neste jogo.
 signal collectible_found(id: String)
 
 const Achievements := preload("res://scripts/achievements.gd")
+const Collectibles := preload("res://scripts/collectibles.gd")
 
 ## Formigas da colônia do Cerrado (cada rainha conta como 200).
 const GOAL := 10000
@@ -305,8 +306,11 @@ var run_id: String = ""
 ## Somas de todos os jogos e conquistas destravadas (ficam em save.cfg).
 var lifetime: Dictionary = {}
 var achievements: Dictionary = {}
-## Formigas colecionáveis achadas (id -> quando), em todos os jogos (save.cfg).
+## Formigas colecionáveis achadas neste jogo (id -> quando): vão no jogo salvo.
 var collection: Dictionary = {}
+## As que já foram achadas alguma vez, em qualquer jogo (save.cfg): é o que
+## conta para as conquistas.
+var collection_ever: Dictionary = {}
 var _facts_dirty := false
 var _facts_timer := 0.0
 ## Habilidades que já cabiam nos pontos (para avisar só das novas).
@@ -338,6 +342,7 @@ func reset_run() -> void:
 	marker = Vector2.INF
 	splits.clear()
 	stats.clear()
+	collection.clear()
 	run_id = "%06x" % (randi() & 0xFFFFFF)
 	_affordable.clear()
 	run_reset.emit()
@@ -426,21 +431,34 @@ func add_eaten(count: int, tanajuras: int = 0, queens: int = 0) -> void:
 		level_completed.emit(elapsed)
 
 
-## Já achou essa formiga colecionável (em qualquer jogo).
+## Já achou essa formiga colecionável neste jogo.
 func has_collectible(id: String) -> bool:
 	return collection.has(id)
 
 
-## Achou uma formiga colecionável: entra na coleção (e fica salva para todos
-## os jogos). Devolve false se ela já estava lá.
+## Achou uma formiga colecionável: entra na coleção deste jogo. A primeira vez
+## que ela é achada, em qualquer jogo, fica também em save.cfg e conta para as
+## conquistas. Devolve false se ela já estava na coleção deste jogo.
 func collect(id: String) -> bool:
 	if collection.has(id):
 		return false
-	collection[id] = Time.get_unix_time_from_system()
-	if not DevTools.autoplay:
+	var now := Time.get_unix_time_from_system()
+	collection[id] = now
+	if not collection_ever.has(id) and not DevTools.autoplay:
+		collection_ever[id] = now
 		_save_record()
+		_check_achievements()
 	collectible_found.emit(id)
 	return true
+
+
+## Quantas colecionáveis da área já foram achadas alguma vez (em qualquer jogo).
+func collected_ever_in(area: int) -> int:
+	var n := 0
+	for c in Collectibles.of_area(area):
+		if collection_ever.has(String(c.id)):
+			n += 1
+	return n
 
 
 ## O recorde do modo deste jogo.
@@ -489,6 +507,7 @@ func achievement_facts() -> Dictionary:
 		"sniffs": stat("sniffs"), "distance": stat("distance"), "exit_broken": stat("exit_broken"),
 		"clock_done": 1 if completed and mode == MODE_CLOCK else 0,
 		"clock_fast": 1 if completed and elapsed < Achievements.FAST_TIME else 0,
+		"costumes": collection_ever.size(), "costumes_area1": collected_ever_in(1),
 	}
 
 
@@ -1147,7 +1166,7 @@ func _load_record() -> void:
 		best_splits = cfg.get_value("records", "best_splits_%d" % GOAL, [])
 		lifetime = cfg.get_value("lifetime", "totals", {})
 		achievements = cfg.get_value("achievements", "unlocked", {})
-		collection = cfg.get_value("collection", "found", {})
+		collection_ever = cfg.get_value("collection", "found", {})
 
 
 func _save_record() -> void:
@@ -1158,7 +1177,7 @@ func _save_record() -> void:
 	cfg.set_value("records", "best_splits_%d" % GOAL, best_splits)
 	cfg.set_value("lifetime", "totals", lifetime)
 	cfg.set_value("achievements", "unlocked", achievements)
-	cfg.set_value("collection", "found", collection)
+	cfg.set_value("collection", "found", collection_ever)
 	cfg.save(RECORD_PATH)
 
 
@@ -1171,6 +1190,7 @@ func to_save() -> Dictionary:
 		"marcos": marcos.duplicate(), "gifted": gifted.duplicate(), "objective": objective,
 		"marker": [marker.x, marker.y] if marker != Vector2.INF else [],
 		"mode": mode, "splits": splits.duplicate(), "stats": stats.duplicate(), "run_id": run_id,
+		"collection": collection.duplicate(),
 	}
 
 
@@ -1179,6 +1199,8 @@ func to_save() -> Dictionary:
 func from_save(d: Dictionary, version: int = SAVE_VERSION) -> void:
 	ants_eaten = int(d.get("ants_eaten", 0))
 	stats = Dictionary(d.get("stats", {}))
+	# Jogos salvos de antes da coleção por jogo começam com ela vazia.
+	collection = Dictionary(d.get("collection", {}))
 	bonus_points = int(d.get("bonus_points", 0))
 	purchased.clear()
 	points_spent = 0

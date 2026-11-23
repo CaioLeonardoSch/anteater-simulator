@@ -39,7 +39,7 @@ var player: Player
 var menu_cam: Camera3D
 var ui: CanvasLayer
 var hud: Hud
-## Tela do TAB (mapa e árvore de habilidades).
+## O Caderno (Tab): mapa, árvore de habilidades e coleção.
 var tab_ui: TabMenu
 var exploration: Exploration
 var menus: Menus
@@ -145,13 +145,6 @@ func _build_game() -> void:
 	collectibles.name = "Colecionaveis"
 	world.add_child(collectibles)
 	collectibles.setup(world, player, swarm)
-	if DevTools.args.has("colecao"):
-		# Teste: já começa com essas na coleção (--colecao=all ou ids separados
-		# por vírgula), sem salvar.
-		var ids := String(DevTools.args.colecao).split(",", false)
-		for c in Collectibles.LIST:
-			if ids.has("all") or ids.has(String(c.id)):
-				GameState.collection[c.id] = 0
 	menu_cam = Camera3D.new()
 	menu_cam.name = "MenuCamera"
 	menu_cam.fov = 62.0
@@ -343,6 +336,13 @@ func _begin_playing() -> void:
 	GameState.playing = true
 	state = State.PLAYING
 	_autosave = AUTOSAVE_EVERY
+	if DevTools.args.has("colecao"):
+		# Teste: este jogo já tem essas na coleção (--colecao=all ou ids
+		# separados por vírgula); elas não contam para as conquistas.
+		var ids := String(DevTools.args.colecao).split(",", false)
+		for c in Collectibles.LIST:
+			if ids.has("all") or ids.has(String(c.id)):
+				GameState.collection[c.id] = 0
 	player.camera.current = true
 	player.bot = DevTools.autoplay
 	player.controls_enabled = not DevTools.autoplay
@@ -400,10 +400,14 @@ func _input(event: InputEvent) -> void:
 		else:
 			_close_tree()
 		get_viewport().set_input_as_handled()
-	elif (event.is_action_pressed("open_map") or event.is_action_pressed("open_skills")) \
-			and state in [State.PLAYING, State.TREE]:
-		# M abre o mapa e H as habilidades; na mesma aba, fecha.
-		var page := TabMenu.MAP if event.is_action_pressed("open_map") else TabMenu.SKILLS
+	elif (event.is_action_pressed("open_map") or event.is_action_pressed("open_skills")
+			or event.is_action_pressed("open_collection")) and state in [State.PLAYING, State.TREE]:
+		# M abre o mapa, H as habilidades e C a coleção; na mesma aba, fecha.
+		var page := TabMenu.MAP
+		if event.is_action_pressed("open_skills"):
+			page = TabMenu.SKILLS
+		elif event.is_action_pressed("open_collection"):
+			page = TabMenu.COLLECTION
 		if state == State.PLAYING:
 			_open_tree(page)
 		elif tab_ui.page == page:
@@ -444,7 +448,8 @@ func _resume() -> void:
 	Sfx.set_music_duck(0.35)
 
 
-## Abre a tela do TAB na aba `page` (Tab: a última aberta; M: mapa; H: habilidades).
+## Abre o Caderno na aba `page` (Tab: a última aberta; M: mapa; H: habilidades;
+## C: coleção).
 func _open_tree(page: int = TabMenu.MAP, focus_skill: String = "") -> void:
 	if state == State.COMPLETE:
 		return

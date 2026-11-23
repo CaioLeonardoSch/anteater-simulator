@@ -76,8 +76,8 @@ tela, a resolução e a qualidade gráfica.
 | Cavar* (abrir câmara, quebrar o tronco) | segure `E` perto, olhando para ela | `X` |
 | Pular (subir nas pedras, sair dos buracos) | `Espaço` | `A` |
 | Tremor* (pulo que atordoa) | `X` | `B` |
-| Mapa, habilidades e coleção | `Tab` (abre na última aba; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
-| Abrir o mapa / as habilidades | `M` / `H` (a mesma tecla fecha) | |
+| Caderno (mapa, habilidades e coleção) | `Tab` (abre na última aba; `Q` e `E` trocam a aba) | `Back` (`LB` e `RB` trocam a aba) |
+| Abrir o mapa / as habilidades / a coleção | `M` / `H` / `C` (a mesma tecla fecha) | |
 | Mostrar o objetivo de novo | `F` | `Y` |
 | Marcar um ponto no mapa | clique direito no mapa | `Y` no mapa |
 | Pausa | `Esc` | `Start` |
@@ -131,7 +131,7 @@ uma vez".
   (muitas carregando folhas); no campo, saem das câmaras, dão uma volta e
   entram de novo. Cada uma foge sozinha quando você chega perto, e cada
   formiga comida conta 1. Uma em cada 16 000 usa um chapéu de Natal (é a
-  Formiga Noel da coleção).
+  Formiga Noel da coleção; comer uma também conta como achar).
 - **Câmaras:** os montinhos de terra clara nos formigueiros são câmaras
   fechadas, e 12 delas ficam sozinhas no meio do campo, espalhadas por igual (as formigas que
   passeiam em volta contam para o formigueiro dono da câmara). Com **Cavar**
@@ -207,9 +207,11 @@ uma vez".
   lantejoulas). Chegue perto e olhe para uma ("Você encontrou a Formiga
   Abóbora") e ela entra na coleção. A sexta é a Formiga Noel, a do chapéu de
   Natal, que só aparece de vez em quando no meio das outras.
-- **Coleção** (`Tab`, aba depois das habilidades): um card para cada formiga
-  fantasiada da área. Antes de achar, só a silhueta; achada, a foto dela,
-  mais detalhada, e o nome. A coleção vale para todos os jogos salvos.
+- **Coleção** (`C`, ou a aba do Caderno depois das habilidades): um card para
+  cada formiga fantasiada da área. Antes de achar, só a silhueta; achada, a
+  foto dela, mais detalhada, e o nome. A coleção é de cada jogo salvo; a
+  primeira vez que cada uma é achada, em qualquer jogo, conta para as
+  conquistas.
 - **Fim da demo:** um tronco caído fecha a passagem para a próxima área. Com
   todas as formigas comidas, a bússola mostra a saída: segure `E` perto do
   tronco e as garras quebram o tronco.

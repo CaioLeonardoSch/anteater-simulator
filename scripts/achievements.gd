@@ -41,6 +41,12 @@ const LIST := [
 		"stat": "distance", "goal": 5000},
 	{"id": "caminho_aberto", "name": "Caminho aberto", "desc": "Quebre o tronco da saída.",
 		"stat": "exit_broken", "goal": 1},
+	# Formigas fantasiadas (collectibles.gd): conta a primeira vez que cada uma
+	# é achada, em qualquer jogo (a coleção da aba é de cada jogo).
+	{"id": "primeira_fantasia", "name": "Baile à fantasia", "desc": "Encontre uma formiga fantasiada.",
+		"stat": "costumes", "goal": 1},
+	{"id": "colecao_area1", "name": "Coleção da clareira",
+		"desc": "Encontre as 6 formigas fantasiadas da área 1.", "stat": "costumes_area1", "goal": 6},
 	# Meta provisória: acertar depois de medir o tempo de bons jogadores.
 	{"id": "relampago", "name": "Relâmpago", "desc": "Limpe a clareira em menos de 45 minutos",
 		"stat": "clock_fast", "goal": 1},

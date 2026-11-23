@@ -1,10 +1,13 @@
 extends RefCounted
 ## Formigas colecionáveis: cada uma com uma fantasia, escondida num lugar fixo
 ## do mapa (o mesmo em todo jogo), parada ou andando no lugar e sem fugir.
-## Chegando perto e olhando para ela, ela entra na coleção (aba Coleção, no
-## Tab), que vale para todos os jogos salvos (fica em user://save.cfg).
+## Chegando perto e olhando para ela, ela entra na coleção deste jogo (aba
+## Coleção, no Caderno), que vai no jogo salvo. A primeira vez que cada uma é
+## achada, em qualquer jogo, conta para as conquistas (achievements.gd).
 ## A Formiga Noel é a do chapéu de Natal, que aparece de vez em quando no meio
-## das outras (ant_field.gd, HAT_CHANCE): ela não tem lugar fixo.
+## das outras (ant_field.gd, HAT_CHANCE): ela não tem lugar fixo. Com a semente
+## fixa do campo, 2 das formigas do campo saem de chapéu em todo jogo (e às
+## vezes uma das câmaras); comer uma também conta como achar (anteater.gd).
 ##
 ## Cada uma: "id" (também o nome da fantasia em ant_mesh_builder.gd), "name",
 ## "area", e as de lugar fixo têm "spot" (x, z do mapa) e "move": "still"

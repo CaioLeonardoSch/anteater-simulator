@@ -1,8 +1,8 @@
 extends Control
-## Aba Coleção (no Tab, depois do mapa e das habilidades): um card para cada
-## formiga colecionável da área (scripts/collectibles.gd). Antes de achar, o
-## card mostra só a silhueta dela; achada, a foto (ant_photo.gd: tirada uma vez,
-## num estúdio só dela) e o nome. A coleção vale para todos os jogos salvos.
+## Aba Coleção (no Caderno, depois do mapa e das habilidades): um card para
+## cada formiga colecionável da área (scripts/collectibles.gd). Antes de achar,
+## o card mostra só a silhueta dela; achada, a foto (ant_photo.gd: tirada uma
+## vez, num estúdio só dela) e o nome. A coleção é deste jogo (vai no jogo salvo).
 
 signal closed
 

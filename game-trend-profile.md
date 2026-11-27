@@ -14,7 +14,7 @@
 - **Paid UA:** não informado
 - **Strengths:** conteúdo procedural, medir o ritmo com o bot e registrar as decisões
 - **Weaknesses:** não informado
-- **Unfinished projects:** Anteater Simulator: a demo da área 1 jogável; o modo incremental (Banquete) planejado em `docs/modo-incremental.md`
+- **Unfinished projects:** Anteater Simulator: a demo da área 1 jogável; a versão incremental (uma área gigante, nome provisório Banquete), alternativa às 4 áreas, planejada em `docs/versao-incremental.md`
 - **Preferences:** jogo relaxante, sem derrota e com fim; até R$ 20; sem anúncios nem compras dentro do jogo; nada enviado pela internet (11/11/2026); poucos textos na tela; as decisões ficam em `docs/DESIGN.md`
 - **Report language:** português (Brasil)
-- **Where files go:** planos e briefs em `docs/` (por exemplo `docs/modo-incremental.md`), não em `briefs/`; registros do bot em `docs/dados/`
+- **Where files go:** planos e briefs em `docs/` (por exemplo `docs/versao-incremental.md`), não em `briefs/`; registros do bot em `docs/dados/`

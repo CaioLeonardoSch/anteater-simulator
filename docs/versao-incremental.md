@@ -1,8 +1,14 @@
-# Modo incremental (nome provisório: Banquete): plano de desenvolvimento
+# A versão incremental: uma área gigante (plano de desenvolvimento)
 
-Escrito em 27/11/2026, a partir do pedido do Caio e das 8 respostas dele no
-mesmo dia. **Nada disto está feito ainda.** Sobre o modo normal (a demo da
-área 1), vale o [`DESIGN.md`](DESIGN.md); sobre o Banquete, vale este arquivo.
+Escrito em 27/11/2026, a partir do pedido do Caio e das 12 respostas dele no
+mesmo dia (nome provisório no menu: **Banquete**). **Nada disto está feito
+ainda.** Sobre a ideia original (a demo da área 1 e as 4 áreas), vale o
+[`DESIGN.md`](DESIGN.md); sobre a versão incremental, vale este arquivo.
+
+**Não é um modo a mais: é a outra opção do jogo.** Durante o teste, as duas
+ficam no menu. Depois fica **uma ou outra**: se o Caio gostar mais da versão
+incremental, o jogo segue só com ela, que tem **uma área só, gigante**, no
+lugar das 4.
 
 Números marcados como **estimativa** são contas feitas aqui, sem medir; o
 simulador da etapa B0 (seção 10) existe para trocá-los por números medidos.
@@ -17,30 +23,27 @@ simulador da etapa B0 (seção 10) existe para trocá-los por números medidos.
   gesto; três deles ainda têm um espaço finito para esvaziar e um fim
   escondido (seção 6). O tamanduá já tem o gesto (a língua) e o espaço (os
   ninhos).
-- **O mapa precisa ser compacto: uns 140 × 180 m, não os ~580 m da área 3
-  do esboço.** Quem dá as 4 a 6 horas é a altura do cupinzeiro (10 andares)
-  e o tamanho dos números, não a distância a pé. O código todo supõe hoje um
-  mundo de 160 m (seção 9.1); 580 m pediria um terreno carregado aos
-  pedaços e dez vezes mais cenário para fazer.
-- **Quase todos os insetos ficam no cupinzeiro** (estimativa: 99%). Para
-  caber 1 bilhão sem travar o computador, as massas grandes (as salas do
-  cupinzeiro, os ninhos de papelão que caem, as formigas sacudidas de uma
-  árvore) viram um **tapete vivo**: a conta continua exata, cada inseto conta
-  1, mas o desenho é de uma massa que baixa quando você come, não de insetos
-  andando um a um. Isso mexe na decisão de 05/11/2026 ("cada formiga anda
-  sozinha") e é a pergunta 3 da seção 16.
+- **Uma área de uns 250 m de ponta a ponta**: umas 5 vezes a largura da área
+  1 (cruzar a pé leva 1 minuto e meio). Cabe no jeito que o jogo monta o
+  mundo hoje, com ajustes nos tamanhos que o código supõe (seção 9.1).
+- **Meta: 1 milhão de insetos**, uns 70% dentro do cupinzeiro (estimativa).
+  Com esse número, **cada inseto na tela continua sendo um só**, como desde
+  05/11/2026. Só o que está fora da tela ou longe vira número (como as
+  moradoras das câmaras fechadas de hoje) ou o desenho simples de longe.
 - **Sem automação, quem acelera é o gesto.** Como no Punch The Walls ("de
   poucos cubos por soco a centenas de uma vez"), cada habilidade grande troca
-  o gesto: lamber 1, lamber vários, puxar do buraco, cavar, empinar, sacudir a
-  árvore, rasgar o tronco, varrer o tapete com a língua (seção 7.4).
+  o gesto: lamber 1, lamber vários, cavar, puxar do buraco, empinar, sacudir a
+  árvore, rasgar o tronco, varrer o chão da sala com a língua (seção 7.4).
 - **Primeiro a ferramenta e um pedaço que testa a ideia**: um simulador da
   economia que prova que dá para chegar ao fim sem travar, e uma fatia
-  jogável de 30 minutos (campo pequeno, um tronco caído, uma árvore-ninho e
-  um andar do cupinzeiro). Só depois a mata inteira e os 10 andares (seção 13).
-- **Critério de parada:** se, na fatia jogável, 2 de 3 pessoas pararem antes
-  de 20 minutos, ou disserem que as compras não mudam nada, o ciclo é refeito
-  antes de fazer o resto do conteúdo. Se falhar duas vezes, o Banquete volta
-  para o papel (seção 4).
+  jogável de 30 minutos (campo, um tronco caído, uma árvore-ninho e um andar
+  do cupinzeiro). **A fatia é o ponto de decisão**: o Caio joga a fatia e a
+  área 1 e escolhe com qual versão o jogo segue (seção 4).
+- **O risco que mais preocupa**: com 1 milhão, a força do fim fica umas 2 a 3
+  vezes a do fim da área 1 (estimativa: umas 100 formigas por lambida contra
+  40). O "número subindo" vem mais do total e das salas cheias do que de cada
+  lambida. O simulador mostra se basta; se não, sobe a meta até onde a tela
+  aguenta (seção 15).
 
 ---
 
@@ -48,9 +51,12 @@ simulador da etapa B0 (seção 10) existe para trocá-los por números medidos.
 
 | Assunto | Decidido |
 |---|---|
-| Onde fica | Uma segunda opção no menu principal, ao lado do jogo normal |
-| Mapa | Só a área 3: um começo com cara de área 1, uma mata densa e escura (a maior parte) e o cupinzeiro gigante |
-| Fim | **Meta gigante com fim**: um número enorme e finito; acaba ao comer o último cupim do cupinzeiro |
+| O que é | **Uma versão alternativa do jogo**, não um modo a mais: um mapa novo, à parte, com **uma área só, gigante**. No teste, fica como segunda opção no menu; depois, ou ela ou a ideia original |
+| Mapa | Um começo com cara de área 1, uma mata densa e escura (a maior parte) e o cupinzeiro gigante |
+| Tamanho | **Uns 250 m** de ponta a ponta |
+| Fim | **Meta gigante com fim**: acaba ao comer o último cupim do cupinzeiro |
+| A meta | **1 milhão de insetos** ("pode ser o suficiente") |
+| Insetos na tela | **Cada um é um só**; juntar em número só o que não está na tela e o que está longe |
 | Automação | **Nenhuma**: tudo pela língua; as habilidades só deixam o tamanduá mais rápido e mais forte |
 | "Tudo disponível" | **Mapa aberto desde o começo, trava por força**: os ninhos maiores e as salas pedem níveis mais altos |
 | O ciclo | "Lamber insetos para ganhar pontos, comprar níveis que multiplicam quanto cada lambida e cada cavada rendem, e com isso abrir ninhos cada vez mais duros (árvores, troncos, salas do cupinzeiro) até comer o último cupim do cupinzeiro gigante." |
@@ -65,28 +71,30 @@ simulador da etapa B0 (seção 10) existe para trocá-los por números medidos.
 
 Se alguma estiver errada, o plano muda.
 
-1. **Mesmo jogo**: mesmo motor (Godot 4.7, Forward+), mesmo estilo (3D
-   estilizado, 1ª pessoa, interface Constelação), mesmos controles. É uma
-   opção a mais no menu, não outro jogo.
-2. **PC (Steam)**, Windows e Mac, teclado e mouse ou controle; o jogo custa
+1. **Mesmo motor e mesmo estilo**: Godot 4.7 (Forward+), 3D estilizado, 1ª
+   pessoa, interface Constelação, os mesmos controles e a mesma história (o
+   tamanduá acorda numa caverna, vê o cupinzeiro gigante e a barriga ronca).
+2. **No teste, as duas versões ficam no menu**: "Jogar" (a original) e
+   "Banquete" (a nova). Depois da decisão, a que perdeu sai do jogo e do código.
+3. **PC (Steam)**, Windows e Mac, teclado e mouse ou controle; o jogo custa
    até R$ 20; sem anúncios e sem compras dentro do jogo; **nada vai pela
-   internet** (decisão de 11/11/2026).
-3. O código continua sendo escrito em sessões do Claude Code, medido com o
+   internet** (decisão de 11/11/2026). A demo da Steam será da versão escolhida.
+4. O código continua sendo escrito em sessões do Claude Code, medido com o
    bot (`--autoplay`, `--botlog`) e com capturas. Modelos e texturas
    continuam feitos por código, com os modelos de IA opcionais.
-4. **O modo normal não pode quebrar**: tudo o que for dividido entre os dois
-   modos é testado nos dois.
-5. O conteúdo feito para o Banquete (a mata, os ninhos em árvores e troncos,
-   o cupinzeiro) deve servir depois para as áreas 2 a 4 do modo normal
-   (pergunta 1 da seção 16).
+5. **A versão original não pode quebrar enquanto as duas estiverem no menu.**
+6. Se a versão incremental perder, as peças dela (a mata, os ninhos em
+   árvores e troncos, o cupinzeiro por dentro) podem ir para as áreas 2 a 4
+   da ideia original. Nada se perde.
 
 ---
 
-## 4. Objetivo, hipótese e critério de parada
+## 4. Objetivo, hipótese e ponto de decisão
 
-**Hipótese:** comer em escala de incremental (de 1 inseto por lambida a
-centenas de milhares por segundo), em 1ª pessoa, num mapa que se abre pela
-força e não por portas, prende uma pessoa por 4 a 6 horas sem automação.
+**Hipótese:** comer em escala de incremental (de 1 inseto por clique a umas
+8 000 por minuto, e de 0 a 1 milhão), em 1ª pessoa, numa área gigante que se
+abre pela força e não por portas, prende uma pessoa por 4 a 6 horas sem
+automação, e o Caio gosta mais dela do que das 4 áreas.
 
 Como medir, sem nada pela internet: testes com amigos (vendo de perto, em
 silêncio, como pede o [`PLANO.md`](PLANO.md)) e o bot.
@@ -100,9 +108,15 @@ silêncio, como pede o [`PLANO.md`](PLANO.md)) e o bot.
 | Jogo inteiro | mediana de 4–6 h até o fim | menos de 3 h ou mais de 8 h | decisão do Caio |
 | Travas | nenhum jogo do bot fica sem poder abrir o próximo ninho | qualquer trava | a trava dos 9 601 insetos da área 1 (11/11/2026) |
 
-**Se a fatia jogável falhar duas vezes seguidas**, o Banquete volta para o
-papel, e o esforço vai para a área 2 do modo normal, que usa as mesmas peças
-(a mata, as árvores-ninho, os troncos).
+**O ponto de decisão é a fatia jogável (B2).** O Caio joga a fatia e a
+demo da área 1 e escolhe:
+
+- **Segue a versão incremental**: a área 1 e as áreas 2 a 4 saem do plano,
+  e as etapas B3 em diante continuam.
+- **Volta para a ideia original**: a versão incremental sai do menu, e as
+  peças dela vão para as áreas 2 a 4.
+- **Ainda não dá para saber**: refaz o que não funcionou e testa de novo. Se
+  falhar duas vezes, vale a ideia original.
 
 ---
 
@@ -112,15 +126,16 @@ As sessões que forem construir **não** devem fazer:
 
 - automação de qualquer tipo: ajudantes, bichos que comem sozinhos,
   progresso com o jogo fechado;
-- renascimento ou prestígio: o modo tem fim;
-- as áreas 2 e 4 separadas, passagens fechadas por tronco, telas de
-  carregamento;
+- renascimento ou prestígio: a versão tem fim;
+- mais de uma área, passagens fechadas por tronco, telas de carregamento;
 - escalada de árvore (fica o Empinar);
 - multijogador (o SHRED A BILLION tem; aqui não);
 - anúncios, loja, moeda paga e estatísticas pela internet;
 - dia e noite: continua o mesmo fim de tarde. Dentro da mata e do cupinzeiro
   a luz muda; o céu não;
-- mudanças no modo normal além das necessárias para dividir o código (seção 9.1).
+- mudanças na versão original além das necessárias para dividir o código
+  (seção 9.1);
+- manter as duas versões depois da decisão.
 
 ---
 
@@ -134,15 +149,15 @@ Números de novembro de 2026; preços e análises mudam.
 | **Punch The Walls** (BoomGames, 06/11/2026, US$ 2,99, 89% de 727) | Socar paredes de concreto, que viram cubos; aspirar e triturar por dinheiro. Socos mais fortes, mais largos e mais rápidos, aspirador maior, explosivos; 8 tipos de rocha, cada um mais duro; ouro, relógios e coroas dentro das paredes. Fugir é o fim; depois, uma marreta que melhora sem limite e a conquista de demolir tudo (Steam e iXBT, nov 2026) | **A dureza do material como trava** (é a "trava por força"); "de poucos por golpe a centenas de uma vez"; tesouros dentro das paredes; um pós-jogo com melhoria sem teto e a conquista de limpar tudo. É o mais parecido com a escolha de não ter automação | O mapa sorteado a cada jogo |
 | **Find The Needle** (Needless Games, 06/11/2026, 849 de 1 023 análises positivas, mediana de 11 h) | Achar uma agulha num palheiro de uns 6 milhões de fios, cavando à mão, e depois com esteiras e máquinas (Wasdland e iXBT, nov 2026; as fontes divergem sobre ser acesso antecipado) | A busca num volume enorme (o papel do Faro); a prova de que as pessoas ficam muitas horas num gesto simples | A fábrica |
 | **Potato Please** (Golden Horn Studios, 03/11/2026, 91% de 4 260) | Descascar batata à mão, fino, para não desperdiçar; depois ferramentas e máquinas (games.gg, nov 2026) | O capricho no gesto manual: o prazer está em fazer bem feito | As máquinas |
-| **We March as One** (dux, 13/11/2026, sem análises ainda) | Auto-batalha incremental em que cada soldado de um exército enorme é simulado (Deku Deals, nov 2026) | Ver uma massa enorme se mexendo (o tapete de cupins) | A batalha automática |
+| **We March as One** (dux, 13/11/2026, sem análises ainda) | Auto-batalha incremental em que cada soldado de um exército enorme é simulado (Deku Deals, nov 2026) | Ver uma massa enorme se mexendo, cada um sozinho (as salas cheias de cupins) | A batalha automática |
 | **Dungeonbound** (louidev) | Pela ficha de uma loja, um incremental de masmorra em 1ª pessoa, com 5 ambientes diferentes. A página não abriu: **não verificado** | Se se confirmar: cada andar com cara própria | O combate |
 
 O padrão dos quatro primeiros: **um gesto à mão, em 1ª pessoa, que passa de
 1 por vez a centenas de uma vez; ferramentas que mudam o gesto; preço
 baixo.** Os três primeiros também têm um espaço finito para esvaziar e um fim
 escondido (a porta do cofre, a fuga, a agulha). O SHRED, o Find The Needle e
-o Potato Please têm automação (drones, esteiras, máquinas); o Banquete troca
-isso por gestos maiores, como o Punch The Walls.
+o Potato Please têm automação (drones, esteiras, máquinas); a versão
+incremental troca isso por gestos maiores, como o Punch The Walls.
 
 ---
 
@@ -150,48 +165,48 @@ isso por gestos maiores, como o Punch The Walls.
 
 ### 7.1 A meta
 
-- **1 bilhão de insetos** (estimativa de partida; o número é parecido com o
-  do SHRED A BILLION, veja a pergunta 2).
+- **1 milhão de insetos.**
 - **O fim** chega ao comer a rainha-mãe, que só fica exposta quando o
   cupinzeiro está 100% limpo (como a rainha da área 1, que só sai depois da
   corte).
-- **O campo e a mata não precisam acabar** para o fim. Limpar o mapa inteiro
+- **O campo e a mata não precisam acabar** para o fim. Limpar a área inteira
   vira a conquista do pós-jogo (como a demolição total do Punch The Walls).
 - **A conta é a de hoje**: cada inseto comido conta 1, e 10 insetos valem 1
-  ponto. Na tela, os números grandes ficam curtos: 12,3 mil · 4,5 mi · 1,2 bi.
+  ponto (uns 100 mil pontos ao todo). Na tela, os números grandes ficam
+  curtos: 12,3 mil · 450 mil · 1 mi.
 
 ### 7.2 As três zonas (estimativas)
 
 | Zona | Como é | Insetos | Tempo de uma pessoa | Gestos que estreiam |
 |---|---|---|---|---|
-| **1. Cerrado aberto** (o começo) | Como a área 1: capim, formigueiros de saúva, trilhas, arbustos; o tamanduá acorda numa caverna e vê o cupinzeiro por cima da mata | ~60 mil | 0:00 – 0:35 | Lamber, Lambida Rápida, Bocado, Cavar, Olheiro |
-| **2. Mata de galeria** (a maior) | Mata fechada e escura ao longo de um córrego; muitas árvores sem nada, algumas cheias de insetos; troncos caídos | ~3 mi | 0:35 – 2:15 | Empinar, Sacudir, Rasgar |
-| **3. Campo de murundus e o cupinzeiro gigante** | Campo com montinhos de cupim em volta do cupinzeiro; 10 andares por dentro | ~1 bi | 2:15 – 5:00 | Varrer, Terremoto, Fungada |
+| **1. Cerrado aberto** (o começo) | Como a área 1: capim, formigueiros de saúva, trilhas, arbustos, a lagoa; o tamanduá acorda numa caverna e vê o cupinzeiro por cima da mata | ~15 mil (a área 1 tem 10 mil) | 0:00 – 0:30 | Lamber, Lambida Rápida, Bocado, Cavar, Olheiro |
+| **2. Mata de galeria** (a maior) | Mata fechada e escura ao longo de um córrego, com umas 1 000 árvores: a maioria sem nada, umas 20 a 30 cheias de insetos; troncos caídos | ~230 mil | 0:30 – 2:15 | Empinar, Sacudir, Rasgar |
+| **3. Campo de murundus e o cupinzeiro gigante** | Campo com montinhos de cupim em volta do cupinzeiro; 10 andares por dentro | ~750 mil | 2:15 – 5:00 | Varrer, Terremoto, Fungada |
 
 "Mata de galeria" e "campo de murundus" são paisagens de verdade do cerrado:
 a mata fechada que acompanha os córregos e o campo pontilhado de montes de
 terra. Dão um motivo para a mata ser densa e para haver cupinzeiros em volta
 do gigante.
 
-A conta por trás (estimativa): se o que o tamanduá come por segundo **dobra a
-cada ~20 minutos** de jogo, ele come uns 60 mil na zona 1, uns 3 milhões na
-mata e quase todo o bilhão no cupinzeiro. É o jeito dos incrementais: a última
+A conta por trás (estimativa): o que o tamanduá come por minuto sobe de umas
+200 no começo para umas 8 000 no fim. É o jeito dos incrementais: a última
 parte tem a maioria dos números.
 
-### 7.3 Insetos um a um e insetos em tapete
+### 7.3 Na tela, cada inseto é um só
 
-- **Até alguns milhares juntos, cada inseto anda sozinho**, como hoje: nas
-  trilhas, em volta das câmaras, subindo os troncos, saindo das câmaras
-  abertas.
-- **Acima disso, a massa vira tapete**: as formigas que caem de uma árvore
-  sacudida, o ninho de papelão que racha no chão, o miolo dos murundus e as
-  salas do cupinzeiro. O tapete guarda quantos insetos sobram em cada
-  pedacinho; a ponta da língua apaga o pedaço que toca, e a conta desce pelo
-  número exato. Na beira do tapete, uns cupins (ou formigas) de verdade
-  andam soltos, para ver de perto.
-- **Nos andares de cima os cupins se amontoam**: o tapete fica mais grosso e
-  vira monte, e o monte baixa quando você come (como os montes de dinheiro do
-  SHRED A BILLION).
+- **Na tela e perto, cada inseto anda sozinho**, como hoje: nas trilhas, em
+  volta das câmaras, subindo os troncos, caindo da árvore sacudida, enchendo
+  as salas do cupinzeiro.
+- **Fora da tela ou longe, vira número ou desenho simples.** É o que o jogo
+  já faz: as moradoras das câmaras fechadas só existem como um número até a
+  câmara abrir, e as formigas de campo de longe usam malhas de 30 e 12
+  triângulos. O trabalho novo é fazer isso valer para a área inteira e para os
+  cupins.
+- **Sala cheia**: uma sala mostra no máximo uns 2 a 3 mil cupins de cada vez
+  (a medir). Os outros saem dos buracos das paredes conforme você come, como
+  o túnel das câmaras de hoje (até 40 à vista; o resto sai conforme você come).
+- **O ninho de papelão** que cai da árvore racha no chão e vira uma câmara
+  aberta: os insetos saem dele aos poucos.
 
 ### 7.4 A escada dos gestos (o que faz o papel da automação)
 
@@ -199,23 +214,23 @@ parte tem a maioria dos números.
 |---|---|---|---|
 | 1 | Lamber | 1 inseto por clique | 0:00 |
 | 2 | Lambida Rápida | segurar o botão | ~0:01 |
-| 3 | Bocado | vários por lambida (2 → milhares) | ~0:03 |
+| 3 | Bocado | vários por lambida (2 → umas 100) | ~0:03 |
 | 4 | Cavar | abre as câmaras (e, depois, as salas) | ~0:08 |
 | 5 | Olheiro | a língua entra no buraco e puxa os escondidos (formigueiro, oco de árvore) | ~0:15 |
-| 6 | Empinar | em pé nas patas de trás: lambe até 1,5 → 2,0 → 2,5 m | ~0:40 |
-| 7 | Sacudir | as garras batem no tronco: as formigas caem como chuva, e os ninhos de papelão despencam | ~0:55 |
-| 8 | Rasgar | abre os troncos caídos em pedaços (cada pedaço é uma câmara) | ~1:10 |
-| 9 | Varrer | segurando, a língua arrasta pelo tapete e limpa uma faixa | ~2:15 |
+| 6 | Empinar | em pé nas patas de trás: lambe até 1,5 → 2,0 → 2,5 m | ~0:35 |
+| 7 | Sacudir | as garras batem no tronco: as formigas caem como chuva, e os ninhos de papelão despencam | ~0:50 |
+| 8 | Rasgar | abre os troncos caídos em pedaços (cada pedaço é uma câmara) | ~1:05 |
+| 9 | Varrer | segurando, a língua arrasta pelo chão da sala e pega todos os insetos da faixa | ~2:15 |
 | 10 | Terremoto | o pulo que puxa tudo em volta (o Tremor de hoje, maior) | ~3:00 |
 | 11 | Fungada | o focinho puxa um cone de insetos de uma vez (o "aspirador" do SHRED e do Punch) | ~3:45 |
 
 O tamanduá-bandeira de verdade empina nas patas de trás, apoiado na cauda, e
 rasga cupinzeiros e madeira podre com as garras. A Fungada é a licença do
-desenho (pergunta 7).
+desenho (pergunta 5 da seção 16).
 
 ### 7.5 Trava por força: a dureza
 
-O mapa inteiro está aberto desde o começo. O que segura é a **dureza** do que
+A área inteira está aberta desde o começo. O que segura é a **dureza** do que
 fecha cada ninho, como as 8 rochas do Punch The Walls. Com Força abaixo da
 dureza, a dica embaixo da mira mostra o cadeado e o nível que falta (como
 hoje).
@@ -250,37 +265,37 @@ parte das travas.
 - **Níveis sem teto** nas linhas de quantidade (Bocado, Destreza, Força,
   Varrer, Fungada). Os pontos acabam junto com os insetos, então na prática o
   teto é o fim do jogo. As linhas de gesto (Empinar, Sacudir) têm poucos níveis.
-- **Cada andar** guarda uns 1,7 vez os insetos do anterior (estimativa):
-  andar 1 com ~3 mi, andar 10 com ~350 mi.
+- **Cada andar** guarda umas 1,25 vez os insetos do anterior (estimativa):
+  andar 1 com ~20 mil, andar 10 com ~150 mil.
 - **Bônus de ninho limpo**, como os 20 pontos de hoje, proporcional ao ninho.
-- **Frenesi** (tanajuras e cogumelos) continua, e no Banquete multiplica.
-  Uma ideia a mais: de vez em quando saem **aleluias** (cupins com asas)
-  pelas janelas do cupinzeiro, e comê-las dá Frenesi.
+- **Frenesi** (tanajuras e cogumelos) continua, e na versão incremental
+  multiplica. Uma ideia a mais: de vez em quando saem **aleluias** (cupins
+  com asas) pelas janelas do cupinzeiro, e comê-las dá Frenesi.
 
 ### 7.7 Os ninhos
 
-Espécies sugeridas com base na vida real; dá para trocar (pergunta 5).
+Espécies sugeridas com base na vida real; dá para trocar (pergunta 3).
 
-| Ninho | Zona | Insetos (estimativa) | Como se come | Peças de hoje que servem |
-|---|---|---|---|---|
-| Formigueiro de saúva | 1 | 2 mil a 15 mil | trilhas, passeio e câmaras, como na área 1 | `nest.gd`, `colony.gd`, `ant_field.gd` |
-| Tronco caído (formiga-carpinteira) | 2 | 20 mil a 150 mil | Rasgar abre o tronco em pedaços; serragem no chão denuncia o ninho | câmaras, a terra ao cavar (`dirt_fx.gd`), as lascas do tronco da saída |
-| Árvore oca (formiga de embaúba) | 2 | 30 mil a 300 mil | uma fila sobe o tronco; Olheiro nos buracos (Empinar para os altos); Sacudir derruba as de fora | a subida no tronco (`ant_ground.gd`), o Olheiro |
-| Ninho de papelão no galho (formiga ou cupim de árvore) | 2 | 100 mil a 800 mil | Sacudir derruba; no chão ele racha e vira tapete | (novo) |
-| Correição (formiga-de-correição) | 2 | 200 mil a 1 mi | um rio de formigas atravessa a mata de vez em quando; é correr atrás | as trilhas (`trail_network.gd`) |
-| Murundu (cupinzeiro pequeno) | 3 | 1 mi a 5 mi | Cavar abre; dentro, tapete | `nest.gd` |
-| Sala do cupinzeiro gigante | 3 | de uns 300 mil (andar 1) a centenas de milhões (andares 9 e 10) | entrar e comer à vontade; tapete no chão e nas paredes | a câmara aberta |
-| Rainha-mãe | 3 | a definir | a última; é o fim | a rainha da área 1 |
+| Ninho | Zona | Quantos | Insetos em cada (estimativa) | Como se come | Peças de hoje que servem |
+|---|---|---|---|---|---|
+| Formigueiro de saúva | 1 | ~8 | 1 mil a 4 mil | trilhas, passeio e câmaras, como na área 1 | `nest.gd`, `colony.gd`, `ant_field.gd` |
+| Tronco caído (formiga-carpinteira) | 2 | ~15 | 2 mil a 6 mil | Rasgar abre o tronco em pedaços; serragem no chão denuncia o ninho | câmaras, a terra ao cavar (`dirt_fx.gd`), as lascas do tronco da saída |
+| Árvore oca (formiga de embaúba) | 2 | ~15 | 3 mil a 8 mil | uma fila sobe o tronco; Olheiro nos buracos (Empinar para os altos); Sacudir derruba as de fora | a subida no tronco (`ant_ground.gd`), o Olheiro |
+| Ninho de papelão no galho (formiga ou cupim de árvore) | 2 | ~10 | 5 mil a 10 mil | Sacudir derruba; no chão ele racha e vira uma câmara aberta | a câmara aberta |
+| Correição (formiga-de-correição) | 2 | de vez em quando | 3 mil a 6 mil por passagem | um rio de formigas atravessa a mata; é correr atrás | as trilhas (`trail_network.gd`) |
+| Murundu (cupinzeiro pequeno) | 3 | ~8 | 4 mil a 8 mil | Cavar abre; os cupins saem das galerias | `nest.gd` |
+| Sala do cupinzeiro gigante | 3 | ~55 | de uns 2 mil (andar 1) a uns 150 mil (a sala da rainha-mãe) | entrar e comer à vontade; os cupins enchem o chão e as paredes e saem dos buracos | a câmara aberta |
+| Rainha-mãe | 3 | 1 | a definir | a última; é o fim | a rainha da área 1 |
 
 ### 7.8 O cupinzeiro gigante
 
-- **Tamanho** (estimativa): uns 40 m de largura na base e 60 m de altura,
+- **Tamanho** (estimativa): uns 50 m de largura na base e 60 m de altura,
   com 10 andares de uns 6 m. Os olhos do tamanduá ficam a 72 cm do chão:
   cada andar parece enorme.
 - **Por dentro**: uma chaminé no meio (como a que alguns cupins de verdade
-  fazem, para ventilar), uma rampa em espiral rente à parede de fora e um anel de salas em
-  volta da chaminé. O andar 1 tem umas 10 salas; o andar 10, só a da
-  rainha-mãe; umas 55 salas ao todo (estimativa).
+  fazem, para ventilar), uma rampa em espiral rente à parede de fora e um
+  anel de salas em volta da chaminé. O andar 1 tem umas 10 salas; o andar 10,
+  só a da rainha-mãe; umas 55 salas ao todo (estimativa).
 - **Travas**: cada sala fechada por uma parede de barro da dureza do andar; a
   rampa para o andar seguinte, por um tampão de barro da dureza dele (cupins
   fecham passagens de verdade). Dá para entrar no cupinzeiro desde o começo e
@@ -291,10 +306,10 @@ Espécies sugeridas com base na vida real; dá para trocar (pergunta 5).
   em todo o jogo.
 - **Luz**: a do fim de tarde entra pelas janelas. Mais para dentro, larvas de
   um besouro que brilha (parente dos vaga-lumes) acendem pontos verdes nas
-  paredes. Isso existe no cerrado: no Parque
-  Nacional das Emas, larvas do besouro *Pyrearinus termitilluminans* vivem em
-  cupinzeiros e acendem luzes verdes para atrair presas (FAPESP, jan 2024).
-  Por fora, o cupinzeiro também pode pontilhar de verde visto de longe.
+  paredes. Isso existe no cerrado: no Parque Nacional das Emas, larvas do
+  besouro *Pyrearinus termitilluminans* vivem em cupinzeiros e acendem luzes
+  verdes para atrair presas (FAPESP, jan 2024). Por fora, o cupinzeiro também
+  pode pontilhar de verde visto de longe.
 - **Um tema por andar**, para não repetir: galerias de terra; depósito de
   capim (cupins guardam capim seco); berçário (ovos e ninfas); andar dos
   soldados; chaminés; andar das larvas que brilham; câmara dos alados
@@ -310,8 +325,9 @@ Espécies sugeridas com base na vida real; dá para trocar (pergunta 5).
 
 ### 7.9 A mata densa e escura
 
-- **Densidade** (estimativa): 500 a 800 árvores na mata, 1 em cada 10 a 15
-  com insetos (as **árvores-ninho**); o resto é só cenário.
+- **Densidade** (estimativa): umas 1 000 árvores na mata e uns 40 troncos
+  caídos. Só umas 20 a 30 árvores e uns 15 troncos têm insetos; o resto é só
+  cenário.
 - **Como reconhecer uma árvore-ninho**: uma fila de formigas subindo o
   tronco, serragem no pé, buracos com terra fresca, bolas escuras de papelão
   nos galhos.
@@ -327,14 +343,15 @@ Espécies sugeridas com base na vida real; dá para trocar (pergunta 5).
 - **Comandos novos** (todos trocáveis em Configurações → Controles):
   Empinar = segurar `C` (controle: `LB`); Fungada = `R` (controle: `RB`).
   Sacudir e Rasgar usam o mesmo `E` do Cavar, mirando no tronco. Varrer é
-  automático: segurar a lambida com a ponta no tapete.
+  automático: segurar a lambida e arrastar a mira pelo chão.
 - **Mão cansada**: horas segurando o botão cansam. A Lambida Rápida ganha a
   opção "apertar uma vez", como Correr e Cavar já têm.
 - **O que precisa ser gostoso** (a lista de capricho):
-  - o "+12,3 mil" subindo do medalhão (hoje já sobe o "+1" e o "+20");
-  - o monte de cupins baixando enquanto a língua passa;
+  - o "+120" subindo do medalhão (hoje já sobe o "+1" e o "+20");
+  - a sala cheia de cupins esvaziando enquanto a língua varre;
   - a chuva de formigas ao sacudir, com o barulhinho delas caindo nas folhas;
   - o tronco abrindo em lascas e o ninho de papelão despencando e rachando;
+  - os insetos voando para dentro do focinho na Fungada;
   - o cartão a cada 10 níveis ("o dobro");
   - as salas do andar acendendo em verde no mapa quando ficam limpas;
   - o som de mastigar subindo de tom com o combo;
@@ -342,7 +359,7 @@ Espécies sugeridas com base na vida real; dá para trocar (pergunta 5).
 
 ---
 
-## 8. Habilidades do Banquete (rascunho)
+## 8. Habilidades da versão incremental (rascunho)
 
 A mesma árvore Constelação, com 5 ramos. Nas linhas de muitos níveis, um
 número ("Nv 37") no lugar das bolinhas. Clique compra 1 nível, Shift compra
@@ -357,12 +374,12 @@ habilidade), que continua mostrando antes → depois.
 | | Comprimento | ~12 | alcance, de 1 m a 5 m |
 | | Mira | ~5 | a área da mira |
 | | Olheiro | sem teto | quantos a língua puxa do buraco, e a recarga |
-| | Varrer | sem teto | largura e velocidade da faixa no tapete |
+| | Varrer | sem teto | largura e velocidade da faixa |
 | **Garras** | Cavar e Força | 14 durezas | o que dá para abrir (seção 7.5) |
 | | Rapidez | ~20 | o descanso das garras e o tempo de cavar |
 | | Sacudir | 4 | a grossura do tronco |
 | | Tremor e Terremoto | ~10 | atordoa e puxa as tontas |
-| **Patas** | Corrida, Respiro, Passada, Fôlego | ~10 cada | como hoje, com mais níveis |
+| **Patas** | Corrida, Respiro, Passada, Fôlego | ~10 cada | como hoje, com mais níveis (a área é 5 vezes mais larga) |
 | | Empinar | 3 | 1,5 → 2,0 → 2,5 m |
 | **Faro** | Rastro e Família | ~6 cada | achar ninhos, salas e o que falta |
 | | Faro no escuro | ~3 | ver os insetos na mata escura e no fundo das salas |
@@ -372,80 +389,97 @@ habilidade), que continua mostrando antes → depois.
 
 ## 9. Sistemas, na ordem de construção
 
-### 9.1 Dividir o código entre os dois modos (o primeiro e o mais arriscado)
+### 9.1 Fazer a versão nova sem quebrar a original (o primeiro e o mais arriscado)
 
-Hoje quase tudo supõe a área 1:
+Como fica **uma ou outra**, não vale a pena deixar tudo geral para sempre.
+Durante o teste:
+
+- **O código novo fica em arquivos novos**: `scripts/world/incremental/` (o
+  mundo, os ninhos novos, o cupinzeiro) e `scripts/modes/incremental.gd` (a
+  economia).
+- **Os arquivos de hoje só ganham parâmetros**, com os valores de hoje como
+  padrão, para a versão original continuar igual.
+- **Depois da decisão**, a versão que perdeu sai do código.
+
+O que hoje supõe a área 1:
 
 | Onde | O que é fixo hoje | O que muda |
 |---|---|---|
-| `scripts/autoload/game_state.gd` | `GOAL` (10 000), `BRANCHES`, `MARCOS`, `UPGRADES` e as contas das habilidades (`lick_capacity()`, `tongue_range()`, `lick_rate()`...), feitas por cliques | Os dados de cada modo em arquivos próprios (`scripts/modes/normal.gd` e `scripts/modes/banquete.gd`); no Banquete, as contas por nível. Números em `int` (64 bits, até 9 × 10^18) |
-| `scripts/main.gd` | Sempre monta o `World` da área 1 | Monta o mundo do modo escolhido |
-| `scripts/world/terrain.gd` (`SIZE` 160 m, `RES` 256), `scripts/ants/ant_ground.gd` (`SIZE` 64 m), `scripts/ants/ant_field.gd` (`HEIGHT_SIZE` 160 m), `scripts/world/cliffs.gd` (`BASE_RADIUS` 26 m), `scripts/world/world.gd` (`NEST_LAYOUT`, `FOOD_LAYOUT`, `LINKS`) | Tamanhos e posições da área 1 | Viram a configuração de cada mundo |
-| `scripts/ants/ant_swarm.gd` (`CAPACITY` 4 096) | Teto das formigas simuladas uma a uma | Continua; o que passar disso vai para o tapete |
-| Jogos salvos (`game_state.gd`, `SAVE_VERSION` 9) | 3 jogos do modo normal | Mais 3 só do Banquete (`user://banquete_N.json`), com versão própria; a coleção (`user://save.cfg`) ganha a área 3 |
+| `scripts/autoload/game_state.gd` | `GOAL` (10 000), `BRANCHES`, `MARCOS`, `UPGRADES` e as contas das habilidades (`lick_capacity()`, `tongue_range()`, `lick_rate()`...), feitas por cliques | Os dados de cada versão em arquivos próprios (`scripts/modes/normal.gd` e `scripts/modes/incremental.gd`); na incremental, as contas por nível |
+| `scripts/main.gd` | Sempre monta o `World` da área 1 | Monta o mundo da versão escolhida no menu |
+| `scripts/world/terrain.gd` | `SIZE` 160 m, `RES` 256 (um ponto a cada 62 cm), `MASK_RES` 512 | Uns 300 m (a área de 250 m mais o platô em volta), mesma densidade de pontos (`RES` ~480) |
+| `scripts/ants/ant_ground.gd` | `SIZE` 64 m (pedras, troncos e árvores onde as formigas sobem) | Uns 260 m |
+| `scripts/ants/ant_field.gd` | `HEIGHT_SIZE` 160 m (o chão das formigas de campo na placa de vídeo) | Uns 300 m |
+| `scripts/world/cliffs.gd` | `BASE_RADIUS` 26 m: um círculo em volta da clareira | O contorno da área gigante |
+| `scripts/world/world.gd` | `NEST_LAYOUT`, `FOOD_LAYOUT`, `LINKS` da área 1 | A planta em dados (seção 10) |
+| `scripts/ants/ant_swarm.gd` | `CAPACITY` 4 096 formigas simuladas uma a uma | Continua; o resto fica no campo calculado pela placa de vídeo, ou como número |
+| Jogos salvos (`game_state.gd`, `SAVE_VERSION` 9) | 3 jogos da versão original | Mais 3 só da incremental (`user://incremental_N.json`), com versão própria; a coleção (`user://save.cfg`) ganha a área nova |
 
-**Teste de que o modo normal não mudou:** o bot com a mesma semente antes e
-depois da divisão (`--autoplay --botlog`), comparando os CSVs (no máximo 5% de
+**Teste de que a versão original não mudou:** o bot com a mesma semente
+antes e depois (`--autoplay --botlog`), comparando os CSVs (no máximo 5% de
 diferença no tempo de cada marco), e capturas do menu, do mapa e da árvore.
 
 ### 9.2 A ordem
 
 1. **A divisão do código** (9.1).
 2. **Menu e jogos salvos**: o botão novo no `scripts/ui/menus.gd` e a tela
-   de jogos salvos do Banquete.
-3. **Números grandes**: a forma curta (mil, mi, bi) num lugar só
+   de jogos salvos da versão incremental.
+3. **Números grandes**: a forma curta (mil, mi) num lugar só
    (`scripts/ui/ui_theme.gd` ou um `scripts/ui/numeros.gd`), usada no
    medalhão, nos cartões, no mapa e na árvore.
 4. **Economia por níveis e a árvore com níveis** (`scripts/ui/skill_tree.gd`):
    ×1, ×10 e Máx, "Nv 37", o cartão a cada 10 níveis.
-5. **O mundo da área 3** (`scripts/world/area3/`): terreno de uns 140 × 180 m
-   com o platô, penhascos em volta, a caverna, as três zonas e a passagem de
-   luz entre elas.
+5. **O mundo da área gigante** (`scripts/world/incremental/`): terreno de uns
+   250 m com o platô, penhascos em volta, a caverna, as três zonas e a
+   passagem de luz entre elas.
 6. **Os formigueiros do começo**: `nest.gd` com números maiores.
-7. **O tapete** (`scripts/world/area3/tapete.gd` e
-   `shaders/tapete_insetos.gdshader`): uma imagem pequena por tapete guarda
-   quantos insetos sobram em cada pedacinho; a ponta da língua apaga, como o
-   `mask_paint` do terreno; a altura do monte acompanha. Na beira, uns
-   insetos de verdade (o modo "morando numa câmara aberta" do `ant_swarm.gd`).
+7. **Insetos fora da tela e de longe**: fazer valer para a área inteira e
+   para os cupins o que o jogo já faz com as moradoras das câmaras fechadas
+   (um número até precisar aparecer) e com as formigas de campo de longe (as
+   malhas simples). Malhas próprias para os cupins, mais simples que as das
+   formigas (sem folha, corpo claro). O teto de insetos à vista por sala, com
+   o resto saindo dos buracos das paredes.
 8. **A mata**: árvores feitas com 12 a 20 modelos repetidos (em vez de uma
    malha para cada árvore), versões simples de longe, sombra só perto, uma
    imagem da copa que escurece o chão, o capim e as formigas embaixo dela
    (mais barato que sombra de verdade de centenas de árvores) e os raios de luz.
 9. **Árvores-ninho e troncos caídos**: um tipo novo de trilha em
    `ant_field.gd`, que sobe o tronco; Olheiro nos buracos; Empinar; Sacudir
-   (formigas caindo, que viram tapete no chão); Rasgar (o tronco em pedaços);
-   o ninho de papelão que cai e vira tapete.
+   (as formigas caem uma a uma e correm pelo chão); Rasgar (o tronco em
+   pedaços); o ninho de papelão que cai, racha e vira uma câmara aberta.
 10. **O cupinzeiro por dentro**: andares, rampa, salas, chaminé, janelas,
     colisão, a luz das larvas, e só o andar onde você está (mais o de cima e
     o de baixo) desenhado por dentro.
-11. **Objetivos e mapa do Banquete**: a sequência guiada dos primeiros 30
-    minutos (como a da área 1) e um objetivo por zona e por andar
-    (`scripts/ui/objectives.gd`); no mapa (`scripts/ui/map_view.gd`), uma
-    vista por andar do cupinzeiro.
-12. **Colecionáveis da área 3, conquistas e estatísticas.**
-13. **O bot do Banquete e o balanceamento.**
+11. **Objetivos e mapa da versão incremental**: a sequência guiada dos
+    primeiros 30 minutos (como a da área 1) e um objetivo por zona e por
+    andar (`scripts/ui/objectives.gd`); no mapa (`scripts/ui/map_view.gd`),
+    uma vista por andar do cupinzeiro.
+12. **Colecionáveis da área nova, conquistas e estatísticas.**
+13. **O bot da versão incremental e o balanceamento.**
 14. **Desempenho e polimento.**
 
 ### 9.3 Desempenho
 
 - **Meta**: pelo menos 60 quadros por segundo no preset Média nos três
   lugares mais pesados (o meio da mata; a beira do cupinzeiro, olhando a
-  mata; uma sala cheia de tapete), medido com F3 e `--stats`. Para comparar:
+  mata; uma sala cheia de cupins), medido com F3 e `--stats`. Para comparar:
   a área 1 roda hoje entre uns 130 e 180 na máquina de teste (RTX 5070,
   3440×1440), segundo o histórico do `DESIGN.md`.
 - **Árvores**: no máximo uns 20 modelos diferentes; o resto repetido.
-- **Insetos um a um**: no máximo as 4 096 formigas simuladas de hoje, mais as
-  formigas de campo calculadas pela placa de vídeo (medir até quantas cabem
-  numa zona; a área 1 tem uns 5 500 andando); o resto em câmaras (como número)
-  ou em tapete.
+- **Insetos à vista**: no máximo as 4 096 formigas simuladas de hoje, mais as
+  formigas de campo calculadas pela placa de vídeo (medir quantas cabem; a
+  área 1 tem uns 5 500 andando) e o teto de cada sala; o resto, como número.
 - **Cupinzeiro**: o que está em outros andares não é desenhado por dentro.
+- **Tempo para abrir o jogo**: o mundo é montado por código na hora de
+  carregar, e a área nova é 5 vezes mais larga. Medir na B1; se passar de uns
+  15 s na máquina de teste, guardar partes já prontas.
 
 ---
 
 ## 10. Ferramentas primeiro (antes do conteúdo)
 
-1. **Simulador da economia** (`tools/sim_banquete.py`, em Python como os
-   outros de `tools/`): lê os mesmos dados que o jogo (`data/banquete.json`:
+1. **Simulador da economia** (`tools/sim_incremental.py`, em Python como os
+   outros de `tools/`): lê os mesmos dados que o jogo (`data/incremental.json`:
    insetos de cada ninho, durezas, preços, efeitos) e simula um jogador que
    compra o nível que mais rende por ponto e come o ninho que mais rende por
    segundo. Diz o tempo até o fim, o tempo entre as compras, quando chega cada
@@ -454,11 +488,11 @@ diferença no tempo de cada marco), e capturas do menu, do mapa e da árvore.
 2. **Validador das travas** (no mesmo script): para cada dureza, prova que
    os insetos abaixo dela dão os pontos para comprá-la, com folga (1,3 vez),
    mesmo comprando mal. Se falhar, aponta onde e sai com erro.
-3. **A planta em dados** (`data/banquete_mapa.json`: zonas, ninhos,
-   árvores-ninho, andares, salas, rampas), lida pelo gerador do mundo e pelo
-   simulador (as distâncias entram no tempo).
-4. **O bot no Banquete** (`--autoplay` e `--botlog`), para conferir o
-   simulador no jogo de verdade. Na área 1, o bot é umas 3 vezes mais lento
+3. **A planta em dados** (`data/incremental_mapa.json`: zonas, ninhos,
+   árvores-ninho, troncos, andares, salas, rampas), lida pelo gerador do
+   mundo e pelo simulador (as distâncias entram no tempo: a área é grande).
+4. **O bot na versão incremental** (`--autoplay` e `--botlog`), para conferir
+   o simulador no jogo de verdade. Na área 1, o bot é umas 3 vezes mais lento
    que uma pessoa; a mesma régua vale aqui até ser medida de novo.
 
 Para o jogo exportado ler os `.json`, o `data/*.json` entra no
@@ -477,8 +511,8 @@ presente da rede de segurança, cada andar aberto, o fim, e uma linha a cada
 - Godot **4.7.2**, Forward+, GDScript; nenhum complemento novo.
 - Tudo feito por código, como hoje (malhas, sons e texturas); modelos de IA
   continuam opcionais.
-- Os jogos salvos do modo normal (versão 9) continuam abrindo.
-- Os números de insetos e pontos em `int` (64 bits).
+- Os jogos salvos da versão original (versão 9) continuam abrindo enquanto
+  ela estiver no jogo.
 - Nada pela internet.
 - O desempenho da seção 9.3.
 
@@ -498,10 +532,10 @@ as estatísticas que o jogo já mostra.
 
 | Etapa | O que entra | Pronto quando (dá para conferir) | Tamanho |
 |---|---|---|---|
-| **B0. Papel e simulador** | A seção 10, a planta do mapa e a do cupinzeiro, e as perguntas da seção 16 respondidas | O simulador dá 4 a 6 h sem trava; o Caio aprova as duas plantas | P |
-| **B1. Fundação** | A seção 9.1, o menu, os jogos salvos, os números grandes e a economia por níveis | "Banquete" no menu abre um mapa vazio de uns 140 × 180 m, com penhascos e caverna; o modo normal fica igual (bot e capturas); os jogos salvos dos dois não se misturam | M |
-| **B2. Fatia jogável** | Um campo pequeno com 3 formigueiros, 1 tronco caído, 1 árvore-ninho (Empinar e Sacudir), 1 andar do cupinzeiro com 3 salas de tapete, e a árvore com níveis | 30 minutos jogáveis, do começo até limpar o 1º andar; o teste com 3 pessoas da seção 4 | G |
-| **B3. Cerrado aberto** | A zona 1 inteira | O bot limpa a zona no equivalente a uns 35 min de uma pessoa | M |
+| **B0. Papel e simulador** | A seção 10, a planta da área e a do cupinzeiro, e as perguntas da seção 16 respondidas | O simulador dá 4 a 6 h sem trava; o Caio aprova as duas plantas | P |
+| **B1. Fundação** | A seção 9.1, o menu, os jogos salvos, os números grandes e a economia por níveis | "Banquete" no menu abre uma área vazia de uns 250 m, com penhascos e caverna; a versão original fica igual (bot e capturas); os jogos salvos das duas não se misturam; o tempo para abrir está medido | M |
+| **B2. Fatia jogável (a decisão)** | Um campo pequeno com 3 formigueiros, 1 tronco caído, 1 árvore-ninho (Empinar e Sacudir), 1 andar do cupinzeiro com 3 salas cheias, e a árvore com níveis | 30 minutos jogáveis, do começo até limpar o 1º andar; o teste com 3 pessoas da seção 4; **o Caio escolhe a versão** | G |
+| **B3. Cerrado aberto** | A zona 1 inteira (e, se a incremental ganhou, a área 1 sai do menu) | O bot limpa a zona no equivalente a uns 30 min de uma pessoa | M |
 | **B4. Mata de galeria** | A zona 2 inteira: escuridão, árvores-ninho, troncos, ninhos de papelão, correição | Pelo menos 60 quadros por segundo no Média no meio da mata; o bot chega ao cupinzeiro no equivalente a umas 2h15 de uma pessoa | G |
 | **B5. O cupinzeiro** | Os 10 andares, salas, rampas, chaminé, larvas, a rainha-mãe e o fim | Dá para subir do chão ao topo e terminar; nenhuma sala sem saída; nenhum lugar onde a câmera atravessa a parede | G |
 | **B6. Economia fechada** | Balanceamento com o simulador e o bot, colecionáveis, conquistas, objetivos, o mapa por andar | O bot termina na faixa de 4 a 6 h de uma pessoa, sem trava, com 3 sementes diferentes | M |
@@ -514,46 +548,53 @@ P = alguns dias de sessões; M = 1 a 2 semanas; G = 3 semanas ou mais
 
 ## 14. Como conferir cada etapa
 
-- **B0**: `python3 tools/sim_banquete.py` mostra a tabela do ritmo e sai com
-  erro se alguma trava falhar.
+- **B0**: `python3 tools/sim_incremental.py` mostra a tabela do ritmo e sai
+  com erro se alguma trava falhar.
 - **B1 a B7**: a sessão baixa o Godot 4.7.2 (do mesmo jeito que o
   `.github/workflows/versao.yml`) e roda o bot e as capturas. A opção para
-  começar direto no Banquete (`--start=banquete`) é criada na B1, junto com as
-  de hoje (`--autoplay`, `--timescale`, `--botlog`, `--captures`, `--quit`).
-- **O modo normal**: a mesma linha do bot de hoje, comparada com os
+  começar direto na versão incremental (`--start=incremental`) é criada na
+  B1, junto com as de hoje (`--autoplay`, `--timescale`, `--botlog`,
+  `--captures`, `--quit`).
+- **A versão original**: a mesma linha do bot de hoje, comparada com os
   `docs/dados/bot-marcos-*.csv`.
 - **Desempenho**: `--stats` e F3 nos três lugares da seção 9.3, numa máquina
   com placa de vídeo (as capturas do servidor sem placa de vídeo não servem
   para medir quadros por segundo).
-- **Os registros** do bot vão para `docs/dados/bot-banquete-*.csv`, como os
-  da área 1.
+- **Os registros** do bot vão para `docs/dados/bot-incremental-*.csv`, como
+  os da área 1.
 
 ---
 
 ## 15. Riscos (do maior para o menor)
 
-1. **Conteúdo demais.** 4 a 6 horas são de 12 a 18 vezes a área 1. Saída:
-   ferramentas e dados primeiro, peças repetidas com variação (como as
-   câmaras), e a fatia jogável antes do resto.
-2. **Quebrar o modo normal ao dividir o código.** Saída: a seção 9.1, com o
-   bot e as capturas antes de cada junção.
-3. **Travar no fim.** Num modo finito e sem automação, se faltar ponto o jogo
-   para. Saída: o validador, redistribuir de graça e a rede de segurança.
-4. **O tapete não convencer** (parecer uma textura, e não insetos). Saída:
-   testar já na B2; insetos de verdade na beira; o monte que baixa.
-5. **Mão cansada.** Saída: a Lambida Rápida com "apertar uma vez"; Varrer e
-   Fungada cobrem mais área com menos cliques.
-6. **Mata escura demais** para ver as formigas. Saída: o contorno, o Faro no
+1. **Conteúdo demais.** 4 a 6 horas são de 12 a 18 vezes a área 1, numa
+   área 5 vezes mais larga. Saída: ferramentas e dados primeiro, peças
+   repetidas com variação (como as câmaras), e a fatia jogável antes do resto.
+2. **Quebrar a versão original durante o teste.** Saída: código novo em
+   arquivos novos, parâmetros com os valores de hoje como padrão, e o bot e
+   as capturas antes de cada junção.
+3. **Travar no fim.** Numa versão finita e sem automação, se faltar ponto o
+   jogo para. Saída: o validador, redistribuir de graça e a rede de segurança.
+4. **Insetos demais na tela** (salas cheias, a chuva de formigas, a
+   correição). Saída: o teto por sala, com o resto saindo dos buracos;
+   malhas simples para os cupins; medir já na B2.
+5. **O número subir pouco.** Com 1 milhão, o fim fica em umas 100 por
+   lambida, 2 a 3 vezes o fim da área 1 (estimativa). Saída: o simulador
+   mostra na B0; se faltar, sobe a meta (2 a 5 milhões, até onde o teto de
+   insetos na tela aguenta) ou cresce mais a Varrer e a Fungada.
+6. **Mão cansada.** Saída: a Lambida Rápida com "apertar uma vez"; Varrer e
+   Fungada pegam mais com menos cliques.
+7. **Mata escura demais** para ver as formigas. Saída: o contorno, o Faro no
    escuro, os raios de luz; testar nos presets Baixa e Média.
-7. **Desempenho da mata** (centenas de árvores). Saída: modelos repetidos,
-   versões de longe, sombra só perto, a imagem da copa no lugar de sombras de
-   verdade.
-8. **Dentro do cupinzeiro**: em 1ª pessoa, em lugar fechado, a câmera pode
+8. **O peso da mata e o tempo para abrir o jogo** (1 000 árvores, uma área 5
+   vezes mais larga, tudo montado por código ao carregar). Saída: modelos
+   repetidos, versões de longe, sombra só perto, a imagem da copa no lugar de
+   sombras de verdade, e partes já prontas se o carregamento passar de 15 s.
+9. **Dentro do cupinzeiro**: em 1ª pessoa, em lugar fechado, a câmera pode
    atravessar a parede, e dá para se perder. Saída: salas largas, janelas, o
    mapa por andar e o losango do objetivo.
-9. **Parecer cópia** do "bilhão" do SHRED A BILLION. Saída: a pergunta 2.
-10. **Dois modos para manter** (dois balanceamentos). Saída: dados separados
-    e as mesmas peças.
+10. **Duas versões até a decisão.** Saída: decidir na B2, e não depois da
+    B6, para não balancear as duas por muito tempo.
 
 ---
 
@@ -561,18 +602,15 @@ P = alguns dias de sessões; M = 1 a 2 semanas; G = 3 semanas ou mais
 
 | # | Pergunta | Vale, se ninguém responder |
 |---|---|---|
-| 1 | O Banquete fica junto das áreas 2 a 4 do modo normal, ou as substitui? | Os dois seguem, e tudo é feito para servir aos dois |
-| 2 | A meta: 1 bilhão (como o SHRED A BILLION) ou outro número? | 1 bilhão de insetos |
-| 3 | As massas grandes viram tapete (a conta é exata, o desenho é uma massa)? | Sim, acima de alguns milhares juntos; abaixo disso, cada inseto anda sozinho, como hoje |
-| 4 | O nome no menu | "Banquete" |
-| 5 | As espécies: saúva, formiga-carpinteira, formiga de embaúba, ninho de papelão (formiga ou cupim de árvore), correição e cupim de murundu | Essas |
-| 6 | Os colecionáveis da área 3 dão bônus (como as relíquias do SHRED)? | Sim, de 3% a 5% cada, só no Banquete; no modo normal continuam só coleção |
-| 7 | A Fungada (o "aspirador" do focinho) como último gesto? | Sim, a partir do andar 7 |
-| 8 | A correição (o rio de formigas que atravessa a mata)? | Sim, mas só na B6 |
-| 9 | O combo dá pontos? | Sim, pouco (até 20% a mais) |
-| 10 | O Banquete entra na demo da Steam? | Não: a demo continua sendo a área 1 |
-| 11 | Dá para continuar depois do fim, para limpar o mapa inteiro? | Sim, com a conquista de limpar tudo |
-| 12 | Os amigos que testarem mandam um registro da partida (um arquivo que eles enviam se quiserem)? | Não: só o bot e as estatísticas de hoje, nada pela internet |
+| 1 | O começo é a própria clareira da área 1 (os 8 formigueiros, a lagoa e a caverna), aberta para a mata? | Sim: aproveita o que já foi feito e afinado; muda só o paredão do lado da mata e os números |
+| 2 | O nome no menu durante o teste | "Banquete" |
+| 3 | As espécies: saúva, formiga-carpinteira, formiga de embaúba, ninho de papelão (formiga ou cupim de árvore), correição e cupim de murundu | Essas |
+| 4 | Os colecionáveis da área nova dão bônus (como as relíquias do SHRED)? | Sim, de 3% a 5% cada |
+| 5 | A Fungada (o "aspirador" do focinho) como último gesto? | Sim, a partir do andar 7 |
+| 6 | A correição (o rio de formigas que atravessa a mata)? | Sim, mas só na B6 |
+| 7 | O combo dá pontos? | Sim, pouco (até 20% a mais) |
+| 8 | Dá para continuar depois do fim, para limpar a área inteira? | Sim, com a conquista de limpar tudo |
+| 9 | Os amigos que testarem mandam um registro da partida (um arquivo que eles enviam se quiserem)? | Não: só o bot e as estatísticas de hoje, nada pela internet |
 
 ---
 

@@ -48,7 +48,9 @@ A demo é a **primeira área** de um mapa maior, todo cercado por penhascos, que
 leva até o cupinzeiro gigante; o plano está em
 [`docs/DESIGN.md`](docs/DESIGN.md). A pesquisa sobre o ciclo das habilidades e a
 economia da compra, com a simulação do bot e a proposta de reformulação, está
-em [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md).
+em [`docs/pesquisa-habilidades.md`](docs/pesquisa-habilidades.md). O plano do
+modo incremental (a segunda opção do menu, ainda não feita) está em
+[`docs/modo-incremental.md`](docs/modo-incremental.md).
 
 ### Como rodar
 

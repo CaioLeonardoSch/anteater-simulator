@@ -134,6 +134,16 @@ buscamos, no espírito delas:
   longe, a barriga ronca, e ele decide comer e ir até lá.
 - **Foco agora:** a demo (área 1) e o refinamento dela.
 
+### O modo incremental (Banquete), planejado em 27/11/2026
+
+Uma segunda opção no menu principal, no estilo dos incrementais em 1ª pessoa
+de novembro de 2026: só a área 3, com um começo parecido com a área 1, uma
+mata densa e escura (a maior parte) e o cupinzeiro gigante, que dá para subir
+por dentro, andar por andar, comendo os cupins das salas. Meta gigante com
+fim, sem automação, mapa aberto com trava por força, de 4 a 6 horas. **Ainda
+não foi feito**; o plano, as decisões e as perguntas em aberto estão em
+[`modo-incremental.md`](modo-incremental.md).
+
 ### A área 1 (a demo), decidida em 02/11/2026
 
 - **Tamanho:** cerca de 50 m de um lado ao outro (era 120 m até 08/11/2026). Em volta, no
@@ -806,3 +816,7 @@ acertar a duração com testes.
 | 18/11/2026 | Objetivos | Comer 200, aprender uma habilidade, limpar um ninho, comer metade, desmanchar a rainha | Comer 50, aprender a Lambida Rápida, abrir uma câmara, limpar 1 e 4 ninhos, comer todos os insetos (o losango aponta o ninho que dá menos trabalho), desmanchar a rainha. Embaixo, a linha da próxima novidade ("Tremor nível 1 · faltam 380 insetos"). Os textos seguem a revisão de 13/11 |
 | 18/11/2026 | Colecionáveis | Só o chapéu de Natal, numa formiga em cada 16 000, sem contar em nada | Seis formigas fantasiadas por área. Na área 1: Abóbora, Tamanduá, Lincoln, Banhista e Foliã, fixas em lugares escondidos (paradas ou andando no lugar, sem fugir), e a Noel, a do chapéu de Natal, que continua aparecendo de vez em quando. Achar = chegar perto e olhar para ela. Aba Coleção no Tab, com a silhueta antes e a foto depois; vale para todos os jogos salvos |
 | 18/11/2026 | Jogo salvo | Versão 8 | Versão 9; a 8 abre e é convertida (marcos renumerados, os ninhos já limpos valem o bônus, Cavar fundo 1 comprado volta como presente com os 60 pontos devolvidos, o cartão de objetivo recomeça pulando o que já está feito) |
+| 27/11/2026 | Modo incremental (plano) | Só o modo normal, com as 4 áreas em sequência | Uma segunda opção no menu: só a área 3 (começo como a área 1, mata densa e escura, cupinzeiro gigante com andares e salas por dentro). Plano em [`modo-incremental.md`](modo-incremental.md) |
+| 27/11/2026 | Modo incremental: fim e ritmo | — | Meta gigante com fim (acaba ao comer o último cupim do cupinzeiro), sem automação, 4 a 6 horas |
+| 27/11/2026 | Modo incremental: mapa | — | Mapa aberto desde o começo; o que segura é a força (os ninhos maiores e as salas pedem níveis mais altos) |
+| 27/11/2026 | Modo incremental: cupinzeiro e árvores | — | Os andares sobem a torre, com a rainha-mãe no topo; nos ninhos altos das árvores o tamanduá empina e as garras rasgam troncos ou sacodem a árvore (sem escalada) |
